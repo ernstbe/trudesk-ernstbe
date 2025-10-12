@@ -51,6 +51,33 @@ const checkConnection = callback => {
 }
 
 ES.testConnection = async callback => {
+  // If a callback is provided, run the async check and invoke the callback
+  // instead of returning a Promise that the caller may ignore — this avoids
+  // unhandled promise rejections when the caller expects callback-style only.
+  if (typeof callback === 'function') {
+    ;(async () => {
+      try {
+        if (process.env.ELASTICSEARCH_URI) ES.host = process.env.ELASTICSEARCH_URI
+        else ES.host = nconf.get('elasticsearch:host') + ':' + nconf.get('elasticsearch:port')
+
+        ES.esclient = new elasticsearch.Client({
+          node: ES.host
+        })
+
+        await checkConnection()
+
+        return callback()
+      } catch (e) {
+        return callback(e)
+      }
+    })()
+
+    // Do not return the promise if caller provided a callback to avoid unhandled
+    // rejection in the caller who doesn't handle the returned promise.
+    return
+  }
+
+  // Promise-based API
   return new Promise((resolve, reject) => {
     ;(async () => {
       try {
@@ -63,12 +90,8 @@ ES.testConnection = async callback => {
 
         await checkConnection()
 
-        if (typeof callback === 'function') callback()
-
         return resolve()
       } catch (e) {
-        if (typeof callback === 'function') callback(e)
-
         return reject(e)
       }
     })()

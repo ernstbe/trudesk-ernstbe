@@ -8,11 +8,11 @@ services:
     dns:
       - "1.1.1.1"
       - "8.8.8.8"
+    env_file:
+      - .env
     environment:
       NODE_ENV: production
       TRUDESK_DOCKER: "true"
-      TD_MONGODB_SERVER: mongo
-      TD_MONGODB_DATABASE: trudesk
       USE_XFORWARDIP: "true"
     volumes:
       - trudesk_uploads:/usr/src/trudesk/public/uploads
@@ -22,9 +22,19 @@ services:
     restart: always
     ports:
       - "27017:27017"
+    env_file:
+      - .env
+    environment:
+      # The official MongoDB image will create this root user on first initialization using
+      # the values provided in the .env file. Change before using outside local dev.
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE}
     volumes:
       - mongo:/var/lib/mongo
       - mongo_data:/data/db:rw
+      # Run initialization scripts (only executed on first container start)
+      - ./docker/initdb:/docker-entrypoint-initdb.d:ro
   elasticsearch:
     image: elasticsearch:8.0.0
     restart: always
