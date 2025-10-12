@@ -883,6 +883,82 @@ apiTickets.update = function (req, res) {
 }
 
 /**
+ * @api {put} /api/v1/tickets/:id/assignee Set Ticket Assignee
+ * @apiName setTicketAssignee
+ * @apiDescription Sets the assignee for a ticket
+ * @apiVersion 0.1.0
+ * @apiGroup Ticket
+ * @apiHeader {string} accesstoken The access token for the logged in user
+ */
+apiTickets.setAssignee = function (req, res) {
+  var user = req.user
+  if (_.isUndefined(user) || _.isNull(user)) return res.status(401).json({ success: false, error: 'Invalid Access Token' })
+
+  var oId = req.params.id
+  var assigneeId = req.body.assignee
+
+  if (_.isUndefined(oId)) return res.status(400).json({ success: false, error: 'Invalid Ticket ObjectID.' })
+  if (_.isUndefined(assigneeId) || _.isNull(assigneeId) || assigneeId === '')
+    return res.status(400).json({ success: false, error: 'Invalid Assignee Id' })
+
+  var ticketModel = require('../../../models/ticket')
+  ticketModel.getTicketById(oId, function (err, ticket) {
+    if (err) return res.status(400).json({ success: false, error: err.message })
+    if (!ticket) return res.status(400).json({ success: false, error: 'Unable to locate ticket. Aborting...' })
+
+    ticket.setAssignee(user._id, assigneeId, function (err) {
+      if (err) return res.status(400).json({ success: false, error: err })
+
+      ticket.save(function (err, t) {
+        if (err) return res.status(500).json({ success: false, error: err.message })
+
+        if (!permissions.canThis(user.role, 'tickets:notes')) {
+          t.notes = []
+        }
+
+        return res.json({ success: true, error: null, ticket: t })
+      })
+    })
+  })
+}
+
+/**
+ * @api {delete} /api/v1/tickets/:id/assignee Clear Ticket Assignee
+ * @apiName clearTicketAssignee
+ * @apiDescription Clears the assignee for a ticket
+ * @apiVersion 0.1.0
+ * @apiGroup Ticket
+ * @apiHeader {string} accesstoken The access token for the logged in user
+ */
+apiTickets.clearAssignee = function (req, res) {
+  var user = req.user
+  if (_.isUndefined(user) || _.isNull(user)) return res.status(401).json({ success: false, error: 'Invalid Access Token' })
+
+  var oId = req.params.id
+  if (_.isUndefined(oId)) return res.status(400).json({ success: false, error: 'Invalid Ticket ObjectID.' })
+
+  var ticketModel = require('../../../models/ticket')
+  ticketModel.getTicketById(oId, function (err, ticket) {
+    if (err) return res.status(400).json({ success: false, error: err.message })
+    if (!ticket) return res.status(400).json({ success: false, error: 'Unable to locate ticket. Aborting...' })
+
+    ticket.clearAssignee(user._id, function (err) {
+      if (err) return res.status(500).json({ success: false, error: err })
+
+      ticket.save(function (err, t) {
+        if (err) return res.status(500).json({ success: false, error: err.message })
+
+        if (!permissions.canThis(user.role, 'tickets:notes')) {
+          t.notes = []
+        }
+
+        return res.json({ success: true, error: null, ticket: t })
+      })
+    })
+  })
+}
+
+/**
  * @api {delete} /api/v1/tickets/:id Delete Ticket
  * @apiName deleteTicket
  * @apiDescription Deletes ticket via given OID

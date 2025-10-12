@@ -16,7 +16,7 @@
         "url": "https://github.com/ionaru/easy-markdown-editor/issues"
     },
     "dependencies": {
-        "codemirror": "^5.39.0",
+        "codemirror": "^5.65.13",
         "codemirror-spell-checker": "1.1.2",
         "marked": "^0.4.0"
     },
