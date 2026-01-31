@@ -1,4 +1,3 @@
-version: '2.1'
 services:
   trudesk:
     image: ghcr.io/ernstbe/truedesk:1.0
@@ -18,7 +17,7 @@ services:
       - trudesk_uploads:/usr/src/trudesk/public/uploads
       - trudesk_backups:/usr/src/trudesk/backups
   mongo:
-    image: mongo:5.0-focal
+    image: mongo:6.0
     restart: always
     ports:
       - "27017:27017"
@@ -36,7 +35,7 @@ services:
       # Run initialization scripts (only executed on first container start)
       - ./docker/initdb:/docker-entrypoint-initdb.d:ro
   elasticsearch:
-    image: elasticsearch:8.0.0
+    image: elasticsearch:8.17.0
     restart: always
     environment:
       - xpack.security.enabled=false
