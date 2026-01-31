@@ -24,6 +24,7 @@
     "delete": "Löschen",
     "edit": "Bearbeiten",
     "create": "Erstellen",
+    "add": "Hinzufügen",
     "search": "Suchen",
     "filter": "Filter",
     "loading": "Laden...",
@@ -67,6 +68,23 @@
     "success": "Erfolg",
     "warning": "Warnung",
     "info": "Info"
+  },
+  "priorities": {
+    "Normal": "Normal",
+    "Urgent": "Dringend",
+    "Critical": "Kritisch",
+    "Low": "Niedrig",
+    "Medium": "Mittel",
+    "High": "Hoch"
+  },
+  "statuses": {
+    "New": "Neu",
+    "Open": "Offen",
+    "Pending": "Ausstehend",
+    "Closed": "Geschlossen",
+    "In Progress": "In Bearbeitung",
+    "On Hold": "Wartend",
+    "Resolved": "Gelöst"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -255,6 +273,11 @@
       "hint": "Bitte wähle die Priorität aus, der Tickets zugewiesen werden sollen, um diese Priorität zu löschen",
       "warning": "WARNUNG: Dies ändert alle Tickets mit der Priorität:",
       "toSelected": "zur oben ausgewählten Priorität."
+    },
+    "addPriority": {
+      "title": "Prioritäten hinzufügen",
+      "hint": "Bitte wähle die Prioritäten aus, die du zum Typ {{typeName}} hinzufügen möchtest",
+      "slaOverdue": "SLA-Überfällig"
     },
     "deleteStatus": {
       "title": "Ticket-Status entfernen",

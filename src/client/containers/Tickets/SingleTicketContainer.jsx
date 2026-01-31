@@ -434,12 +434,12 @@ class SingleTicketContainer extends React.Component {
                                   this.ticket.type.priorities &&
                                   this.ticket.type.priorities.map(priority => (
                                     <option key={priority._id} value={priority._id}>
-                                      {priority.name}
+                                      {t('priorities.' + priority.name, priority.name)}
                                     </option>
                                   ))}
                               </select>
                             )}
-                            {!hasTicketUpdate && <div className={'input-box'}>{this.ticket.priority.name}</div>}
+                            {!hasTicketUpdate && <div className={'input-box'}>{t('priorities.' + this.ticket.priority.name, this.ticket.priority.name)}</div>}
                           </div>
                         </div>
                         {/*  Group */}

@@ -280,7 +280,7 @@ class CreateTicketModal extends React.Component {
                       />
                       <label htmlFor={'p___' + priority._id} className={'mb-10 inline-label'}>
                         <span className='uk-badge' style={{ backgroundColor: priority.htmlColor }}>
-                          {priority.name}
+                          {t('priorities.' + priority.name, priority.name)}
                         </span>
                       </label>
                     </span>

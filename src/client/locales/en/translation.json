@@ -24,6 +24,7 @@
     "delete": "Delete",
     "edit": "Edit",
     "create": "Create",
+    "add": "Add",
     "search": "Search",
     "filter": "Filter",
     "loading": "Loading...",
@@ -67,6 +68,23 @@
     "success": "Success",
     "warning": "Warning",
     "info": "Info"
+  },
+  "priorities": {
+    "Normal": "Normal",
+    "Urgent": "Urgent",
+    "Critical": "Critical",
+    "Low": "Low",
+    "Medium": "Medium",
+    "High": "High"
+  },
+  "statuses": {
+    "New": "New",
+    "Open": "Open",
+    "Pending": "Pending",
+    "Closed": "Closed",
+    "In Progress": "In Progress",
+    "On Hold": "On Hold",
+    "Resolved": "Resolved"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -255,6 +273,11 @@
       "hint": "Please select the priority you wish to reassign tickets to in order to delete this priority",
       "warning": "WARNING: This will change all tickets with a priority of:",
       "toSelected": "to the selected priority above."
+    },
+    "addPriority": {
+      "title": "Add Priorities",
+      "hint": "Please select the priorities you wish to add to type: {{typeName}}",
+      "slaOverdue": "SLA Overdue"
     },
     "deleteStatus": {
       "title": "Remove Ticket Status",

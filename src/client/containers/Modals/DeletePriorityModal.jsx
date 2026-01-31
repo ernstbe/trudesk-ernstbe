@@ -61,7 +61,7 @@ class DeletePriorityModal extends React.Component {
         return priority.get('name') !== obj.get('name')
       })
       .map(p => {
-        return { text: p.get('name'), value: p.get('_id') }
+        return { text: t('priorities.' + p.get('name'), p.get('name')), value: p.get('_id') }
       })
     return (
       <BaseModal>
@@ -86,7 +86,7 @@ class DeletePriorityModal extends React.Component {
             </div>
             <div className='uk-margin-medium-bottom uk-clearfix'>
               <span className='uk-text-danger'>
-                {t('modals.deletePriority.warning')} <strong>{priority.get('name')}</strong> {t('modals.deletePriority.toSelected')}
+                {t('modals.deletePriority.warning')} <strong>{t('priorities.' + priority.get('name'), priority.get('name'))}</strong> {t('modals.deletePriority.toSelected')}
               </span>
             </div>
             <div className='uk-modal-footer uk-text-right'>
