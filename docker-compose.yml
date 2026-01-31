@@ -1,7 +1,7 @@
 version: '2.1'
 services:
   trudesk:
-    image: polonel/trudesk:1
+    image: ghcr.io/ernstbe/truedesk:1.0
     restart: always
     ports:
       - "8118:8118"
