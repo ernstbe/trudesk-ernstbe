@@ -72,42 +72,29 @@ function performBackup (dbVersion, callback) {
 }
 
 async function saveVersion (callback) {
-  SettingsSchema.getSettingByName('gen:version', async function (err, setting) {
-    if (err) {
-      winston.warn(err)
-      if (_.isFunction(callback)) return callback(err)
-      return false
-    }
+  try {
+    var setting = await SettingsSchema.getSettingByName('gen:version')
 
     if (!setting) {
       var s = new SettingsSchema({
         name: 'gen:version',
         value: version
       })
-      try {
-        await s.save()
-        if (_.isFunction(callback)) return callback()
-      } catch (err) {
-        if (_.isFunction(callback)) return callback(err)
-        return false
-      }
+      await s.save()
     } else {
       if (setting.value) setting.value = require('../../package').version
-      try {
-        await setting.save()
-        if (_.isFunction(callback)) return callback()
-        return true
-      } catch (err) {
-        if (_.isFunction(callback)) return callback(err)
-        return false
-      }
+      await setting.save()
     }
-  })
+    if (_.isFunction(callback)) return callback()
+  } catch (err) {
+    winston.warn(err)
+    if (_.isFunction(callback)) return callback(err)
+  }
 }
 
-function getDatabaseVersion (callback) {
-  SettingsSchema.getSettingByName('gen:version', function (err, setting) {
-    if (err) return callback(err)
+async function getDatabaseVersion (callback) {
+  try {
+    var setting = await SettingsSchema.getSettingByName('gen:version')
 
     if (!setting) {
       if (semver.satisfies(version, '>=1.0.11')) {
@@ -116,7 +103,9 @@ function getDatabaseVersion (callback) {
     }
 
     return callback(null, setting.value)
-  })
+  } catch (err) {
+    return callback(err)
+  }
 }
 
 function migrateUserRoles (callback) {

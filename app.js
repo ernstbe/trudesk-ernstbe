@@ -134,121 +134,97 @@ function start () {
   })
 }
 
+function promisify (fn) {
+  return new Promise(function (resolve, reject) {
+    fn(function (err, result) {
+      if (err) return reject(err)
+      resolve(result)
+    })
+  })
+}
+
 function launchServer (db) {
   const ws = require('./src/webserver')
-  ws.init(db, function (err) {
+  ws.init(db, async function (err) {
     if (err) {
       winston.error(err)
       return
     }
 
-    async.series(
-      [
-        function (next) {
-          require('./src/settings/defaults').init(next)
-        },
-        function (next) {
-          require('./src/permissions').register(next)
-        },
-        function (next) {
-          require('./src/elasticsearch').init(function (err) {
-            if (err) {
-              winston.error(err)
-            }
+    try {
+      await require('./src/settings/defaults').init()
+      await require('./src/permissions').register()
 
-            return next()
-          })
-        },
-        function (next) {
-          require('./src/socketserver')(ws)
-          return next()
-        },
-        function (next) {
-          // Start Check Mail
-          const settingSchema = require('./src/models/setting')
-          settingSchema.getSetting('mailer:check:enable', function (err, mailCheckEnabled) {
-            if (err) {
-              winston.warn(err)
-              return next(err)
-            }
-
-            if (mailCheckEnabled && mailCheckEnabled.value) {
-              settingSchema.getSettings(function (err, settings) {
-                if (err) return next(err)
-
-                const mailCheck = require('./src/mailer/mailCheck')
-                winston.debug('Starting MailCheck...')
-                mailCheck.init(settings)
-
-                return next()
-              })
-            } else {
-              return next()
-            }
-          })
-        },
-        function (next) {
-          require('./src/migration').run(next)
-        },
-        function (next) {
-          winston.debug('Building dynamic sass...')
-          require('./src/sass/buildsass').build(next)
-        },
-        // function (next) {
-        //   // Start Task Runners
-        //   require('./src/taskrunner')
-        //   return next()
-        // },
-        function (next) {
-          const cache = require('./src/cache/cache')
-          if (isDocker) {
-            cache.env = {
-              TRUDESK_DOCKER: process.env.TRUDESK_DOCKER,
-              TD_MONGODB_SERVER: process.env.TD_MONGODB_SERVER,
-              TD_MONGODB_PORT: process.env.TD_MONGODB_PORT,
-              TD_MONGODB_USERNAME: process.env.TD_MONGODB_USERNAME,
-              TD_MONGODB_PASSWORD: process.env.TD_MONGODB_PASSWORD,
-              TD_MONGODB_DATABASE: process.env.TD_MONGODB_DATABASE,
-              TD_MONGODB_URI: process.env.TD_MONGODB_URI
-            }
-          }
-
-          cache.init()
-
-          return next()
-        },
-        function (next) {
-          const taskRunner = require('./src/taskrunner')
-          return taskRunner.init(next)
-        }
-      ],
-      function (err) {
-        if (err) throw new Error(err)
-
-        ws.listen(function () {
-          winston.info('trudesk Ready')
-        })
+      try {
+        await require('./src/elasticsearch').init()
+      } catch (esErr) {
+        winston.error(esErr)
       }
-    )
+
+      require('./src/socketserver')(ws)
+
+      // Start Check Mail
+      try {
+        const settingSchema = require('./src/models/setting')
+        const mailCheckEnabled = await settingSchema.getSetting('mailer:check:enable')
+        if (mailCheckEnabled && mailCheckEnabled.value) {
+          const settings = await settingSchema.getSettings()
+          const mailCheck = require('./src/mailer/mailCheck')
+          winston.debug('Starting MailCheck...')
+          mailCheck.init(settings)
+        }
+      } catch (mailErr) {
+        winston.warn(mailErr)
+      }
+
+      await promisify(require('./src/migration').run)
+
+      winston.debug('Building dynamic sass...')
+      await promisify(require('./src/sass/buildsass').build)
+
+      const cache = require('./src/cache/cache')
+      if (isDocker) {
+        cache.env = {
+          TRUDESK_DOCKER: process.env.TRUDESK_DOCKER,
+          TD_MONGODB_SERVER: process.env.TD_MONGODB_SERVER,
+          TD_MONGODB_PORT: process.env.TD_MONGODB_PORT,
+          TD_MONGODB_USERNAME: process.env.TD_MONGODB_USERNAME,
+          TD_MONGODB_PASSWORD: process.env.TD_MONGODB_PASSWORD,
+          TD_MONGODB_DATABASE: process.env.TD_MONGODB_DATABASE,
+          TD_MONGODB_URI: process.env.TD_MONGODB_URI
+        }
+      }
+      cache.init()
+
+      await promisify(require('./src/taskrunner').init)
+
+      ws.listen(function () {
+        winston.info('trudesk Ready')
+      })
+    } catch (e) {
+      throw new Error(e)
+    }
   })
 }
 
-function dbCallback (err, db) {
+async function dbCallback (err, db) {
   if (err || !db) {
     return start()
   }
 
   if (isDocker) {
-    const s = require('./src/models/setting')
-    s.getSettingByName('installed', function (err, installed) {
-      if (err) return start()
+    try {
+      const s = require('./src/models/setting')
+      const installed = await s.getSettingByName('installed')
 
       if (!installed) {
         return launchInstallServer()
       } else {
         return launchServer(db)
       }
-    })
+    } catch (e) {
+      return start()
+    }
   } else {
     return launchServer(db)
   }
