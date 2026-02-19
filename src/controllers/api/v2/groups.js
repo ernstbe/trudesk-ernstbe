@@ -19,90 +19,80 @@ var Department = require('../../../models/department')
 
 var apiGroups = {}
 
-apiGroups.create = function (req, res) {
+apiGroups.create = async function (req, res) {
   var postGroup = req.body
   if (!postGroup) return apiUtils.sendApiError_InvalidPostData(res)
 
-  Group.create(postGroup, function (err, group) {
-    if (err) return apiUtils.sendApiError(res, 500, err.message)
-
-    group.populate('members sendMailTo', function (err, group) {
-      if (err) return apiUtils.sendApiError(res, 500, err.message)
-
-      return apiUtils.sendApiSuccess(res, { group: group })
-    })
-  })
+  try {
+    let group = await Group.create(postGroup)
+    group = await group.populate('members sendMailTo')
+    return apiUtils.sendApiSuccess(res, { group: group })
+  } catch (err) {
+    return apiUtils.sendApiError(res, 500, err.message)
+  }
 }
 
-apiGroups.get = function (req, res) {
+apiGroups.get = async function (req, res) {
   var limit = Number(req.query.limit) || 50
   var page = Number(req.query.page) || 0
   var type = req.query.type || 'user'
 
-  if (type === 'all') {
-    Group.getWithObject({ limit: limit, page: page }, function (err, groups) {
-      if (err) return apiUtils.sendApiError(res, 500, err.message)
-
+  try {
+    if (type === 'all') {
+      const groups = await Group.getWithObject({ limit: limit, page: page })
       return apiUtils.sendApiSuccess(res, { groups: groups, count: groups.length })
-    })
-  } else {
-    if (req.user.role.isAdmin || req.user.role.isAgent) {
-      Department.getDepartmentGroupsOfUser(req.user._id, function (err, groups) {
-        if (err) return apiUtils.sendApiError(res, 500, err.message)
-
-        return apiUtils.sendApiSuccess(res, { groups: groups, count: groups.length })
-      })
     } else {
-      Group.getAllGroupsOfUser(req.user._id, function (err, groups) {
-        if (err) return apiUtils.sendApiError(res, 500, err.message)
-
+      if (req.user.role.isAdmin || req.user.role.isAgent) {
+        const groups = await Department.getDepartmentGroupsOfUser(req.user._id)
         return apiUtils.sendApiSuccess(res, { groups: groups, count: groups.length })
-      })
+      } else {
+        const groups = await Group.getAllGroupsOfUser(req.user._id)
+        return apiUtils.sendApiSuccess(res, { groups: groups, count: groups.length })
+      }
     }
+  } catch (err) {
+    return apiUtils.sendApiError(res, 500, err.message)
   }
 }
 
-apiGroups.update = function (req, res) {
+apiGroups.update = async function (req, res) {
   var id = req.params.id
   if (!id) return apiUtils.sendApiError(res, 400, 'Invalid Group Id')
 
   var putData = req.body
   if (!putData) return apiUtils.sendApiError_InvalidPostData(res)
 
-  Group.findOne({ _id: id }, function (err, group) {
-    if (err || !group) return apiUtils.sendApiError(res, 400, 'Invalid Group')
+  try {
+    let group = await Group.findOne({ _id: id })
+    if (!group) return apiUtils.sendApiError(res, 400, 'Invalid Group')
 
     if (putData.name) group.name = putData.name
     if (putData.members) group.members = putData.members
     if (putData.sendMailTo) group.sendMailTo = putData.sendMailTo
 
-    group.save(function (err, group) {
-      if (err) return apiUtils.sendApiError(res, 500, err.message)
-
-      group.populate('members sendMailTo', function (err, group) {
-        if (err) return apiUtils.sendApiError(res, 500, err.message)
-
-        return apiUtils.sendApiSuccess(res, { group: group })
-      })
-    })
-  })
+    group = await group.save()
+    group = await group.populate('members sendMailTo')
+    return apiUtils.sendApiSuccess(res, { group: group })
+  } catch (err) {
+    return apiUtils.sendApiError(res, 500, err.message)
+  }
 }
 
-apiGroups.delete = function (req, res) {
+apiGroups.delete = async function (req, res) {
   var id = req.params.id
   if (!id) return apiUtils.sendApiError_InvalidPostData(res)
 
-  Ticket.countDocuments({ group: { $in: [id] } }, function (err, tickets) {
-    if (err) return apiUtils.sendApiError(res, 500, err.message)
+  try {
+    const tickets = await Ticket.countDocuments({ group: { $in: [id] } })
     if (tickets > 0) return apiUtils.sendApiError(res, 400, 'Unable to delete group with tickets.')
 
-    Group.deleteOne({ _id: id }, function (err, success) {
-      if (err) return apiUtils.sendApiError(res, 500, err.message)
-      if (!success) return apiUtils.sendApiError(res, 500, 'Unable to delete group. Contact your administrator.')
+    const success = await Group.deleteOne({ _id: id })
+    if (!success) return apiUtils.sendApiError(res, 500, 'Unable to delete group. Contact your administrator.')
 
-      return apiUtils.sendApiSuccess(res, { _id: id })
-    })
-  })
+    return apiUtils.sendApiSuccess(res, { _id: id })
+  } catch (err) {
+    return apiUtils.sendApiError(res, 500, err.message)
+  }
 }
 
 module.exports = apiGroups

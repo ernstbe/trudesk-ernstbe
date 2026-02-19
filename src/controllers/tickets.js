@@ -42,31 +42,32 @@ const ticketsController = {}
  */
 ticketsController.content = {}
 
-ticketsController.pubNewIssue = function (req, res) {
+ticketsController.pubNewIssue = async function (req, res) {
   const marked = require('marked')
   const settings = require('../models/setting')
-  settings.getSettingByName('allowPublicTickets:enable', function (err, setting) {
-    if (err) return handleError(res, err)
+
+  try {
+    const setting = await settings.getSettingByName('allowPublicTickets:enable')
     if (setting && setting.value === true) {
-      settings.getSettingByName('legal:privacypolicy', function (err, privacyPolicy) {
-        if (err) return handleError(res, err)
+      const privacyPolicy = await settings.getSettingByName('legal:privacypolicy')
 
-        const content = {}
-        content.title = 'New Issue'
-        content.layout = false
-        content.data = {}
-        if (privacyPolicy === null || _.isUndefined(privacyPolicy.value)) {
-          content.data.privacyPolicy = 'No Privacy Policy has been set.'
-        } else {
-          content.data.privacyPolicy = xss(marked.parse(privacyPolicy.value))
-        }
+      const content = {}
+      content.title = 'New Issue'
+      content.layout = false
+      content.data = {}
+      if (privacyPolicy === null || _.isUndefined(privacyPolicy.value)) {
+        content.data.privacyPolicy = 'No Privacy Policy has been set.'
+      } else {
+        content.data.privacyPolicy = xss(marked.parse(privacyPolicy.value))
+      }
 
-        return res.render('pub_createTicket', content)
-      })
+      return res.render('pub_createTicket', content)
     } else {
       return res.redirect('/')
     }
-  })
+  } catch (err) {
+    return handleError(res, err)
+  }
 }
 
 /**
@@ -311,7 +312,7 @@ ticketsController.processor = function (req, res) {
   return res.render(processor.renderpage, content)
 }
 
-ticketsController.pdf = function (req, res) {
+ticketsController.pdf = async function (req, res) {
   const TicketPDFGenerator = require('../pdf/ticketGenerator')
   let uid = null
   try {
@@ -321,9 +322,8 @@ ticketsController.pdf = function (req, res) {
     return res.status(404).send('Invalid Ticket UID')
   }
 
-  ticketSchema.getTicketByUid(uid, function (err, ticket) {
-    if (err) return handleError(res, err)
-
+  try {
+    const ticket = await ticketSchema.getTicketByUid(uid)
     const ticketGenerator = new TicketPDFGenerator(ticket)
 
     ticketGenerator.generate(function (err, obj) {
@@ -331,7 +331,9 @@ ticketsController.pdf = function (req, res) {
 
       return res.writeHead(200, obj.headers).end(obj.data)
     })
-  })
+  } catch (err) {
+    return handleError(res, err)
+  }
 }
 
 /**
@@ -340,7 +342,7 @@ ticketsController.pdf = function (req, res) {
  * @param {object} res Express Response
  * @return {View} Subviews/PrintTicket View
  */
-ticketsController.print = function (req, res) {
+ticketsController.print = async function (req, res) {
   const user = req.user
   let uid = null
   try {
@@ -359,79 +361,69 @@ ticketsController.print = function (req, res) {
   content.data.common = req.viewdata
   content.data.ticket = {}
 
-  ticketSchema.getTicketByUid(uid, function (err, ticket) {
-    if (err) return handleError(res, err)
+  try {
+    const ticket = await ticketSchema.getTicketByUid(uid)
     if (_.isNull(ticket) || _.isUndefined(ticket)) return res.redirect('/tickets')
 
     const hasPublic = permissions.canThis(user.role, 'tickets:public')
     let hasAccess = false
-    async.series(
-      [
-        function (next) {
-          if (user.role.isAdmin || user.role.isAgent) {
-            departmentSchema.getDepartmentGroupsOfUser(user._id, function (err, groups) {
-              if (err) return res.redirect('/tickets')
-              const gIds = groups.map(function (g) {
-                return g._id
-              })
 
-              if (_.some(gIds, ticket.group._id)) {
-                if (!permissions.canThis(user.role, 'tickets:notes')) {
-                  ticket.notes = []
-                }
+    // Step 1: check department group access for admin/agent
+    if (user.role.isAdmin || user.role.isAgent) {
+      const groups = await departmentSchema.getDepartmentGroupsOfUser(user._id)
+      const gIds = groups.map(function (g) {
+        return g._id
+      })
 
-                hasAccess = true
-                return next()
-              } else {
-                return next('UNAUTHORIZED_GROUP_ACCESS')
-              }
-            })
-          } else {
-            return next()
-          }
-        },
-        function (next) {
-          if (hasAccess) return next()
-
-          const members = ticket.group.members.map(function (m) {
-            return m._id.toString()
-          })
-
-          if (!members.includes(user._id.toString())) {
-            if (ticket.group.public && hasPublic) {
-              // Blank to bypass
-            } else {
-              return next('UNAUTHORIZED_GROUP_ACCESS')
-            }
-          }
-
-          if (!permissions.canThis(user.role, 'tickets:notes')) {
-            ticket.notes = []
-          }
-
-          return next()
+      if (_.some(gIds, ticket.group._id)) {
+        if (!permissions.canThis(user.role, 'tickets:notes')) {
+          ticket.notes = []
         }
-      ],
-      function (err) {
-        if (err) {
-          if (err === 'UNAUTHORIZED_GROUP_ACCESS')
-            winston.warn(
-              'User tried to access ticket outside of group - UserId: ' + user._id + ' (' + user.username + ')'
-            )
 
+        hasAccess = true
+      } else {
+        winston.warn(
+          'User tried to access ticket outside of group - UserId: ' + user._id + ' (' + user.username + ')'
+        )
+        return res.redirect('/tickets')
+      }
+    }
+
+    // Step 2: check group membership for non-admin/agent
+    if (!hasAccess) {
+      const members = ticket.group.members.map(function (m) {
+        return m._id.toString()
+      })
+
+      if (!members.includes(user._id.toString())) {
+        if (ticket.group.public && hasPublic) {
+          // Blank to bypass
+        } else {
+          winston.warn(
+            'User tried to access ticket outside of group - UserId: ' + user._id + ' (' + user.username + ')'
+          )
           return res.redirect('/tickets')
         }
-
-        content.data.ticket = ticket
-        content.data.ticket.priorityname = ticket.priority.name
-        content.data.ticket.tagsArray = ticket.tags
-        content.data.ticket.commentCount = _.size(ticket.comments)
-        content.layout = 'layout/print'
-
-        return res.render('subviews/printticket', content)
       }
-    )
-  })
+
+      if (!permissions.canThis(user.role, 'tickets:notes')) {
+        ticket.notes = []
+      }
+    }
+
+    content.data.ticket = ticket
+    content.data.ticket.priorityname = ticket.priority.name
+    content.data.ticket.tagsArray = ticket.tags
+    content.data.ticket.commentCount = _.size(ticket.comments)
+    content.layout = 'layout/print'
+
+    return res.render('subviews/printticket', content)
+  } catch (err) {
+    if (err) {
+      winston.warn(err)
+    }
+    return res.redirect('/tickets')
+  }
 }
 
 /**
@@ -455,7 +447,7 @@ ticketsController.print = function (req, res) {
  * content.data.ticket.tagsArray = ticket.tags;
  * content.data.ticket.commentCount = _.size(ticket.comments);
  */
-ticketsController.single = function (req, res) {
+ticketsController.single = async function (req, res) {
   const user = req.user
   const uid = req.params.id
   if (isNaN(uid)) {
@@ -471,75 +463,63 @@ ticketsController.single = function (req, res) {
   content.data.common = req.viewdata
   content.data.ticket = {}
 
-  ticketSchema.getTicketByUid(uid, function (err, ticket) {
-    if (err) return handleError(res, err)
+  try {
+    const ticket = await ticketSchema.getTicketByUid(uid)
     if (_.isNull(ticket) || _.isUndefined(ticket)) return res.redirect('/tickets')
 
     const departmentSchema = require('../models/department')
-    async.waterfall(
-      [
-        function (next) {
-          if (!req.user.role.isAdmin && !req.user.role.isAgent) {
-            return groupSchema.getAllGroupsOfUserNoPopulate(req.user._id, next)
-          }
 
-          departmentSchema.getUserDepartments(req.user._id, function (err, departments) {
-            if (err) return next(err)
-            if (_.some(departments, { allGroups: true })) {
-              return groupSchema.find({}, next)
-            }
-
-            const groups = _.flattenDeep(
-              departments.map(function (d) {
-                return d.groups
-              })
-            )
-
-            return next(null, groups)
+    // Waterfall step 1: get user groups
+    let userGroups
+    if (!req.user.role.isAdmin && !req.user.role.isAgent) {
+      userGroups = await groupSchema.getAllGroupsOfUserNoPopulate(req.user._id)
+    } else {
+      const departments = await departmentSchema.getUserDepartments(req.user._id)
+      if (_.some(departments, { allGroups: true })) {
+        userGroups = await groupSchema.find({})
+      } else {
+        userGroups = _.flattenDeep(
+          departments.map(function (d) {
+            return d.groups
           })
-        },
-        function (userGroups, next) {
-          const hasPublic = permissions.canThis(user.role, 'tickets:public')
-          const groupIds = userGroups.map(function (g) {
-            return g._id.toString()
-          })
-
-          if (!groupIds.includes(ticket.group._id.toString())) {
-            if (ticket.group.public && hasPublic) {
-              // Blank to bypass
-            } else {
-              winston.warn('User access ticket outside of group - UserId: ' + user._id)
-              return res.redirect('/tickets')
-            }
-          }
-
-          if (
-            ticket.owner._id.toString() !== req.user._id.toString() &&
-            !permissions.canThis(user.role, 'tickets:viewall')
-          ) {
-            return res.redirect('/tickets')
-          }
-
-          if (!permissions.canThis(user.role, 'comments:view')) ticket.comments = []
-
-          if (!permissions.canThis(user.role, 'tickets:notes')) ticket.notes = []
-
-          content.data.ticket = ticket
-          content.data.ticket.priorityname = ticket.priority.name
-
-          return next()
-        }
-      ],
-      function (err) {
-        if (err) {
-          winston.warn(err)
-          return res.redirect('/tickets')
-        }
-
-        return res.render('subviews/singleticket', content)
+        )
       }
-    )
-  })
+    }
+
+    // Waterfall step 2: check access
+    const hasPublic = permissions.canThis(user.role, 'tickets:public')
+    const groupIds = userGroups.map(function (g) {
+      return g._id.toString()
+    })
+
+    if (!groupIds.includes(ticket.group._id.toString())) {
+      if (ticket.group.public && hasPublic) {
+        // Blank to bypass
+      } else {
+        winston.warn('User access ticket outside of group - UserId: ' + user._id)
+        return res.redirect('/tickets')
+      }
+    }
+
+    if (
+      ticket.owner._id.toString() !== req.user._id.toString() &&
+      !permissions.canThis(user.role, 'tickets:viewall')
+    ) {
+      return res.redirect('/tickets')
+    }
+
+    if (!permissions.canThis(user.role, 'comments:view')) ticket.comments = []
+
+    if (!permissions.canThis(user.role, 'tickets:notes')) ticket.notes = []
+
+    content.data.ticket = ticket
+    content.data.ticket.priorityname = ticket.priority.name
+
+    return res.render('subviews/singleticket', content)
+  } catch (err) {
+    winston.warn(err)
+    return res.redirect('/tickets')
+  }
 }
 
 ticketsController.uploadImageMDE = function (req, res) {
@@ -783,7 +763,7 @@ ticketsController.uploadAttachment = function (req, res) {
   })
 
   busboy.on('finish', function () {
-    async.series(events, function () {
+    async.series(events, async function () {
       if (error) return res.status(error.status).send(error.message)
 
       if (_.isUndefined(object.ticketId) || _.isUndefined(object.ownerId) || _.isUndefined(object.filePath)) {
@@ -797,11 +777,8 @@ ticketsController.uploadAttachment = function (req, res) {
         return res.status(500).send('File Failed to Save to Disk')
       }
 
-      ticketSchema.getTicketById(object.ticketId, function (err, ticket) {
-        if (err) {
-          winston.warn(err)
-          return res.status(500).send(err.message)
-        }
+      try {
+        const ticket = await ticketSchema.getTicketById(object.ticketId)
 
         const attachment = {
           owner: object.ownerId,
@@ -819,20 +796,18 @@ ticketsController.uploadAttachment = function (req, res) {
         ticket.history.push(historyItem)
 
         ticket.updated = Date.now()
-        ticket.save(function (err, t) {
-          if (err) {
-            fs.unlinkSync(object.filePath)
-            winston.warn(err)
-            return res.status(500).send(err.message)
-          }
+        const t = await ticket.save()
 
-          const returnData = {
-            ticket: t
-          }
+        const returnData = {
+          ticket: t
+        }
 
-          return res.json(returnData)
-        })
-      })
+        return res.json(returnData)
+      } catch (err) {
+        if (object.filePath) fs.unlinkSync(object.filePath)
+        winston.warn(err)
+        return res.status(500).send(err.message)
+      }
     })
   })
 

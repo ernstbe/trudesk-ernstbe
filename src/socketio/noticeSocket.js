@@ -28,19 +28,16 @@ function register (socket) {
 function eventLoop () {}
 
 events.onShowNotice = function (socket) {
-  socket.on(socketEventConst.NOTICE_SHOW, function ({ noticeId }) {
-    noticeSchema.getNotice(noticeId, function (err, notice) {
-      if (err) return true
+  socket.on(socketEventConst.NOTICE_SHOW, async function ({ noticeId }) {
+    try {
+      const notice = await noticeSchema.getNotice(noticeId)
       notice.activeDate = new Date()
-      notice.save(function (err) {
-        if (err) {
-          winston.warn(err)
-          return true
-        }
+      await notice.save()
 
-        utils.sendToAllConnectedClients(io, socketEventConst.NOTICE_UI_SHOW, notice)
-      })
-    })
+      utils.sendToAllConnectedClients(io, socketEventConst.NOTICE_UI_SHOW, notice)
+    } catch (err) {
+      winston.warn(err)
+    }
   })
 }
 

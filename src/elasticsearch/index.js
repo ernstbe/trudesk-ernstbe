@@ -163,12 +163,9 @@ ES.setupHooks = () => {
     }
   })
 
-  emitter.on('ticket:created', data => {
-    ticketSchema.getTicketById(data.ticket._id, function (err, ticket) {
-      if (err) {
-        winston.warn('Elasticsearch Error: ' + err)
-        return false
-      }
+  emitter.on('ticket:created', async data => {
+    try {
+      const ticket = await ticketSchema.getTicketById(data.ticket._id)
 
       const _id = ticket._id.toString()
       const cleanedTicket = {
@@ -205,17 +202,14 @@ ES.setupHooks = () => {
         tags: ticket.tags
       }
 
-      ES.esclient.index(
-        {
-          index: ES.indexName,
-          id: _id,
-          body: cleanedTicket
-        },
-        function (err) {
-          if (err) winston.warn('Elasticsearch Error: ' + err)
-        }
-      )
-    })
+      await ES.esclient.index({
+        index: ES.indexName,
+        id: _id,
+        body: cleanedTicket
+      })
+    } catch (e) {
+      winston.warn('Elasticsearch Error: ' + e)
+    }
   })
 }
 

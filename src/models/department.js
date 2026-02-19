@@ -13,7 +13,6 @@
  **/
 
 var _ = require('lodash')
-var async = require('async')
 var mongoose = require('mongoose')
 var utils = require('../helpers/utils')
 
@@ -42,89 +41,53 @@ departmentSchema.pre('save', function (next) {
   return next()
 })
 
-departmentSchema.statics.getDepartmentsByTeam = function (teamIds, callback) {
+departmentSchema.statics.getDepartmentsByTeam = async function (teamIds) {
   return this.model(COLLECTION)
     .find({ teams: { $in: teamIds } })
-    .exec(callback)
+    .exec()
 }
 
-departmentSchema.statics.getUserDepartments = async function (userId, callback) {
-  const self = this
-  return new Promise((resolve, reject) => {
-    ;(async () => {
-      try {
-        const teams = await Teams.getTeamsOfUser(userId)
-        const exec = self.model(COLLECTION).find({ teams: { $in: teams } })
-        if (typeof callback === 'function') {
-          return exec.exec(callback)
-        }
-
-        const departments = await exec.exec()
-        return resolve(departments)
-      } catch (e) {
-        return reject(e)
-      }
-    })()
-  })
+departmentSchema.statics.getUserDepartments = async function (userId) {
+  const teams = await Teams.getTeamsOfUser(userId)
+  return this.model(COLLECTION).find({ teams: { $in: teams } }).exec()
 }
 
-departmentSchema.statics.getDepartmentGroupsOfUser = function (userId, callback) {
-  const self = this
-  return new Promise((resolve, reject) => {
-    ;(async () => {
-      try {
-        const teams = await Teams.getTeamsOfUser(userId)
-        const departments = await self.model(COLLECTION).find({ teams: { $in: teams } })
+departmentSchema.statics.getDepartmentGroupsOfUser = async function (userId) {
+  const teams = await Teams.getTeamsOfUser(userId)
+  const departments = await this.model(COLLECTION).find({ teams: { $in: teams } })
 
-        const hasAllGroups = _.some(departments, { allGroups: true })
-        const hasPublicGroups = _.some(departments, { publicGroups: true })
-        if (hasAllGroups) {
-          const allGroups = await Groups.getAllGroups()
-          if (typeof callback === 'function') return callback(null, allGroups)
+  const hasAllGroups = _.some(departments, { allGroups: true })
+  const hasPublicGroups = _.some(departments, { publicGroups: true })
+  if (hasAllGroups) {
+    return Groups.getAllGroups()
+  } else if (hasPublicGroups) {
+    const publicGroups = await Groups.getAllPublicGroups()
+    const mapped = departments.map(department => {
+      return department.groups
+    })
 
-          return resolve(allGroups)
-        } else if (hasPublicGroups) {
-          const publicGroups = await Groups.getAllPublicGroups()
-          const mapped = departments.map(department => {
-            return department.groups
-          })
+    let merged = _.concat(publicGroups, mapped)
+    merged = _.flattenDeep(merged)
+    merged = _.uniqBy(merged, i => {
+      return i._id
+    })
 
-          let merged = _.concat(publicGroups, mapped)
-          merged = _.flattenDeep(merged)
-          merged = _.uniqBy(merged, i => {
-            return i._id
-          })
+    return merged
+  } else {
+    const groups = _.flattenDeep(
+      departments.map(function (department) {
+        return department.groups
+      })
+    )
 
-          if (typeof callback === 'function') return callback(null, merged)
-
-          return resolve(merged)
-        } else {
-          const groups = _.flattenDeep(
-            departments.map(function (department) {
-              return department.groups
-            })
-          )
-
-          if (typeof callback === 'function') return callback(null, groups)
-
-          return resolve(groups)
-        }
-      } catch (error) {
-        if (typeof callback === 'function') return callback(error)
-
-        return reject(error)
-      }
-    })()
-  })
+    return groups
+  }
 }
 
-departmentSchema.statics.getDepartmentsByGroup = function (groupId, callback) {
-  var self = this
-
-  return self
-    .model(COLLECTION)
+departmentSchema.statics.getDepartmentsByGroup = async function (groupId) {
+  return this.model(COLLECTION)
     .find({ $or: [{ groups: groupId }, { allGroups: true }] })
-    .exec(callback)
+    .exec()
 }
 
 module.exports = mongoose.model(COLLECTION, departmentSchema)

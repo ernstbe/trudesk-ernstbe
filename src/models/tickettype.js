@@ -58,10 +58,8 @@ ticketTypeSchema.pre('save', function (next) {
  *
  * @param {QueryCallback} callback MongoDB Query Callback
  */
-ticketTypeSchema.statics.getTypes = function (callback) {
-  var q = this.model(COLLECTION).find({})
-
-  return q.exec(callback)
+ticketTypeSchema.statics.getTypes = async function () {
+  return this.model(COLLECTION).find({}).exec()
 }
 
 /**
@@ -74,10 +72,8 @@ ticketTypeSchema.statics.getTypes = function (callback) {
  * @param {String} id Object Id of ticket type
  * @param {QueryCallback} callback MongoDB Query Callback
  */
-ticketTypeSchema.statics.getType = function (id, callback) {
-  var q = this.model(COLLECTION).findOne({ _id: id })
-
-  return q.exec(callback)
+ticketTypeSchema.statics.getType = async function (id) {
+  return this.model(COLLECTION).findOne({ _id: id }).exec()
 }
 
 /**
@@ -90,14 +86,12 @@ ticketTypeSchema.statics.getType = function (id, callback) {
  * @param {String} name Name of Ticket Type to search for
  * @param {QueryCallback} callback MongoDB Query Callback
  */
-ticketTypeSchema.statics.getTypeByName = function (name, callback) {
-  var q = this.model(COLLECTION).findOne({ name: name })
-
-  return q.exec(callback)
+ticketTypeSchema.statics.getTypeByName = async function (name) {
+  return this.model(COLLECTION).findOne({ name: name }).exec()
 }
 
-ticketTypeSchema.methods.addPriority = function (priorityId, callback) {
-  if (!priorityId) return callback({ message: 'Invalid Priority Id' })
+ticketTypeSchema.methods.addPriority = function (priorityId) {
+  if (!priorityId) throw new Error('Invalid Priority Id')
 
   var self = this
 
@@ -107,11 +101,11 @@ ticketTypeSchema.methods.addPriority = function (priorityId, callback) {
 
   self.priorities.push(priorityId)
 
-  return callback(null, self)
+  return self
 }
 
-ticketTypeSchema.methods.removePriority = function (priorityId, callback) {
-  if (!priorityId) return callback({ message: 'Invalid Priority Id' })
+ticketTypeSchema.methods.removePriority = function (priorityId) {
+  if (!priorityId) throw new Error('Invalid Priority Id')
 
   var self = this
 
@@ -119,7 +113,7 @@ ticketTypeSchema.methods.removePriority = function (priorityId, callback) {
     return p._id.toString() === priorityId.toString()
   })
 
-  return callback(null, self)
+  return self
 }
 
 module.exports = mongoose.model(COLLECTION, ticketTypeSchema)

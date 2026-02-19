@@ -12,7 +12,6 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-const async = require('async')
 const path = require('path')
 const _ = require('lodash')
 const winston = require('../logger')
@@ -119,7 +118,7 @@ installController.existingdb = function (req, res) {
   })
 }
 
-installController.install = function (req, res) {
+installController.install = async function (req, res) {
   const db = require('../database')
   const roleSchema = require('../models/role')
   const roleOrderSchema = require('../models/roleorder')
@@ -159,351 +158,214 @@ installController.install = function (req, res) {
   let conuri = 'mongodb://' + username + ':' + dbPassword + '@' + host + ':' + port + '/' + database
   if (port === '---') conuri = 'mongodb+srv://' + username + ':' + dbPassword + '@' + host + '/' + database
 
-  async.waterfall(
-    [
-      function (next) {
-        db.init(function (err) {
-          return next(err)
-        }, conuri)
+  try {
+    // Step 1: Init DB
+    await new Promise((resolve, reject) => {
+      db.init(function (err) {
+        if (err) return reject(err)
+        return resolve()
+      }, conuri)
+    })
+
+    // Step 2: Save version setting
+    const s = new SettingsSchema({
+      name: 'gen:version',
+      value: require('../../package.json').version
+    })
+    await s.save()
+
+    // Step 3: Save ElasticSearch settings
+    await Promise.all([
+      SettingsSchema.create({
+        name: 'es:enable',
+        value: typeof eEnabled === 'undefined' ? false : eEnabled
+      }),
+      eHost ? SettingsSchema.create({ name: 'es:host', value: eHost }) : Promise.resolve(),
+      ePort ? SettingsSchema.create({ name: 'es:port', value: ePort }) : Promise.resolve()
+    ])
+
+    // Step 4: Create ticket counter
+    const ticketCounter = new Counters({
+      _id: 'tickets',
+      next: 1001
+    })
+    await ticketCounter.save()
+
+    // Step 5: Create report counter
+    const reportCounter = new Counters({
+      _id: 'reports',
+      next: 1001
+    })
+    await reportCounter.save()
+
+    // Step 6: Create ticket statuses
+    await TicketStatusSchema.create([
+      {
+        name: 'New',
+        htmlColor: '#29b955',
+        uid: 0,
+        order: 0,
+        isResolved: false,
+        slatimer: true,
+        isLocked: true
       },
-      function (next) {
-        const s = new SettingsSchema({
-          name: 'gen:version',
-          value: require('../../package.json').version
-        })
-
-        return s.save(function (err) {
-          return next(err)
-        })
+      {
+        name: 'Open',
+        htmlColor: '#d32f2f',
+        uid: 1,
+        order: 1,
+        isResolved: false,
+        slatimer: true,
+        isLocked: true
       },
-      function (next) {
-        // if (!eEnabled) return next()
-        async.parallel(
-          [
-            function (done) {
-              SettingsSchema.create(
-                {
-                  name: 'es:enable',
-                  value: typeof eEnabled === 'undefined' ? false : eEnabled
-                },
-                done
-              )
-            },
-            function (done) {
-              if (!eHost) return done()
-              SettingsSchema.create(
-                {
-                  name: 'es:host',
-                  value: eHost
-                },
-                done
-              )
-            },
-            function (done) {
-              if (!ePort) return done()
-              SettingsSchema.create(
-                {
-                  name: 'es:port',
-                  value: ePort
-                },
-                done
-              )
-            }
-          ],
-          function (err) {
-            return next(err)
-          }
-        )
+      {
+        name: 'Pending',
+        htmlColor: '#2196F3',
+        uid: 2,
+        order: 2,
+        isResolved: false,
+        slatimer: false,
+        isLocked: true
       },
-      function (next) {
-        const Counter = new Counters({
-          _id: 'tickets',
-          next: 1001
-        })
+      {
+        name: 'Closed',
+        htmlColor: '#CCCCCC',
+        uid: 3,
+        order: 3,
+        isResolved: true,
+        slatimer: false,
+        isLocked: true
+      }
+    ])
 
-        Counter.save(function (err) {
-          return next(err)
-        })
-      },
-      function (next) {
-        const Counter = new Counters({
-          _id: 'reports',
-          next: 1001
-        })
+    // Step 7: Set status counter
+    await Counters.setCounter('status', 4)
 
-        Counter.save(function (err) {
-          return next(err)
-        })
-      },
-      function (next) {
-        TicketStatusSchema.create(
-          [
-            {
-              name: 'New',
-              htmlColor: '#29b955',
-              uid: 0,
-              order: 0,
-              isResolved: false,
-              slatimer: true,
-              isLocked: true
-            },
-            {
-              name: 'Open',
-              htmlColor: '#d32f2f',
-              uid: 1,
-              order: 1,
-              isResolved: false,
-              slatimer: true,
-              isLocked: true
-            },
-            {
-              name: 'Pending',
-              htmlColor: '#2196F3',
-              uid: 2,
-              order: 2,
-              isResolved: false,
-              slatimer: false,
-              isLocked: true
-            },
-            {
-              name: 'Closed',
-              htmlColor: '#CCCCCC',
-              uid: 3,
-              order: 3,
-              isResolved: true,
-              slatimer: false,
-              isLocked: true
-            }
-          ],
-          function (err) {
-            if (err) return next(err)
+    // Step 8: Create ticket types
+    const issueType = new TicketTypeSchema({ name: 'Issue' })
+    await issueType.save()
 
-            return next()
-          }
-        )
-      },
-      function (next) {
-        Counters.setCounter('status', 4, function (err) {
-          if (err) return next(err)
+    const taskType = new TicketTypeSchema({ name: 'Task' })
+    await taskType.save()
 
-          return next()
-        })
-      },
-      function (next) {
-        const type = new TicketTypeSchema({
-          name: 'Issue'
-        })
+    // Step 9: Create default group
+    await GroupSchema.create({ name: 'Default Group' })
 
-        type.save(function (err) {
-          return next(err)
-        })
-      },
-      function (next) {
-        const type = new TicketTypeSchema({
-          name: 'Task'
-        })
+    // Step 10: Create roles
+    const defaults = require('../settings/defaults')
+    const [adminRole, supportRole, userRole] = await Promise.all([
+      roleSchema.create({
+        name: 'Admin',
+        description: 'Default role for admins',
+        grants: defaults.roleDefaults.adminGrants
+      }),
+      roleSchema.create({
+        name: 'Support',
+        description: 'Default role for agents',
+        grants: defaults.roleDefaults.supportGrants
+      }),
+      roleSchema.create({
+        name: 'User',
+        description: 'Default role for users',
+        grants: defaults.roleDefaults.userGrants
+      })
+    ])
 
-        type.save(function (err) {
-          return next(err)
-        })
-      },
-      function (next) {
-        GroupSchema.create({ name: 'Default Group' }, function (err) {
-          if (err) return next(err)
-          return next()
-        })
-      },
-      function (next) {
-        const defaults = require('../settings/defaults')
-        const roleResults = {}
-        async.parallel(
-          [
-            function (done) {
-              roleSchema.create(
-                {
-                  name: 'Admin',
-                  description: 'Default role for admins',
-                  grants: defaults.roleDefaults.adminGrants
-                },
-                function (err, role) {
-                  if (err) return done(err)
-                  roleResults.adminRole = role
-                  return done()
-                }
-              )
-            },
-            function (done) {
-              roleSchema.create(
-                {
-                  name: 'Support',
-                  description: 'Default role for agents',
-                  grants: defaults.roleDefaults.supportGrants
-                },
-                function (err, role) {
-                  if (err) return done(err)
-                  roleResults.supportRole = role
-                  return done()
-                }
-              )
-            },
-            function (done) {
-              roleSchema.create(
-                {
-                  name: 'User',
-                  description: 'Default role for users',
-                  grants: defaults.roleDefaults.userGrants
-                },
-                function (err, role) {
-                  if (err) return done(err)
-                  roleResults.userRole = role
-                  return done()
-                }
-              )
-            }
-          ],
-          function (err) {
-            return next(err, roleResults)
-          }
-        )
-      },
-      function (roleResults, next) {
-        const TeamSchema = require('../models/team')
-        TeamSchema.create(
-          {
-            name: 'Support (Default)',
-            members: []
-          },
-          function (err, team) {
-            return next(err, team, roleResults)
-          }
-        )
-      },
-      function (defaultTeam, roleResults, next) {
-        UserSchema.getUserByUsername(user.username, function (err, admin) {
-          if (err) {
-            winston.error('Database Error: ' + err.message)
-            return next('Database Error: ' + err.message)
-          }
+    // Step 11: Create default team
+    const TeamSchema = require('../models/team')
+    const defaultTeam = await TeamSchema.create({
+      name: 'Support (Default)',
+      members: []
+    })
 
-          if (!_.isNull(admin) && !_.isUndefined(admin) && !_.isEmpty(admin)) {
-            return next('Username: ' + user.username + ' already exists.')
-          }
+    // Step 12: Create admin user
+    const admin = await UserSchema.getUserByUsername(user.username)
 
-          if (user.password !== user.passconfirm) {
-            return next('Passwords do not match!')
-          }
+    if (!_.isNull(admin) && !_.isUndefined(admin) && !_.isEmpty(admin)) {
+      throw new Error('Username: ' + user.username + ' already exists.')
+    }
 
-          const chance = new Chance()
-          const adminUser = new UserSchema({
-            username: user.username,
-            password: user.password,
-            fullname: user.fullname,
-            email: user.email,
-            role: roleResults.adminRole._id,
-            title: 'Administrator',
-            accessToken: chance.hash()
-          })
+    if (user.password !== user.passconfirm) {
+      throw new Error('Passwords do not match!')
+    }
 
-          adminUser.save(function (err, savedUser) {
-            if (err) {
-              winston.error('Database Error: ' + err.message)
-              return next('Database Error: ' + err.message)
-            }
+    const chance = new Chance()
+    const adminUser = new UserSchema({
+      username: user.username,
+      password: user.password,
+      fullname: user.fullname,
+      email: user.email,
+      role: adminRole._id,
+      title: 'Administrator',
+      accessToken: chance.hash()
+    })
 
-            defaultTeam.addMember(savedUser._id, function (err, success) {
-              if (err) {
-                winston.error('Database Error: ' + err.message)
-                return next('Database Error: ' + err.message)
-              }
+    const savedUser = await adminUser.save()
 
-              if (!success) {
-                return next('Unable to add user to Administrator group!')
-              }
+    const addResult = await defaultTeam.addMember(savedUser._id)
+    if (!addResult) {
+      throw new Error('Unable to add user to Administrator group!')
+    }
 
-              defaultTeam.save(function (err) {
-                if (err) {
-                  winston.error('Database Error: ' + err.message)
-                  return next('Database Error: ' + err.message)
-                }
+    await defaultTeam.save()
 
-                return next(null, defaultTeam)
-              })
-            })
-          })
-        })
-      },
-      function (defaultTeam, next) {
-        const DepartmentSchema = require('../models/department')
-        DepartmentSchema.create(
-          {
-            name: 'Support - All Groups (Default)',
-            teams: [defaultTeam._id],
-            allGroups: true,
-            groups: []
-          },
-          function (err) {
-            return next(err)
-          }
-        )
-      },
-      function (next) {
-        if (!process.env.TRUDESK_DOCKER) return next()
-        const S = require('../models/setting')
-        const installed = new S({
-          name: 'installed',
-          value: true
-        })
+    // Step 13: Create default department
+    const DepartmentSchema = require('../models/department')
+    await DepartmentSchema.create({
+      name: 'Support - All Groups (Default)',
+      teams: [defaultTeam._id],
+      allGroups: true,
+      groups: []
+    })
 
-        installed.save(function (err) {
-          if (err) {
-            winston.error('DB Error: ' + err.message)
-            return next('DB Error: ' + err.message)
-          }
+    // Step 14: Save installed setting (Docker only)
+    if (process.env.TRUDESK_DOCKER) {
+      const S = require('../models/setting')
+      const installed = new S({
+        name: 'installed',
+        value: true
+      })
+      await installed.save()
+    }
 
-          return next()
-        })
-      },
-      function (next) {
-        if (process.env.TRUDESK_DOCKER) return next()
-        // Write Configfile
-        const fs = require('fs')
-        const configFile = path.join(__dirname, '../../config.yml')
-        const chance = new Chance()
-        const YAML = require('yaml')
+    // Step 15: Write config file (non-Docker only)
+    if (!process.env.TRUDESK_DOCKER) {
+      const fs = require('fs')
+      const configFile = path.join(__dirname, '../../config.yml')
+      const configChance = new Chance()
+      const YAML = require('yaml')
 
-        const conf = {
-          mongo: {
-            host: host,
-            port: port,
-            username: username,
-            password: password,
-            database: database,
-            shard: port === '---'
-          },
-          tokens: {
-            secret: chance.hash() + chance.md5(),
-            expires: 900 // 15min
-          }
+      const conf = {
+        mongo: {
+          host: host,
+          port: port,
+          username: username,
+          password: password,
+          database: database,
+          shard: port === '---'
+        },
+        tokens: {
+          secret: configChance.hash() + configChance.md5(),
+          expires: 900 // 15min
         }
+      }
 
+      await new Promise((resolve, reject) => {
         fs.writeFile(configFile, YAML.stringify(conf), function (err) {
           if (err) {
             winston.error('FS Error: ' + err.message)
-            return next('FS Error: ' + err.message)
+            return reject('FS Error: ' + err.message)
           }
-
-          return next(null)
+          return resolve()
         })
-      }
-    ],
-    function (err) {
-      if (err) {
-        return res.status(400).json({ success: false, error: err })
-      }
-
-      res.json({ success: true })
+      })
     }
-  )
+
+    res.json({ success: true })
+  } catch (err) {
+    const errorMsg = typeof err === 'string' ? err : (err.message || err)
+    return res.status(400).json({ success: false, error: errorMsg })
+  }
 }
 
 installController.restart = function (req, res) {

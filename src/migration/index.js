@@ -71,8 +71,8 @@ function performBackup (dbVersion, callback) {
   })
 }
 
-function saveVersion (callback) {
-  SettingsSchema.getSettingByName('gen:version', function (err, setting) {
+async function saveVersion (callback) {
+  SettingsSchema.getSettingByName('gen:version', async function (err, setting) {
     if (err) {
       winston.warn(err)
       if (_.isFunction(callback)) return callback(err)
@@ -84,25 +84,23 @@ function saveVersion (callback) {
         name: 'gen:version',
         value: version
       })
-      s.save(function (err) {
-        if (err) {
-          if (_.isFunction(callback)) return callback(err)
-          return false
-        }
-
+      try {
+        await s.save()
         if (_.isFunction(callback)) return callback()
-      })
+      } catch (err) {
+        if (_.isFunction(callback)) return callback(err)
+        return false
+      }
     } else {
       if (setting.value) setting.value = require('../../package').version
-      setting.save(function (err) {
-        if (err) {
-          if (_.isFunction(callback)) return callback(err)
-          return false
-        }
-
+      try {
+        await setting.save()
         if (_.isFunction(callback)) return callback()
         return true
-      })
+      } catch (err) {
+        if (_.isFunction(callback)) return callback(err)
+        return false
+      }
     }
   })
 }
@@ -342,9 +340,14 @@ function createTicketStatus (callback) {
             return next(err)
           })
       },
-      function (next) {
+      async function (next) {
         winston.info('Completed updating ticket status.')
-        counterSchema.setCounter('status', 4, next)
+        try {
+          await counterSchema.setCounter('status', 4)
+          next()
+        } catch (err) {
+          next(err)
+        }
       }
     ],
     callback

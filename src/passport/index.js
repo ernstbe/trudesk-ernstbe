@@ -26,10 +26,13 @@ module.exports = function () {
     done(null, user._id)
   })
 
-  passport.deserializeUser(function (id, done) {
-    User.findById(id, function (err, user) {
-      done(err, user)
-    })
+  passport.deserializeUser(async function (id, done) {
+    try {
+      const user = await User.findById(id)
+      done(null, user)
+    } catch (err) {
+      done(err)
+    }
   })
 
   passport.use(
@@ -40,23 +43,22 @@ module.exports = function () {
         passwordField: 'login-password',
         passReqToCallback: true
       },
-      function (req, username, password, done) {
-        User.findOne({ username: new RegExp('^' + username.trim() + '$', 'i') })
-          .select('+password +tOTPKey +tOTPPeriod')
-          .exec(function (err, user) {
-            if (err) {
-              return done(err)
-            }
+      async function (req, username, password, done) {
+        try {
+          const user = await User.findOne({ username: new RegExp('^' + username.trim() + '$', 'i') })
+            .select('+password +tOTPKey +tOTPPeriod')
 
-            if (!user || user.deleted || !User.validate(password, user.password)) {
-              req.flash('loginMessage', '')
-              return done(null, false, req.flash('loginMessage', 'Invalid Username/Password'))
-            }
+          if (!user || user.deleted || !User.validate(password, user.password)) {
+            req.flash('loginMessage', '')
+            return done(null, false, req.flash('loginMessage', 'Invalid Username/Password'))
+          }
 
-            req.user = user
+          req.user = user
 
-            return done(null, user)
-          })
+          return done(null, user)
+        } catch (err) {
+          return done(err)
+        }
       }
     )
   )
@@ -67,18 +69,20 @@ module.exports = function () {
       {
         window: 6
       },
-      function (user, done) {
+      async function (user, done) {
         if (!user.hasL2Auth) return done(false)
 
-        User.findOne({ _id: user._id }, '+tOTPKey +tOTPPeriod', function (err, user) {
-          if (err) return done(err)
+        try {
+          const foundUser = await User.findOne({ _id: user._id }, '+tOTPKey +tOTPPeriod')
 
-          if (!user.tOTPPeriod) {
-            user.tOTPPeriod = 30
+          if (!foundUser.tOTPPeriod) {
+            foundUser.tOTPPeriod = 30
           }
 
-          return done(null, base32.decode(user.tOTPKey).toString(), user.tOTPPeriod)
-        })
+          return done(null, base32.decode(foundUser.tOTPKey).toString(), foundUser.tOTPPeriod)
+        } catch (err) {
+          return done(err)
+        }
       }
     )
   )

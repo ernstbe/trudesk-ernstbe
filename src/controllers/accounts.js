@@ -35,32 +35,33 @@ function handleError (res, err) {
   }
 }
 
-accountsController.signup = function (req, res) {
+accountsController.signup = async function (req, res) {
   const marked = require('marked')
   const settings = require('../models/setting')
-  settings.getSettingByName('allowUserRegistration:enable', function (err, setting) {
-    if (err) return handleError(res, err)
+
+  try {
+    const setting = await settings.getSettingByName('allowUserRegistration:enable')
     if (setting && setting.value === true) {
-      settings.getSettingByName('legal:privacypolicy', function (err, privacyPolicy) {
-        if (err) return handleError(res, err)
+      const privacyPolicy = await settings.getSettingByName('legal:privacypolicy')
 
-        const content = {}
-        content.title = 'Create Account'
-        content.layout = false
-        content.data = {}
+      const content = {}
+      content.title = 'Create Account'
+      content.layout = false
+      content.data = {}
 
-        if (privacyPolicy === null || _.isUndefined(privacyPolicy.value)) {
-          content.data.privacyPolicy = 'No Privacy Policy has been set.'
-        } else {
-          content.data.privacyPolicy = xss(marked.parse(privacyPolicy.value))
-        }
+      if (privacyPolicy === null || _.isUndefined(privacyPolicy.value)) {
+        content.data.privacyPolicy = 'No Privacy Policy has been set.'
+      } else {
+        content.data.privacyPolicy = xss(marked.parse(privacyPolicy.value))
+      }
 
-        return res.render('pub_signup', content)
-      })
+      return res.render('pub_signup', content)
     } else {
       return res.redirect('/')
     }
-  })
+  } catch (err) {
+    return handleError(res, err)
+  }
 }
 
 accountsController.get = function (req, res) {
@@ -154,7 +155,7 @@ accountsController.importPage = function (req, res) {
   res.render('accounts_import', content)
 }
 
-accountsController.profile = function (req, res) {
+accountsController.profile = async function (req, res) {
   const user = req.user
   const backUrl = req.header('Referer') || '/'
   if (_.isUndefined(user)) {
@@ -173,25 +174,14 @@ accountsController.profile = function (req, res) {
   content.data.host = req.hostname
   content.data.account = {}
 
-  async.parallel(
-    {
-      account: function (callback) {
-        userSchema.findOne({ _id: req.user._id }, '+accessToken +tOTPKey', function (err, obj) {
-          callback(err, obj)
-        })
-      }
-    },
-    function (err, result) {
-      if (err) {
-        winston.warn(err)
-        return res.redirect(backUrl)
-      }
-
-      content.data.account = result.account
-
-      res.render('subviews/profile', content)
-    }
-  )
+  try {
+    const account = await userSchema.findOne({ _id: req.user._id }, '+accessToken +tOTPKey')
+    content.data.account = account
+    res.render('subviews/profile', content)
+  } catch (err) {
+    winston.warn(err)
+    return res.redirect(backUrl)
+  }
 }
 
 accountsController.bindLdap = function (req, res) {
@@ -219,9 +209,7 @@ accountsController.bindLdap = function (req, res) {
 
         let mappedUsernames = _.map(entries, 'sAMAccountName')
 
-        userSchema.find({ username: mappedUsernames }, function (err, users) {
-          if (err && !res.headersSent) return res.status(400).json({ success: false, error: err })
-
+        userSchema.find({ username: mappedUsernames }).then(function (users) {
           foundUsers = users
 
           mappedUsernames = _.map(foundUsers, 'username')
@@ -257,24 +245,22 @@ accountsController.bindLdap = function (req, res) {
             addedUsers: entries,
             updatedUsers: foundUsers
           })
+        }).catch(function (err) {
+          if (!res.headersSent) return res.status(400).json({ success: false, error: err })
         })
       })
     })
   })
 }
 
-function processUsers (addedUserArray, updatedUserArray, item, callback) {
-  userSchema.getUserByUsername(item.username, function (err, user) {
-    if (err) return callback(err)
+async function processUsers (addedUserArray, updatedUserArray, item) {
+  const user = await userSchema.getUserByUsername(item.username)
 
-    if (user) {
-      updatedUserArray.push(item)
-    } else {
-      addedUserArray.push(item)
-    }
-
-    return callback()
-  })
+  if (user) {
+    updatedUserArray.push(item)
+  } else {
+    addedUserArray.push(item)
+  }
 }
 
 accountsController.uploadCSV = function (req, res) {
@@ -314,7 +300,7 @@ accountsController.uploadCSV = function (req, res) {
     .on('data', function (row) {
       object.csv.push(row)
     })
-    .on('end', function () {
+    .on('end', async function () {
       if (object.csv.length < 1) {
         return res.json({ success: false, error: 'Invalid CSV. No title Row.' })
       }
@@ -352,25 +338,21 @@ accountsController.uploadCSV = function (req, res) {
       const addedUsers = []
       const updatedUsers = []
 
-      async.each(
-        object.csv,
-        function (item, next) {
-          return processUsers(addedUsers, updatedUsers, item, next)
-        },
-        function (err) {
-          if (err) {
-            winston.warn(err.message)
-            return res.json({ success: false, error: err })
-          }
+      try {
+        await Promise.all(object.csv.map(async (item) => {
+          return processUsers(addedUsers, updatedUsers, item)
+        }))
 
-          return res.json({
-            success: true,
-            contents: object.csv,
-            addedUsers: addedUsers,
-            updatedUsers: updatedUsers
-          })
-        }
-      )
+        return res.json({
+          success: true,
+          contents: object.csv,
+          addedUsers: addedUsers,
+          updatedUsers: updatedUsers
+        })
+      } catch (err) {
+        winston.warn(err.message)
+        return res.json({ success: false, error: err })
+      }
     })
 
   req.pipe(busboy)
@@ -406,7 +388,7 @@ accountsController.uploadJSON = function (req, res) {
     })
 
     file
-      .on('end', function () {
+      .on('end', async function () {
         object.json = JSON.parse(buffer)
         const accounts = object.json.accounts
         if (_.isUndefined(accounts)) {
@@ -416,24 +398,20 @@ accountsController.uploadJSON = function (req, res) {
           })
         }
 
-        async.eachSeries(
-          accounts,
-          function (item, next) {
-            return processUsers(addedUsers, updatedUsers, item, next)
-          },
-          function (err) {
-            if (err) {
-              return res.status(400).json({ success: false, error: err })
-            }
-
-            return res.json({
-              success: true,
-              contents: object.json,
-              addedUsers: addedUsers,
-              updatedUsers: updatedUsers
-            })
+        try {
+          for (const item of accounts) {
+            await processUsers(addedUsers, updatedUsers, item)
           }
-        )
+
+          return res.json({
+            success: true,
+            contents: object.json,
+            addedUsers: addedUsers,
+            updatedUsers: updatedUsers
+          })
+        } catch (err) {
+          return res.status(400).json({ success: false, error: err })
+        }
       })
       .setEncoding('utf8')
   })
@@ -501,16 +479,13 @@ accountsController.uploadImage = function (req, res) {
         message: 'File too large'
       }
 
-      // Delete the temp file
-      // if (fs.existsSync(object.filePath)) fs.unlinkSync(object.filePath);
-
       return file.resume()
     })
 
     file.pipe(fs.createWriteStream(object.filePath))
   })
 
-  busboy.once('finish', function () {
+  busboy.once('finish', async function () {
     if (error) {
       winston.warn(error)
       return res.status(error.status).send(error.message)
@@ -531,22 +506,20 @@ accountsController.uploadImage = function (req, res) {
       require('../helpers/utils').stripExifData(object.filePath)
     }
 
-    userSchema.getUser(object._id, function (err, user) {
-      if (err) return handleError(res, err)
-
+    try {
+      const user = await userSchema.getUser(object._id)
       user.image = object.filename
+      await user.save()
 
-      user.save(function (err) {
-        if (err) return handleError(res, err)
-
-        emitter.emit('trudesk:profileImageUpdate', {
-          userid: user._id,
-          img: user.image
-        })
-
-        return res.status(200).send('/uploads/users/' + object.filename)
+      emitter.emit('trudesk:profileImageUpdate', {
+        userid: user._id,
+        img: user.image
       })
-    })
+
+      return res.status(200).send('/uploads/users/' + object.filename)
+    } catch (err) {
+      return handleError(res, err)
+    }
   })
 
   req.pipe(busboy)

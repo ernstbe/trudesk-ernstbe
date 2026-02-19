@@ -12,7 +12,6 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 const _ = require('lodash')
-const async = require('async')
 const winston = require('../logger')
 const utils = require('../helpers/utils')
 const UserSchema = require('../models/user')
@@ -128,7 +127,7 @@ events.onImportCSV = socket => {
 }
 
 events.onImportJSON = function (socket) {
-  socket.on('$trudesk:accounts:import:json', function (data) {
+  socket.on('$trudesk:accounts:import:json', async function (data) {
     var authUser = socket.request.user
     if (!permissions.canThis(authUser.role, 'accounts:import')) {
       // Send Error Socket Emit
@@ -143,115 +142,92 @@ events.onImportJSON = function (socket) {
     var updatedUsers = data.updatedUsers
 
     var completedCount = 0
-    async.series(
-      [
-        function (next) {
-          async.eachSeries(
-            addedUsers,
-            function (cu, done) {
-              var data = {
-                type: 'json',
-                totalCount: addedUsers.length + updatedUsers.length,
-                completedCount: completedCount,
-                item: {
-                  username: cu.username,
-                  state: 1
-                }
-              }
 
-              utils.sendToSelf(socket, '$trudesk:accounts:import:onStatusChange', data)
-
-              var user = new UserSchema({
-                username: cu.username,
-                fullname: cu.fullname,
-                email: cu.email,
-                password: 'Password1!'
-              })
-
-              if (!_.isUndefined(cu.role)) {
-                user.role = cu.role
-              } else {
-                user.role = 'user'
-              }
-
-              if (!_.isUndefined(cu.title)) {
-                user.title = cu.title
-              }
-
-              user.save(function (err) {
-                if (err) {
-                  winston.warn(err)
-                  data.item.state = 3
-                  utils.sendToSelf(socket, '$trudesk:accounts:import:onStatusChange', data)
-                } else {
-                  completedCount++
-                  // Send update
-                  data.completedCount = completedCount
-                  data.item.state = 2 // Completed
-                  setTimeout(function () {
-                    utils.sendToSelf(socket, '$trudesk:accounts:import:onStatusChange', data)
-
-                    done()
-                  }, 150)
-                }
-              })
-            },
-            function () {
-              return next()
-            }
-          )
-        },
-        function (next) {
-          _.each(updatedUsers, function (uu) {
-            var data = {
-              type: 'json',
-              totalCount: addedUsers.length + updatedUsers.length,
-              completedCount: completedCount,
-              item: {
-                username: uu.username,
-                state: 1 // Starting
-              }
-            }
-            utils.sendToSelf(socket, '$trudesk:accounts:import:onStatusChange', data)
-            UserSchema.getUserByUsername(uu.username, function (err, user) {
-              if (err) {
-                console.log(err)
-              } else {
-                user.fullname = uu.fullname
-                user.title = uu.title
-                user.email = uu.email
-                if (!_.isUndefined(uu.role)) {
-                  user.role = uu.role
-                }
-
-                user.save(function (err) {
-                  if (err) {
-                    console.log(err)
-                    data.item.state = 3
-                    utils.sendToSelf(socket, '$trudesk:accounts:import:onStatusChange', data)
-                  } else {
-                    completedCount++
-                    data.item.state = 2
-                    data.completedCount = completedCount
-                    setTimeout(function () {
-                      utils.sendToSelf(socket, '$trudesk:accounts:import:onStatusChange', data)
-                    }, 150)
-                  }
-                })
-              }
-            })
-          })
-
-          return next()
+    // Process added users sequentially (was async.eachSeries)
+    for (const cu of addedUsers) {
+      var addData = {
+        type: 'json',
+        totalCount: addedUsers.length + updatedUsers.length,
+        completedCount: completedCount,
+        item: {
+          username: cu.username,
+          state: 1
         }
-      ],
-      function () {}
-    )
+      }
+
+      utils.sendToSelf(socket, '$trudesk:accounts:import:onStatusChange', addData)
+
+      var user = new UserSchema({
+        username: cu.username,
+        fullname: cu.fullname,
+        email: cu.email,
+        password: 'Password1!'
+      })
+
+      if (!_.isUndefined(cu.role)) {
+        user.role = cu.role
+      } else {
+        user.role = 'user'
+      }
+
+      if (!_.isUndefined(cu.title)) {
+        user.title = cu.title
+      }
+
+      try {
+        await user.save()
+        completedCount++
+        // Send update
+        addData.completedCount = completedCount
+        addData.item.state = 2 // Completed
+        await new Promise(resolve => setTimeout(resolve, 150))
+        utils.sendToSelf(socket, '$trudesk:accounts:import:onStatusChange', addData)
+      } catch (err) {
+        winston.warn(err)
+        addData.item.state = 3
+        utils.sendToSelf(socket, '$trudesk:accounts:import:onStatusChange', addData)
+      }
+    }
+
+    // Process updated users sequentially
+    for (const uu of updatedUsers) {
+      var updateData = {
+        type: 'json',
+        totalCount: addedUsers.length + updatedUsers.length,
+        completedCount: completedCount,
+        item: {
+          username: uu.username,
+          state: 1 // Starting
+        }
+      }
+      utils.sendToSelf(socket, '$trudesk:accounts:import:onStatusChange', updateData)
+      try {
+        const existingUser = await UserSchema.getUserByUsername(uu.username)
+        existingUser.fullname = uu.fullname
+        existingUser.title = uu.title
+        existingUser.email = uu.email
+        if (!_.isUndefined(uu.role)) {
+          existingUser.role = uu.role
+        }
+
+        await existingUser.save()
+        completedCount++
+        updateData.item.state = 2
+        updateData.completedCount = completedCount
+        setTimeout(function () {
+          utils.sendToSelf(socket, '$trudesk:accounts:import:onStatusChange', updateData)
+        }, 150)
+      } catch (err) {
+        winston.warn(err)
+        updateData.item.state = 3
+        utils.sendToSelf(socket, '$trudesk:accounts:import:onStatusChange', updateData)
+      }
+    }
   })
 }
 
 events.onImportLDAP = function (socket) {
-  socket.on('$trudesk:accounts:import:ldap', function (data) {
+  socket.on('$trudesk:accounts:import:ldap', async function (data) {
     const authUser = socket.request.user
     if (!permissions.canThis(authUser.role, 'accounts:import')) {
       // Send Error Socket Emit
@@ -267,114 +243,94 @@ events.onImportLDAP = function (socket) {
     let defaultUserRole = null
     let completedCount = 0
 
-    async.series(
-      [
-        function (next) {
-          var settingSchema = require('../models/setting')
-          settingSchema.getSetting('role:user:default', function (err, setting) {
-            if (err || !setting) {
-              utils.sendToSelf(socket, '$trudesk:accounts:import:error', {
-                error: 'Default user role not set. Please contact an Administrator.'
-              })
+    // Step 1: Get default user role setting
+    try {
+      var settingSchema = require('../models/setting')
+      const setting = await settingSchema.getSetting('role:user:default')
+      if (!setting) {
+        utils.sendToSelf(socket, '$trudesk:accounts:import:error', {
+          error: 'Default user role not set. Please contact an Administrator.'
+        })
+        return
+      }
+      defaultUserRole = setting.value
+    } catch (err) {
+      winston.warn(err)
+      utils.sendToSelf(socket, '$trudesk:accounts:import:error', {
+        error: 'Default user role not set. Please contact an Administrator.'
+      })
+      return
+    }
 
-              return next('Default user role not set. Please contact an Administrator')
-            }
-
-            defaultUserRole = setting.value
-            return next()
-          })
-        },
-        function (next) {
-          async.eachSeries(
-            addedUsers,
-            function (lu, done) {
-              var data = {
-                type: 'ldap',
-                totalCount: addedUsers.length + updatedUsers.length,
-                completedCount: completedCount,
-                item: {
-                  username: lu.sAMAccountName,
-                  state: 1 // Starting
-                }
-              }
-
-              utils.sendToSelf(socket, '$trudesk:accounts:import:onStatusChange', data)
-
-              var user = new UserSchema({
-                username: lu.sAMAccountName,
-                fullname: lu.displayName,
-                email: lu.mail,
-                title: lu.title,
-                role: defaultUserRole,
-                password: 'Password1!'
-              })
-
-              user.save(function (err) {
-                if (err) {
-                  winston.warn(err)
-                  data.item.state = 3
-                  utils.sendToSelf(socket, '$trudesk:accounts:import:onStatusChange', data)
-                } else {
-                  completedCount++
-                  // Send update
-                  data.completedCount = completedCount
-                  data.item.state = 2 // Completed
-                  setTimeout(function () {
-                    utils.sendToSelf(socket, '$trudesk:accounts:import:onStatusChange', data)
-
-                    done()
-                  }, 150)
-                }
-              })
-            },
-            function () {
-              return next()
-            }
-          )
-        },
-        function (next) {
-          _.each(updatedUsers, function (uu) {
-            var data = {
-              type: 'ldap',
-              totalCount: addedUsers.length + updatedUsers.length,
-              completedCount: completedCount,
-              item: {
-                username: uu.username,
-                state: 1 // Starting
-              }
-            }
-            utils.sendToSelf(socket, '$trudesk:accounts:import:onStatusChange', data)
-            UserSchema.getUser(uu._id, function (err, user) {
-              if (err) {
-                console.log(err)
-              } else {
-                user.fullname = uu.fullname
-                user.title = uu.title
-                user.email = uu.email
-
-                user.save(function (err) {
-                  if (err) {
-                    console.log(err)
-                    data.item.state = 3
-                    utils.sendToSelf(socket, '$trudesk:accounts:import:onStatusChange', data)
-                  } else {
-                    completedCount++
-                    data.item.state = 2
-                    data.completedCount = completedCount
-                    setTimeout(function () {
-                      utils.sendToSelf(socket, '$trudesk:accounts:import:onStatusChange', data)
-                    }, 150)
-                  }
-                })
-              }
-            })
-          })
-
-          return next()
+    // Step 2: Process added users sequentially (was async.eachSeries)
+    for (const lu of addedUsers) {
+      var addData = {
+        type: 'ldap',
+        totalCount: addedUsers.length + updatedUsers.length,
+        completedCount: completedCount,
+        item: {
+          username: lu.sAMAccountName,
+          state: 1 // Starting
         }
-      ],
-      function () {}
-    )
+      }
+
+      utils.sendToSelf(socket, '$trudesk:accounts:import:onStatusChange', addData)
+
+      var user = new UserSchema({
+        username: lu.sAMAccountName,
+        fullname: lu.displayName,
+        email: lu.mail,
+        title: lu.title,
+        role: defaultUserRole,
+        password: 'Password1!'
+      })
+
+      try {
+        await user.save()
+        completedCount++
+        // Send update
+        addData.completedCount = completedCount
+        addData.item.state = 2 // Completed
+        await new Promise(resolve => setTimeout(resolve, 150))
+        utils.sendToSelf(socket, '$trudesk:accounts:import:onStatusChange', addData)
+      } catch (err) {
+        winston.warn(err)
+        addData.item.state = 3
+        utils.sendToSelf(socket, '$trudesk:accounts:import:onStatusChange', addData)
+      }
+    }
+
+    // Step 3: Process updated users sequentially
+    for (const uu of updatedUsers) {
+      var updateData = {
+        type: 'ldap',
+        totalCount: addedUsers.length + updatedUsers.length,
+        completedCount: completedCount,
+        item: {
+          username: uu.username,
+          state: 1 // Starting
+        }
+      }
+      utils.sendToSelf(socket, '$trudesk:accounts:import:onStatusChange', updateData)
+      try {
+        const existingUser = await UserSchema.getUser(uu._id)
+        existingUser.fullname = uu.fullname
+        existingUser.title = uu.title
+        existingUser.email = uu.email
+
+        await existingUser.save()
+        completedCount++
+        updateData.item.state = 2
+        updateData.completedCount = completedCount
+        setTimeout(function () {
+          utils.sendToSelf(socket, '$trudesk:accounts:import:onStatusChange', updateData)
+        }, 150)
+      } catch (err) {
+        winston.warn(err)
+        updateData.item.state = 3
+        utils.sendToSelf(socket, '$trudesk:accounts:import:onStatusChange', updateData)
+      }
+    }
   })
 }
 

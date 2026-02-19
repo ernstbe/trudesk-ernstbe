@@ -13,7 +13,6 @@
  **/
 
 var _ = require('lodash')
-var async = require('async')
 var emitter = require('../../../emitter')
 var winston = require('winston')
 var sanitizeHtml = require('sanitize-html')
@@ -29,9 +28,9 @@ function defaultApiResponse (err, res) {
   return res.json({ success: true })
 }
 
-apiSettings.getSettings = function (req, res) {
-  settingsUtil.getSettings(function (err, settings) {
-    if (err) return res.status(400).json({ success: false, error: err })
+apiSettings.getSettings = async function (req, res) {
+  try {
+    var settings = await settingsUtil.getSettings()
 
     // Sanitize
     if (!req.user.role.isAdmin) {
@@ -58,18 +57,22 @@ apiSettings.getSettings = function (req, res) {
     }
 
     return res.json({ success: true, settings: settings })
-  })
+  } catch (err) {
+    return res.status(400).json({ success: false, error: err })
+  }
 }
 
-apiSettings.getSingleSetting = function (req, res) {
-  settingsUtil.getSettings(function (err, settings) {
-    if (err) return res.status(400).json({ success: false, error: err })
+apiSettings.getSingleSetting = async function (req, res) {
+  try {
+    var settings = await settingsUtil.getSettings()
 
     var setting = settings.data.settings[req.params.name]
     if (!setting) return res.status(400).json({ success: false, error: 'invalid setting' })
 
     return res.json({ success: true, setting: setting })
-  })
+  } catch (err) {
+    return res.status(400).json({ success: false, error: err })
+  }
 }
 
 /**
@@ -101,49 +104,39 @@ apiSettings.getSingleSetting = function (req, res) {
      "error": "Invalid Post Data"
  }
  */
-apiSettings.updateSetting = function (req, res) {
+apiSettings.updateSetting = async function (req, res) {
   var postData = req.body
   if (_.isUndefined(postData)) return res.status(400).json({ success: false, error: 'Invalid Post Data' })
 
   if (!_.isArray(postData)) postData = [postData]
 
-  var updatedSettings = []
+  try {
+    var updatedSettings = []
 
-  //
-  async.each(
-    postData,
-    function (item, callback) {
-      SettingsSchema.getSettingByName(item.name, function (err, s) {
-        if (err) return callback(err.message)
-        if (_.isNull(s) || _.isUndefined(s)) {
-          s = new SettingsSchema({
-            name: item.name
-          })
-        }
-
-        if (s.name === 'legal:privacypolicy') {
-          item.value = sanitizeHtml(item.value, {
-            allowedTags: false
-          })
-        }
-
-        s.value = item.value
-
-        s.save(function (err, savedSetting) {
-          if (err) return callback(err.message)
-
-          updatedSettings.push(savedSetting)
-
-          return callback()
+    for (var item of postData) {
+      var s = await SettingsSchema.getSettingByName(item.name)
+      if (_.isNull(s) || _.isUndefined(s)) {
+        s = new SettingsSchema({
+          name: item.name
         })
-      })
-    },
-    function (err) {
-      if (err) return res.status(400).json({ success: false, error: err })
+      }
 
-      return res.json({ success: true, updatedSettings: updatedSettings })
+      if (s.name === 'legal:privacypolicy') {
+        item.value = sanitizeHtml(item.value, {
+          allowedTags: false
+        })
+      }
+
+      s.value = item.value
+
+      var savedSetting = await s.save()
+      updatedSettings.push(savedSetting)
     }
-  )
+
+    return res.json({ success: true, updatedSettings: updatedSettings })
+  } catch (err) {
+    return res.status(400).json({ success: false, error: err })
+  }
 }
 
 apiSettings.testMailer = function (req, res) {
@@ -158,23 +151,24 @@ apiSettings.testMailer = function (req, res) {
   })
 }
 
-apiSettings.updateTemplateSubject = function (req, res) {
-  var templateSchema = require('../../../models/template')
-  var id = req.params.id
-  var subject = req.body.subject
-  if (!subject) return res.status(400).json({ sucess: false, error: 'Invalid PUT data' })
-  subject = subject.trim()
+apiSettings.updateTemplateSubject = async function (req, res) {
+  try {
+    var templateSchema = require('../../../models/template')
+    var id = req.params.id
+    var subject = req.body.subject
+    if (!subject) return res.status(400).json({ sucess: false, error: 'Invalid PUT data' })
+    subject = subject.trim()
 
-  templateSchema.findOne({ _id: id }, function (err, template) {
-    if (err) return defaultApiResponse(err, res)
+    var template = await templateSchema.findOne({ _id: id })
     if (!template) return res.status(404).json({ success: false, error: 'No Template Found' })
 
     template.subject = subject
 
-    template.save(function (err) {
-      return defaultApiResponse(err, res)
-    })
-  })
+    await template.save()
+    return res.json({ success: true })
+  } catch (err) {
+    return defaultApiResponse(err, res)
+  }
 }
 
 apiSettings.buildsass = function (req, res) {
@@ -184,32 +178,31 @@ apiSettings.buildsass = function (req, res) {
   })
 }
 
-apiSettings.updateRoleOrder = function (req, res) {
+apiSettings.updateRoleOrder = async function (req, res) {
   if (!req.body.roleOrder) return res.status(400).json({ success: false, error: 'Invalid PUT Data' })
-  var RoleOrderSchema = require('../../../models/roleorder')
-  RoleOrderSchema.getOrder(function (err, order) {
-    if (err) return res.status(500).json({ success: false, error: err.message })
+
+  try {
+    var RoleOrderSchema = require('../../../models/roleorder')
+    var order = await RoleOrderSchema.getOrder()
     if (!order) {
       order = new RoleOrderSchema({
         order: req.body.roleOrder
       })
-      order.save(function (err, order) {
-        if (err) return res.status(500).json({ success: false, error: err.message })
+      var savedOrder = await order.save()
 
-        emitter.emit(socketEventConsts.ROLES_FLUSH)
+      emitter.emit(socketEventConsts.ROLES_FLUSH)
 
-        return res.json({ success: true, roleOrder: order })
-      })
+      return res.json({ success: true, roleOrder: savedOrder })
     } else {
-      order.updateOrder(req.body.roleOrder, function (err, order) {
-        if (err) return res.status(400).json({ success: false, error: err.message })
+      var updatedOrder = await order.updateOrder(req.body.roleOrder)
 
-        emitter.emit(socketEventConsts.ROLES_FLUSH)
+      emitter.emit(socketEventConsts.ROLES_FLUSH)
 
-        return res.json({ success: true, roleOrder: order })
-      })
+      return res.json({ success: true, roleOrder: updatedOrder })
     }
-  })
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message })
+  }
 }
 
 module.exports = apiSettings

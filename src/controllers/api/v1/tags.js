@@ -13,8 +13,6 @@
  */
 
 var _ = require('lodash')
-var async = require('async')
-var TagSchema = require('../../../models/tag')
 var apiTags = {}
 
 /**
@@ -38,58 +36,44 @@ var apiTags = {}
  *
  * @apiError InvalidPostData Invalid Post Data
  */
-apiTags.createTag = function (req, res) {
-  var data = req.body
-  if (_.isUndefined(data.tag)) return res.status(400).json({ error: 'Invalid Post Data' })
+apiTags.createTag = async function (req, res) {
+  try {
+    var data = req.body
+    if (_.isUndefined(data.tag)) return res.status(400).json({ error: 'Invalid Post Data' })
 
-  var Tag = new TagSchema({
-    name: data.tag
-  })
+    var TagSchema = require('../../../models/tag')
+    var Tag = new TagSchema({
+      name: data.tag
+    })
 
-  Tag.save(function (err, T) {
-    if (err) return res.status(400).json({ error: err.message })
-
+    var T = await Tag.save()
     return res.json({ success: true, tag: T })
-  })
+  } catch (err) {
+    return res.status(400).json({ error: err.message })
+  }
 }
 
-apiTags.getTagsWithLimit = function (req, res) {
-  var qs = req.query
-  var limit = qs.limit ? qs.limit : 25
-  var page = qs.page ? qs.page : 0
+apiTags.getTagsWithLimit = async function (req, res) {
+  try {
+    var qs = req.query
+    var limit = qs.limit ? qs.limit : 25
+    var page = qs.page ? qs.page : 0
 
-  var tagSchema = require('../../../models/tag')
-  var result = { success: true }
+    var tagSchema = require('../../../models/tag')
+    var result = { success: true }
 
-  async.parallel(
-    [
-      function (done) {
-        try {
-          tagSchema.getTagsWithLimit(parseInt(limit), parseInt(page), function (err, tags) {
-            if (err) return done(err)
+    var [tags, count] = await Promise.all([
+      tagSchema.getTagsWithLimit(parseInt(limit), parseInt(page)),
+      tagSchema.countDocuments({})
+    ])
 
-            result.tags = tags
-            return done()
-          })
-        } catch (e) {
-          return done({ message: 'Invalid Limit and/or page' })
-        }
-      },
-      function (done) {
-        tagSchema.countDocuments({}, function (err, count) {
-          if (err) return done(err)
-          result.count = count
+    result.tags = tags
+    result.count = count
 
-          return done()
-        })
-      }
-    ],
-    function (err) {
-      if (err) return res.status(500).json({ success: false, error: err.message })
-
-      return res.json(result)
-    }
-  )
+    return res.json(result)
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message })
+  }
 }
 
 /**
@@ -107,25 +91,24 @@ apiTags.getTagsWithLimit = function (req, res) {
  * @apiSuccess {object} tag Updated Tag
  *
  */
-apiTags.updateTag = function (req, res) {
+apiTags.updateTag = async function (req, res) {
   var id = req.params.id
   var data = req.body
   if (_.isUndefined(id) || _.isNull(id) || _.isNull(data) || _.isUndefined(data)) {
     return res.status(400).json({ success: false, error: 'Invalid Put Data' })
   }
 
-  var tagSchema = require('../../../models/tag')
-  tagSchema.getTag(id, function (err, tag) {
-    if (err) return res.status(400).json({ success: false, error: err.message })
+  try {
+    var tagSchema = require('../../../models/tag')
+    var tag = await tagSchema.getTag(id)
 
     tag.name = data.name
 
-    tag.save(function (err, t) {
-      if (err) return res.status(400).json({ success: false, error: err.message })
-
-      return res.json({ success: true, tag: t })
-    })
-  })
+    var t = await tag.save()
+    return res.json({ success: true, tag: t })
+  } catch (err) {
+    return res.status(400).json({ success: false, error: err.message })
+  }
 }
 
 /**
@@ -142,48 +125,27 @@ apiTags.updateTag = function (req, res) {
  * @apiSuccess {boolean} success Successfully?
  *
  */
-apiTags.deleteTag = function (req, res) {
+apiTags.deleteTag = async function (req, res) {
   var id = req.params.id
   if (_.isUndefined(id) || _.isNull(id)) return res.status(400).json({ success: false, error: 'Invalid Tag Id' })
 
-  async.series(
-    [
-      function (next) {
-        var ticketModel = require('../../../models/ticket')
-        ticketModel.getAllTicketsByTag(id, function (err, tickets) {
-          if (err) return next(err)
-          async.each(
-            tickets,
-            function (ticket, cb) {
-              ticket.tags = _.reject(ticket.tags, function (o) {
-                return o._id.toString() === id.toString()
-              })
-
-              ticket.save(function (err) {
-                return cb(err)
-              })
-            },
-            function (err) {
-              if (err) return next(err)
-
-              return next(null)
-            }
-          )
-        })
-      },
-      function (next) {
-        var tagSchema = require('../../../models/tag')
-        tagSchema.findByIdAndRemove(id, function (err) {
-          return next(err)
-        })
-      }
-    ],
-    function (err) {
-      if (err) return res.status(400).json({ success: false, error: err.message })
-
-      return res.json({ success: true })
+  try {
+    var ticketModel = require('../../../models/ticket')
+    var tickets = await ticketModel.getAllTicketsByTag(id)
+    for (var ticket of tickets) {
+      ticket.tags = _.reject(ticket.tags, function (o) {
+        return o._id.toString() === id.toString()
+      })
+      await ticket.save()
     }
-  )
+
+    var tagSchema = require('../../../models/tag')
+    await tagSchema.findByIdAndDelete(id)
+
+    return res.json({ success: true })
+  } catch (err) {
+    return res.status(400).json({ success: false, error: err.message })
+  }
 }
 
 module.exports = apiTags

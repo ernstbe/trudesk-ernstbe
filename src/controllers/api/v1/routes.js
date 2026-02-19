@@ -100,13 +100,14 @@ module.exports = function (middleware, router, controllers) {
   )
 
   // Tags
-  router.get('/api/v1/count/tags', middleware.api, function (req, res) {
-    const tagSchema = require('../../../models/tag')
-    tagSchema.countDocuments({}, function (err, count) {
-      if (err) return res.status(500).json({ success: false, error: err })
-
+  router.get('/api/v1/count/tags', middleware.api, async function (req, res) {
+    try {
+      const tagSchema = require('../../../models/tag')
+      const count = await tagSchema.countDocuments({})
       return res.json({ success: true, count: count })
-    })
+    } catch (err) {
+      return res.status(500).json({ success: false, error: err })
+    }
   })
 
   router.post('/api/v1/tags/create', apiv1, apiCtrl.tags.createTag)

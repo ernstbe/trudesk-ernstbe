@@ -13,145 +13,96 @@
  */
 
 var _ = require('lodash')
-var async = require('async')
 var userSchema = require('../../../models/user')
 var permissions = require('../../../permissions')
 const socketEventConsts = require('../../../socketio/socketEventConsts')
 
 var rolesV1 = {}
 
-rolesV1.get = function (req, res) {
-  var roleSchmea = require('../../../models/role')
-  var roleOrderSchema = require('../../../models/roleorder')
+rolesV1.get = async function (req, res) {
+  try {
+    var roleSchema = require('../../../models/role')
+    var roleOrderSchema = require('../../../models/roleorder')
 
-  var roles = []
-  var roleOrder = {}
+    var [roles, roleOrder] = await Promise.all([
+      roleSchema.find({}),
+      roleOrderSchema.getOrder()
+    ])
 
-  async.parallel(
-    [
-      function (done) {
-        roleSchmea.find({}, function (err, r) {
-          if (err) return done(err)
-
-          roles = r
-
-          return done()
-        })
-      },
-      function (done) {
-        roleOrderSchema.getOrder(function (err, ro) {
-          if (err) return done(err)
-
-          roleOrder = ro
-
-          return done()
-        })
-      }
-    ],
-    function (err) {
-      if (err) return res.status(400).json({ success: false, error: err })
-
-      return res.json({ success: true, roles: roles, roleOrder: roleOrder })
-    }
-  )
+    return res.json({ success: true, roles: roles, roleOrder: roleOrder })
+  } catch (err) {
+    return res.status(400).json({ success: false, error: err })
+  }
 }
 
-rolesV1.create = function (req, res) {
+rolesV1.create = async function (req, res) {
   var name = req.body.name
   if (!name) return res.status(400).json({ success: false, error: 'Invalid Post Data' })
 
-  var roleSchema = require('../../../models/role')
-  var roleOrder = require('../../../models/roleorder')
+  try {
+    var roleSchema = require('../../../models/role')
+    var roleOrder = require('../../../models/roleorder')
 
-  async.waterfall(
-    [
-      function (next) {
-        roleSchema.create({ name: name }, next)
-      },
-      function (role, next) {
-        if (!role) return next('Invalid Role')
+    var role = await roleSchema.create({ name: name })
+    if (!role) throw new Error('Invalid Role')
 
-        roleOrder.getOrder(function (err, ro) {
-          if (err) return next(err)
+    var ro = await roleOrder.getOrder()
+    ro.order.push(role._id)
+    var savedRo = await ro.save()
 
-          ro.order.push(role._id)
+    global.roleOrder = savedRo
+    global.roles.push(role)
 
-          ro.save(function (err, savedRo) {
-            if (err) return next(err)
-
-            return next(null, role, savedRo)
-          })
-        })
-      }
-    ],
-    function (err, role, roleOrder) {
-      if (err) return res.status(400).json({ success: false, error: err })
-
-      global.roleOrder = roleOrder
-      global.roles.push(role)
-
-      return res.json({ success: true, role: role, roleOrder: roleOrder })
-    }
-  )
+    return res.json({ success: true, role: role, roleOrder: savedRo })
+  } catch (err) {
+    return res.status(400).json({ success: false, error: err })
+  }
 }
 
-rolesV1.update = function (req, res) {
+rolesV1.update = async function (req, res) {
   var _id = req.params.id
   var data = req.body
   if (_.isUndefined(_id) || _.isUndefined(data))
     return res.status(400).json({ success: false, error: 'Invalid Post Data' })
 
-  var emitter = require('../../../emitter')
-  var hierarchy = data.hierarchy ? data.hierarchy : false
-  var cleaned = _.omit(data, ['_id', 'hierarchy'])
-  var k = permissions.buildGrants(cleaned)
-  var roleSchema = require('../../../models/role')
-  roleSchema.get(data._id, function (err, role) {
-    if (err) return res.status(400).json({ success: false, error: err })
-    role.updateGrantsAndHierarchy(k, hierarchy, function (err) {
-      if (err) return res.status(400).json({ success: false, error: err })
+  try {
+    var emitter = require('../../../emitter')
+    var hierarchy = data.hierarchy ? data.hierarchy : false
+    var cleaned = _.omit(data, ['_id', 'hierarchy'])
+    var k = permissions.buildGrants(cleaned)
+    var roleSchema = require('../../../models/role')
+    var role = await roleSchema.get(data._id)
+    await role.updateGrantsAndHierarchy(k, hierarchy)
 
-      emitter.emit(socketEventConsts.ROLES_FLUSH)
+    emitter.emit(socketEventConsts.ROLES_FLUSH)
 
-      return res.send('OK')
-    })
-  })
+    return res.send('OK')
+  } catch (err) {
+    return res.status(400).json({ success: false, error: err })
+  }
 }
 
-rolesV1.delete = function (req, res) {
+rolesV1.delete = async function (req, res) {
   var _id = req.params.id
   var newRoleId = req.body.newRoleId
   if (!_id || !newRoleId) return res.status(400).json({ success: false, error: 'Invalid Post Data' })
 
-  var roleSchema = require('../../../models/role')
-  var roleOrderSchema = require('../../../models/roleorder')
+  try {
+    var roleSchema = require('../../../models/role')
+    var roleOrderSchema = require('../../../models/roleorder')
 
-  async.series(
-    [
-      function (done) {
-        userSchema.updateMany({ role: _id }, { $set: { role: newRoleId } }, done)
-      },
-      function (done) {
-        roleSchema.deleteOne({ _id: _id }, done)
-      },
-      function (done) {
-        roleOrderSchema.getOrder(function (err, ro) {
-          if (err) return done(err)
+    await userSchema.updateMany({ role: _id }, { $set: { role: newRoleId } })
+    await roleSchema.deleteOne({ _id: _id })
 
-          ro.removeFromOrder(_id, done)
-        })
-      }
-    ],
-    function (err) {
-      if (err) return res.status(500).json({ success: false, error: err })
+    var ro = await roleOrderSchema.getOrder()
+    await ro.removeFromOrder(_id)
 
-      permissions.register(function (err) {
-        if (err) return res.status(500).json({ success: false, error: err })
+    await permissions.register()
 
-        return res.json({ success: true })
-      })
-    }
-  )
+    return res.json({ success: true })
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err })
+  }
 }
 
 module.exports = rolesV1

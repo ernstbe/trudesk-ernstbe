@@ -13,7 +13,6 @@
  */
 
 const _ = require('lodash')
-const async = require('async')
 const path = require('path')
 const winston = require('../logger')
 
@@ -21,7 +20,7 @@ const debugController = {}
 
 debugController.content = {}
 
-debugController.populatedatabase = function (req, res) {
+debugController.populatedatabase = async function (req, res) {
   const Chance = require('chance')
   const chance = new Chance()
   const ticketSchema = require('../models/ticket')
@@ -313,151 +312,132 @@ debugController.populatedatabase = function (req, res) {
     'Windows updates taking 30 to 45 minutes each morning to revert'
   ]
 
-  async.series(
-    [
-      function (done) {
-        const roles = global.roles
-        const userRole = _.find(roles, { normalized: 'user' })
+  try {
+    // Step 1: Create users
+    const roles = global.roles
+    const userRole = _.find(roles, { normalized: 'user' })
 
-        users = []
-        for (let i = 0; i < 11; i++) {
-          const random = Math.floor(Math.random() * (10000 - 1 + 1)) + 1
-          const first = chance.first()
-          const last = chance.last()
-          const user = {
-            username: first + '.' + last,
-            fullname: first + ' ' + last,
-            email: first + '.' + last + random + '@' + chance.domain(),
-            title: chance.profession(),
-            password: 'password',
-            role: userRole._id
-          }
-
-          users.push(user)
-        }
-
-        userSchema.collection.insert(users, done)
-      },
-      function (done) {
-        groupSchema.remove({}, done)
-      },
-      function (done) {
-        tagSchema.remove({}, done)
-      },
-      function (done) {
-        ticketSchema.remove({}, done)
-      },
-      function (done) {
-        const groups = []
-        for (let i = 0; i < 11; i++) {
-          let name = chance.company()
-          while (_.find(groups, { name: name })) {
-            name = chance.company()
-          }
-
-          const group = {
-            name: name,
-            __v: 0,
-            members: _.map(users, function (o) {
-              return o._id
-            })
-          }
-
-          groups.push(group)
-        }
-
-        groupSchema.collection.insert(groups, done)
-      },
-      function (done) {
-        // Populate Tags...
-        const tags = getSampleTags()
-        const usedTags = []
-        const savedTags = []
-        for (let i = 0; i < 1001; i++) {
-          const tag = _.sample(tags)
-          if (_.includes(usedTags, tag)) {
-            continue
-          }
-
-          const t = {
-            name: tag,
-            __v: 0
-          }
-
-          usedTags.push(tag)
-          savedTags.push(t)
-        }
-
-        tagSchema.collection.insert(savedTags, done)
-      },
-      function (done) {
-        userSchema.findAll(function (err, users) {
-          if (err) return done(err)
-
-          groupSchema.getAllGroups(function (err, groups) {
-            if (err) return done(err)
-
-            ticketTypeSchema.getTypes(function (err, types) {
-              if (err) return done(err)
-
-              tagSchema.getTags(function (err, tags) {
-                if (err) return done(err)
-
-                const loremIpsum = require('lorem-ipsum')
-                for (let i = 0; i < 100001; i++) {
-                  const user = users[Math.floor(Math.random() * users.length)]
-                  const group = groups[Math.floor(Math.random() * groups.length)]
-                  const type = types[Math.floor(Math.random() * types.length)]
-                  const tagCount = chance.integer({ min: 1, max: 6 })
-                  const ticketTags = []
-                  for (let k = 0; k < tagCount; k++) {
-                    const t = tags[Math.floor(Math.random() * tags.length)]
-                    if (!_.includes(ticketTags, t._id)) {
-                      ticketTags.push(t._id)
-                    }
-                  }
-                  const randomPriority = type.priorities[Math.floor(Math.random() * type.priorities.length)]
-                  const ticket = {
-                    __v: 0,
-                    // uid: res.value.next,
-                    uid: i + 1000,
-                    date: randomDate(new Date(2015, 0, 1), new Date()),
-                    owner: user._id,
-                    group: group._id,
-                    type: type._id,
-                    tags: ticketTags,
-                    status: Math.floor(Math.random() * 4),
-                    priority: randomPriority._id,
-                    subject: _.sample(subjects),
-                    issue: loremIpsum({ count: 3, units: 'paragraph' }),
-                    deleted: false
-                  }
-
-                  winston.debug('Adding Ticket...(' + i + ')')
-                  ticketsToSave.push(ticket)
-                }
-
-                return done()
-              })
-            })
-          })
-        })
-      },
-      function (done) {
-        winston.debug('Saving Tickets...')
-        ticketSchema.collection.insert(ticketsToSave, done)
-      },
-      function (done) {
-        const counterSchema = require('../models/counters')
-        counterSchema.setCounter('tickets', 101001, done)
+    users = []
+    for (let i = 0; i < 11; i++) {
+      const random = Math.floor(Math.random() * (10000 - 1 + 1)) + 1
+      const first = chance.first()
+      const last = chance.last()
+      const user = {
+        username: first + '.' + last,
+        fullname: first + ' ' + last,
+        email: first + '.' + last + random + '@' + chance.domain(),
+        title: chance.profession(),
+        password: 'password',
+        role: userRole._id
       }
-    ],
-    function (err) {
-      if (err) return res.status(400).send(err)
 
-      return res.send('OK')
+      users.push(user)
     }
-  )
+
+    await userSchema.collection.insertMany(users)
+
+    // Step 2: Remove groups
+    await groupSchema.deleteMany({})
+
+    // Step 3: Remove tags
+    await tagSchema.deleteMany({})
+
+    // Step 4: Remove tickets
+    await ticketSchema.deleteMany({})
+
+    // Step 5: Create groups
+    const groups = []
+    for (let i = 0; i < 11; i++) {
+      let name = chance.company()
+      while (_.find(groups, { name: name })) {
+        name = chance.company()
+      }
+
+      const group = {
+        name: name,
+        __v: 0,
+        members: _.map(users, function (o) {
+          return o._id
+        })
+      }
+
+      groups.push(group)
+    }
+
+    await groupSchema.collection.insertMany(groups)
+
+    // Step 6: Create tags
+    const sampleTags = getSampleTags()
+    const usedTags = []
+    const savedTags = []
+    for (let i = 0; i < 1001; i++) {
+      const tag = _.sample(sampleTags)
+      if (_.includes(usedTags, tag)) {
+        continue
+      }
+
+      const t = {
+        name: tag,
+        __v: 0
+      }
+
+      usedTags.push(tag)
+      savedTags.push(t)
+    }
+
+    await tagSchema.collection.insertMany(savedTags)
+
+    // Step 7: Create tickets
+    const allUsers = await userSchema.findAll()
+    const allGroups = await groupSchema.getAllGroups()
+    const types = await ticketTypeSchema.getTypes()
+    const tags = await tagSchema.getTags()
+
+    const loremIpsum = require('lorem-ipsum')
+    for (let i = 0; i < 100001; i++) {
+      const user = allUsers[Math.floor(Math.random() * allUsers.length)]
+      const group = allGroups[Math.floor(Math.random() * allGroups.length)]
+      const type = types[Math.floor(Math.random() * types.length)]
+      const tagCount = chance.integer({ min: 1, max: 6 })
+      const ticketTags = []
+      for (let k = 0; k < tagCount; k++) {
+        const t = tags[Math.floor(Math.random() * tags.length)]
+        if (!_.includes(ticketTags, t._id)) {
+          ticketTags.push(t._id)
+        }
+      }
+      const randomPriority = type.priorities[Math.floor(Math.random() * type.priorities.length)]
+      const ticket = {
+        __v: 0,
+        uid: i + 1000,
+        date: randomDate(new Date(2015, 0, 1), new Date()),
+        owner: user._id,
+        group: group._id,
+        type: type._id,
+        tags: ticketTags,
+        status: Math.floor(Math.random() * 4),
+        priority: randomPriority._id,
+        subject: _.sample(subjects),
+        issue: loremIpsum({ count: 3, units: 'paragraph' }),
+        deleted: false
+      }
+
+      winston.debug('Adding Ticket...(' + i + ')')
+      ticketsToSave.push(ticket)
+    }
+
+    // Step 8: Save tickets
+    winston.debug('Saving Tickets...')
+    await ticketSchema.collection.insertMany(ticketsToSave)
+
+    // Step 9: Set counter
+    const counterSchema = require('../models/counters')
+    await counterSchema.setCounter('tickets', 101001)
+
+    return res.send('OK')
+  } catch (err) {
+    return res.status(400).send(err)
+  }
 }
 
 function randomDate (start, end) {
@@ -482,19 +462,6 @@ debugController.sendmail = function (req, res) {
         extension: 'handlebars'
       }
     }
-    // This is to test the new email templates (beta feature)
-    // render: function (view, locals) {
-    //   return new Promise(function (resolve, reject) {
-    //     if (!global.Handlebars) return reject(new Error('Could not load global.Handlebars'))
-    //     templateSchema.findOne({ name: view }, function (err, template) {
-    //       if (err) return reject(err)
-    //       if (!template) return reject(new Error('Invalid Template'))
-    //       const html = global.Handlebars.compile(template.data['gjs-fullHtml'])(locals)
-    //       console.log(html)
-    //       email.juiceResources(html).then(resolve)
-    //     })
-    //   })
-    // }
   })
 
   const ticket = {
@@ -578,9 +545,6 @@ debugController.uploadPlugin = function (req, res) {
         status: 500,
         message: 'File too large'
       }
-
-      // Delete the temp file
-      // if (fs.existsSync(object.filePath)) fs.unlinkSync(object.filePath);
 
       return file.resume()
     })

@@ -42,7 +42,7 @@ messageSchema.pre('save', function (next) {
   next()
 })
 
-messageSchema.statics.getFullConversation = function (convoId, callback) {
+messageSchema.statics.getFullConversation = async function (convoId) {
   return this.model(COLLECTION)
     .find({ conversation: convoId })
     .select('createdAt body owner')
@@ -51,10 +51,10 @@ messageSchema.statics.getFullConversation = function (convoId, callback) {
       path: 'owner',
       select: '_id username fullname email image lastOnline'
     })
-    .exec(callback)
+    .exec()
 }
 
-messageSchema.statics.getConversation = function (convoId, callback) {
+messageSchema.statics.getConversation = async function (convoId) {
   return this.model(COLLECTION)
     .find({ conversation: convoId })
     .select('createdAt body owner')
@@ -64,89 +64,53 @@ messageSchema.statics.getConversation = function (convoId, callback) {
       path: 'owner',
       select: '_id username fullname email image lastOnline'
     })
-    .exec(callback)
+    .exec()
 }
 
-messageSchema.statics.getConversationWithObject = function (object, callback) {
-  const self = this
+messageSchema.statics.getConversationWithObject = async function (object) {
+  if (!_.isObject(object)) {
+    throw new Error('Invalid Object (Must by of type Object) - MessageSchema.GetUserWithObject()')
+  }
+
   const limit = !object.limit ? 25 : object.limit
   const page = !object.page ? 0 : object.page
 
-  return new Promise((resolve, reject) => {
-    ;(async () => {
-      try {
-        if (!_.isObject(object)) {
-          if (typeof callback === 'function')
-            return callback('Invalid Object (Must by of type Object) - MessageSchema.GetUserWithObject()')
+  let deletedAt = null
 
-          return reject(new Error('Invalid Object (Must by of type Object) - MessageSchema.GetUserWithObject()'))
-        }
+  if (object.requestingUser) {
+    const userMetaIdx = _.findIndex(object.userMeta, item => {
+      return item.userId.toString() === object.requestingUser._id.toString()
+    })
+    if (userMetaIdx !== -1 && object.userMeta[userMetaIdx].deletedAt)
+      deletedAt = new Date(object.userMeta[userMetaIdx].deletedAt)
+  }
 
-        let deletedAt = null
+  const query = this.model(COLLECTION)
+    .find({})
+    .sort('-createdAt')
+    .skip(page * limit)
+    .populate({
+      path: 'owner',
+      select: '_id username fullname email image lastOnline'
+    })
 
-        if (object.requestingUser) {
-          const userMetaIdx = _.findIndex(object.userMeta, item => {
-            return item.userId.toString() === object.requestingUser._id.toString()
-          })
-          if (userMetaIdx !== -1 && object.userMeta[userMetaIdx].deletedAt)
-            deletedAt = new Date(object.userMeta[userMetaIdx].deletedAt)
-        }
+  if (limit !== -1) query.limit(limit)
+  if (object.cid) query.where({ conversation: object.cid })
+  if (deletedAt) query.where({ createdAt: { $gte: deletedAt } })
 
-        const query = self
-          .model(COLLECTION)
-          .find({})
-          .sort('-createdAt')
-          .skip(page * limit)
-          .populate({
-            path: 'owner',
-            select: '_id username fullname email image lastOnline'
-          })
-
-        if (limit !== -1) query.limit(limit)
-        if (object.cid) query.where({ conversation: object.cid })
-        if (deletedAt) query.where({ createdAt: { $gte: deletedAt } })
-
-        if (typeof callback === 'function') return query.exec(callback)
-
-        const results = await query.exec()
-
-        return resolve(results)
-      } catch (e) {
-        if (typeof callback === 'function') return callback(e)
-
-        return reject(e)
-      }
-    })()
-  })
+  return query.exec()
 }
 
-messageSchema.statics.getMostRecentMessage = function (convoId, callback) {
-  const self = this
-  return new Promise((resolve, reject) => {
-    ;(async () => {
-      try {
-        const query = self
-          .model(COLLECTION)
-          .find({ conversation: convoId })
-          .sort('-createdAt')
-          .limit(1)
-          .populate({
-            path: 'owner',
-            select: '_id username fullname image lastOnline'
-          })
-
-        if (typeof callback === 'function') return query.exec(callback)
-
-        const results = await query.exec()
-
-        return resolve(results)
-      } catch (e) {
-        if (typeof callback === 'function') return callback(e)
-
-        return reject(e)
-      }
-    })()
-  })
+messageSchema.statics.getMostRecentMessage = async function (convoId) {
+  return this.model(COLLECTION)
+    .find({ conversation: convoId })
+    .sort('-createdAt')
+    .limit(1)
+    .populate({
+      path: 'owner',
+      select: '_id username fullname image lastOnline'
+    })
+    .exec()
 }
 
 module.exports = mongoose.model(COLLECTION, messageSchema)

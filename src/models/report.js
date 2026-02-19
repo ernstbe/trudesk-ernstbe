@@ -40,23 +40,17 @@ var reportSchema = mongoose.Schema({
   data: { type: [mongoose.Schema.Types.Mixed], required: true }
 })
 
-reportSchema.pre('save', function (next) {
-  if (!_.isUndefined(this.uid) || this.uid) return next()
+reportSchema.pre('save', async function () {
+  if (!_.isUndefined(this.uid) || this.uid) return
 
   var c = require('./counters')
-  var self = this
-  c.increment('reports', function (err, res) {
-    if (err) return next(err)
+  var res = await c.increment('reports')
 
-    self.uid = res.value.next
+  this.uid = res.next
 
-    if (_.isUndefined(self.uid)) {
-      var error = new Error('Invalid UID.')
-      return next(error)
-    }
-
-    return next()
-  })
+  if (_.isUndefined(this.uid)) {
+    throw new Error('Invalid UID.')
+  }
 })
 
 /**
@@ -66,10 +60,10 @@ reportSchema.pre('save', function (next) {
  * @memberof Report
  * @param {QueryCallback} callback MongoDB Query Callback
  */
-reportSchema.statics.getReports = function (callback) {
+reportSchema.statics.getReports = async function () {
   return this.model(COLLECTION)
     .find({})
-    .exec(callback)
+    .exec()
 }
 
 // /**
@@ -100,22 +94,22 @@ reportSchema.statics.getReports = function (callback) {
 //     });
 // };
 
-reportSchema.statics.getReportByType = function (type, callback) {
+reportSchema.statics.getReportByType = async function (type) {
   if (_.isUndefined(type) || _.isNull(type))
-    return callback('Invalid Report Type - ReportSchema.GetReportByType();', null)
+    throw new Error('Invalid Report Type - ReportSchema.GetReportByType();')
 
   return this.model(COLLECTION)
     .find({ type: type })
-    .exec(callback)
+    .exec()
 }
 
-reportSchema.statics.getReportByStatus = function (status, callback) {
+reportSchema.statics.getReportByStatus = async function (status) {
   if (_.isUndefined(status) || _.isNull(status))
-    return callback('Invalid Report Status - ReportSchema.GetReportByStatus();', null)
+    throw new Error('Invalid Report Status - ReportSchema.GetReportByStatus();')
 
   return this.model(COLLECTION)
     .find({ status: status })
-    .exec(callback)
+    .exec()
 }
 
 module.exports = mongoose.model(COLLECTION, reportSchema)

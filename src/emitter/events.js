@@ -14,7 +14,6 @@
 
 const _ = require('lodash')
 const path = require('path')
-const async = require('async')
 const winston = require('../logger')
 const emitter = require('../emitter')
 const NotificationSchema = require('../models/notification')
@@ -132,15 +131,17 @@ const eventTicketCreated = require('./events/event_ticket_created')
     io.sockets.emit('ticket:subscriber:update', data)
   })
 
-  emitter.on('ticket:comment:added', function (ticket, comment, hostname) {
+  emitter.on('ticket:comment:added', async function (ticket, comment, hostname) {
     // Goes to client
     io.sockets.emit(socketEvents.TICKETS_UPDATE, ticket)
 
-    settingsSchema.getSettingsByName(['tps:enable', 'tps:username', 'tps:apikey', 'mailer:enable'], function (
-      err,
-      tpsSettings
-    ) {
-      if (err) return false
+    try {
+      const tpsSettings = await settingsSchema.getSettingsByName([
+        'tps:enable',
+        'tps:username',
+        'tps:apikey',
+        'mailer:enable'
+      ])
 
       let tpsEnabled = _.head(_.filter(tpsSettings, ['name', 'tps:enable']))
       let tpsUsername = _.head(_.filter(tpsSettings, ['name', 'tps:username']))
@@ -156,31 +157,29 @@ const eventTicketCreated = require('./events/event_ticket_created')
         tpsApiKey = tpsApiKey.value
       }
 
-      async.parallel(
-        [
-          function (cb) {
-            if (ticket.owner._id.toString() === comment.owner.toString()) return cb
-            if (!_.isUndefined(ticket.assignee) && ticket.assignee._id.toString() === comment.owner.toString())
-              return cb
+      // Save notifications
+      const notificationPromises = []
 
-            const notification = new NotificationSchema({
-              owner: ticket.owner,
-              title: 'Comment Added to Ticket#' + ticket.uid,
-              message: ticket.subject,
-              type: 1,
-              data: { ticket: ticket },
-              unread: true
-            })
+      // Notification for ticket owner
+      if (ticket.owner._id.toString() !== comment.owner.toString()) {
+        if (_.isUndefined(ticket.assignee) || ticket.assignee._id.toString() !== comment.owner.toString()) {
+          const notification = new NotificationSchema({
+            owner: ticket.owner,
+            title: 'Comment Added to Ticket#' + ticket.uid,
+            message: ticket.subject,
+            type: 1,
+            data: { ticket: ticket },
+            unread: true
+          })
 
-            notification.save(function (err) {
-              return cb(err)
-            })
-          },
-          function (cb) {
-            if (_.isUndefined(ticket.assignee)) return cb()
-            if (ticket.assignee._id.toString() === comment.owner.toString()) return cb
-            if (ticket.owner._id.toString() === ticket.assignee._id.toString()) return cb()
+          notificationPromises.push(notification.save())
+        }
+      }
 
+      // Notification for assignee
+      if (!_.isUndefined(ticket.assignee)) {
+        if (ticket.assignee._id.toString() !== comment.owner.toString()) {
+          if (ticket.owner._id.toString() !== ticket.assignee._id.toString()) {
             const notification = new NotificationSchema({
               owner: ticket.assignee,
               title: 'Comment Added to Ticket#' + ticket.uid,
@@ -190,98 +189,78 @@ const eventTicketCreated = require('./events/event_ticket_created')
               unread: true
             })
 
-            notification.save(function (err) {
-              return cb(err)
-            })
-          },
-          function (cb) {
-            sendPushNotification(
-              {
-                tpsEnabled: tpsEnabled,
-                tpsUsername: tpsUsername,
-                tpsApiKey: tpsApiKey,
-                hostname: hostname
-              },
-              { type: 2, ticket: ticket }
-            )
-            return cb()
-          },
-          // Send email to subscribed users
-          function (c) {
-            if (!mailerEnabled) return c()
-
-            const mailer = require('../mailer')
-            let emails = []
-            async.each(
-              ticket.subscribers,
-              function (member, cb) {
-                if (_.isUndefined(member) || _.isUndefined(member.email)) return cb()
-                if (member._id.toString() === comment.owner.toString()) return cb()
-                if (member.deleted) return cb()
-
-                emails.push(member.email)
-
-                cb()
-              },
-              function (err) {
-                if (err) return c(err)
-
-                emails = _.uniq(emails)
-
-                if (_.size(emails) < 1) {
-                  return c()
-                }
-
-                const email = new Email({
-                  views: {
-                    root: templateDir,
-                    options: {
-                      extension: 'handlebars'
-                    }
-                  }
-                })
-
-                ticket.populate('comments.owner', function (err, ticket) {
-                  if (err) winston.warn(err)
-                  if (err) return c()
-
-                  ticket = ticket.toJSON()
-
-                  email
-                    .render('ticket-comment-added', {
-                      ticket: ticket,
-                      comment: comment
-                    })
-                    .then(function (html) {
-                      const mailOptions = {
-                        to: emails.join(),
-                        subject: 'Updated: Ticket #' + ticket.uid + '-' + ticket.subject,
-                        html: html,
-                        generateTextFromHTML: true
-                      }
-
-                      mailer.sendMail(mailOptions, function (err) {
-                        if (err) winston.warn('[trudesk:events:sendSubscriberEmail] - ' + err)
-
-                        winston.debug('Sent [' + emails.length + '] emails.')
-                      })
-
-                      return c()
-                    })
-                    .catch(function (err) {
-                      winston.warn('[trudesk:events:sendSubscriberEmail] - ' + err)
-                      return c(err)
-                    })
-                })
-              }
-            )
+            notificationPromises.push(notification.save())
           }
-        ],
-        function () {
-          // Blank
         }
+      }
+
+      // Push notification
+      sendPushNotification(
+        {
+          tpsEnabled: tpsEnabled,
+          tpsUsername: tpsUsername,
+          tpsApiKey: tpsApiKey,
+          hostname: hostname
+        },
+        { type: 2, ticket: ticket }
       )
-    })
+
+      await Promise.all(notificationPromises)
+
+      // Send email to subscribed users
+      if (mailerEnabled) {
+        const mailer = require('../mailer')
+        let emails = []
+
+        for (const member of ticket.subscribers) {
+          if (_.isUndefined(member) || _.isUndefined(member.email)) continue
+          if (member._id.toString() === comment.owner.toString()) continue
+          if (member.deleted) continue
+
+          emails.push(member.email)
+        }
+
+        emails = _.uniq(emails)
+
+        if (_.size(emails) >= 1) {
+          const email = new Email({
+            views: {
+              root: templateDir,
+              options: {
+                extension: 'handlebars'
+              }
+            }
+          })
+
+          try {
+            const populatedTicket = await ticket.populate('comments.owner')
+            const ticketJSON = populatedTicket.toJSON()
+
+            const html = await email.render('ticket-comment-added', {
+              ticket: ticketJSON,
+              comment: comment
+            })
+
+            const mailOptions = {
+              to: emails.join(),
+              subject: 'Updated: Ticket #' + ticketJSON.uid + '-' + ticketJSON.subject,
+              html: html,
+              generateTextFromHTML: true
+            }
+
+            mailer.sendMail(mailOptions, function (err) {
+              if (err) winston.warn('[trudesk:events:sendSubscriberEmail] - ' + err)
+
+              winston.debug('Sent [' + emails.length + '] emails.')
+            })
+          } catch (err) {
+            winston.warn('[trudesk:events:sendSubscriberEmail] - ' + err)
+          }
+        }
+      }
+    } catch (err) {
+      winston.warn(err)
+    }
   })
 
   emitter.on('ticket:note:added', function (ticket) {

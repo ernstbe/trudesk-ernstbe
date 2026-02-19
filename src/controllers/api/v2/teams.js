@@ -13,13 +13,12 @@
  */
 
 var _ = require('lodash')
-var async = require('async')
 var Team = require('../../../models/team')
 var apiUtils = require('../apiUtils')
 
 var apiTeams = {}
 
-apiTeams.get = function (req, res) {
+apiTeams.get = async function (req, res) {
   var limit = 10
   if (!_.isUndefined(req.query.limit)) {
     try {
@@ -43,63 +42,61 @@ apiTeams.get = function (req, res) {
     page: page
   }
 
-  Team.getWithObject(obj, function (err, results) {
-    if (err) return apiUtils.sendApiError(res, 400, err.message)
-
+  try {
+    const results = await Team.getWithObject(obj)
     return apiUtils.sendApiSuccess(res, { count: results.length, teams: results })
-  })
+  } catch (err) {
+    return apiUtils.sendApiError(res, 400, err.message)
+  }
 }
 
-apiTeams.create = function (req, res) {
+apiTeams.create = async function (req, res) {
   var postData = req.body
   if (!postData) return apiUtils.sendApiError_InvalidPostData(res)
 
-  Team.create(postData, function (err, team) {
-    if (err) return apiUtils.sendApiError(res, 500, err.message)
-
-    team.populate('members', function (err, team) {
-      if (err) return apiUtils.sendApiError(res, 500, err.message)
-
-      return apiUtils.sendApiSuccess(res, { team: team })
-    })
-  })
+  try {
+    let team = await Team.create(postData)
+    team = await team.populate('members')
+    return apiUtils.sendApiSuccess(res, { team: team })
+  } catch (err) {
+    return apiUtils.sendApiError(res, 500, err.message)
+  }
 }
 
-apiTeams.update = function (req, res) {
+apiTeams.update = async function (req, res) {
   var id = req.params.id
   if (!id) return apiUtils.sendApiError(res, 400, 'Invalid Team Id')
 
   var putData = req.body
   if (!putData) return apiUtils.sendApiError_InvalidPostData(res)
 
-  Team.findOne({ _id: id }, function (err, team) {
-    if (err || !team) return apiUtils.sendApiError(res, 400, 'Invalid Team')
+  try {
+    let team = await Team.findOne({ _id: id })
+    if (!team) return apiUtils.sendApiError(res, 400, 'Invalid Team')
 
     if (putData.name) team.name = putData.name
     if (putData.members) team.members = putData.members
 
-    team.save(function (err, team) {
-      if (err) return apiUtils.sendApiError(res, 500, err.message)
-
-      team.populate('members', function (err, team) {
-        if (err) return apiUtils.sendApiError(res, 500, err.message)
-
-        return apiUtils.sendApiSuccess(res, { team: team })
-      })
-    })
-  })
+    team = await team.save()
+    team = await team.populate('members')
+    return apiUtils.sendApiSuccess(res, { team: team })
+  } catch (err) {
+    return apiUtils.sendApiError(res, 500, err.message)
+  }
 }
 
-apiTeams.delete = function (req, res) {
+apiTeams.delete = async function (req, res) {
   var id = req.params.id
   if (!id) return apiUtils.sendApiError(res, 400, 'Invalid Team Id')
 
-  Team.deleteOne({ _id: id }, function (err, success) {
-    if (err) return apiUtils.sendApiError(res, 500, err.message)
+  try {
+    const success = await Team.deleteOne({ _id: id })
     if (!success) return apiUtils.sendApiError(res, 500, 'Unable to delete team. Contact your administrator.')
 
     return apiUtils.sendApiSuccess(res, { _id: id })
-  })
+  } catch (err) {
+    return apiUtils.sendApiError(res, 500, err.message)
+  }
 }
 
 module.exports = apiTeams

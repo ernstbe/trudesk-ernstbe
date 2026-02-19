@@ -38,10 +38,10 @@ tagSchema.pre('save', function (next) {
   return next()
 })
 
-tagSchema.statics.getTag = function (id, callback) {
+tagSchema.statics.getTag = async function (id) {
   var q = this.model(COLLECTION).findOne({ _id: id })
 
-  return q.exec(callback)
+  return q.exec()
 }
 
 /**
@@ -53,15 +53,15 @@ tagSchema.statics.getTag = function (id, callback) {
  *
  * @param {QueryCallback} callback MongoDB Query Callback
  */
-tagSchema.statics.getTags = function (callback) {
+tagSchema.statics.getTags = async function () {
   var q = this.model(COLLECTION)
     .find({})
     .sort('normalized')
 
-  return q.exec(callback)
+  return q.exec()
 }
 
-tagSchema.statics.getTagsWithLimit = function (limit, page, callback) {
+tagSchema.statics.getTagsWithLimit = async function (limit, page) {
   var q = this.model(COLLECTION)
     .find({})
     .sort('normalized')
@@ -70,29 +70,29 @@ tagSchema.statics.getTagsWithLimit = function (limit, page, callback) {
     q.limit(limit).skip(page * limit)
   }
 
-  return q.exec(callback)
+  return q.exec()
 }
 
-tagSchema.statics.getTagByName = function (tagName, callback) {
+tagSchema.statics.getTagByName = async function (tagName) {
   var q = this.model(COLLECTION)
     .find({ name: tagName })
     .limit(1)
 
-  return q.exec(callback)
+  return q.exec()
 }
 
-tagSchema.statics.tagExist = function (tagName, callback) {
+tagSchema.statics.tagExist = async function (tagName) {
   var q = this.model(COLLECTION).countDocuments({ name: tagName })
 
-  return q.exec(callback)
+  return q.exec()
 }
 
-tagSchema.statics.getTagCount = function (callback) {
+tagSchema.statics.getTagCount = async function () {
   var q = this.model(COLLECTION)
     .countDocuments({})
     .lean()
 
-  return q.exec(callback)
+  return q.exec()
 }
 
 module.exports = mongoose.model(COLLECTION, tagSchema)

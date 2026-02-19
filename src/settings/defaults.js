@@ -15,7 +15,6 @@
 const _ = require('lodash')
 const fs = require('fs-extra')
 const path = require('path')
-const async = require('async')
 const winston = require('../logger')
 const moment = require('moment-timezone')
 
@@ -53,140 +52,82 @@ roleDefaults.adminGrants = [
 
 settingsDefaults.roleDefaults = roleDefaults
 
-function rolesDefault (callback) {
+async function rolesDefault () {
   const roleSchema = require('../models/role')
 
-  async.series(
-    [
-      function (done) {
-        roleSchema.getRoleByName('User', function (err, role) {
-          if (err) return done(err)
-          if (role) return done()
-
-          roleSchema.create(
-            {
-              name: 'User',
-              description: 'Default role for users',
-              grants: roleDefaults.userGrants
-            },
-            function (err, userRole) {
-              if (err) return done(err)
-              SettingsSchema.getSetting('role:user:default', function (err, roleUserDefault) {
-                if (err) return done(err)
-                if (roleUserDefault) return done()
-
-                SettingsSchema.create(
-                  {
-                    name: 'role:user:default',
-                    value: userRole._id
-                  },
-                  done
-                )
-              })
-            }
-          )
-        })
-      },
-      function (done) {
-        roleSchema.getRoleByName('Support', function (err, role) {
-          if (err) return done(err)
-          if (role) {
-            return done()
-            // role.updateGrants(supportGrants, done);
-          } else
-            roleSchema.create(
-              {
-                name: 'Support',
-                description: 'Default role for agents',
-                grants: roleDefaults.supportGrants
-              },
-              done
-            )
-        })
-      },
-      function (done) {
-        roleSchema.getRoleByName('Admin', function (err, role) {
-          if (err) return done(err)
-          if (role) return done()
-          // role.updateGrants(adminGrants, done);
-          else {
-            roleSchema.create(
-              {
-                name: 'Admin',
-                description: 'Default role for admins',
-                grants: roleDefaults.adminGrants
-              },
-              done
-            )
-          }
-        })
-      },
-      function (done) {
-        var roleOrderSchema = require('../models/roleorder')
-        roleOrderSchema.getOrder(function (err, roleOrder) {
-          if (err) return done(err)
-          if (roleOrder) return done()
-
-          roleSchema.getRoles(function (err, roles) {
-            if (err) return done(err)
-
-            var roleOrder = []
-            roleOrder.push(_.find(roles, { name: 'Admin' })._id)
-            roleOrder.push(_.find(roles, { name: 'Support' })._id)
-            roleOrder.push(_.find(roles, { name: 'User' })._id)
-
-            roleOrderSchema.create(
-              {
-                order: roleOrder
-              },
-              done
-            )
-          })
-        })
-      }
-    ],
-    function (err) {
-      if (err) throw err
-
-      return callback()
+  // Step 1: Create User role if not exists
+  let role = await roleSchema.getRoleByName('User')
+  if (!role) {
+    const userRole = await roleSchema.create({
+      name: 'User',
+      description: 'Default role for users',
+      grants: roleDefaults.userGrants
+    })
+    const roleUserDefault = await SettingsSchema.getSetting('role:user:default')
+    if (!roleUserDefault) {
+      await SettingsSchema.create({
+        name: 'role:user:default',
+        value: userRole._id
+      })
     }
-  )
+  }
+
+  // Step 2: Create Support role if not exists
+  role = await roleSchema.getRoleByName('Support')
+  if (!role) {
+    await roleSchema.create({
+      name: 'Support',
+      description: 'Default role for agents',
+      grants: roleDefaults.supportGrants
+    })
+  }
+
+  // Step 3: Create Admin role if not exists
+  role = await roleSchema.getRoleByName('Admin')
+  if (!role) {
+    await roleSchema.create({
+      name: 'Admin',
+      description: 'Default role for admins',
+      grants: roleDefaults.adminGrants
+    })
+  }
+
+  // Step 4: Create role order if not exists
+  var roleOrderSchema = require('../models/roleorder')
+  const roleOrder = await roleOrderSchema.getOrder()
+  if (!roleOrder) {
+    const roles = await roleSchema.getRoles()
+    var order = []
+    order.push(_.find(roles, { name: 'Admin' })._id)
+    order.push(_.find(roles, { name: 'Support' })._id)
+    order.push(_.find(roles, { name: 'User' })._id)
+
+    await roleOrderSchema.create({
+      order: order
+    })
+  }
 }
 
-function defaultUserRole (callback) {
+async function defaultUserRole () {
   var roleOrderSchema = require('../models/roleorder')
-  roleOrderSchema.getOrderLean(function (err, roleOrder) {
-    if (err) return callback(err)
-    if (!roleOrder) return callback()
+  const roleOrder = await roleOrderSchema.getOrderLean()
+  if (!roleOrder) return
 
-    SettingsSchema.getSetting('role:user:default', function (err, roleDefault) {
-      if (err) return callback(err)
-      if (roleDefault) return callback()
+  const roleDefault = await SettingsSchema.getSetting('role:user:default')
+  if (roleDefault) return
 
-      var lastId = _.last(roleOrder.order)
-      SettingsSchema.create(
-        {
-          name: 'role:user:default',
-          value: lastId
-        },
-        callback
-      )
-    })
+  var lastId = _.last(roleOrder.order)
+  await SettingsSchema.create({
+    name: 'role:user:default',
+    value: lastId
   })
 }
 
-function createDirectories (callback) {
-  async.parallel(
-    [
-      function (done) {
-        fs.ensureDir(path.join(__dirname, '../../backups'), done)
-      },
-      function (done) {
-        fs.ensureDir(path.join(__dirname, '../../restores'), done)
-      }
-    ],
-    callback
-  )
+async function createDirectories () {
+  await Promise.all([
+    fs.ensureDir(path.join(__dirname, '../../backups')),
+    fs.ensureDir(path.join(__dirname, '../../restores'))
+  ])
 }
 
 function downloadWin32MongoDBTools (callback) {
@@ -204,15 +145,26 @@ function downloadWin32MongoDBTools (callback) {
     if (
       !fs.existsSync(path.join(savePath, 'mongodump.exe')) ||
       !fs.existsSync(path.join(savePath, 'mongorestore.exe'))
-      // !fs.existsSync(path.join(savePath, 'libeay32.dll')) ||
-      // !fs.existsSync(path.join(savePath, 'ssleay32.dll'))
     ) {
       winston.debug('Windows platform detected. Downloading MongoDB Tools [' + filename + ']')
       fs.emptyDirSync(savePath)
       var unzipper = require('unzipper')
       var file = fs.createWriteStream(path.join(savePath, filename))
-      http
+      var callbackFired = false
+      var safeCallback = function (err) {
+        if (callbackFired) return
+        callbackFired = true
+        callback(err)
+      }
+      var req = http
         .get('http://storage.trudesk.io/tools/' + filename, function (response) {
+          if (response.statusCode !== 200) {
+            req.destroy()
+            file.close()
+            fs.unlink(path.join(savePath, filename), function () {})
+            winston.warn('MongoDB Tools download returned HTTP ' + response.statusCode + ', skipping.')
+            return safeCallback()
+          }
           response.pipe(file)
           file.on('finish', function () {
             file.close()
@@ -221,15 +173,22 @@ function downloadWin32MongoDBTools (callback) {
             fs.createReadStream(path.join(savePath, filename))
               .pipe(unzipper.Extract({ path: savePath }))
               .on('close', function () {
-                fs.unlink(path.join(savePath, filename), callback)
+                fs.unlink(path.join(savePath, filename), safeCallback)
               })
           })
         })
         .on('error', function (err) {
-          fs.unlink(path.join(savePath, filename))
+          fs.unlink(path.join(savePath, filename), function () {})
           winston.debug(err)
-          return callback()
+          return safeCallback()
         })
+      req.setTimeout(10000, function () {
+        req.destroy()
+        file.close()
+        fs.unlink(path.join(savePath, filename), function () {})
+        winston.warn('MongoDB Tools download timed out, skipping.')
+        return safeCallback()
+      })
     } else {
       return callback()
     }
@@ -238,171 +197,90 @@ function downloadWin32MongoDBTools (callback) {
   }
 }
 
-function timezoneDefault (callback) {
-  SettingsSchema.getSettingByName('gen:timezone', function (err, setting) {
-    if (err) {
-      winston.warn(err)
-      if (_.isFunction(callback)) return callback(err)
-      return false
-    }
+async function timezoneDefault () {
+  const setting = await SettingsSchema.getSettingByName('gen:timezone')
 
-    if (!setting) {
-      var defaultTimezone = new SettingsSchema({
-        name: 'gen:timezone',
-        value: 'America/New_York'
-      })
+  if (!setting) {
+    var defaultTimezone = new SettingsSchema({
+      name: 'gen:timezone',
+      value: 'America/New_York'
+    })
 
-      defaultTimezone.save(function (err, setting) {
-        if (err) {
-          winston.warn(err)
-          if (_.isFunction(callback)) return callback(err)
-        }
-
-        winston.debug('Timezone set to ' + setting.value)
-        moment.tz.setDefault(setting.value)
-
-        global.timezone = setting.value
-
-        if (_.isFunction(callback)) return callback()
-      })
-    } else {
-      winston.debug('Timezone set to ' + setting.value)
-      moment.tz.setDefault(setting.value)
-
-      global.timezone = setting.value
-
-      if (_.isFunction(callback)) return callback()
-    }
-  })
+    const saved = await defaultTimezone.save()
+    winston.debug('Timezone set to ' + saved.value)
+    moment.tz.setDefault(saved.value)
+    global.timezone = saved.value
+  } else {
+    winston.debug('Timezone set to ' + setting.value)
+    moment.tz.setDefault(setting.value)
+    global.timezone = setting.value
+  }
 }
 
-function showTourSettingDefault (callback) {
-  SettingsSchema.getSettingByName('showTour:enable', function (err, setting) {
-    if (err) {
-      winston.warn(err)
-      if (_.isFunction(callback)) return callback(err)
-      return false
-    }
+async function showTourSettingDefault () {
+  const setting = await SettingsSchema.getSettingByName('showTour:enable')
 
-    if (!setting) {
-      var defaultShowTour = new SettingsSchema({
-        name: 'showTour:enable',
-        value: 0
-      })
+  if (!setting) {
+    var defaultShowTour = new SettingsSchema({
+      name: 'showTour:enable',
+      value: 0
+    })
 
-      defaultShowTour.save(function (err) {
-        if (err) {
-          winston.warn(err)
-          if (_.isFunction(callback)) return callback(err)
-        }
-
-        if (_.isFunction(callback)) return callback()
-      })
-    } else if (_.isFunction(callback)) return callback()
-  })
+    await defaultShowTour.save()
+  }
 }
 
-function ticketTypeSettingDefault (callback) {
-  SettingsSchema.getSettingByName('ticket:type:default', function (err, setting) {
-    if (err) {
-      winston.warn(err)
-      if (_.isFunction(callback)) {
-        return callback(err)
-      }
-    }
+async function ticketTypeSettingDefault () {
+  const setting = await SettingsSchema.getSettingByName('ticket:type:default')
 
-    if (!setting) {
-      var ticketTypeSchema = require('../models/tickettype')
-      ticketTypeSchema.getTypes(function (err, types) {
-        if (err) {
-          winston.warn(err)
-          if (_.isFunction(callback)) {
-            return callback(err)
-          }
-          return false
-        }
+  if (!setting) {
+    var ticketTypeSchema = require('../models/tickettype')
+    const types = await ticketTypeSchema.getTypes()
 
-        var type = _.first(types)
-        if (!type) return callback('No Types Defined!')
-        if (!_.isObject(type) || _.isUndefined(type._id)) return callback('Invalid Type. Skipping.')
+    var type = _.first(types)
+    if (!type) throw new Error('No Types Defined!')
+    if (!_.isObject(type) || _.isUndefined(type._id)) throw new Error('Invalid Type. Skipping.')
 
-        // Save default ticket type
-        var defaultTicketType = new SettingsSchema({
-          name: 'ticket:type:default',
-          value: type._id
-        })
+    // Save default ticket type
+    var defaultTicketType = new SettingsSchema({
+      name: 'ticket:type:default',
+      value: type._id
+    })
 
-        defaultTicketType.save(function (err) {
-          if (err) {
-            winston.warn(err)
-            if (_.isFunction(callback)) {
-              return callback(err)
-            }
-          }
-
-          if (_.isFunction(callback)) {
-            return callback()
-          }
-        })
-      })
-    } else {
-      if (_.isFunction(callback)) {
-        return callback()
-      }
-    }
-  })
+    await defaultTicketType.save()
+  }
 }
 
 /**
  * Sets default status of tickets during creation.
- * @param {Parameters<async.AsyncFunction>[0]} callback 
  */
-function ticketStatusSettingDefault(callback) {
+async function ticketStatusSettingDefault () {
   const statusSettingName = 'ticket:status:default'
-  callback = _.isFunction(callback) ? callback : () => {}
-  SettingsSchema.getSettingByName(statusSettingName, function(err, setting) { 
-    if (err) {
-      winston.warn(err)
-      return callback(err)
-    }
+  const setting = await SettingsSchema.getSettingByName(statusSettingName)
 
-    if (setting) {
-      return callback()
-    }
+  if (setting) return
 
-    const ticketStatusSchema = require('../models/ticketStatus')
-    ticketStatusSchema.getStatus(function(err, statuses) {
-      if (err) {
-        winston.warn(err)
-        return callback(err)
-      }
+  const ticketStatusSchema = require('../models/ticketStatus')
+  const statuses = await ticketStatusSchema.getStatus()
 
-      const status = _.first(statuses)
-      if (!status) {
-        return callback("No Statuses Defined!")
-      }
+  const status = _.first(statuses)
+  if (!status) {
+    throw new Error('No Statuses Defined!')
+  }
 
-      if (!_.isObject(status) || _.isUndefined(status._id)) {
-        return callback('Invalid Status. Skipping.')
-      }
+  if (!_.isObject(status) || _.isUndefined(status._id)) {
+    throw new Error('Invalid Status. Skipping.')
+  }
 
-      const defaultTicketStatus = new SettingsSchema({
-        name: statusSettingName,
-        value: status._id
-      })
-
-      defaultTicketStatus.save(function(err) {
-        if (err) {
-          winston.warn(err)
-            return callback(err)
-        }
-        return callback()
-      })
-    })
+  const defaultTicketStatus = new SettingsSchema({
+    name: statusSettingName,
+    value: status._id
   })
+
+  await defaultTicketStatus.save()
 }
 
-function ticketPriorityDefaults (callback) {
+async function ticketPriorityDefaults () {
   var priorities = []
 
   var normal = new PrioritySchema({
@@ -428,371 +306,242 @@ function ticketPriorityDefaults (callback) {
   priorities.push(normal)
   priorities.push(urgent)
   priorities.push(critical)
-  async.each(
-    priorities,
-    function (item, next) {
-      PrioritySchema.findOne({ migrationNum: item.migrationNum }, function (err, priority) {
-        if (!err && (_.isUndefined(priority) || _.isNull(priority))) {
-          return item.save(next)
-        }
 
-        return next(err)
-      })
-    },
-    callback
-  )
-}
-
-function normalizeTags (callback) {
-  var tagSchema = require('../models/tag')
-  tagSchema.find({}, function (err, tags) {
-    if (err) return callback(err)
-    async.each(
-      tags,
-      function (tag, next) {
-        tag.save(next)
-      },
-      callback
-    )
-  })
-}
-
-function checkPriorities (callback) {
-  var ticketSchema = require('../models/ticket')
-  var migrateP1 = false
-  var migrateP2 = false
-  var migrateP3 = false
-
-  async.parallel(
-    [
-      function (done) {
-        ticketSchema.collection.countDocuments({ priority: 1 }).then(function (count) {
-          migrateP1 = count > 0
-          return done()
-        })
-      },
-      function (done) {
-        ticketSchema.collection.countDocuments({ priority: 2 }).then(function (count) {
-          migrateP2 = count > 0
-          return done()
-        })
-      },
-      function (done) {
-        ticketSchema.collection.countDocuments({ priority: 3 }).then(function (count) {
-          migrateP3 = count > 0
-          return done()
-        })
-      }
-    ],
-    function () {
-      async.parallel(
-        [
-          function (done) {
-            if (!migrateP1) return done()
-            PrioritySchema.getByMigrationNum(1, function (err, normal) {
-              if (!err) {
-                winston.debug('Converting Priority: Normal')
-                ticketSchema.collection
-                  .updateMany({ priority: 1 }, { $set: { priority: normal._id } })
-                  .then(function (res) {
-                    if (res && res.result) {
-                      if (res.result.ok === 1) {
-                        return done()
-                      }
-
-                      winston.warn(res.message)
-                      return done(res.message)
-                    }
-                  })
-              } else {
-                winston.warn(err.message)
-                return done()
-              }
-            })
-          },
-          function (done) {
-            if (!migrateP2) return done()
-            PrioritySchema.getByMigrationNum(2, function (err, urgent) {
-              if (!err) {
-                winston.debug('Converting Priority: Urgent')
-                ticketSchema.collection
-                  .updateMany({ priority: 2 }, { $set: { priority: urgent._id } })
-                  .then(function (res) {
-                    if (res && res.result) {
-                      if (res.result.ok === 1) {
-                        return done()
-                      }
-
-                      winston.warn(res.message)
-                      return done(res.message)
-                    }
-                  })
-              } else {
-                winston.warn(err.message)
-                return done()
-              }
-            })
-          },
-          function (done) {
-            if (!migrateP3) return done()
-            PrioritySchema.getByMigrationNum(3, function (err, critical) {
-              if (!err) {
-                winston.debug('Converting Priority: Critical')
-                ticketSchema.collection
-                  .updateMany({ priority: 3 }, { $set: { priority: critical._id } })
-                  .then(function (res) {
-                    if (res && res.result) {
-                      if (res.result.ok === 1) {
-                        return done()
-                      }
-
-                      winston.warn(res.message)
-                      return done(res.message)
-                    }
-                  })
-              } else {
-                winston.warn(err.message)
-                return done()
-              }
-            })
-          }
-        ],
-        callback
-      )
+  await Promise.all(priorities.map(async function (item) {
+    const priority = await PrioritySchema.findOne({ migrationNum: item.migrationNum })
+    if (!priority) {
+      await item.save()
     }
-  )
+  }))
 }
 
-function addedDefaultPrioritiesToTicketTypes (callback) {
-  async.waterfall(
-    [
-      function (next) {
-        PrioritySchema.find({ default: true })
-          .then(function (results) {
-            return next(null, results)
-          })
-          .catch(next)
-      },
-      function (priorities, next) {
-        priorities = _.sortBy(priorities, 'migrationNum')
-        var ticketTypeSchema = require('../models/tickettype')
-        ticketTypeSchema.getTypes(function (err, types) {
-          if (err) return next(err)
+async function normalizeTags () {
+  var tagSchema = require('../models/tag')
+  const tags = await tagSchema.find({})
+  await Promise.all(tags.map(async function (tag) {
+    await tag.save()
+  }))
+}
 
-          async.each(
-            types,
-            function (type, done) {
-              var prioritiesToAdd = []
-              if (!type.priorities || type.priorities.length < 1) {
-                type.priorities = []
-                prioritiesToAdd = _.map(priorities, '_id')
-              }
+async function checkPriorities () {
+  var ticketSchema = require('../models/ticket')
 
-              if (prioritiesToAdd.length < 1) {
-                return done()
-              }
+  const [countP1, countP2, countP3] = await Promise.all([
+    ticketSchema.collection.countDocuments({ priority: 1 }),
+    ticketSchema.collection.countDocuments({ priority: 2 }),
+    ticketSchema.collection.countDocuments({ priority: 3 })
+  ])
 
-              type.priorities = _.concat(type.priorities, prioritiesToAdd)
-              type.save(done)
-            },
-            function () {
-              next(null)
-            }
-          )
-        })
+  var migrateP1 = countP1 > 0
+  var migrateP2 = countP2 > 0
+  var migrateP3 = countP3 > 0
+
+  const migrations = []
+
+  if (migrateP1) {
+    migrations.push((async function () {
+      try {
+        const normal = await PrioritySchema.getByMigrationNum(1)
+        winston.debug('Converting Priority: Normal')
+        const res = await ticketSchema.collection.updateMany({ priority: 1 }, { $set: { priority: normal._id } })
+        if (res && res.result && res.result.ok !== 1) {
+          winston.warn(res.message)
+        }
+      } catch (err) {
+        winston.warn(err.message)
       }
-    ],
-    callback
-  )
+    })())
+  }
+
+  if (migrateP2) {
+    migrations.push((async function () {
+      try {
+        const urgent = await PrioritySchema.getByMigrationNum(2)
+        winston.debug('Converting Priority: Urgent')
+        const res = await ticketSchema.collection.updateMany({ priority: 2 }, { $set: { priority: urgent._id } })
+        if (res && res.result && res.result.ok !== 1) {
+          winston.warn(res.message)
+        }
+      } catch (err) {
+        winston.warn(err.message)
+      }
+    })())
+  }
+
+  if (migrateP3) {
+    migrations.push((async function () {
+      try {
+        const critical = await PrioritySchema.getByMigrationNum(3)
+        winston.debug('Converting Priority: Critical')
+        const res = await ticketSchema.collection.updateMany({ priority: 3 }, { $set: { priority: critical._id } })
+        if (res && res.result && res.result.ok !== 1) {
+          winston.warn(res.message)
+        }
+      } catch (err) {
+        winston.warn(err.message)
+      }
+    })())
+  }
+
+  await Promise.all(migrations)
 }
 
-function mailTemplates (callback) {
+async function addedDefaultPrioritiesToTicketTypes () {
+  let priorities = await PrioritySchema.find({ default: true })
+  priorities = _.sortBy(priorities, 'migrationNum')
+
+  var ticketTypeSchema = require('../models/tickettype')
+  const types = await ticketTypeSchema.getTypes()
+
+  await Promise.all(types.map(async function (type) {
+    var prioritiesToAdd = []
+    if (!type.priorities || type.priorities.length < 1) {
+      type.priorities = []
+      prioritiesToAdd = _.map(priorities, '_id')
+    }
+
+    if (prioritiesToAdd.length < 1) {
+      return
+    }
+
+    type.priorities = _.concat(type.priorities, prioritiesToAdd)
+    await type.save()
+  }))
+}
+
+async function mailTemplates () {
   var newTicket = require('./json/mailer-new-ticket')
   var passwordReset = require('./json/mailer-password-reset')
   var templateSchema = require('../models/template')
-  async.parallel(
-    [
-      function (done) {
-        templateSchema.findOne({ name: newTicket.name }, function (err, templates) {
-          if (err) return done(err)
-          if (!templates || templates.length < 1) {
-            return templateSchema.create(newTicket, done)
-          }
 
-          return done()
-        })
-      },
-      function (done) {
-        templateSchema.findOne({ name: passwordReset.name }, function (err, templates) {
-          if (err) return done(err)
-          if (!templates || templates.length < 1) {
-            return templateSchema.create(passwordReset, done)
-          }
+  const [existingNewTicket, existingPasswordReset] = await Promise.all([
+    templateSchema.findOne({ name: newTicket.name }),
+    templateSchema.findOne({ name: passwordReset.name })
+  ])
 
-          return done()
-        })
-      }
-    ],
-    callback
-  )
+  const creates = []
+  if (!existingNewTicket) {
+    creates.push(templateSchema.create(newTicket))
+  }
+  if (!existingPasswordReset) {
+    creates.push(templateSchema.create(passwordReset))
+  }
+  if (creates.length > 0) {
+    await Promise.all(creates)
+  }
 }
 
-function elasticSearchConfToDB (callback) {
+async function elasticSearchConfToDB () {
   const nconf = require('nconf')
   const elasticsearch = {
     enable: nconf.get('elasticsearch:enable') || false,
-    host: nconf.get('elasticsearch:host') || "",
+    host: nconf.get('elasticsearch:host') || '',
     port: nconf.get('elasticsearch:port') || 9200
   }
 
   nconf.set('elasticsearch', {})
 
-  async.parallel(
-    [
-      function (done) {
-        nconf.save(done)
-      },
-      function (done) {
-        // if (!elasticsearch.enable) return done()
-        SettingsSchema.getSettingByName('es:enable', function (err, setting) {
-          if (err) return done(err)
-          if (!setting) {
-            SettingsSchema.create(
-              {
-                name: 'es:enable',
-                value: elasticsearch.enable
-              },
-              done
-            )
-          } else done()
-        })
-      },
-      function (done) {
-        if (!elasticsearch.host) elasticsearch.host = 'localhost'
-        SettingsSchema.getSettingByName('es:host', function (err, setting) {
-          if (err) return done(err)
-          if (!setting) {
-            SettingsSchema.create(
-              {
-                name: 'es:host',
-                value: elasticsearch.host
-              },
-              done
-            )
-          } else done()
-        })
-      },
-      function (done) {
-        if (!elasticsearch.port) return done()
-        SettingsSchema.getSettingByName('es:port', function (err, setting) {
-          if (err) return done(err)
-          if (!setting) {
-            SettingsSchema.create(
-              {
-                name: 'es:port',
-                value: elasticsearch.port
-              },
-              done
-            )
-          } else done()
-        })
+  await new Promise(function (resolve, reject) {
+    var resolved = false
+    nconf.save(function (err) {
+      if (resolved) return
+      resolved = true
+      if (err) return reject(err)
+      resolve()
+    })
+    // Safety: if nconf has no file store, the callback may never fire
+    setTimeout(function () {
+      if (!resolved) {
+        resolved = true
+        resolve()
       }
-    ],
-    callback
-  )
+    }, 3000)
+  })
+
+  const [esEnableSetting, esHostSetting, esPortSetting] = await Promise.all([
+    SettingsSchema.getSettingByName('es:enable'),
+    SettingsSchema.getSettingByName('es:host'),
+    SettingsSchema.getSettingByName('es:port')
+  ])
+
+  const creates = []
+
+  if (!esEnableSetting) {
+    creates.push(SettingsSchema.create({
+      name: 'es:enable',
+      value: elasticsearch.enable
+    }))
+  }
+
+  if (!esHostSetting) {
+    if (!elasticsearch.host) elasticsearch.host = 'localhost'
+    creates.push(SettingsSchema.create({
+      name: 'es:host',
+      value: elasticsearch.host
+    }))
+  }
+
+  if (!esPortSetting && elasticsearch.port) {
+    creates.push(SettingsSchema.create({
+      name: 'es:port',
+      value: elasticsearch.port
+    }))
+  }
+
+  if (creates.length > 0) {
+    await Promise.all(creates)
+  }
 }
 
-function installationID (callback) {
+async function installationID () {
   const Chance = require('chance')
   const chance = new Chance()
-  SettingsSchema.getSettingByName('gen:installid', function (err, setting) {
-    if (err) return callback(err)
-    if (!setting) {
-      SettingsSchema.create(
-        {
-          name: 'gen:installid',
-          value: chance.guid()
-        },
-        callback
-      )
-    } else {
-      return callback()
-    }
-  })
+  const setting = await SettingsSchema.getSettingByName('gen:installid')
+  if (!setting) {
+    await SettingsSchema.create({
+      name: 'gen:installid',
+      value: chance.guid()
+    })
+  }
 }
 
-function maintenanceModeDefault (callback) {
-  SettingsSchema.getSettingByName('maintenanceMode:enable', function (err, setting) {
-    if (err) return callback(err)
-    if (!setting) {
-      SettingsSchema.create(
-        {
-          name: 'maintenanceMode:enable',
-          value: false
-        },
-        callback
-      )
-    } else {
-      return callback()
-    }
-  })
+async function maintenanceModeDefault () {
+  const setting = await SettingsSchema.getSettingByName('maintenanceMode:enable')
+  if (!setting) {
+    await SettingsSchema.create({
+      name: 'maintenanceMode:enable',
+      value: false
+    })
+  }
 }
 
-settingsDefaults.init = function (callback) {
+settingsDefaults.init = async function (callback) {
   winston.debug('Checking Default Settings...')
-  async.series(
-    [
-      function (done) {
-        return createDirectories(done)
-      },
-      function (done) {
-        return downloadWin32MongoDBTools(done)
-      },
-      function (done) {
-        return rolesDefault(done)
-      },
-      function (done) {
-        return defaultUserRole(done)
-      },
-      function (done) {
-        return timezoneDefault(done)
-      },
-      function (done) {
-        return ticketTypeSettingDefault(done)
-      },
-      function (done) {
-        return ticketPriorityDefaults(done)
-      },
-      function (done) {
-        return ticketStatusSettingDefault(done)
-      },
-      function (done) {
-        return addedDefaultPrioritiesToTicketTypes(done)
-      },
-      function (done) {
-        return checkPriorities(done)
-      },
-      function (done) {
-        return normalizeTags(done)
-      },
-      function (done) {
-        return mailTemplates(done)
-      },
-      function (done) {
-        return elasticSearchConfToDB(done)
-      },
-      function (done) {
-        return maintenanceModeDefault(done)
-      },
-      function (done) {
-        return installationID(done)
-      }
-    ],
-    function (err) {
-      if (err) winston.warn(err)
-      if (_.isFunction(callback)) return callback()
-    }
-  )
+  try {
+    await createDirectories()
+    await new Promise(function (resolve, reject) {
+      downloadWin32MongoDBTools(function (err) {
+        if (err) return reject(err)
+        resolve()
+      })
+    })
+    await rolesDefault()
+    await defaultUserRole()
+    await timezoneDefault()
+    await ticketTypeSettingDefault()
+    await ticketPriorityDefaults()
+    await ticketStatusSettingDefault()
+    await addedDefaultPrioritiesToTicketTypes()
+    await checkPriorities()
+    await normalizeTags()
+    await mailTemplates()
+    await elasticSearchConfToDB()
+    await maintenanceModeDefault()
+    await installationID()
+  } catch (err) {
+    winston.warn(err)
+  }
+  if (_.isFunction(callback)) return callback()
 }
 
 module.exports = settingsDefaults

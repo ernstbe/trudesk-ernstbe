@@ -2,22 +2,14 @@
 /* globals server */
 var expect = require('chai').expect
 var request = require('supertest')
-var superagent = require('superagent')
 
 describe('api/api.js', function () {
-  var agent = superagent.agent()
-
   it('should return 401 for failed login', function (done) {
     var user = { username: 'test', password: '' }
-    agent
-      .post('http://localhost:3111/api/v1/login')
+    request(server)
+      .post('/api/v1/login')
       .send(user)
-      .end(function (err, res) {
-        expect(err).to.exist
-        expect(err.status).to.equal(401)
-
-        done()
-      })
+      .expect(401, done)
   })
 
   it('should login', function (done) {

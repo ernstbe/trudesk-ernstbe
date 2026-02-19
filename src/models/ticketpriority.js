@@ -49,22 +49,22 @@ prioritySchema.virtual('durationFormatted').get(function () {
     .format('Y [year], M [month], d [day], h [hour], m [min]', { trim: 'both' })
 })
 
-prioritySchema.statics.getPriority = function (_id, callback) {
+prioritySchema.statics.getPriority = async function (_id) {
   return this.model(COLLECTION)
     .findOne({ _id: _id })
-    .exec(callback)
+    .exec()
 }
 
-prioritySchema.statics.getPriorities = function (callback) {
+prioritySchema.statics.getPriorities = async function () {
   return this.model(COLLECTION)
     .find({})
-    .exec(callback)
+    .exec()
 }
 
-prioritySchema.statics.getByMigrationNum = function (num, callback) {
-  var q = this.model(COLLECTION).findOne({ migrationNum: num })
-
-  return q.exec(callback)
+prioritySchema.statics.getByMigrationNum = async function (num) {
+  return this.model(COLLECTION)
+    .findOne({ migrationNum: num })
+    .exec()
 }
 
 module.exports = mongoose.model(COLLECTION, prioritySchema)

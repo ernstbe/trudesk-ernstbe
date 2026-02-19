@@ -56,22 +56,20 @@ function mainRoutes (router, middleware, controllers) {
   router.get('/register', controllers.accounts.signup)
   router.get('/signup', controllers.accounts.signup)
 
-  router.get('/logoimage', function (req, res) {
+  router.get('/logoimage', async function (req, res) {
     const s = require('../models/setting')
-    const _ = require('lodash')
-    s.getSettingByName('gen:customlogo', function (err, hasCustomLogo) {
-      if (!err && hasCustomLogo && hasCustomLogo.value) {
-        s.getSettingByName('gen:customlogofilename', function (err, logoFilename) {
-          if (!err && logoFilename && !_.isUndefined(logoFilename)) {
-            return res.send('/assets/topLogo.png')
-          }
-
-          return res.send('/img/defaultLogoLight.png')
-        })
-      } else {
-        return res.send('/img/defaultLogoLight.png')
+    try {
+      const hasCustomLogo = await s.getSettingByName('gen:customlogo')
+      if (hasCustomLogo && hasCustomLogo.value) {
+        const logoFilename = await s.getSettingByName('gen:customlogofilename')
+        if (logoFilename && logoFilename.value) {
+          return res.send('/assets/topLogo.png')
+        }
       }
-    })
+      return res.send('/img/defaultLogoLight.png')
+    } catch (err) {
+      return res.send('/img/defaultLogoLight.png')
+    }
   })
 
   // Maintenance

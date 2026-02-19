@@ -13,7 +13,6 @@
  */
 
 const _ = require('lodash')
-const async = require('async')
 const winston = require('../../../logger')
 const Chance = require('chance')
 const apiUtil = require('../apiUtils')
@@ -128,7 +127,7 @@ accountsApi.create = async function (req, res) {
   }
 }
 
-accountsApi.get = function (req, res) {
+accountsApi.get = async function (req, res) {
   const query = req.query
   const type = query.type || 'customers'
   const limit = query.limit ? Number(query.limit) : 25
@@ -140,111 +139,64 @@ accountsApi.get = function (req, res) {
     showDeleted: query.showDeleted && query.showDeleted === 'true'
   }
 
-  switch (type) {
-    case 'all':
-      User.getUserWithObject(obj, function (err, accounts) {
-        if (err) return apiUtil.sendApiError(res, 500, err.message)
-
+  try {
+    switch (type) {
+      case 'all': {
+        const accounts = await User.getUserWithObject(obj)
         return apiUtil.sendApiSuccess(res, { accounts: accounts, count: accounts.length })
-      })
-      break
-    case 'customers':
-      User.getCustomers(obj, function (err, accounts) {
-        if (err) return apiUtil.sendApiError(res, 500, err.message)
-
+      }
+      case 'customers': {
+        const accounts = await User.getCustomers(obj)
         const resAccounts = []
-
-        async.eachSeries(
-          accounts,
-          function (account, next) {
-            Group.getAllGroupsOfUser(account._id, function (err, groups) {
-              if (err) return next(err)
-              const a = account.toObject()
-              a.groups = groups.map(function (group) {
-                return { name: group.name, _id: group._id }
-              })
-              resAccounts.push(a)
-              next()
-            })
-          },
-          function (err) {
-            if (err) return apiUtil.sendApiError(res, 500, err.message)
-
-            return apiUtil.sendApiSuccess(res, { accounts: resAccounts, count: resAccounts.length })
-          }
-        )
-      })
-      break
-    case 'agents':
-      User.getAgents(obj, function (err, accounts) {
-        if (err) return apiUtil.sendApiError(res, 500, err.message)
-
+        for (const account of accounts) {
+          const groups = await Group.getAllGroupsOfUser(account._id)
+          const a = account.toObject()
+          a.groups = groups.map(function (group) {
+            return { name: group.name, _id: group._id }
+          })
+          resAccounts.push(a)
+        }
+        return apiUtil.sendApiSuccess(res, { accounts: resAccounts, count: resAccounts.length })
+      }
+      case 'agents': {
+        const accounts = await User.getAgents(obj)
         const resAccounts = []
-        async.eachSeries(
-          accounts,
-          function (account, next) {
-            const a = account.toObject()
-            Department.getUserDepartments(account._id, function (err, departments) {
-              if (err) return next(err)
-
-              a.departments = departments.map(function (department) {
-                return { name: department.name, _id: department._id }
-              })
-
-              Team.getTeamsOfUser(account._id, function (err, teams) {
-                if (err) return next(err)
-                a.teams = teams.map(function (team) {
-                  return { name: team.name, _id: team._id }
-                })
-                resAccounts.push(a)
-                next()
-              })
-            })
-          },
-          function (err) {
-            if (err) return apiUtil.sendApiError(res, 500, err.message)
-
-            return apiUtil.sendApiSuccess(res, { accounts: resAccounts, count: resAccounts.length })
-          }
-        )
-      })
-      break
-    case 'admins':
-      User.getAdmins(obj, function (err, accounts) {
-        if (err) return apiUtil.sendApiError(res, 500, err.message)
-
-        var resAccounts = []
-        async.eachSeries(
-          accounts,
-          function (account, next) {
-            var a = account.toObject()
-            Department.getUserDepartments(account._id, function (err, departments) {
-              if (err) return next(err)
-
-              a.departments = departments.map(function (department) {
-                return { name: department.name, _id: department._id }
-              })
-
-              Team.getTeamsOfUser(account._id, function (err, teams) {
-                if (err) return next(err)
-                a.teams = teams.map(function (team) {
-                  return { name: team.name, _id: team._id }
-                })
-                resAccounts.push(a)
-                next()
-              })
-            })
-          },
-          function (err) {
-            if (err) return apiUtil.sendApiError(res, 500, err.message)
-
-            return apiUtil.sendApiSuccess(res, { accounts: resAccounts, count: resAccounts.length })
-          }
-        )
-      })
-      break
-    default:
-      return apiUtil.sendApiError_InvalidPostData(res)
+        for (const account of accounts) {
+          const a = account.toObject()
+          const departments = await Department.getUserDepartments(account._id)
+          a.departments = departments.map(function (department) {
+            return { name: department.name, _id: department._id }
+          })
+          const teams = await Team.getTeamsOfUser(account._id)
+          a.teams = teams.map(function (team) {
+            return { name: team.name, _id: team._id }
+          })
+          resAccounts.push(a)
+        }
+        return apiUtil.sendApiSuccess(res, { accounts: resAccounts, count: resAccounts.length })
+      }
+      case 'admins': {
+        const accounts = await User.getAdmins(obj)
+        const resAccounts = []
+        for (const account of accounts) {
+          const a = account.toObject()
+          const departments = await Department.getUserDepartments(account._id)
+          a.departments = departments.map(function (department) {
+            return { name: department.name, _id: department._id }
+          })
+          const teams = await Team.getTeamsOfUser(account._id)
+          a.teams = teams.map(function (team) {
+            return { name: team.name, _id: team._id }
+          })
+          resAccounts.push(a)
+        }
+        return apiUtil.sendApiSuccess(res, { accounts: resAccounts, count: resAccounts.length })
+      }
+      default:
+        return apiUtil.sendApiError_InvalidPostData(res)
+    }
+  } catch (err) {
+    return apiUtil.sendApiError(res, 500, err.message)
   }
 }
 
@@ -431,22 +383,22 @@ accountsApi.verifyMFA = async (req, res) => {
   req.user.tOTPKey = payload.tOTPKey
 
   const passport = require('../../../passport')
-  passport().authenticate('totp-verify', (err, success) => {
+  passport().authenticate('totp-verify', async (err, success) => {
     if (err || !success) return apiUtil.sendApiError(res, 400, 'Invalid Verification')
 
-    User.findOne({ _id: req.user._id }, function (err, user) {
-      if (err) return apiUtil.sendApiError(res, 404, 'Invalid Verification')
+    try {
+      const user = await User.findOne({ _id: req.user._id })
+      if (!user) return apiUtil.sendApiError(res, 404, 'Invalid Verification')
 
       user.tOTPKey = req.user.tOTPKey
       user.tOTPPeriod = 30
       user.hasL2Auth = true
 
-      user.save(function (err) {
-        if (err) return apiUtil.sendApiError(res, 500, err.message)
-
-        return apiUtil.sendApiSuccess(res)
-      })
-    })
+      await user.save()
+      return apiUtil.sendApiSuccess(res)
+    } catch (e) {
+      return apiUtil.sendApiError(res, 500, e.message)
+    }
   })(req, res)
 }
 

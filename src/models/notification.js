@@ -32,23 +32,23 @@ var notificationSchema = mongoose.Schema({
   unread: { type: Boolean, default: true }
 })
 
-notificationSchema.methods.markRead = function (callback) {
+notificationSchema.methods.markRead = async function () {
   this.unread = false
 
-  return callback(null, true)
+  return true
 }
 
-notificationSchema.statics.getNotification = function (id, callback) {
+notificationSchema.statics.getNotification = async function (id) {
   if (_.isUndefined(id)) {
-    return callback('Invalid ObjectId - NotificationSchema.GetNotification()', null)
+    throw new Error('Invalid ObjectId - NotificationSchema.GetNotification()')
   }
 
-  return this.model(COLLECTION).findOne({ _id: id }, callback)
+  return this.model(COLLECTION).findOne({ _id: id })
 }
 
-notificationSchema.statics.findAllForUser = function (oId, callback) {
+notificationSchema.statics.findAllForUser = async function (oId) {
   if (_.isUndefined(oId)) {
-    return callback('Invalid ObjectId - NotificationSchema.FindAllForUser()', null)
+    throw new Error('Invalid ObjectId - NotificationSchema.FindAllForUser()')
   }
 
   var q = this.model(COLLECTION)
@@ -56,41 +56,41 @@ notificationSchema.statics.findAllForUser = function (oId, callback) {
     .sort({ created: -1 })
     .limit(100)
 
-  return q.exec(callback)
+  return q.exec()
 }
 
-notificationSchema.statics.getForUserWithLimit = function (oId, callback) {
-  if (_.isUndefined(oId)) return callback('Invalid ObjectId - NotificationSchema.GetForUserWithLimit()', null)
+notificationSchema.statics.getForUserWithLimit = async function (oId) {
+  if (_.isUndefined(oId)) throw new Error('Invalid ObjectId - NotificationSchema.GetForUserWithLimit()')
 
   return this.model(COLLECTION)
     .find({ owner: oId })
     .sort({ created: -1 })
     .limit(5)
-    .exec(callback)
+    .exec()
 }
 
-notificationSchema.statics.getCount = function (oId, callback) {
+notificationSchema.statics.getCount = async function (oId) {
   if (_.isUndefined(oId)) {
-    return callback('Invalid ObjectId - NotificationSchema.GetCount()', null)
+    throw new Error('Invalid ObjectId - NotificationSchema.GetCount()')
   }
 
-  return this.model(COLLECTION).countDocuments({ owner: oId }, callback)
+  return this.model(COLLECTION).countDocuments({ owner: oId })
 }
 
-notificationSchema.statics.getUnreadCount = function (oId, callback) {
+notificationSchema.statics.getUnreadCount = async function (oId) {
   if (_.isUndefined(oId)) {
-    return callback('Invalid ObjectId - NotificationSchema.GetUnreadCount()', null)
+    throw new Error('Invalid ObjectId - NotificationSchema.GetUnreadCount()')
   }
 
-  return this.model(COLLECTION).countDocuments({ owner: oId, unread: true }, callback)
+  return this.model(COLLECTION).countDocuments({ owner: oId, unread: true })
 }
 
-notificationSchema.statics.clearNotifications = function (oId, callback) {
+notificationSchema.statics.clearNotifications = async function (oId) {
   if (_.isUndefined(oId)) {
-    return callback('Invalid UserId - NotificationSchema.ClearNotifications()', null)
+    throw new Error('Invalid UserId - NotificationSchema.ClearNotifications()')
   }
 
-  return this.model(COLLECTION).deleteMany({ owner: oId }, callback)
+  return this.model(COLLECTION).deleteMany({ owner: oId })
 }
 
 module.exports = mongoose.model(COLLECTION, notificationSchema)

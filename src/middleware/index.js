@@ -28,7 +28,7 @@ const flash = require('connect-flash')
 const bodyParser = require('body-parser')
 const cookieParser = require('cookie-parser')
 const session = require('express-session')
-const MongoStore = require('connect-mongo')
+const MongoStore = require('connect-mongo').default || require('connect-mongo').MongoStore
 const passportConfig = require('../passport')()
 
 let middleware = {}
@@ -85,21 +85,23 @@ module.exports = function (app, db, callback) {
   async.waterfall(
     [
       function (next) {
-        const sessionStore = MongoStore.create({
-          client: db.connection.getClient(),
-          autoReconnect: true
-        })
-        app.use(
-          session({
-            secret: sessionSecret,
-            cookie,
-            store: sessionStore,
-            saveUninitialized: false,
-            resave: false
+        try {
+          const sessionStore = MongoStore.create({
+            client: db.connection.getClient()
           })
-        )
-
-        next(null, sessionStore)
+          app.use(
+            session({
+              secret: sessionSecret,
+              cookie,
+              store: sessionStore,
+              saveUninitialized: false,
+              resave: false
+            })
+          )
+          next(null, sessionStore)
+        } catch (e) {
+          next(e)
+        }
       },
       function (store, next) {
         app.use(passportConfig.initialize())
@@ -146,6 +148,7 @@ module.exports = function (app, db, callback) {
         )
 
         // Uncomment to enable plugins
+
         return next(null, store)
         // global.plugins = [];
         // var dive = require('dive');
@@ -169,9 +172,11 @@ module.exports = function (app, db, callback) {
     ],
     function (err, s) {
       if (err) {
+
         winston.error(err)
         throw new Error(err)
       }
+
 
       callback(middleware, s)
     }

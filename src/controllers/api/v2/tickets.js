@@ -13,7 +13,6 @@
  */
 
 const _ = require('lodash')
-const async = require('async')
 const logger = require('../../../logger')
 const apiUtils = require('../apiUtils')
 const Models = require('../../../models')
@@ -116,108 +115,107 @@ ticketsV2.get = async (req, res) => {
 ticketsV2.single = async function (req, res) {
   const uid = req.params.uid
   if (!uid) return apiUtils.sendApiError(res, 400, 'Invalid Parameters')
-  Models.Ticket.getTicketByUid(uid, function (err, ticket) {
-    if (err) return apiUtils.sendApiError(res, 500, err)
+
+  try {
+    const ticket = await Models.Ticket.getTicketByUid(uid)
+    if (!ticket) return apiUtils.sendApiError(res, 404, 'Ticket not found')
 
     if (req.user.role.isAdmin || req.user.role.isAgent) {
-      Models.Department.getDepartmentGroupsOfUser(req.user._id, function (err, dbGroups) {
-        if (err) return apiUtils.sendApiError(res, 500, err)
-
-        const groups = dbGroups.map(function (g) {
-          return g._id.toString()
-        })
-
-        if (groups.includes(ticket.group._id.toString())) {
-          return apiUtils.sendApiSuccess(res, { ticket })
-        } else {
-          return apiUtils.sendApiError(res, 403, 'Forbidden')
-        }
+      const dbGroups = await Models.Department.getDepartmentGroupsOfUser(req.user._id)
+      const groups = dbGroups.map(function (g) {
+        return g._id.toString()
       })
+
+      if (groups.includes(ticket.group._id.toString())) {
+        return apiUtils.sendApiSuccess(res, { ticket })
+      } else {
+        return apiUtils.sendApiError(res, 403, 'Forbidden')
+      }
     } else {
-      Models.Group.getAllGroupsOfUser(req.user._id, function (err, userGroups) {
-        if (err) return apiUtils.sendApiError(res, 500, err)
-
-        const groupIds = userGroups.map(function (m) {
-          return m._id.toString()
-        })
-
-        if (groupIds.includes(ticket.group._id.toString())) {
-          return apiUtils.sendApiSuccess(res, { ticket })
-        } else {
-          return apiUtils.sendApiError(res, 403, 'Forbidden')
-        }
+      const userGroups = await Models.Group.getAllGroupsOfUser(req.user._id)
+      const groupIds = userGroups.map(function (m) {
+        return m._id.toString()
       })
+
+      if (groupIds.includes(ticket.group._id.toString())) {
+        return apiUtils.sendApiSuccess(res, { ticket })
+      } else {
+        return apiUtils.sendApiError(res, 403, 'Forbidden')
+      }
     }
-  })
+  } catch (err) {
+    return apiUtils.sendApiError(res, 500, err.message || err)
+  }
 }
 
-ticketsV2.update = function (req, res) {
+ticketsV2.update = async function (req, res) {
   const uid = req.params.uid
   const putTicket = req.body.ticket
   if (!uid || !putTicket) return apiUtils.sendApiError(res, 400, 'Invalid Parameters')
 
-  // todo: complete this...
-  Models.Ticket.getTicketByUid(uid, function (err, ticket) {
-    if (err) return apiUtils.sendApiError(res, 500, err.message)
-
+  try {
+    // todo: complete this...
+    const ticket = await Models.Ticket.getTicketByUid(uid)
     return apiUtils.sendApiSuccess(res, ticket)
-  })
+  } catch (err) {
+    return apiUtils.sendApiError(res, 500, err.message)
+  }
 }
 
-ticketsV2.batchUpdate = function (req, res) {
+ticketsV2.batchUpdate = async function (req, res) {
   const batch = req.body.batch
   if (!_.isArray(batch)) return apiUtils.sendApiError_InvalidPostData(res)
 
-  async.each(
-    batch,
-    function (batchTicket, next) {
-      Models.Ticket.getTicketById(batchTicket.id, function (err, ticket) {
-        if (err) return next(err)
+  try {
+    await Promise.all(batch.map(async (batchTicket) => {
+      const ticket = await Models.Ticket.getTicketById(batchTicket.id)
 
-        if (!_.isUndefined(batchTicket.status)) {
-          ticket.status = batchTicket.status
-          const HistoryItem = {
-            action: 'ticket:set:status',
-            description: 'status set to: ' + batchTicket.status,
-            owner: req.user._id
-          }
-
-          ticket.history.push(HistoryItem)
+      if (!_.isUndefined(batchTicket.status)) {
+        ticket.status = batchTicket.status
+        const HistoryItem = {
+          action: 'ticket:set:status',
+          description: 'status set to: ' + batchTicket.status,
+          owner: req.user._id
         }
 
-        return ticket.save(next)
-      })
-    },
-    function (err) {
-      if (err) return apiUtils.sendApiError(res, 400, err.message)
+        ticket.history.push(HistoryItem)
+      }
 
-      return apiUtils.sendApiSuccess(res)
-    }
-  )
+      await ticket.save()
+    }))
+
+    return apiUtils.sendApiSuccess(res)
+  } catch (err) {
+    return apiUtils.sendApiError(res, 400, err.message)
+  }
 }
 
-ticketsV2.delete = function (req, res) {
+ticketsV2.delete = async function (req, res) {
   const uid = req.params.uid
   if (!uid) return apiUtils.sendApiError(res, 400, 'Invalid Parameters')
 
-  Models.Ticket.softDeleteUid(uid, function (err, success) {
-    if (err) return apiUtils.sendApiError(res, 500, err.message)
+  try {
+    const success = await Models.Ticket.softDeleteUid(uid)
     if (!success) return apiUtils.sendApiError(res, 500, 'Unable to delete ticket')
 
     return apiUtils.sendApiSuccess(res, { deleted: true })
-  })
+  } catch (err) {
+    return apiUtils.sendApiError(res, 500, err.message)
+  }
 }
 
-ticketsV2.permDelete = function (req, res) {
+ticketsV2.permDelete = async function (req, res) {
   const id = req.params.id
   if (!id) return apiUtils.sendApiError(res, 400, 'Invalid Parameters')
 
-  Models.Ticket.deleteOne({ _id: id }, function (err, success) {
-    if (err) return apiUtils.sendApiError(res, 400, err.message)
+  try {
+    const success = await Models.Ticket.deleteOne({ _id: id })
     if (!success) return apiUtils.sendApiError(res, 400, 'Unable to delete ticket')
 
     return apiUtils.sendApiSuccess(res, { deleted: true })
-  })
+  } catch (err) {
+    return apiUtils.sendApiError(res, 400, err.message)
+  }
 }
 
 ticketsV2.transferToThirdParty = async (req, res) => {

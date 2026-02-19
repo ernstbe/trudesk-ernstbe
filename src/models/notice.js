@@ -48,28 +48,28 @@ noticeSchema.pre('save', function (next) {
   return next()
 })
 
-noticeSchema.statics.getNotices = function (callback) {
+noticeSchema.statics.getNotices = async function () {
   return this.model(COLLECTION)
     .find({})
-    .exec(callback)
+    .exec()
 }
 
-noticeSchema.statics.getNotice = function (id, callback) {
+noticeSchema.statics.getNotice = async function (id) {
   return this.model(COLLECTION)
     .findOne({ _id: id })
-    .exec(callback)
+    .exec()
 }
 
-noticeSchema.statics.getNoticeByName = function (name, callback) {
+noticeSchema.statics.getNoticeByName = async function (name) {
   return this.model(COLLECTION)
     .find({ name: name })
-    .exec(callback)
+    .exec()
 }
 
-noticeSchema.statics.getActive = function (callback) {
+noticeSchema.statics.getActive = async function () {
   return this.model(COLLECTION)
     .findOne({ active: true })
-    .exec(callback)
+    .exec()
 }
 
 module.exports = mongoose.model(COLLECTION, noticeSchema)

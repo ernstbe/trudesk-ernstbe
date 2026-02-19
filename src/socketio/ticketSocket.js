@@ -12,7 +12,6 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 var _ = require('lodash')
-var async = require('async')
 var winston = require('../logger')
 var marked = require('marked')
 var sanitizeHtml = require('sanitize-html')
@@ -92,96 +91,75 @@ events.onUpdateTicket = function (socket) {
 }
 
 events.onUpdateAssigneeList = function (socket) {
-  socket.on(socketEvents.TICKETS_ASSIGNEE_LOAD, function () {
-    roleSchema.getAgentRoles(function (err, roles) {
-      if (err) return true
-      userSchema.find({ role: { $in: roles }, deleted: false }, function (err, users) {
-        if (err) return true
+  socket.on(socketEvents.TICKETS_ASSIGNEE_LOAD, async function () {
+    try {
+      const roles = await roleSchema.getAgentRoles()
+      const users = await userSchema.find({ role: { $in: roles }, deleted: false })
 
-        var sortedUser = _.sortBy(users, 'fullname')
+      var sortedUser = _.sortBy(users, 'fullname')
 
-        utils.sendToSelf(socket, socketEvents.TICKETS_ASSIGNEE_LOAD, sortedUser)
-      })
-    })
+      utils.sendToSelf(socket, socketEvents.TICKETS_ASSIGNEE_LOAD, sortedUser)
+    } catch (err) {
+      winston.warn(err)
+    }
   })
 }
 
 events.onSetAssignee = function (socket) {
-  socket.on(socketEvents.TICKETS_ASSIGNEE_SET, function (data) {
+  socket.on(socketEvents.TICKETS_ASSIGNEE_SET, async function (data) {
     var userId = data._id
     var ownerId = socket.request.user._id
     var ticketId = data.ticketId
-    ticketSchema.getTicketById(ticketId, function (err, ticket) {
-      if (err) return true
+    try {
+      let ticket = await ticketSchema.getTicketById(ticketId)
 
-      async.parallel(
-        {
-          setAssignee: function (callback) {
-            ticket.setAssignee(ownerId, userId, function (err, ticket) {
-              callback(err, ticket)
-            })
-          },
-          subscriber: function (callback) {
-            ticket.addSubscriber(userId, function (err, ticket) {
-              callback(err, ticket)
-            })
-          }
-        },
-        function (err, results) {
-          if (err) return true
+      const [setAssigneeResult, subscriberResult] = await Promise.all([
+        ticket.setAssignee(ownerId, userId),
+        ticket.addSubscriber(userId)
+      ])
 
-          ticket = results.subscriber
-          ticket.save(function (err, ticket) {
-            if (err) return true
-            ticket.populate('assignee', function (err, ticket) {
-              if (err) return true
+      ticket = subscriberResult
+      ticket = await ticket.save()
+      ticket = await ticket.populate('assignee')
 
-              emitter.emit('ticket:subscriber:update', {
-                user: userId,
-                subscribe: true
-              })
+      emitter.emit('ticket:subscriber:update', {
+        user: userId,
+        subscribe: true
+      })
 
-              emitter.emit(socketEvents.TICKETS_ASSIGNEE_SET, {
-                assigneeId: ticket.assignee._id,
-                ticketId: ticket._id,
-                ticketUid: ticket.uid,
-                hostname: socket.handshake.headers.host
-              })
+      emitter.emit(socketEvents.TICKETS_ASSIGNEE_SET, {
+        assigneeId: ticket.assignee._id,
+        ticketId: ticket._id,
+        ticketUid: ticket.uid,
+        hostname: socket.handshake.headers.host
+      })
 
-              // emitter.emit('ticket:updated', ticket)
-              utils.sendToAllConnectedClients(io, socketEvents.TICKETS_ASSIGNEE_UPDATE, ticket)
-            })
-          })
-        }
-      )
-    })
+      // emitter.emit('ticket:updated', ticket)
+      utils.sendToAllConnectedClients(io, socketEvents.TICKETS_ASSIGNEE_UPDATE, ticket)
+    } catch (err) {
+      winston.warn(err)
+    }
   })
 }
 
 events.onSetTicketType = function (socket) {
-  socket.on(socketEvents.TICKETS_TYPE_SET, function (data) {
+  socket.on(socketEvents.TICKETS_TYPE_SET, async function (data) {
     const ticketId = data._id
     const typeId = data.value
     const ownerId = socket.request.user._id
 
     if (_.isUndefined(ticketId) || _.isUndefined(typeId)) return true
-    ticketSchema.getTicketById(ticketId, function (err, ticket) {
-      if (err) return true
-      ticket.setTicketType(ownerId, typeId, function (err, t) {
-        if (err) return true
+    try {
+      let ticket = await ticketSchema.getTicketById(ticketId)
+      let t = await ticket.setTicketType(ownerId, typeId)
+      let tt = await t.save()
+      await ticketSchema.populate(tt, 'type')
 
-        t.save(function (err, tt) {
-          if (err) return true
-
-          ticketSchema.populate(tt, 'type', function (err) {
-            if (err) return true
-
-            // emitter.emit('ticket:updated', tt)
-            utils.sendToAllConnectedClients(io, socketEvents.TICKETS_UI_TYPE_UPDATE, tt)
-          })
-        })
-      })
-    })
+      // emitter.emit('ticket:updated', tt)
+      utils.sendToAllConnectedClients(io, socketEvents.TICKETS_UI_TYPE_UPDATE, tt)
+    } catch (err) {
+      winston.warn(err)
+    }
   })
 }
 
@@ -201,31 +179,23 @@ events.onUpdateTicketTags = socket => {
 }
 
 events.onSetTicketPriority = function (socket) {
-  socket.on(socketEvents.TICKETS_PRIORITY_SET, function (data) {
+  socket.on(socketEvents.TICKETS_PRIORITY_SET, async function (data) {
     const ticketId = data._id
     const priority = data.value
     const ownerId = socket.request.user._id
 
     if (_.isUndefined(ticketId) || _.isUndefined(priority)) return true
-    ticketSchema.getTicketById(ticketId, function (err, ticket) {
-      if (err) return true
-      prioritySchema.getPriority(priority, function (err, p) {
-        if (err) {
-          winston.debug(err)
-          return true
-        }
+    try {
+      const ticket = await ticketSchema.getTicketById(ticketId)
+      const p = await prioritySchema.getPriority(priority)
+      const t = await ticket.setTicketPriority(ownerId, p)
+      const tt = await t.save()
 
-        ticket.setTicketPriority(ownerId, p, function (err, t) {
-          if (err) return true
-          t.save(function (err, tt) {
-            if (err) return true
-
-            // emitter.emit('ticket:updated', tt)
-            utils.sendToAllConnectedClients(io, socketEvents.TICKETS_UI_PRIORITY_UPDATE, tt)
-          })
-        })
-      })
-    })
+      // emitter.emit('ticket:updated', tt)
+      utils.sendToAllConnectedClients(io, socketEvents.TICKETS_UI_PRIORITY_UPDATE, tt)
+    } catch (err) {
+      winston.debug(err)
+    }
   })
 }
 
@@ -247,56 +217,45 @@ events.onClearAssignee = socket => {
 }
 
 events.onSetTicketGroup = function (socket) {
-  socket.on(socketEvents.TICKETS_GROUP_SET, function (data) {
+  socket.on(socketEvents.TICKETS_GROUP_SET, async function (data) {
     const ticketId = data._id
     const groupId = data.value
     const ownerId = socket.request.user._id
 
     if (_.isUndefined(ticketId) || _.isUndefined(groupId)) return true
 
-    ticketSchema.getTicketById(ticketId, function (err, ticket) {
-      if (err) return true
+    try {
+      let ticket = await ticketSchema.getTicketById(ticketId)
+      let t = await ticket.setTicketGroup(ownerId, groupId)
+      let tt = await t.save()
+      await ticketSchema.populate(tt, 'group')
 
-      ticket.setTicketGroup(ownerId, groupId, function (err, t) {
-        if (err) return true
-
-        t.save(function (err, tt) {
-          if (err) return true
-
-          ticketSchema.populate(tt, 'group', function (err) {
-            if (err) return true
-
-            // emitter.emit('ticket:updated', tt)
-            utils.sendToAllConnectedClients(io, socketEvents.TICKETS_UI_GROUP_UPDATE, tt)
-          })
-        })
-      })
-    })
+      // emitter.emit('ticket:updated', tt)
+      utils.sendToAllConnectedClients(io, socketEvents.TICKETS_UI_GROUP_UPDATE, tt)
+    } catch (err) {
+      winston.warn(err)
+    }
   })
 }
 
 events.onSetTicketDueDate = function (socket) {
-  socket.on(socketEvents.TICKETS_DUEDATE_SET, function (data) {
+  socket.on(socketEvents.TICKETS_DUEDATE_SET, async function (data) {
     const ticketId = data._id
     const dueDate = data.value
     const ownerId = socket.request.user._id
 
     if (_.isUndefined(ticketId)) return true
 
-    ticketSchema.getTicketById(ticketId, function (err, ticket) {
-      if (err) return true
+    try {
+      let ticket = await ticketSchema.getTicketById(ticketId)
+      let t = await ticket.setTicketDueDate(ownerId, dueDate)
+      let tt = await t.save()
 
-      ticket.setTicketDueDate(ownerId, dueDate, function (err, t) {
-        if (err) return true
-
-        t.save(function (err, tt) {
-          if (err) return true
-
-          // emitter.emit('ticket:updated', tt)
-          utils.sendToAllConnectedClients(io, socketEvents.TICKETS_UI_DUEDATE_UPDATE, tt)
-        })
-      })
-    })
+      // emitter.emit('ticket:updated', tt)
+      utils.sendToAllConnectedClients(io, socketEvents.TICKETS_UI_DUEDATE_UPDATE, tt)
+    } catch (err) {
+      winston.warn(err)
+    }
   })
 }
 

@@ -18,15 +18,6 @@ const winston = require('../logger')
 // Optionally use an in-memory MongoDB for local development
 const useInMem = process.env.TD_USE_INMEM_MONGO === 'true'
 let mongoMemoryServer = null
-if (useInMem) {
-  try {
-    const { MongoMemoryServer } = require('mongodb-memory-server')
-    mongoMemoryServer = new MongoMemoryServer({ instance: { port: 0 } })
-  } catch (e) {
-    // mongodb-memory-server not installed or failed to load
-    winston.warn('mongodb-memory-server not available; falling back to configured MongoDB')
-  }
-}
 
 const db = {}
 const mongoConnectionUri = {
@@ -73,7 +64,6 @@ if (!mongoConnectionUri.username) {
 if (process.env.TD_MONGODB_URI) CONNECTION_URI = process.env.TD_MONGODB_URI
 
 let options = {
-  keepAlive: true,
   connectTimeoutMS: 30000
 }
 
@@ -87,11 +77,12 @@ module.exports.init = async function (callback, connectionString, opts) {
   }
   global.CONNECTION_URI = CONNECTION_URI
 
-  // If in-memory is requested and server was successfully created, start it and override CONNECTION_URI
-  if (useInMem && mongoMemoryServer) {
+  // If in-memory is requested, create and start the server (mongodb-memory-server v11+ API)
+  if (useInMem && !mongoMemoryServer) {
     try {
-      const uri = await mongoMemoryServer.getUri()
-      CONNECTION_URI = uri
+      const { MongoMemoryServer } = require('mongodb-memory-server')
+      mongoMemoryServer = await MongoMemoryServer.create()
+      CONNECTION_URI = mongoMemoryServer.getUri()
       global.CONNECTION_URI = CONNECTION_URI
       winston.info('Using in-memory MongoDB for development')
     } catch (memErr) {
@@ -99,70 +90,67 @@ module.exports.init = async function (callback, connectionString, opts) {
     }
   }
 
-  mongoose.Promise = global.Promise
-  mongoose
-    .connect(CONNECTION_URI, options)
-    .then(function () {
-      if (!process.env.FORK) {
-        winston.info('Connected to MongoDB')
-      }
+  try {
+    await mongoose.connect(CONNECTION_URI, options)
 
-      db.connection = mongoose.connection
-      mongoose.connection.db.admin().command({ buildInfo: 1 }, function (err, info) {
-        if (err) winston.warn(err.message)
-        db.version = info.version
-        return callback(null, db)
-      })
-    })
-    .catch(function (e) {
-      winston.error('Oh no, something went wrong with DB! - ' + e.message)
-      db.connection = null
+    if (!process.env.FORK) {
+      winston.info('Connected to MongoDB')
+    }
 
-      // If the configured server is the Docker service name 'mongo' and
-      // connection failed, try a fallback to localhost. This helps when
-      // Mongo is running in Docker with port 27017 published to the host
-      // (docker-compose maps 27017:27017) and the app is running on the host.
-      if (
-        (!connectionString || connectionString === CONNECTION_URI) &&
-        mongoConnectionUri.server &&
-        mongoConnectionUri.server.toString().toLowerCase() === 'mongo'
-      ) {
-        try {
-          winston.warn('Initial MongoDB connection to "mongo" failed; retrying with localhost as fallback')
+    db.connection = mongoose.connection
+    try {
+      const info = await mongoose.connection.db.admin().command({ buildInfo: 1 })
+      db.version = info.version
+    } catch (err) {
+      winston.warn(err.message)
+    }
+    return callback(null, db)
+  } catch (e) {
+    winston.error('Oh no, something went wrong with DB! - ' + e.message)
+    db.connection = null
 
-          // build a localhost connection URI
-          const fallback =
-            'mongodb://' + 'localhost' + ':' + mongoConnectionUri.port + '/' + mongoConnectionUri.database
-          CONNECTION_URI = fallback
-          global.CONNECTION_URI = CONNECTION_URI
+    // If the configured server is the Docker service name 'mongo' and
+    // connection failed, try a fallback to localhost. This helps when
+    // Mongo is running in Docker with port 27017 published to the host
+    // (docker-compose maps 27017:27017) and the app is running on the host.
+    if (
+      (!connectionString || connectionString === CONNECTION_URI) &&
+      mongoConnectionUri.server &&
+      mongoConnectionUri.server.toString().toLowerCase() === 'mongo'
+    ) {
+      try {
+        winston.warn('Initial MongoDB connection to "mongo" failed; retrying with localhost as fallback')
 
-          return mongoose
-            .connect(CONNECTION_URI, options)
-            .then(function () {
-              if (!process.env.FORK) {
-                winston.info('Connected to MongoDB (fallback localhost)')
-              }
+        // build a localhost connection URI
+        const fallback =
+          'mongodb://' + 'localhost' + ':' + mongoConnectionUri.port + '/' + mongoConnectionUri.database
+        CONNECTION_URI = fallback
+        global.CONNECTION_URI = CONNECTION_URI
 
-              db.connection = mongoose.connection
-              mongoose.connection.db.admin().command({ buildInfo: 1 }, function (err, info) {
-                if (err) winston.warn(err.message)
-                db.version = info.version
-                return callback(null, db)
-              })
-            })
-            .catch(function (err2) {
-              winston.error('Fallback MongoDB connection also failed: ' + err2.message)
-              return callback(err2, null)
-            })
-        } catch (ex) {
-          winston.error('Fallback attempt failed: ' + ex.message)
-          return callback(e, null)
+        await mongoose.connect(CONNECTION_URI, options)
+
+        if (!process.env.FORK) {
+          winston.info('Connected to MongoDB (fallback localhost)')
         }
-      }
 
-      return callback(e, null)
-    })
+        db.connection = mongoose.connection
+        try {
+          const info = await mongoose.connection.db.admin().command({ buildInfo: 1 })
+          db.version = info.version
+        } catch (err) {
+          winston.warn(err.message)
+        }
+        return callback(null, db)
+      } catch (err2) {
+        winston.error('Fallback MongoDB connection also failed: ' + err2.message)
+        return callback(err2, null)
+      }
+    }
+
+    return callback(e, null)
+  }
 }
 
 module.exports.db = db
 module.exports.connectionuri = CONNECTION_URI
+module.exports.getMemoryServer = function () { return mongoMemoryServer }
