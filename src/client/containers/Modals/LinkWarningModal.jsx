@@ -15,6 +15,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
+import { withTranslation } from 'react-i18next'
 import BaseModal from './BaseModal'
 import Button from 'components/Button'
 
@@ -30,19 +31,20 @@ class LinkWarningModal extends React.Component {
   }
 
   render () {
+    const { t } = this.props
     return (
       <BaseModal>
         <div>
-          <h2>Redirect Warning</h2>
-          <p>You are being redirected to a site outside this domain. Proceed with caution.</p>
+          <h2>{t('modals.linkWarning.title')}</h2>
+          <p>{t('modals.linkWarning.message')}</p>
           <p>
             <strong>{this.props.href}</strong>
           </p>
         </div>
         <div className='uk-modal-footer uk-text-right'>
-          <Button text={'Cancel'} extraClass={'uk-modal-close'} flat={true} waves={true} />
+          <Button text={t('common.cancel')} extraClass={'uk-modal-close'} flat={true} waves={true} />
           <Button
-            text={'Proceed'}
+            text={t('modals.linkWarning.proceed')}
             type={'submit'}
             flat={true}
             waves={true}
@@ -60,4 +62,4 @@ LinkWarningModal.propTypes = {
   href: PropTypes.string.isRequired
 }
 
-export default connect(null, { hideModal })(LinkWarningModal)
+export default withTranslation()(connect(null, { hideModal })(LinkWarningModal))

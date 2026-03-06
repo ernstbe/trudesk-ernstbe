@@ -67,7 +67,8 @@
     "error": "Fehler",
     "success": "Erfolg",
     "warning": "Warnung",
-    "info": "Info"
+    "info": "Info",
+    "permanentAction": "Diese Aktion ist unwiderruflich."
   },
   "priorities": {
     "Normal": "Normal",
@@ -292,7 +293,19 @@
       "toSelected": "zum ausgewählten Ticket-Typ."
     },
     "confirm": "Bestätigen",
-    "areYouSure": "Bist du sicher?"
+    "areYouSure": "Bist du sicher?",
+    "linkWarning": {
+      "title": "Weiterleitungswarnung",
+      "message": "Du wirst zu einer externen Seite weitergeleitet. Bitte mit Vorsicht fortfahren.",
+      "proceed": "Fortfahren"
+    },
+    "passwordPrompt": {
+      "title": "Passwort bestätigen",
+      "message": "Bitte bestätige dein Passwort.",
+      "currentPassword": "Aktuelles Passwort",
+      "verifyPassword": "Passwort überprüfen",
+      "error": "Ein Fehler ist aufgetreten."
+    }
   },
   "tickets": {
     "title": "Tickets",
@@ -366,7 +379,11 @@
     "addMember": "Mitglied hinzufügen",
     "removeMember": "Mitglied entfernen",
     "editTeam": "Team bearbeiten",
-    "deleteTeam": "Team löschen"
+    "deleteTeam": "Team löschen",
+    "teamMembers": "Teammitglieder",
+    "teamActions": "Team-Aktionen",
+    "noTeams": "Keine Teams",
+    "deleteWarning": "Mitarbeiter verlieren möglicherweise den Zugriff auf Ressourcen, sobald dieses Team gelöscht wird."
   },
   "departments": {
     "title": "Abteilungen",
@@ -374,7 +391,19 @@
     "allDepartments": "Alle Abteilungen",
     "departmentDetails": "Abteilungsdetails",
     "editDepartment": "Abteilung bearbeiten",
-    "deleteDepartment": "Abteilung löschen"
+    "deleteDepartment": "Abteilung löschen",
+    "teams": "Teams",
+    "groups": "Gruppen",
+    "allGroups": "Alle Gruppen",
+    "allPublicGroups": "Alle öffentlichen Gruppen",
+    "deleteWarning": "Mitarbeiter verlieren möglicherweise den Zugriff auf Ressourcen, sobald diese Abteilung gelöscht wird."
+  },
+  "groups": {
+    "title": "Kundengruppen",
+    "groupMembers": "Gruppenmitglieder",
+    "groupActions": "Gruppen-Aktionen",
+    "deleteWarning": "Mitarbeiter verlieren möglicherweise den Zugriff auf Ressourcen, sobald diese Gruppe gelöscht wird.",
+    "deleteAssociatedWarning": "Gruppen, die mit Tickets verknüpft sind, können nicht gelöscht werden."
   },
   "reports": {
     "title": "Berichte",
@@ -384,7 +413,15 @@
     "dateRange": "Zeitraum",
     "startDate": "Startdatum",
     "endDate": "Enddatum",
-    "groupBy": "Gruppieren nach"
+    "groupBy": "Gruppieren nach",
+    "selectReport": "Bericht auswählen",
+    "ticketsByGroups": "Tickets nach Gruppen",
+    "ticketsByPriorities": "Tickets nach Prioritäten",
+    "ticketsByStatus": "Tickets nach Status",
+    "ticketsByTags": "Tickets nach Tags",
+    "ticketsByTypes": "Tickets nach Typen",
+    "ticketsByAssignee": "Tickets nach Zuständigem",
+    "selectReportType": "Bitte wähle eine Berichtsart aus"
   },
   "settings": {
     "title": "Einstellungen",
@@ -575,7 +612,15 @@
     "allConversations": "Alle Unterhaltungen",
     "sendMessage": "Nachricht senden",
     "typeMessage": "Nachricht eingeben...",
-    "noMessages": "Keine Nachrichten"
+    "noMessages": "Keine Nachrichten",
+    "conversations": "Unterhaltungen",
+    "startConversation": "Unterhaltung starten",
+    "send": "SENDEN",
+    "deleteConversation": "Unterhaltung löschen",
+    "deleteConfirm": "Möchtest du diese Unterhaltung wirklich löschen?",
+    "conversationStartedOn": "Unterhaltung begonnen am",
+    "conversationDeletedAt": "Unterhaltung gelöscht am",
+    "invalidParticipants": "Ungültige Teilnehmer"
   },
   "notices": {
     "title": "Mitteilungen",
@@ -615,6 +660,50 @@
     "networkError": "Netzwerkfehler",
     "validationError": "Validierungsfehler",
     "requiredField": "Pflichtfeld"
+  },
+  "profile": {
+    "title": "Profil",
+    "editProfile": "Profil bearbeiten",
+    "workInformation": "Arbeitsinformationen",
+    "otherInformation": "Weitere Informationen",
+    "name": "Name",
+    "titleField": "Titel",
+    "companyName": "Firmenname",
+    "workNumber": "Geschäftliche Telefonnummer",
+    "mobileNumber": "Mobilnummer",
+    "facebookUrl": "Facebook-URL",
+    "linkedinUrl": "LinkedIn-URL",
+    "twitterUrl": "Twitter-URL",
+    "security": "Sicherheit",
+    "preferences": "Einstellungen",
+    "changePassword": "Passwort ändern",
+    "passwordWarning": "Nach der Passwortänderung werden Sie aus allen Sitzungen abgemeldet.",
+    "currentPassword": "Aktuelles Passwort",
+    "newPassword": "Neues Passwort",
+    "confirmPassword": "Passwort bestätigen",
+    "updatePassword": "Passwort aktualisieren",
+    "twoFactorAuth": "Zwei-Faktor-Authentifizierung",
+    "twoFactorNotEnabled": "Zwei-Faktor-Authentifizierung ist noch nicht aktiviert",
+    "twoFactorDescription": "Die Aktivierung der Zwei-Faktor-Authentifizierung fügt Ihrem Konto eine zusätzliche Sicherheitsebene hinzu. Nach der Aktivierung müssen Sie sowohl Ihr Passwort als auch einen Authentifizierungscode eingeben, um sich anzumelden. Nachdem Sie die Zwei-Faktor-Authentifizierung erfolgreich aktiviert haben, können Sie sich nicht mehr anmelden, ohne den korrekten Authentifizierungscode einzugeben.",
+    "twoFactorEnabled": "Zwei-Faktor-Authentifizierung ist <1>aktiviert</1>",
+    "twoFactorDisableHint": "Durch Deaktivierung der Zwei-Faktor-Authentifizierung wird Ihr Konto nur noch durch Ihr Passwort geschützt.",
+    "scanQrCode": "Scannen Sie den QR-Code unten mit einer Authenticator-App wie Authy, Google Authenticator, LastPass Authenticator oder Microsoft Authenticator",
+    "cantScanQr": "QR-Code kann nicht gescannt werden?",
+    "manualKeyHint": "Wenn Sie den QR-Code nicht scannen können, öffnen Sie die Authenticator-App und wählen Sie die Option, den untenstehenden Schlüssel manuell einzugeben.",
+    "verifyCodeHint": "Geben Sie nach dem Scannen des QR-Codes den 6-stelligen Bestätigungscode unten ein, um die Zwei-Faktor-Authentifizierung für Ihr Konto zu aktivieren.",
+    "verificationCode": "Bestätigungscode",
+    "verifyAndContinue": "Überprüfen und fortfahren",
+    "uiPreferences": "Benutzeroberflächen-Einstellungen",
+    "timezone": "Zeitzone",
+    "savePreferences": "Einstellungen speichern",
+    "fieldTooLong": "Feldlänge zu lang",
+    "invalidEmail": "Ungültige E-Mail-Adresse",
+    "profileSaved": "Profil erfolgreich gespeichert.",
+    "invalidFormData": "Ungültige Formulardaten",
+    "passwordTooShort": "Passwort ist zu kurz",
+    "passwordTooLong": "Passwort ist zu lang",
+    "passwordUpdated": "Passwort erfolgreich aktualisiert",
+    "invalidRequest": "Ungültige Anfrage"
   },
   "language": {
     "select": "Sprache wählen",

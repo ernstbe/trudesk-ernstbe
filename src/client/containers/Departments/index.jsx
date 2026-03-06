@@ -16,6 +16,8 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 
+import { withTranslation } from 'react-i18next'
+
 import { fetchDepartments, deleteDepartment } from 'actions/departments'
 import { showModal } from 'actions/common'
 
@@ -41,36 +43,38 @@ class DepartmentsContainer extends React.Component {
   }
 
   onDeleteDepartmentClick (_id) {
+    const { t } = this.props
     UIKit.modal.confirm(
-      `<h2>Are you sure?</h2>
+      `<h2>${t('modals.areYouSure')}</h2>
         <p style="font-size: 15px;">
-            <span class="uk-text-danger" style="font-size: 15px;">This is a permanent action.</span> 
+            <span class="uk-text-danger" style="font-size: 15px;">${t('common.permanentAction')}</span>
         </p>
         <p style="font-size: 12px;">
-            Agents may lose access to resources once this department is deleted.
+            ${t('departments.deleteWarning')}
         </p>
         `,
       () => {
         this.props.deleteDepartment({ _id })
       },
       {
-        labels: { Ok: 'Yes', Cancel: 'No' },
+        labels: { Ok: t('common.yes'), Cancel: t('common.no') },
         confirmButtonClass: 'md-btn-danger'
       }
     )
   }
 
   render () {
+    const { t } = this.props
     return (
       <div>
         <PageTitle
-          title={'Departments'}
+          title={t('departments.title')}
           shadow={false}
           rightComponent={
             <div className={'uk-grid uk-grid-collapse'}>
               <div className={'uk-width-1-1 mt-15 uk-text-right'}>
                 <Button
-                  text={'Create'}
+                  text={t('common.create')}
                   flat={false}
                   small={true}
                   waves={false}
@@ -95,11 +99,11 @@ class DepartmentsContainer extends React.Component {
                     padding: '8px 8px 8px 27px'
                   }}
                 >
-                  Name
+                  {t('common.name')}
                 </th>
-                <th style={{ verticalAlign: 'middle', fontSize: 12, textTransform: 'uppercase' }}>Teams</th>
+                <th style={{ verticalAlign: 'middle', fontSize: 12, textTransform: 'uppercase' }}>{t('departments.teams')}</th>
                 <th style={{ width: '25%', verticalAlign: 'middle', fontSize: 12, textTransform: 'uppercase' }}>
-                  Groups
+                  {t('departments.groups')}
                 </th>
                 <th
                   style={{
@@ -109,7 +113,7 @@ class DepartmentsContainer extends React.Component {
                     textTransform: 'uppercase'
                   }}
                 >
-                  Actions
+                  {t('common.actions')}
                 </th>
               </tr>
             </thead>
@@ -151,14 +155,14 @@ class DepartmentsContainer extends React.Component {
                         {department.get('allGroups') === true && (
                           <div>
                             <h6 className={'text-success'} style={{ fontWeight: 'bold' }}>
-                              All Groups
+                              {t('departments.allGroups')}
                             </h6>
                           </div>
                         )}
                         {department.get('publicGroups') === true && (
                           <div>
                             <h6 className={'text-success'} style={{ fontWeight: 'bold' }}>
-                              All Public Groups
+                              {t('departments.allPublicGroups')}
                             </h6>
                           </div>
                         )}
@@ -176,7 +180,7 @@ class DepartmentsContainer extends React.Component {
                         <ButtonGroup>
                           {helpers.canUser('departments:update', true) && (
                             <Button
-                              text={'Edit'}
+                              text={t('common.edit')}
                               small={true}
                               waves={true}
                               onClick={() => this.onEditDepartmentClick(department)}
@@ -184,7 +188,7 @@ class DepartmentsContainer extends React.Component {
                           )}
                           {helpers.canUser('departments:delete', true) && (
                             <Button
-                              text={'Delete'}
+                              text={t('common.delete')}
                               style={'danger'}
                               small={true}
                               waves={true}
@@ -215,4 +219,4 @@ const mapStateToProps = state => ({
   departments: state.departmentsState.departments
 })
 
-export default connect(mapStateToProps, { fetchDepartments, deleteDepartment, showModal })(DepartmentsContainer)
+export default withTranslation()(connect(mapStateToProps, { fetchDepartments, deleteDepartment, showModal })(DepartmentsContainer))
