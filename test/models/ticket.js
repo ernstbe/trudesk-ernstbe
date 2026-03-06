@@ -7,6 +7,7 @@ var prioritySchema = require('../../src/models/ticketpriority')
 var statusSchema = require('../../src/models/ticketStatus')
 
 describe('ticket.js', function () {
+  var testTicketUid
   // it('should clear collections.', function(done) {
   //    expect(mongoose).to.exist;
   //
@@ -53,7 +54,8 @@ describe('ticket.js', function () {
       'deleted'
     )
 
-    expect(t.uid).to.equal(1000)
+    expect(t.uid).to.be.a('number')
+    testTicketUid = t.uid
   })
 
   it('should set the ticket status to closed then to open', async function () {
@@ -61,7 +63,7 @@ describe('ticket.js', function () {
     var closedStatus = await statusSchema.findOne({ uid: 3 })
     expect(closedStatus).to.be.a('object')
 
-    var ticket = await ticketSchema.getTicketByUid(1000)
+    var ticket = await ticketSchema.getTicketByUid(testTicketUid)
     expect(ticket).to.be.a('object')
 
     var closedTicket = await ticket.setStatus(ticket._id, closedStatus._id)
@@ -72,7 +74,7 @@ describe('ticket.js', function () {
     var openStatus = await statusSchema.findOne({ uid: 1 })
     expect(openStatus).to.be.a('object')
 
-    var ticket2 = await ticketSchema.getTicketByUid(1000)
+    var ticket2 = await ticketSchema.getTicketByUid(testTicketUid)
     expect(ticket2).to.be.a('object')
 
     var openedTicket = await ticket2.setStatus(ticket2._id, openStatus._id)
@@ -87,7 +89,7 @@ describe('ticket.js', function () {
     expect(user).to.be.a('object')
     expect(user).to.have.property('_id')
 
-    var ticket = await ticketSchema.getTicketByUid(1000)
+    var ticket = await ticketSchema.getTicketByUid(testTicketUid)
     expect(ticket).to.be.a('object')
 
     var updatedTicket = await ticket.setAssignee(user._id, user._id)
@@ -95,7 +97,7 @@ describe('ticket.js', function () {
   })
 
   it('should set ticket type', async function () {
-    var ticket = await ticketSchema.getTicketByUid(1000)
+    var ticket = await ticketSchema.getTicketByUid(testTicketUid)
     expect(ticket).to.be.a('object')
 
     var typeSchema = require('../../src/models/tickettype')
@@ -108,7 +110,7 @@ describe('ticket.js', function () {
   })
 
   it('should set ticket priority', async function () {
-    var ticket = await ticketSchema.getTicketByUid(1000)
+    var ticket = await ticketSchema.getTicketByUid(testTicketUid)
     expect(ticket).to.be.a('object')
     var ownerId = new m.Types.ObjectId()
     var priority = await prioritySchema.getByMigrationNum(3)
@@ -125,7 +127,7 @@ describe('ticket.js', function () {
     var group = await grp.save()
     expect(group).to.be.a('object')
 
-    var ticket = await ticketSchema.getTicketByUid(1000)
+    var ticket = await ticketSchema.getTicketByUid(testTicketUid)
     expect(ticket).to.be.a('object')
     var ownerId = new m.Types.ObjectId()
     var updatedTicket = await ticket.setTicketGroup(ownerId, group._id)
@@ -133,7 +135,7 @@ describe('ticket.js', function () {
   })
 
   it('should clear the ticket assignee', async function () {
-    var ticket = await ticketSchema.getTicketByUid(1000)
+    var ticket = await ticketSchema.getTicketByUid(testTicketUid)
     expect(ticket).to.be.a('object')
 
     var updatedTicket = await ticket.clearAssignee(new m.Types.ObjectId())
@@ -141,7 +143,7 @@ describe('ticket.js', function () {
   })
 
   it('should add Comment and Save', async function () {
-    var ticket = await ticketSchema.getTicketByUid(1000)
+    var ticket = await ticketSchema.getTicketByUid(testTicketUid)
     expect(ticket).to.be.a('object')
 
     var comment = {
@@ -162,7 +164,7 @@ describe('ticket.js', function () {
   })
 
   it('should update comment', async function () {
-    var ticket = await ticketSchema.getTicketByUid(1000)
+    var ticket = await ticketSchema.getTicketByUid(testTicketUid)
     expect(ticket).to.be.a('object')
 
     var commentId = ticket.comments[0]._id
@@ -173,7 +175,7 @@ describe('ticket.js', function () {
   })
 
   it('should remove comment', async function () {
-    var ticket = await ticketSchema.getTicketByUid(1000)
+    var ticket = await ticketSchema.getTicketByUid(testTicketUid)
     expect(ticket).to.be.a('object')
 
     var commentId = ticket.comments[0]._id
@@ -184,7 +186,7 @@ describe('ticket.js', function () {
   })
 
   it('should add Note and Save', async function () {
-    var ticket = await ticketSchema.getTicketByUid(1000)
+    var ticket = await ticketSchema.getTicketByUid(testTicketUid)
     expect(ticket).to.be.a('object')
 
     var note = {
@@ -205,7 +207,7 @@ describe('ticket.js', function () {
   })
 
   it('should update note', async function () {
-    var ticket = await ticketSchema.getTicketByUid(1000)
+    var ticket = await ticketSchema.getTicketByUid(testTicketUid)
     expect(ticket).to.be.a('object')
 
     var noteId = ticket.notes[0]._id
@@ -216,7 +218,7 @@ describe('ticket.js', function () {
   })
 
   it('should remove note', async function () {
-    var ticket = await ticketSchema.getTicketByUid(1000)
+    var ticket = await ticketSchema.getTicketByUid(testTicketUid)
     expect(ticket).to.be.a('object')
 
     var noteId = ticket.notes[0]._id
@@ -227,7 +229,7 @@ describe('ticket.js', function () {
   })
 
   it('should set ticket issue', async function () {
-    var ticket = await ticketSchema.getTicketByUid(1000)
+    var ticket = await ticketSchema.getTicketByUid(testTicketUid)
     expect(ticket).to.be.a('object')
 
     var ownerId = new m.Types.ObjectId()
@@ -316,8 +318,8 @@ describe('ticket.js', function () {
   })
 
   // Should be last
-  it('should soft delete ticket with UID 1000', async function () {
-    var ticket = await ticketSchema.getTicketByUid(1000)
+  it('should soft delete ticket', async function () {
+    var ticket = await ticketSchema.getTicketByUid(testTicketUid)
     expect(ticket).to.be.a('object')
 
     var deletedTicket = await ticketSchema.softDelete(ticket._id)

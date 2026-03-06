@@ -44,10 +44,10 @@ before(function (done) {
 
       var statusSchema = require('../src/models/ticketStatus')
       await statusSchema.insertMany([
-        { name: 'New', uid: 0, isLocked: true },
-        { name: 'Open', uid: 1, isLocked: true },
-        { name: 'Pending', uid: 2, isLocked: true },
-        { name: 'Closed', uid: 3, isLocked: true, isResolved: true }
+        { name: 'New', uid: 0, order: 0, isLocked: true },
+        { name: 'Open', uid: 1, order: 1, isLocked: true },
+        { name: 'Pending', uid: 2, order: 2, isLocked: true },
+        { name: 'Closed', uid: 3, order: 3, isLocked: true, isResolved: true }
       ])
 
       await require('../src/settings/defaults').init()
