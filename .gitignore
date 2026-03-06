@@ -73,3 +73,8 @@ dist/
 
 .claude/*
 
+# Environment files (keep .env.example only)
+.env
+
+# IDE
+.vs/
