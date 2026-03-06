@@ -67,7 +67,8 @@
     "error": "Error",
     "success": "Success",
     "warning": "Warning",
-    "info": "Info"
+    "info": "Info",
+    "permanentAction": "This is a permanent action."
   },
   "priorities": {
     "Normal": "Normal",
@@ -292,7 +293,19 @@
       "toSelected": "to the selected ticket type."
     },
     "confirm": "Confirm",
-    "areYouSure": "Are you sure?"
+    "areYouSure": "Are you sure?",
+    "linkWarning": {
+      "title": "Redirect Warning",
+      "message": "You are being redirected to a site outside this domain. Proceed with caution.",
+      "proceed": "Proceed"
+    },
+    "passwordPrompt": {
+      "title": "Confirm Password",
+      "message": "Please confirm your password.",
+      "currentPassword": "Current Password",
+      "verifyPassword": "Verify Password",
+      "error": "An Error has occurred."
+    }
   },
   "tickets": {
     "title": "Tickets",
@@ -366,7 +379,11 @@
     "addMember": "Add Member",
     "removeMember": "Remove Member",
     "editTeam": "Edit Team",
-    "deleteTeam": "Delete Team"
+    "deleteTeam": "Delete Team",
+    "teamMembers": "Team Members",
+    "teamActions": "Team Actions",
+    "noTeams": "No Teams",
+    "deleteWarning": "Agents may lose access to resources once this team is deleted."
   },
   "departments": {
     "title": "Departments",
@@ -374,7 +391,19 @@
     "allDepartments": "All Departments",
     "departmentDetails": "Department Details",
     "editDepartment": "Edit Department",
-    "deleteDepartment": "Delete Department"
+    "deleteDepartment": "Delete Department",
+    "teams": "Teams",
+    "groups": "Groups",
+    "allGroups": "All Groups",
+    "allPublicGroups": "All Public Groups",
+    "deleteWarning": "Agents may lose access to resources once this department is deleted."
+  },
+  "groups": {
+    "title": "Customer Groups",
+    "groupMembers": "Group Members",
+    "groupActions": "Group Actions",
+    "deleteWarning": "Agents may lose access to resources once this group is deleted.",
+    "deleteAssociatedWarning": "Groups that are associated with ticket cannot be deleted."
   },
   "reports": {
     "title": "Reports",
@@ -384,7 +413,15 @@
     "dateRange": "Date Range",
     "startDate": "Start Date",
     "endDate": "End Date",
-    "groupBy": "Group By"
+    "groupBy": "Group By",
+    "selectReport": "Select Report",
+    "ticketsByGroups": "Tickets by Groups",
+    "ticketsByPriorities": "Tickets by Priorities",
+    "ticketsByStatus": "Tickets by Status",
+    "ticketsByTags": "Tickets by Tags",
+    "ticketsByTypes": "Tickets by Types",
+    "ticketsByAssignee": "Tickets by Assignee",
+    "selectReportType": "Please select a report type"
   },
   "settings": {
     "title": "Settings",
@@ -575,7 +612,15 @@
     "allConversations": "All Conversations",
     "sendMessage": "Send Message",
     "typeMessage": "Type a message...",
-    "noMessages": "No messages"
+    "noMessages": "No messages",
+    "conversations": "Conversations",
+    "startConversation": "Start Conversation",
+    "send": "SEND",
+    "deleteConversation": "Delete Conversation",
+    "deleteConfirm": "Are you sure you want to delete this conversation?",
+    "conversationStartedOn": "Conversation Started on",
+    "conversationDeletedAt": "Conversation Deleted at",
+    "invalidParticipants": "Invalid participants"
   },
   "notices": {
     "title": "Notices",
@@ -615,6 +660,50 @@
     "networkError": "Network Error",
     "validationError": "Validation Error",
     "requiredField": "Required Field"
+  },
+  "profile": {
+    "title": "Profile",
+    "editProfile": "Edit Profile",
+    "workInformation": "Work Information",
+    "otherInformation": "Other Information",
+    "name": "Name",
+    "titleField": "Title",
+    "companyName": "Company Name",
+    "workNumber": "Work Number",
+    "mobileNumber": "Mobile Number",
+    "facebookUrl": "Facebook Url",
+    "linkedinUrl": "LinkedIn Url",
+    "twitterUrl": "Twitter Url",
+    "security": "Security",
+    "preferences": "Preferences",
+    "changePassword": "Change Password",
+    "passwordWarning": "After changing your password, you will be logged out of all sessions.",
+    "currentPassword": "Current Password",
+    "newPassword": "New Password",
+    "confirmPassword": "Confirm Password",
+    "updatePassword": "Update Password",
+    "twoFactorAuth": "Two-Factor Authentication",
+    "twoFactorNotEnabled": "Two-factor authentication is not enabled yet",
+    "twoFactorDescription": "Enabling two-factor authentication adds an extra layer of security to your accounts. Once enabled, you will be required to enter both your password and an authentication code in order to sign into your account. After you successfully enable two-factor authentication, you will not be able to login unless you enter the correct authentication code.",
+    "twoFactorEnabled": "Two-factor authentication is <1>enabled</1>",
+    "twoFactorDisableHint": "By disabling two-factor authentication, your account will be protected with only your password.",
+    "scanQrCode": "Scan the QR code below using any authenticator app such as Authy, Google Authenticator, LastPass Authenticator, Microsoft Authenticator",
+    "cantScanQr": "Can't scan the QR code?",
+    "manualKeyHint": "If you are unable to scan the QR code, open the authenticator app and select the option that allows you to enter the below key manually.",
+    "verifyCodeHint": "After scanning the QR code, enter the 6-digit verification code below to activate two-factor authentication on your account.",
+    "verificationCode": "Verification Code",
+    "verifyAndContinue": "Verify and continue",
+    "uiPreferences": "UI Preferences",
+    "timezone": "Timezone",
+    "savePreferences": "Save Preferences",
+    "fieldTooLong": "Field length too long",
+    "invalidEmail": "Invalid Email",
+    "profileSaved": "Profile saved successfully.",
+    "invalidFormData": "Invalid Form Data",
+    "passwordTooShort": "Password length is too short",
+    "passwordTooLong": "Password length is too long",
+    "passwordUpdated": "Password Updated Successfully",
+    "invalidRequest": "Invalid Request"
   },
   "language": {
     "select": "Select Language",

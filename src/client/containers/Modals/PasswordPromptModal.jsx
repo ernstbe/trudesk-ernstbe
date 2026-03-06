@@ -4,6 +4,8 @@ import { connect } from 'react-redux'
 import { observer } from 'mobx-react'
 import { observable } from 'mobx'
 
+import { withTranslation } from 'react-i18next'
+
 import { hideModal } from 'actions/common'
 
 import Input from 'components/Input'
@@ -30,7 +32,7 @@ class PasswordPromptModal extends React.Component {
         if (this.props.onVerifyComplete) this.props.onVerifyComplete(true)
       })
       .catch(error => {
-        let errMessage = 'An Error has occurred.'
+        let errMessage = this.props.t('modals.passwordPrompt.error')
         if (error.response && error.response.data && error.response.data.error) errMessage = error.response.data.error
 
         helpers.UI.showSnackbar(errMessage, true)
@@ -40,21 +42,21 @@ class PasswordPromptModal extends React.Component {
   }
 
   render () {
-    const { titleOverride, textOverride } = this.props
+    const { titleOverride, textOverride, t } = this.props
     return (
       <BaseModal options={{ bgclose: false }}>
         <div>
-          <h2>{titleOverride || 'Confirm Password'}</h2>
-          <p>{textOverride || 'Please confirm your password.'}</p>
+          <h2>{titleOverride || t('modals.passwordPrompt.title')}</h2>
+          <p>{textOverride || t('modals.passwordPrompt.message')}</p>
         </div>
         <div className={'uk-margin-medium-bottom'}>
-          <label>Current Password</label>
+          <label>{t('modals.passwordPrompt.currentPassword')}</label>
           <Input name={'current-password'} type={'password'} onChange={val => (this.confirmPassword = val)} />
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <Button text={'Cancel'} small={true} flat={true} waves={false} onClick={() => this.props.hideModal()} />
+          <Button text={t('common.cancel')} small={true} flat={true} waves={false} onClick={() => this.props.hideModal()} />
           <Button
-            text={'Verify Password'}
+            text={t('modals.passwordPrompt.verifyPassword')}
             style={'primary'}
             small={true}
             waves={true}
@@ -76,4 +78,4 @@ PasswordPromptModal.propTypes = {
 
 const mapStateToProps = state => ({})
 
-export default connect(mapStateToProps, { hideModal })(PasswordPromptModal)
+export default withTranslation()(connect(mapStateToProps, { hideModal })(PasswordPromptModal))

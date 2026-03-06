@@ -256,7 +256,7 @@ mainController.forgotL2Auth = async function (req, res) {
     const html = await emailRenderer.render('l2auth-reset', renderData)
     const mailOptions = {
       to: savedUser.email,
-      subject: '[Trudesk] Account Recovery',
+      subject: require('../i18n').t('accountRecovery', { siteTitle: 'Trudesk' }),
       html: html,
       generateTextFromHTML: true
     }
@@ -356,7 +356,7 @@ mainController.forgotPass = async function (req, res) {
       })
     }
 
-    let subject = '[Trudesk] Password Reset Request'
+    const emailT = require('../i18n').t; let subject = emailT('passwordResetRequest', { siteTitle: 'Trudesk' })
     if (template) subject = global.Handlebars.compile(template.subject)(renderData)
 
     const html = await email.render('password-reset', renderData)
@@ -424,7 +424,7 @@ mainController.resetl2auth = async function (req, res) {
       const html = await emailRenderer.render('l2auth-cleared', user)
       const mailOptions = {
         to: updated.email,
-        subject: '[Trudesk] Two-Factor Authentication Removed!',
+        subject: require('../i18n').t('twoFactorRemoved', { siteTitle: 'Trudesk' }),
         html: html,
         generateTextFromHTML: true
       }
@@ -499,7 +499,7 @@ mainController.resetPass = async function (req, res) {
       const html = await emailRenderer.render('new-password', renderData)
       const mailOptions = {
         to: updated.email,
-        subject: '[Trudesk] New Password',
+        subject: require('../i18n').t('newPassword', { siteTitle: 'Trudesk' }),
         html: html,
         generateTextFromHTML: true
       }

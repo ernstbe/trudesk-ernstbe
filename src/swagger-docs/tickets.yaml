@@ -1,0 +1,263 @@
+paths:
+  /api/v1/tickets:
+    get:
+      tags: [Tickets]
+      summary: Get tickets
+      security:
+        - accessToken: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+          description: Page number
+        - in: query
+          name: limit
+          schema:
+            type: integer
+          description: Results per page
+        - in: query
+          name: status
+          schema:
+            type: string
+          description: Filter by status ID
+        - in: query
+          name: assignee
+          schema:
+            type: string
+          description: Filter by assignee user ID
+      responses:
+        200:
+          description: List of tickets
+  /api/v1/tickets/create:
+    post:
+      tags: [Tickets]
+      summary: Create a ticket
+      security:
+        - accessToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [subject, issue, group, type, priority]
+              properties:
+                subject:
+                  type: string
+                issue:
+                  type: string
+                owner:
+                  type: string
+                  description: User ID of ticket owner
+                group:
+                  type: string
+                  description: Group ID
+                type:
+                  type: string
+                  description: Ticket type ID
+                priority:
+                  type: string
+                  description: Priority ID
+                tags:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        200:
+          description: Ticket created
+        400:
+          description: Validation error
+  /api/v1/tickets/{uid}:
+    get:
+      tags: [Tickets]
+      summary: Get single ticket by UID
+      security:
+        - accessToken: []
+      parameters:
+        - in: path
+          name: uid
+          required: true
+          schema:
+            type: integer
+          description: Ticket UID number
+      responses:
+        200:
+          description: Ticket object
+        404:
+          description: Ticket not found
+  /api/v1/tickets/{id}:
+    put:
+      tags: [Tickets]
+      summary: Update a ticket
+      security:
+        - accessToken: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                subject:
+                  type: string
+                issue:
+                  type: string
+                status:
+                  type: string
+                priority:
+                  type: string
+                group:
+                  type: string
+                type:
+                  type: string
+                tags:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        200:
+          description: Ticket updated
+    delete:
+      tags: [Tickets]
+      summary: Delete a ticket
+      security:
+        - accessToken: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Ticket deleted
+  /api/v1/tickets/{id}/assignee:
+    put:
+      tags: [Tickets]
+      summary: Set ticket assignee
+      security:
+        - accessToken: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [_id]
+              properties:
+                _id:
+                  type: string
+                  description: User ID to assign
+      responses:
+        200:
+          description: Assignee set
+    delete:
+      tags: [Tickets]
+      summary: Clear ticket assignee
+      security:
+        - accessToken: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Assignee cleared
+  /api/v1/tickets/addcomment:
+    post:
+      tags: [Tickets]
+      summary: Add comment to ticket
+      security:
+        - accessToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ticketid, comment]
+              properties:
+                ticketid:
+                  type: string
+                comment:
+                  type: string
+      responses:
+        200:
+          description: Comment added
+  /api/v1/tickets/addnote:
+    post:
+      tags: [Tickets]
+      summary: Add internal note to ticket
+      security:
+        - accessToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ticketid, note]
+              properties:
+                ticketid:
+                  type: string
+                note:
+                  type: string
+      responses:
+        200:
+          description: Note added
+  /api/v1/tickets/types:
+    get:
+      tags: [Ticket Types]
+      summary: Get all ticket types
+      security:
+        - accessToken: []
+      responses:
+        200:
+          description: List of ticket types
+  /api/v1/tickets/priorities:
+    get:
+      tags: [Ticket Priorities]
+      summary: Get all priorities
+      security:
+        - accessToken: []
+      responses:
+        200:
+          description: List of priorities
+  /api/v1/tickets/status:
+    get:
+      tags: [Ticket Status]
+      summary: Get all ticket statuses
+      security:
+        - accessToken: []
+      responses:
+        200:
+          description: List of statuses
+  /api/v1/tickets/search:
+    get:
+      tags: [Tickets]
+      summary: Search tickets
+      security:
+        - accessToken: []
+      parameters:
+        - in: query
+          name: search
+          schema:
+            type: string
+          description: Search query
+      responses:
+        200:
+          description: Search results

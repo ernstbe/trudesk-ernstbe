@@ -243,7 +243,7 @@ const eventTicketCreated = require('./events/event_ticket_created')
 
             const mailOptions = {
               to: emails.join(),
-              subject: 'Updated: Ticket #' + ticketJSON.uid + '-' + ticketJSON.subject,
+              subject: require('../i18n').t('ticketUpdated', { uid: ticketJSON.uid, subject: ticketJSON.subject }),
               html: html,
               generateTextFromHTML: true
             }

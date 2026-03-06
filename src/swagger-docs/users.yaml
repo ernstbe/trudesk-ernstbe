@@ -1,0 +1,115 @@
+paths:
+  /api/v1/users:
+    get:
+      tags: [Users]
+      summary: Get users
+      security:
+        - accessToken: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+        - in: query
+          name: limit
+          schema:
+            type: integer
+      responses:
+        200:
+          description: List of users
+  /api/v1/users/create:
+    post:
+      tags: [Users]
+      summary: Create a user
+      security:
+        - accessToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, email, fullname, password, role]
+              properties:
+                username:
+                  type: string
+                email:
+                  type: string
+                fullname:
+                  type: string
+                password:
+                  type: string
+                role:
+                  type: string
+                  description: Role ID
+                title:
+                  type: string
+      responses:
+        200:
+          description: User created
+  /api/v1/users/{username}:
+    get:
+      tags: [Users]
+      summary: Get single user
+      security:
+        - accessToken: []
+      parameters:
+        - in: path
+          name: username
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: User object
+    put:
+      tags: [Users]
+      summary: Update a user
+      security:
+        - accessToken: []
+      parameters:
+        - in: path
+          name: username
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fullname:
+                  type: string
+                email:
+                  type: string
+                title:
+                  type: string
+                role:
+                  type: string
+      responses:
+        200:
+          description: User updated
+    delete:
+      tags: [Users]
+      summary: Delete a user
+      security:
+        - accessToken: []
+      parameters:
+        - in: path
+          name: username
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: User deleted
+  /api/v1/users/getassignees:
+    get:
+      tags: [Users]
+      summary: Get available assignees (agents and admins)
+      security:
+        - accessToken: []
+      responses:
+        200:
+          description: List of assignable users

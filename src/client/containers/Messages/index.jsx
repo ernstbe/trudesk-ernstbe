@@ -5,6 +5,8 @@ import { observer } from 'mobx-react'
 import { makeObservable, observable } from 'mobx'
 import clsx from 'clsx'
 
+import { withTranslation } from 'react-i18next'
+
 import { fetchAccounts, unloadAccounts } from 'actions/accounts'
 
 import {
@@ -190,7 +192,7 @@ class MessagesContainer extends React.Component {
 
   onUserStartConversationClick (account) {
     if (!account || !this.props.sessionUser) {
-      helpers.UI.showSnackbar('Invalid participants', true)
+      helpers.UI.showSnackbar(this.props.t('messages.invalidParticipants'), true)
       return false
     }
 
@@ -226,7 +228,7 @@ class MessagesContainer extends React.Component {
       const convoId = $li.attr('data-conversation-id')
       if (action.toLowerCase() === 'delete') {
         UIKit.modal.confirm(
-          'Are you sure you want to delete this conversation?',
+          self.props.t('messages.deleteConfirm'),
           function () {
             // Confirm
             self.deleteConversation(convoId)
@@ -234,7 +236,7 @@ class MessagesContainer extends React.Component {
           // Cancel Function
           function () {},
           {
-            labels: { Ok: 'YES' },
+            labels: { Ok: self.props.t('common.yes') },
             confirmButtonClass: 'md-btn-danger'
           }
         )
@@ -302,6 +304,7 @@ class MessagesContainer extends React.Component {
   }
 
   render () {
+    const { t } = this.props
     const { currentConversation } = this.props.messagesState
 
     return (
@@ -309,7 +312,7 @@ class MessagesContainer extends React.Component {
         <Grid>
           <GridItem width={'3-10'} extraClass={'full-height'}>
             <PageTitle
-              title={'Conversations'}
+              title={t('messages.conversations')}
               extraClasses={'page-title-border-right'}
               hideBorderBottom={true}
               rightComponent={
@@ -317,7 +320,7 @@ class MessagesContainer extends React.Component {
                   <div id='convo-actions' style={{ position: 'absolute', top: 20, right: 15 }}>
                     {!this.userListShown && (
                       <a
-                        title='Start Conversation'
+                        title={t('messages.startConversation')}
                         className='no-ajaxy'
                         style={{ display: 'block', height: 28 }}
                         onClick={e => this.showUserList(e)}
@@ -333,7 +336,7 @@ class MessagesContainer extends React.Component {
                         style={{ height: 28, lineHeight: '30px', fontSize: '16px', fontWeight: 300 }}
                         onClick={e => this.hideUserList(e)}
                       >
-                        Cancel
+                        {t('common.cancel')}
                       </a>
                     )}
                   </div>
@@ -377,7 +380,7 @@ class MessagesContainer extends React.Component {
                 <div className='search-box'>
                   <input
                     type='text'
-                    placeholder={'Search'}
+                    placeholder={t('common.search')}
                     value={this.userListSearchText}
                     onChange={e => this.onUserListSearchChange(e)}
                   />
@@ -413,11 +416,11 @@ class MessagesContainer extends React.Component {
                 style={{ marginBottom: '41px !important' }}
               >
                 <span className={'conversation-start'}>
-                  Conversation Started on {helpers.formatDate(currentConversation.get('createdAt'), helpers.getLongDateWithTimeFormat())}
+                  {t('messages.conversationStartedOn')} {helpers.formatDate(currentConversation.get('createdAt'), helpers.getLongDateWithTimeFormat())}
                 </span>
                 {currentConversation.get('requestingUserMeta').get('deletedAt') && (
                   <span className={'conversation-deleted'}>
-                    Conversation Deleted at {helpers.formatDate(currentConversation.get('requestingUserMeta').get('deletedAt'), helpers.getLongDateWithTimeFormat())}
+                    {t('messages.conversationDeletedAt')} {helpers.formatDate(currentConversation.get('requestingUserMeta').get('deletedAt'), helpers.getLongDateWithTimeFormat())}
                   </span>
                 )}
                 <div ref={this.conversationScrollSpy} className={clsx('uk-text-center', 'uk-hidden')}>
@@ -497,7 +500,7 @@ class MessagesContainer extends React.Component {
                   <input
                     type='text'
                     name={'chatMessage'}
-                    placeholder={'Type your message...'}
+                    placeholder={t('messages.typeMessage')}
                     onKeyDown={e =>
                       this.onSendMessageKeyDown(
                         e,
@@ -506,7 +509,7 @@ class MessagesContainer extends React.Component {
                       )
                     }
                   />
-                  <button type={'submit'}>SEND</button>
+                  <button type={'submit'}>{t('messages.send')}</button>
                 </form>
               </div>
             </GridItem>
@@ -514,7 +517,7 @@ class MessagesContainer extends React.Component {
         </Grid>
         <ul className='context-menu'>
           <li data-action={'delete'} style={{ color: '#d32f2f' }}>
-            Delete Conversation
+            {t('messages.deleteConversation')}
           </li>
         </ul>
       </div>
@@ -548,7 +551,7 @@ const mapStateToProps = state => ({
   accountsState: state.accountsState
 })
 
-export default connect(mapStateToProps, {
+export default withTranslation()(connect(mapStateToProps, {
   fetchAccounts,
   unloadAccounts,
   fetchConversations,
@@ -559,4 +562,4 @@ export default connect(mapStateToProps, {
   unloadSingleConversation,
   sendMessage,
   receiveMessage
-})(MessagesContainer)
+})(MessagesContainer))

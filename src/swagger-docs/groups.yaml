@@ -1,0 +1,85 @@
+paths:
+  /api/v1/groups:
+    get:
+      tags: [Groups]
+      summary: Get groups for current user
+      security:
+        - accessToken: []
+      responses:
+        200:
+          description: List of groups
+  /api/v1/groups/all:
+    get:
+      tags: [Groups]
+      summary: Get all groups
+      security:
+        - accessToken: []
+      responses:
+        200:
+          description: List of all groups
+  /api/v1/groups/create:
+    post:
+      tags: [Groups]
+      summary: Create a group
+      security:
+        - accessToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                members:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        200:
+          description: Group created
+  /api/v1/groups/{id}:
+    get:
+      tags: [Groups]
+      summary: Get single group
+      security:
+        - accessToken: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Group object
+    put:
+      tags: [Groups]
+      summary: Update a group
+      security:
+        - accessToken: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Group updated
+    delete:
+      tags: [Groups]
+      summary: Delete a group
+      security:
+        - accessToken: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Group deleted

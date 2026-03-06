@@ -4,20 +4,26 @@ var expect = require('chai').expect
 var mongoose = require('mongoose')
 var path = require('path')
 var _ = require('lodash')
+var { MongoMemoryServer } = require('mongodb-memory-server')
 
 var database, db
-var CONNECTION_URI = 'mongodb://localhost:27017/polonel_trudesk31908899'
+var mongoServer
 
 // Global Setup for tests
 before(function (done) {
-  this.timeout(60000) // Longer timeout: in-memory MongoDB + defaults init + possible tool download
+  this.timeout(120000) // Longer timeout: in-memory MongoDB download + defaults init
   delete require.cache[require.resolve('../src/database')]
   delete require.cache[require.resolve('mongoose')]
   mongoose = require('mongoose')
   database = require('../src/database')
 
   mongoose.connection.close()
-  database.init(async function (err, d) {
+
+  MongoMemoryServer.create().then(function (server) {
+    mongoServer = server
+    var CONNECTION_URI = mongoServer.getUri()
+
+    database.init(async function (err, d) {
     try {
       expect(err).to.not.exist
       expect(d).to.be.a('object')
@@ -118,6 +124,7 @@ before(function (done) {
       done(e)
     }
   }, CONNECTION_URI)
+  }).catch(function (e) { done(e) })
 })
 
 // Global Teardown for tests
@@ -127,7 +134,10 @@ after(async function () {
     await mongoose.connection.dropDatabase()
     await mongoose.connection.close()
   }
-  // Stop in-memory MongoDB if it was used
+  if (mongoServer) {
+    await mongoServer.stop()
+  }
+  // Stop in-memory MongoDB if it was used by the app module
   var dbModule = require('../src/database')
   var memServer = dbModule.getMemoryServer && dbModule.getMemoryServer()
   if (memServer) {
@@ -152,6 +162,7 @@ describe('Database', function () {
   })
 
   it('should connect without error', function (done) {
+    var uri = mongoServer.getUri()
     database.init(function (err, db) {
       expect(err).to.not.exist
       expect(db).to.be.a('object')
@@ -164,7 +175,7 @@ describe('Database', function () {
         expect(db.connection._readyState).to.equal(1)
 
         done()
-      }, CONNECTION_URI)
-    }, CONNECTION_URI)
+      }, uri)
+    }, uri)
   })
 })

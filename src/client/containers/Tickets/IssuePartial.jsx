@@ -17,7 +17,7 @@ import { observer } from 'mobx-react'
 import { makeObservable, observable } from 'mobx'
 
 import Avatar from 'components/Avatar/Avatar'
-import ReactHtmlParser from 'react-html-parser'
+import parse from 'html-react-parser'
 
 import { TICKETS_ISSUE_SET, TICKETS_UI_ATTACHMENTS_UPDATE } from 'serverSocket/socketEventConsts'
 
@@ -158,7 +158,7 @@ class IssuePartial extends React.Component {
               ))}
           </ul>
           <div className='issue-body' ref={r => (this.issueBody = r)}>
-            {ReactHtmlParser(this.issue)}
+            {parse(this.issue)}
           </div>
         </div>
         {/* Permissions on Fragment for edit */}

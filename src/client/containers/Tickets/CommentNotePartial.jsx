@@ -13,7 +13,7 @@
 
 import React, { Fragment } from 'react'
 import PropTypes from 'prop-types'
-import ReactHtmlParser from 'react-html-parser'
+import parse from 'html-react-parser'
 import Avatar from 'components/Avatar/Avatar'
 
 import helpers from 'lib/helpers'
@@ -61,8 +61,8 @@ class CommentNotePartial extends React.Component {
           {isNote && <span className='uk-badge uk-badge-small nomargin-left-right text-white'>NOTE</span>}
 
           <div className='comment-body' style={{ marginTop: 10 }} ref={r => (this.body = r)}>
-            {isNote && <Fragment>{ReactHtmlParser(comment.note)}</Fragment>}
-            {!isNote && <Fragment>{ReactHtmlParser(comment.comment)}</Fragment>}
+            {isNote && <Fragment>{parse(comment.note)}</Fragment>}
+            {!isNote && <Fragment>{parse(comment.comment)}</Fragment>}
           </div>
         </div>
         {this.props.ticketStatus.get('isResolved') === false && (

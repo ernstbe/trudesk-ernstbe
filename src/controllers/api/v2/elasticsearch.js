@@ -13,7 +13,6 @@
  */
 
 const _ = require('lodash')
-const async = require('async')
 const winston = require('../../../logger')
 const es = require('../../../elasticsearch')
 const ticketSchema = require('../../../models/ticket')
@@ -73,7 +72,7 @@ apiElasticSearch.status = async (req, res) => {
   }
 }
 
-apiElasticSearch.search = function (req, res) {
+apiElasticSearch.search = async function (req, res) {
   var limit = !_.isUndefined(req.query['limit']) ? req.query.limit : 100
   try {
     limit = parseInt(limit)
@@ -81,71 +80,77 @@ apiElasticSearch.search = function (req, res) {
     limit = 100
   }
 
-  async.waterfall(
-    [
-      function (next) {
-        if (!req.user.role.isAdmin && !req.user.role.isAgent)
-          return groupSchema.getAllGroupsOfUserNoPopulate(req.user._id, next)
+  try {
+    var grps
+    if (req.user.role.isAdmin || req.user.role.isAgent) {
+      var Department = require('../../../models/department')
+      grps = await Department.getDepartmentGroupsOfUser(req.user._id)
+    } else {
+      grps = await groupSchema.getAllGroupsOfUserNoPopulate(req.user._id)
+    }
 
-        var Department = require('../../../models/department')
-        return Department.getDepartmentGroupsOfUser(req.user._id, next)
-      },
-      function (groups, next) {
-        var g = _.map(groups, function (i) {
-          return i._id
-        })
-        // For docker we need to add a unique ID for the index.
-        var obj = {
-          index: es.indexName,
-          body: {
-            size: limit,
-            from: 0,
-            query: {
-              bool: {
-                must: {
-                  multi_match: {
-                    query: req.query['q'],
-                    type: 'cross_fields',
-                    operator: 'and',
-                    fields: [
-                      'uid^5',
-                      'subject^4',
-                      'issue^4',
-                      'owner.fullname',
-                      'owner.username',
-                      'owner.email',
-                      'comments.owner.email',
-                      'tags.normalized',
-                      'priority.name',
-                      'type.name',
-                      'group.name',
-                      'comments.comment^3',
-                      'notes.note^3',
-                      'dateFormatted'
-                    ],
-                    tie_breaker: 0.3
-                  }
-                },
-                filter: {
-                  terms: { 'group._id': g }
-                }
+    var g = _.map(grps, function (i) {
+      return i._id
+    })
+
+    // Fall back to MongoDB search when Elasticsearch is not available
+    if (!es || !es.esclient) {
+      var searchQuery = req.query['q']
+      if (!searchQuery) return apiUtil.sendApiError(res, 400, 'Missing search query parameter "q"')
+
+      var results = await ticketSchema.getTicketsWithSearchString(g, searchQuery)
+      return res.json({
+        success: true,
+        count: _.size(results),
+        totalCount: _.size(results),
+        tickets: _.sortBy(results, 'uid').reverse()
+      })
+    }
+
+    var obj = {
+      index: es.indexName,
+      body: {
+        size: limit,
+        from: 0,
+        query: {
+          bool: {
+            must: {
+              multi_match: {
+                query: req.query['q'],
+                type: 'cross_fields',
+                operator: 'and',
+                fields: [
+                  'uid^5',
+                  'subject^4',
+                  'issue^4',
+                  'owner.fullname',
+                  'owner.username',
+                  'owner.email',
+                  'comments.owner.email',
+                  'tags.normalized',
+                  'priority.name',
+                  'type.name',
+                  'group.name',
+                  'comments.comment^3',
+                  'notes.note^3',
+                  'dateFormatted'
+                ],
+                tie_breaker: 0.3
               }
+            },
+            filter: {
+              terms: { 'group._id': g }
             }
           }
         }
-
-        return next(null, obj)
       }
-    ],
-    function (err, obj) {
-      if (err) return apiUtil.sendApiError(res, 500, err.message)
-      if (!es || !es.esclient) return apiUtil.sendApiError(res, 400, 'Elasticsearch is not configured')
-
-      es.esclient.search(obj).then(function (r) {
-        return res.send(r)
-      })
     }
-  )
+
+    var r = await es.esclient.search(obj)
+    return res.send(r)
+  } catch (err) {
+    return apiUtil.sendApiError(res, 500, err.message)
+  }
 }
 
 module.exports = apiElasticSearch

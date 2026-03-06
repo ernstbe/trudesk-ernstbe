@@ -517,7 +517,7 @@ userSchema.statics.createUserFromEmail = async function (email) {
   const html = await emailRenderer.render('public-account-created', dataObject)
   var mailOptions = {
     to: savedUser.email,
-    subject: 'Welcome to trudesk! - Here are your account details.',
+    subject: require('../i18n').t('welcomeAccount', { siteTitle: 'Trudesk' }),
     html: html,
     generateTextFromHTML: true
   }

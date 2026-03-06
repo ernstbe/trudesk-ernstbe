@@ -13,7 +13,7 @@
  */
 
 import React from 'react'
-import ReactDOM from 'react-dom'
+import { createRoot } from 'react-dom/client'
 import { applyMiddleware, createStore, compose } from 'redux'
 import { Provider } from 'react-redux'
 import createSagaMiddleware from 'redux-saga'
@@ -72,7 +72,7 @@ if (document.getElementById('globals')) {
     </Provider>
   )
 
-  ReactDOM.render(GlobalsRoot, document.getElementById('globals'))
+  createRoot(document.getElementById('globals')).render(GlobalsRoot)
 }
 
 const sidebarWithProvider = (
@@ -81,7 +81,7 @@ const sidebarWithProvider = (
   </Provider>
 )
 
-ReactDOM.render(sidebarWithProvider, document.getElementById('sidebar'))
+createRoot(document.getElementById('sidebar')).render(sidebarWithProvider)
 
 if (document.getElementById('modal-wrapper')) {
   const RootModal = (
@@ -89,7 +89,7 @@ if (document.getElementById('modal-wrapper')) {
       <ModalRoot />
     </Provider>
   )
-  ReactDOM.render(RootModal, document.getElementById('modal-wrapper'))
+  createRoot(document.getElementById('modal-wrapper')).render(RootModal)
 }
 
 if (document.getElementById('topbar')) {
@@ -99,10 +99,9 @@ if (document.getElementById('topbar')) {
     </Provider>
   )
 
-  ReactDOM.render(TopbarRoot, document.getElementById('topbar'))
+  createRoot(document.getElementById('topbar')).render(TopbarRoot)
 }
 
 window.react.renderer = renderer
-window.react.dom = ReactDOM
 
 renderer(store)

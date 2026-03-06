@@ -432,6 +432,15 @@ function mainRoutes (router, middleware, controllers) {
 }
 
 module.exports = function (app, middleware) {
+  // Swagger API Documentation
+  const swaggerUi = require('swagger-ui-express')
+  const swaggerSpec = require('../swagger')
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+    customSiteTitle: 'Trudesk API Docs',
+    customCss: '.swagger-ui .topbar { display: none }'
+  }))
+  app.get('/api-docs.json', (req, res) => res.json(swaggerSpec))
+
   mainRoutes(router, middleware, controllers)
   app.use('/', router)
 

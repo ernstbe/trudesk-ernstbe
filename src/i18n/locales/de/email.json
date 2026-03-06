@@ -1,0 +1,9 @@
+{
+  "ticketCreated": "Ticket #{{uid}} erstellt - {{subject}}",
+  "ticketUpdated": "Aktualisiert: Ticket #{{uid}} - {{subject}}",
+  "accountRecovery": "[{{siteTitle}}] Kontowiederherstellung",
+  "passwordResetRequest": "[{{siteTitle}}] Passwort zurücksetzen",
+  "twoFactorRemoved": "[{{siteTitle}}] Zwei-Faktor-Authentifizierung entfernt!",
+  "newPassword": "[{{siteTitle}}] Neues Passwort",
+  "welcomeAccount": "Willkommen bei {{siteTitle}}! - Hier sind Ihre Zugangsdaten."
+}

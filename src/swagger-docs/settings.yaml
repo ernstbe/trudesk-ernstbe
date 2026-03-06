@@ -1,0 +1,107 @@
+paths:
+  /api/v1/settings:
+    get:
+      tags: [Settings]
+      summary: Get all settings
+      security:
+        - accessToken: []
+      responses:
+        200:
+          description: Settings object
+    put:
+      tags: [Settings]
+      summary: Update a setting
+      security:
+        - accessToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, value]
+              properties:
+                name:
+                  type: string
+                value:
+                  type: string
+      responses:
+        200:
+          description: Setting updated
+  /api/v1/roles:
+    get:
+      tags: [Roles]
+      summary: Get all roles
+      security:
+        - accessToken: []
+      responses:
+        200:
+          description: List of roles
+    post:
+      tags: [Roles]
+      summary: Create a role
+      security:
+        - accessToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                grants:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        200:
+          description: Role created
+  /api/v1/notices/create:
+    post:
+      tags: [Notices]
+      summary: Create a notice
+      security:
+        - accessToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, message, color, fontColor]
+              properties:
+                name:
+                  type: string
+                message:
+                  type: string
+                color:
+                  type: string
+                fontColor:
+                  type: string
+      responses:
+        200:
+          description: Notice created
+  /api/v1/tags/create:
+    post:
+      tags: [Tags]
+      summary: Create a tag
+      security:
+        - accessToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tag]
+              properties:
+                tag:
+                  type: string
+      responses:
+        200:
+          description: Tag created
