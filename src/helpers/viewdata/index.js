@@ -156,17 +156,17 @@ viewController.getData = function (request, cb) {
       // Custom favicon
       viewdata.hasCustomFavicon = !!(customFaviconSetting && customFaviconSetting.value)
       if (!viewdata.hasCustomFavicon) {
-        viewdata.favicon = '/img/favicon.ico'
+        viewdata.favicon = '/img/favicon.png'
       } else {
         try {
           const faviconFilename = await settingSchema.getSetting('gen:customfaviconfilename')
           if (faviconFilename && !_.isUndefined(faviconFilename.value)) {
             viewdata.favicon = '/assets/' + faviconFilename.value
           } else {
-            viewdata.favicon = '/img/favicon.ico'
+            viewdata.favicon = '/img/favicon.png'
           }
         } catch (e) {
-          viewdata.favicon = '/img/favicon.ico'
+          viewdata.favicon = '/img/favicon.png'
         }
       }
 
