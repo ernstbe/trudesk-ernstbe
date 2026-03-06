@@ -1,64 +1,114 @@
 <h1 align="center">
 <a href="http://trudesk.io"><img src="http://trudesk.io/TD_Black.png" width="500" /></a>
-<br />Community Edition
+<br />Community Edition (Fork)
 </h1>
 <p align="center">
-<a href="https://app.codacy.com/gh/polonel/trudesk/dashboard"><img alt="Codacy grade" src="https://img.shields.io/codacy/grade/3228c30aa1d14530ba25a04948985079?style=flat-square"></a>
 <a href="https://standardjs.com"><img src="https://img.shields.io/badge/code_style-standard-brightgreen.svg?style=flat-square" /></a>
-<a href="https://app.circleci.com/pipelines/github/polonel/trudesk"><img src="https://img.shields.io/circleci/token/ad7d2d066a75685a15c8e2fd08bd75e53b18fbb7/project/github/polonel/trudesk/master.svg?style=flat-square" /></a>
-<a href="https://forum.trudesk.io"><img src="https://img.shields.io/discourse/https/forum.trudesk.io/topics.svg?style=flat-square" /></a>
-<a title="Crowdin" target="_blank" href="https://crowdin.com/project/trudesk"><img src="https://d322cqt584bo4o.cloudfront.net/trudesk/localized.svg?style=flat-square"></a>
-<a href="https://github.com/polonel/trudesk/blob/master/LICENSE"><img src="https://img.shields.io/badge/license-APACHE%202-green.svg?style=flat-square" /></a>
-<a href="https://github.com/polonel/trudesk/releases"><img src="https://img.shields.io/github/release/polonel/trudesk.svg?style=flat-square" /></a>
-<a href="https://docs.trudesk.io/v1.2"><img src="https://img.shields.io/badge/documentation-click%20to%20read-blue.svg?style=flat-square" /></a>
-<br />
-<sub>© 2014-2023, Trudesk, Inc. (<b><a href="https://trudesk.io">@trudesk</a></b>).</sub>
-</p>
-<br />
-
-### Open Source Help Desk - Simply Organized.
-Quickly resolve issues & task with an easy-to-use solution. Built with one goal in mind, to keep work loads organized and simple. **This is the source for Trudesk Community Edition. For the more comprehensive, cloud-hosted version, please see Trudesk Cloud at <a href="http://trudesk.io">Trudesk.io</a>.**
-
-<p align="center">
-    <img src="https://trudesk.io/images/hero-td-right.png" />
+<a href="https://github.com/ernstbe/trudesk-ernstbe/actions"><img src="https://img.shields.io/github/actions/workflow/status/ernstbe/trudesk-ernstbe/ci.yml?branch=master&style=flat-square&label=CI" /></a>
+<a href="https://github.com/ernstbe/trudesk-ernstbe/blob/master/LICENSE"><img src="https://img.shields.io/badge/license-APACHE%202-green.svg?style=flat-square" /></a>
 </p>
 
-#### Deploy Trudesk Anywhere
-**Trudesk** is built with <a href="https://nodejs.org">nodejs</a> and <a href="https://mongodb.org">mongodb</a> and can run on any cloud provider, docker, bare-metal, or even a raspberry pi.
-Take it for a spin on Ubuntu 20.04 with a one liner - <br />`curl -L -s https://storage.trudesk.io/install/ubuntu-1.2.sh | sudo bash`
+> Modernized fork of [Trudesk](https://github.com/polonel/trudesk) with upgraded dependencies, improved test coverage, and Docker-first deployment.
 
-#### Requirements
-- NodeJS 16+
-- MongoDB 5.0+
-- Elasticsearch 8 (optional to enable search)
+### What's changed in this fork
 
-### Documentation
-Online documentation: [https://docs.trudesk.io/v1.2](https://docs.trudesk.io/v1.2)
+- **MongoDB 8 & Mongoose 8** — upgraded from legacy versions
+- **Elasticsearch 8.19** — with MongoDB fallback when ES is unavailable
+- **React 18** — migrated from React 17 (`createRoot` API)
+- **Security updates** — Express, Axios, jsonwebtoken, sanitize-html, socket.io, webpack, and more
+- **Server-side i18n** — email subjects translated via i18next (EN/DE)
+- **Swagger/OpenAPI** — REST API documentation at `/apidoc`
+- **CI pipeline** — GitHub Actions with lint and test stages
+- **Expanded test suite** — 89 tests covering models, API endpoints, and i18n
+
+### Requirements
+
+- Node.js 20+
+- MongoDB 8.0+
+- Elasticsearch 8 (optional — search falls back to MongoDB)
+
+### Quick Start
+
+#### Docker Compose (recommended)
+
+```bash
+cp .env.example .env
+# Edit .env with your settings (see comments in .env.example)
+docker compose up -d
+```
+
+This starts Trudesk, MongoDB 8, and Elasticsearch 8 together. The app is available at `http://localhost:8118`.
+
+#### Manual Setup
+
+```bash
+npm install --legacy-peer-deps
+npm run build
+npm start
+```
+
+On first run, Trudesk opens a setup wizard at `http://localhost:8118` to configure the database connection and admin account.
+
+### Development
+
+```bash
+# Watch mode for frontend
+npm run webpackwatch
+
+# Run tests (uses in-memory MongoDB — no external DB needed)
+npm test
+
+# Lint
+npm run lint
+```
+
+### Environment Variables
+
+All configuration is done via environment variables or a `.env` file. See [`.env.example`](.env.example) for a full reference with descriptions covering:
+
+- General settings (port, site URL)
+- MongoDB connection (URI, auth, replica sets)
+- Elasticsearch connection
+- Rate limiting and caching
+
+### API Documentation
+
+Interactive Swagger UI is available at `/apidoc` when the server is running. The OpenAPI spec covers tickets, groups, users, settings, and more.
+
+### Project Structure
+
+```
+src/
+  controllers/    # Express route handlers (API v1 & v2)
+  models/         # Mongoose schemas (ticket, user, group, etc.)
+  client/         # React frontend (islands architecture)
+  views/          # Handlebars server-rendered templates
+  settings/       # App defaults and configuration
+  i18n/           # Translation resources (EN, DE)
+test/
+  0_database.js   # Global test setup (in-memory MongoDB)
+  models/         # Model unit tests
+  api/            # API endpoint tests
+  source/         # Utility tests (i18n, etc.)
+```
 
 ### Contributing
-If you like what you see here, and want to help support the work being done, you could:
-+ Report Bugs
-+ Request/Implement Features
-+ Refactor Codebase
-+ Help Write Documentation
 
-### Sponsors
-Just a few who have made the project possible.
-<br />
-<a href="https://www.browserstack.com"><img src="https://files.trudesk.io/browserstack-logo-600x315.png" width="115" /></a>
-
-Trudesk is tested with confidence using [BrowserStack](https://browserstack.com).
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feat/my-feature`)
+3. Run tests (`npm test`) and lint (`npm run lint`)
+4. Open a pull request against `master`
 
 ### License
 
     Copyright 2014-2023 Trudesk, Inc.
-    
+
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
-    
+
     http://www.apache.org/licenses/LICENSE-2.0
-    
+
     Unless required by applicable law or agreed to in writing, software
     distributed under the License is distributed on an "AS IS" BASIS,
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
