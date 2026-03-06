@@ -12,12 +12,10 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-import React from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import { withTranslation } from 'react-i18next'
-import { observer } from 'mobx-react'
-import { makeObservable, observable } from 'mobx'
 import { createPriority } from 'actions/tickets'
 import BaseModal from './BaseModal'
 import Button from 'components/Button'
@@ -26,90 +24,82 @@ import ColorSelector from 'components/ColorSelector'
 import $ from 'jquery'
 import helpers from 'lib/helpers'
 
-@observer
-class CreatePriorityModal extends React.Component {
-  @observable name = ''
-  @observable overdueIn = 2880
-  @observable htmlColor = '#29B995'
+function CreatePriorityModal (props) {
+  const { t } = props
+  const [name, setName] = useState('')
+  const [overdueIn, setOverdueIn] = useState(2880)
+  const [htmlColor, setHtmlColor] = useState('#29B995')
 
-  constructor (props) {
-    super(props)
-    makeObservable(this)
-  }
-
-  componentDidMount () {
+  useEffect(() => {
     helpers.UI.inputs()
     helpers.formvalidator()
-  }
+  }, [])
 
-  onCreatePrioritySubmit (e) {
+  const onCreatePrioritySubmit = useCallback((e) => {
     e.preventDefault()
     const $form = $(e.target)
     if (!$form.isValid(null, null, false)) return true
 
     //  Form is valid... Submit..
-    this.props.createPriority({
-      name: this.name,
-      overdueIn: this.overdueIn,
-      htmlColor: this.htmlColor
+    props.createPriority({
+      name: name,
+      overdueIn: overdueIn,
+      htmlColor: htmlColor
     })
-  }
+  }, [name, overdueIn, htmlColor])
 
-  render () {
-    const { t } = this.props
-    return (
-      <BaseModal {...this.props} ref={i => (this.base = i)}>
-        <form className={'uk-form-stacked'} onSubmit={e => this.onCreatePrioritySubmit(e)}>
-          <div className='uk-margin-medium-bottom uk-clearfix'>
-            <h2>{t('modals.createPriority.title')}</h2>
-          </div>
+  return (
+    <BaseModal {...props}>
+      <form className={'uk-form-stacked'} onSubmit={e => onCreatePrioritySubmit(e)}>
+        <div className='uk-margin-medium-bottom uk-clearfix'>
+          <h2>{t('modals.createPriority.title')}</h2>
+        </div>
 
-          <div>
-            <div className='uk-clearfix'>
-              <div className='z-box uk-grid uk-grid-collpase uk-clearfix'>
-                <div className='uk-width-1-3'>
-                  <label>{t('modals.createPriority.priorityName')}</label>
-                  <input
-                    type='text'
-                    className={'md-input'}
-                    value={this.name}
-                    onChange={e => (this.name = e.target.value)}
-                    data-validation='length'
-                    data-validation-length='min3'
-                    data-validation-error-msg={t('modals.createPriority.validName')}
-                  />
-                </div>
-                <div className='uk-width-1-3'>
-                  <label>{t('modals.createPriority.slaOverdue')}</label>
-                  <input
-                    type='text'
-                    className={'md-input'}
-                    value={this.overdueIn}
-                    onChange={e => (this.overdueIn = e.target.value)}
-                    data-validation='number'
-                    data-validation-allowing='range[1;525600]'
-                    data-validation-error-msg={t('modals.createPriority.validSla')}
-                  />
-                </div>
-                <div className='uk-width-1-3'>
-                  <ColorSelector
-                    hideRevert={true}
-                    defaultColor={'#29B995'}
-                    validationEnabled={true}
-                    onChange={e => (this.htmlColor = e.target.value)}
-                  />
-                </div>
+        <div>
+          <div className='uk-clearfix'>
+            <div className='z-box uk-grid uk-grid-collpase uk-clearfix'>
+              <div className='uk-width-1-3'>
+                <label>{t('modals.createPriority.priorityName')}</label>
+                <input
+                  type='text'
+                  className={'md-input'}
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  data-validation='length'
+                  data-validation-length='min3'
+                  data-validation-error-msg={t('modals.createPriority.validName')}
+                />
               </div>
-              <div className='uk-modal-footer uk-text-right'>
-                <Button text={t('common.cancel')} type={'button'} extraClass={'uk-modal-close'} flat={true} waves={true} />
-                <Button text={t('common.create')} type={'submit'} flat={true} waves={true} style={'success'} />
+              <div className='uk-width-1-3'>
+                <label>{t('modals.createPriority.slaOverdue')}</label>
+                <input
+                  type='text'
+                  className={'md-input'}
+                  value={overdueIn}
+                  onChange={e => setOverdueIn(e.target.value)}
+                  data-validation='number'
+                  data-validation-allowing='range[1;525600]'
+                  data-validation-error-msg={t('modals.createPriority.validSla')}
+                />
+              </div>
+              <div className='uk-width-1-3'>
+                <ColorSelector
+                  hideRevert={true}
+                  defaultColor={'#29B995'}
+                  validationEnabled={true}
+                  onChange={e => setHtmlColor(e.target.value)}
+                />
               </div>
             </div>
+            <div className='uk-modal-footer uk-text-right'>
+              <Button text={t('common.cancel')} type={'button'} extraClass={'uk-modal-close'} flat={true} waves={true} />
+              <Button text={t('common.create')} type={'submit'} flat={true} waves={true} style={'success'} />
+            </div>
           </div>
-        </form>
-      </BaseModal>
-    )
-  }
+        </div>
+      </form>
+    </BaseModal>
+  )
 }
 
 CreatePriorityModal.propTypes = {

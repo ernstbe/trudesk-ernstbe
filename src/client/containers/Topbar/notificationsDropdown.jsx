@@ -12,12 +12,10 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-import React from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import moment from 'moment-timezone'
-import { observer } from 'mobx-react'
-import { makeObservable, observable } from 'mobx'
 
 import PDropdown from 'components/PDropdown'
 
@@ -25,118 +23,104 @@ import helpers from 'lib/helpers'
 import { NOTIFICATIONS_UPDATE, NOTIFICATIONS_MARK_READ, NOTIFICATIONS_CLEAR } from 'serverSocket/socketEventConsts'
 import 'history'
 
-@observer
-class NotificationsDropdownPartial extends React.Component {
-  @observable notifications = []
+function NotificationsDropdownPartial ({ socket, shortDateFormat, timezone, onViewAllNotificationsClick, forwardedRef }) {
+  const [notifications, setNotifications] = useState([])
 
-  constructor (props) {
-    super(props)
-    makeObservable(this)
+  const onSocketUpdateNotifications = useCallback((data) => {
+    setNotifications(prev => !helpers.arrayIsEqual(prev, data.items) ? data.items : prev)
+  }, [])
 
-    this.onSocketUpdateNotifications = this.onSocketUpdateNotifications.bind(this)
-    this.clearNotificationsClicked = this.clearNotificationsClicked.bind(this)
-    this.markNotificationRead = this.markNotificationRead.bind(this)
-  }
-
-  componentDidMount () {
-    this.props.socket.on(NOTIFICATIONS_UPDATE, this.onSocketUpdateNotifications)
-  }
-
-  componentWillUnmount () {
-    this.props.socket.off(NOTIFICATIONS_UPDATE, this.onSocketUpdateNotifications)
-  }
-
-  onSocketUpdateNotifications (data) {
-    if (!helpers.arrayIsEqual(this.notifications, data.items)) this.notifications = data.items
-  }
-
-  clearNotificationsClicked (e) {
+  const clearNotificationsClicked = useCallback((e) => {
     e.preventDefault()
     e.stopPropagation()
 
-    this.props.socket.emit(NOTIFICATIONS_CLEAR)
-  }
+    socket.emit(NOTIFICATIONS_CLEAR)
+  }, [socket])
 
-  markNotificationRead (e, notification) {
+  const markNotificationRead = useCallback((e, notification) => {
     e.preventDefault()
     e.stopPropagation()
 
-    this.props.socket.emit(NOTIFICATIONS_MARK_READ, notification._id)
+    socket.emit(NOTIFICATIONS_MARK_READ, notification._id)
 
     History.pushState(null, null, `/tickets/${notification.data.ticket.uid}`)
-  }
+  }, [socket])
 
-  render () {
-    const { shortDateFormat, timezone, forwardedRef } = this.props
+  useEffect(() => {
+    socket.on(NOTIFICATIONS_UPDATE, onSocketUpdateNotifications)
 
-    return (
-      <PDropdown
-        ref={forwardedRef}
-        id={'notifications'}
-        title={'Notifications'}
-        topOffset={-4}
-        leftOffset={4}
-        rightComponent={
-          <a className={'hoverUnderline no-ajaxy'} onClick={e => this.clearNotificationsClicked(e)}>
-            Clear Notifications
+    return () => {
+      socket.off(NOTIFICATIONS_UPDATE, onSocketUpdateNotifications)
+    }
+  }, [socket, onSocketUpdateNotifications])
+
+  return (
+    <PDropdown
+      ref={forwardedRef}
+      id={'notifications'}
+      title={'Notifications'}
+      topOffset={-4}
+      leftOffset={4}
+      rightComponent={
+        <a className={'hoverUnderline no-ajaxy'} onClick={e => clearNotificationsClicked(e)}>
+          Clear Notifications
+        </a>
+      }
+      footerComponent={
+        <div className={'uk-text-center' + (notifications.length < 1 ? ' hide' : '')}>
+          <a className={'no-ajaxy hoverUnderline'} onClick={onViewAllNotificationsClick}>
+            View All Notifications
           </a>
-        }
-        footerComponent={
-          <div className={'uk-text-center' + (this.notifications.length < 1 ? ' hide' : '')}>
-            <a className={'no-ajaxy hoverUnderline'} onClick={this.props.onViewAllNotificationsClick}>
-              View All Notifications
-            </a>
-          </div>
-        }
-      >
-        {this.notifications.map(notification => {
-          const formattedTimestamp = moment
-            .utc(notification.created)
-            .tz(timezone)
-            .format('YYYY-MM-DDThh:mm')
-          const formattedDate = moment
-            .utc(notification.created)
-            .tz(timezone)
-            .format(shortDateFormat)
-          return (
-            <li key={notification._id}>
-              <a className='item no-ajaxy' onClick={e => this.markNotificationRead(e, notification)}>
-                <div className='uk-clearfix'>
-                  {notification.unread && <div className={'messageUnread'} />}
-                  {notification.type === 0 && (
-                    <div className={'messageIcon left'}>
-                      <i className='fa fa-check green' />
-                    </div>
-                  )}
-                  {notification.type === 1 && (
-                    <div className={'messageIcon left'}>
-                      <i className='fa fa-comment-o green' style={{ marginTop: '-5px' }} />
-                    </div>
-                  )}
-                  {notification.type === 2 && (
-                    <div className={'messageIcon left'}>
-                      <i className='fa fa-exclamation red' />
-                    </div>
-                  )}
-                  <div className='messageAuthor'>
-                    <strong>{notification.title}</strong>
+        </div>
+      }
+    >
+      {notifications.map(notification => {
+        const formattedTimestamp = moment
+          .utc(notification.created)
+          .tz(timezone)
+          .format('YYYY-MM-DDThh:mm')
+        const formattedDate = moment
+          .utc(notification.created)
+          .tz(timezone)
+          .format(shortDateFormat)
+        return (
+          <li key={notification._id}>
+            <a className='item no-ajaxy' onClick={e => markNotificationRead(e, notification)}>
+              <div className='uk-clearfix'>
+                {notification.unread && <div className={'messageUnread'} />}
+                {notification.type === 0 && (
+                  <div className={'messageIcon left'}>
+                    <i className='fa fa-check green' />
                   </div>
-                  <div className='messageSnippet'>
-                    <span>{notification.message}</span>
+                )}
+                {notification.type === 1 && (
+                  <div className={'messageIcon left'}>
+                    <i className='fa fa-comment-o green' style={{ marginTop: '-5px' }} />
                   </div>
-                  <div className='messageDate'>
-                    <time dateTime={formattedTimestamp} className={'timestamp'}>
-                      {formattedDate}
-                    </time>
+                )}
+                {notification.type === 2 && (
+                  <div className={'messageIcon left'}>
+                    <i className='fa fa-exclamation red' />
                   </div>
+                )}
+                <div className='messageAuthor'>
+                  <strong>{notification.title}</strong>
                 </div>
-              </a>
-            </li>
-          )
-        }, this)}
-      </PDropdown>
-    )
-  }
+                <div className='messageSnippet'>
+                  <span>{notification.message}</span>
+                </div>
+                <div className='messageDate'>
+                  <time dateTime={formattedTimestamp} className={'timestamp'}>
+                    {formattedDate}
+                  </time>
+                </div>
+              </div>
+            </a>
+          </li>
+        )
+      })}
+    </PDropdown>
+  )
 }
 
 NotificationsDropdownPartial.propTypes = {

@@ -15,11 +15,8 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 
-class Zone extends React.Component {
-  render () {
-    const { extraClass } = this.props
-    return <div className={'zone uk-clearfix ' + (extraClass ? extraClass : '')}>{this.props.children}</div>
-  }
+const Zone = ({ extraClass, children }) => {
+  return <div className={'zone uk-clearfix ' + (extraClass ? extraClass : '')}>{children}</div>
 }
 
 Zone.propTypes = {

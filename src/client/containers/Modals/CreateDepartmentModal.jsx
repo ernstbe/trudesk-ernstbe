@@ -12,10 +12,8 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-import React from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import PropTypes from 'prop-types'
-import { makeObservable, observable } from 'mobx'
-import { observer } from 'mobx-react'
 import { connect } from 'react-redux'
 import { withTranslation } from 'react-i18next'
 
@@ -30,159 +28,153 @@ import $ from 'jquery'
 import Button from 'components/Button'
 import MultiSelect from 'components/MultiSelect'
 
-@observer
-class CreateDepartmentModal extends React.Component {
-  @observable name = ''
-  @observable allGroups = false
-  @observable publicGroups = false
+function CreateDepartmentModal (props) {
+  const { t } = props
+  const [name, setName] = useState('')
+  const [allGroups, setAllGroups] = useState(false)
+  const [publicGroups, setPublicGroups] = useState(false)
 
-  constructor (props) {
-    super(props)
+  const teamsSelectRef = useRef(null)
+  const groupSelectRef = useRef(null)
 
-    makeObservable(this)
-  }
-
-  componentDidMount () {
-    this.props.fetchTeams()
-    this.props.fetchGroups({ type: 'all' })
+  useEffect(() => {
+    props.fetchTeams()
+    props.fetchGroups({ type: 'all' })
 
     helpers.UI.inputs()
     helpers.UI.reRenderInputs()
     helpers.formvalidator()
-  }
 
-  componentDidUpdate () {
+    return () => {
+      props.unloadTeams()
+      props.unloadGroups()
+    }
+  }, [])
+
+  useEffect(() => {
     helpers.UI.reRenderInputs()
-  }
+  })
 
-  componentWillUnmount () {
-    this.props.unloadTeams()
-    this.props.unloadGroups()
-  }
+  const onInputChange = useCallback((e) => {
+    setName(e.target.value)
+  }, [])
 
-  onInputChange (e) {
-    this.name = e.target.value
-  }
-
-  onFormSubmit (e) {
+  const onFormSubmit = useCallback((e) => {
     e.preventDefault()
-    const { t } = this.props
     const $form = $(e.target)
     if (!$form.isValid(null, null, false)) return false
 
-    if (!this.allGroups && !this.publicGroups && this.groupSelect.getSelected() == null) {
+    if (!allGroups && !publicGroups && groupSelectRef.current.getSelected() == null) {
       helpers.UI.showSnackbar(t('modals.createDepartment.noGroupSelected'), true)
       return false
     }
 
-    if (this.teamsSelect.getSelected() == null) {
+    if (teamsSelectRef.current.getSelected() == null) {
       helpers.UI.showSnackbar(t('modals.createDepartment.noTeamSelected'), true)
       return false
     }
 
     const payload = {
-      name: this.name,
-      teams: this.teamsSelect.getSelected(),
-      allGroups: this.allGroups,
-      publicGroups: this.publicGroups,
-      groups: this.allGroups ? [] : this.groupSelect.getSelected()
+      name: name,
+      teams: teamsSelectRef.current.getSelected(),
+      allGroups: allGroups,
+      publicGroups: publicGroups,
+      groups: allGroups ? [] : groupSelectRef.current.getSelected()
     }
 
-    this.props.createDepartment(payload)
-  }
+    props.createDepartment(payload)
+  }, [name, allGroups, publicGroups, t])
 
-  render () {
-    const { t } = this.props
-    const mappedTeams = this.props.teams
-      .map(team => {
-        return { text: team.get('name'), value: team.get('_id') }
-      })
-      .toArray()
+  const mappedTeams = props.teams
+    .map(team => {
+      return { text: team.get('name'), value: team.get('_id') }
+    })
+    .toArray()
 
-    const mappedGroups = this.props.groups
-      .map(group => {
-        return { text: group.get('name'), value: group.get('_id') }
-      })
-      .toArray()
+  const mappedGroups = props.groups
+    .map(group => {
+      return { text: group.get('name'), value: group.get('_id') }
+    })
+    .toArray()
 
-    return (
-      <BaseModal {...this.props} options={{ bgclose: false }}>
-        <div className={'mb-25'}>
-          <h2>{t('modals.createDepartment.title')}</h2>
+  return (
+    <BaseModal {...props} options={{ bgclose: false }}>
+      <div className={'mb-25'}>
+        <h2>{t('modals.createDepartment.title')}</h2>
+      </div>
+      <form className={'uk-form-stacked'} onSubmit={e => onFormSubmit(e)}>
+        <div className={'uk-margin-medium-bottom'}>
+          <label>{t('modals.createDepartment.departmentName')}</label>
+          <input
+            type='text'
+            className={'md-input'}
+            value={name}
+            onChange={e => onInputChange(e)}
+            data-validation='length'
+            data-validation-length={'min2'}
+            data-validation-error-msg={t('modals.createDepartment.validName')}
+          />
         </div>
-        <form className={'uk-form-stacked'} onSubmit={e => this.onFormSubmit(e)}>
-          <div className={'uk-margin-medium-bottom'}>
-            <label>{t('modals.createDepartment.departmentName')}</label>
-            <input
-              type='text'
-              className={'md-input'}
-              value={this.name}
-              onChange={e => this.onInputChange(e)}
-              data-validation='length'
-              data-validation-length={'min2'}
-              data-validation-error-msg={t('modals.createDepartment.validName')}
-            />
+        <div className={'uk-margin-medium-bottom'}>
+          <label style={{ marginBottom: 5 }}>{t('nav.teams')}</label>
+          <MultiSelect items={mappedTeams} onChange={() => {}} ref={r => (teamsSelectRef.current = r)} />
+        </div>
+        <hr />
+        <div className={'uk-margin-medium-bottom uk-clearfix'}>
+          <div className='uk-float-left'>
+            <h4 style={{ paddingLeft: 2 }}>{t('modals.createDepartment.accessAllGroups')}</h4>
           </div>
-          <div className={'uk-margin-medium-bottom'}>
-            <label style={{ marginBottom: 5 }}>{t('nav.teams')}</label>
-            <MultiSelect items={mappedTeams} onChange={() => {}} ref={r => (this.teamsSelect = r)} />
+          <div className='uk-float-right md-switch md-green' style={{ marginTop: 5 }}>
+            <label>
+              {t('common.yes')}
+              <input
+                type='checkbox'
+                value={allGroups}
+                onChange={e => {
+                  const checked = e.target.checked
+                  setAllGroups(checked)
+                  if (checked) groupSelectRef.current.selectAll()
+                  else groupSelectRef.current.deselectAll()
+                }}
+              />
+              <span className={'lever'} />
+            </label>
           </div>
-          <hr />
-          <div className={'uk-margin-medium-bottom uk-clearfix'}>
-            <div className='uk-float-left'>
-              <h4 style={{ paddingLeft: 2 }}>{t('modals.createDepartment.accessAllGroups')}</h4>
-            </div>
-            <div className='uk-float-right md-switch md-green' style={{ marginTop: 5 }}>
-              <label>
-                {t('common.yes')}
-                <input
-                  type='checkbox'
-                  value={this.allGroups}
-                  onChange={e => {
-                    this.allGroups = e.target.checked
-                    if (this.allGroups) this.groupSelect.selectAll()
-                    else this.groupSelect.deselectAll()
-                  }}
-                />
-                <span className={'lever'} />
-              </label>
-            </div>
+        </div>
+        <div className={'uk-margin-medium-bottom uk-clearfix'}>
+          <div className='uk-float-left'>
+            <h4 style={{ paddingLeft: 2 }}>{t('modals.createDepartment.accessPublicGroups')}</h4>
           </div>
-          <div className={'uk-margin-medium-bottom uk-clearfix'}>
-            <div className='uk-float-left'>
-              <h4 style={{ paddingLeft: 2 }}>{t('modals.createDepartment.accessPublicGroups')}</h4>
-            </div>
-            <div className='uk-float-right md-switch md-green' style={{ marginTop: 1 }}>
-              <label>
-                {t('common.yes')}
-                <input
-                  type='checkbox'
-                  checked={this.publicGroups}
-                  onChange={e => {
-                    this.publicGroups = e.target.checked
-                  }}
-                />
-                <span className={'lever'} />
-              </label>
-            </div>
+          <div className='uk-float-right md-switch md-green' style={{ marginTop: 1 }}>
+            <label>
+              {t('common.yes')}
+              <input
+                type='checkbox'
+                checked={publicGroups}
+                onChange={e => {
+                  setPublicGroups(e.target.checked)
+                }}
+              />
+              <span className={'lever'} />
+            </label>
           </div>
-          <div className={'uk-margin-medium-bottom'}>
-            <label style={{ marginBottom: 5 }}>{t('modals.createDepartment.customerGroups')}</label>
-            <MultiSelect
-              items={mappedGroups}
-              onChange={() => {}}
-              ref={r => (this.groupSelect = r)}
-              disabled={this.allGroups}
-            />
-          </div>
-          <div className='uk-modal-footer uk-text-right'>
-            <Button text={t('common.close')} flat={true} waves={true} extraClass={'uk-modal-close'} />
-            <Button text={t('modals.createDepartment.createButton')} flat={true} waves={true} style={'primary'} type={'submit'} />
-          </div>
-        </form>
-      </BaseModal>
-    )
-  }
+        </div>
+        <div className={'uk-margin-medium-bottom'}>
+          <label style={{ marginBottom: 5 }}>{t('modals.createDepartment.customerGroups')}</label>
+          <MultiSelect
+            items={mappedGroups}
+            onChange={() => {}}
+            ref={r => (groupSelectRef.current = r)}
+            disabled={allGroups}
+          />
+        </div>
+        <div className='uk-modal-footer uk-text-right'>
+          <Button text={t('common.close')} flat={true} waves={true} extraClass={'uk-modal-close'} />
+          <Button text={t('modals.createDepartment.createButton')} flat={true} waves={true} style={'primary'} type={'submit'} />
+        </div>
+      </form>
+    </BaseModal>
+  )
 }
 
 CreateDepartmentModal.propTypes = {

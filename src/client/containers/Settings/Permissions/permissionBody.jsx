@@ -12,11 +12,9 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-import React from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
-import { observer } from 'mobx-react'
-import { makeObservable, observable } from 'mobx'
 import { isEqual } from 'lodash'
 import { updatePermissions } from 'actions/settings'
 import { showModal } from 'actions/common'
@@ -39,268 +37,266 @@ function defaultGrants () {
   }
 }
 
-@observer
-class PermissionBody extends React.Component {
-  @observable isAdmin = ''
-  @observable isAgent = ''
-  @observable hasHierarchy = ''
-  grants = []
-
-  @observable ticketGrants = defaultGrants()
-  @observable commentGrants = defaultGrants()
-  @observable accountGrants = defaultGrants()
-  @observable groupGrants = defaultGrants()
-  @observable teamGrants = defaultGrants()
-  @observable departmentGrants = defaultGrants()
-  @observable reportGrants = defaultGrants()
-  @observable noticeGrants = defaultGrants()
-
-  constructor (props) {
-    super(props)
-    makeObservable(this)
+function buildPermArray (permGroup) {
+  let arr = []
+  if (permGroup.all) arr = ['*']
+  else {
+    if (permGroup.create) arr.push('create')
+    if (permGroup.view) arr.push('view')
+    if (permGroup.update) arr.push('update')
+    if (permGroup.delete) arr.push('delete')
+    if (permGroup.special) arr.push(permGroup.special.join(' '))
   }
 
-  componentDidMount () {
-    this.isAdmin = this.props.role.get('isAdmin') || false
-    this.isAgent = this.props.role.get('isAgent') || false
-    this.hasHierarchy = this.props.role.get('hierarchy') || false
-    this.grants = this.props.role.get('grants').toArray() || []
+  return arr
+}
 
-    this.parseGrants()
-  }
+function mapTicketSpecials () {
+  return [
+    { title: 'Print', perm: 'print' },
+    { title: 'Notes', perm: 'notes' },
+    { title: 'Manage Public Tickets', perm: 'public' },
+    { title: 'Can View All Tickets in Assigned Groups', perm: 'viewall' }
+  ]
+}
 
-  componentDidUpdate () {
-    if (this.isAdmin === '') this.isAdmin = this.props.role.get('isAdmin') || false
-    if (this.isAgent === '') this.isAgent = this.props.role.get('isAgent') || false
-    if (this.hasHierarchy === '') this.hasHierarchy = this.props.role.get('hierarchy') || false
-    if (this.grants.length < 1) this.grants = this.props.role.get('grants').toArray() || []
+function mapAccountSpecials () {
+  return [{ title: 'Import', perm: 'import' }]
+}
 
-    this.parseGrants()
-  }
+function mapNoticeSpecials () {
+  return [
+    { title: 'Activate', perm: 'activate' },
+    { title: 'Deactivate', perm: 'deactivate' }
+  ]
+}
 
-  parseGrants () {
-    if (!this.grants) return
-    const parsedGrants = helpers.parseRoleGrants(this.grants)
+const PermissionBody = ({ role, updatePermissions, showModal }) => {
+  const [isAdmin, setIsAdmin] = useState('')
+  const [isAgent, setIsAgent] = useState('')
+  const [hasHierarchy, setHasHierarchy] = useState('')
+  const grantsRef = useRef([])
 
-    if (parsedGrants.tickets && !isEqual(parsedGrants.tickets, this.ticketGrants))
-      this.ticketGrants = parsedGrants.tickets
+  const [ticketGrants, setTicketGrants] = useState(defaultGrants())
+  const [commentGrants, setCommentGrants] = useState(defaultGrants())
+  const [accountGrants, setAccountGrants] = useState(defaultGrants())
+  const [groupGrants, setGroupGrants] = useState(defaultGrants())
+  const [teamGrants, setTeamGrants] = useState(defaultGrants())
+  const [departmentGrants, setDepartmentGrants] = useState(defaultGrants())
+  const [reportGrants, setReportGrants] = useState(defaultGrants())
+  const [noticeGrants, setNoticeGrants] = useState(defaultGrants())
 
-    if (parsedGrants.comments && !isEqual(parsedGrants.comments, this.commentGrants))
-      this.commentGrants = parsedGrants.comments
+  const ticketPermGroupRef = useRef(null)
+  const commentPermGroupRef = useRef(null)
+  const accountPermGroupRef = useRef(null)
+  const groupPermGroupRef = useRef(null)
+  const teamPermGroupRef = useRef(null)
+  const departmentPermGroupRef = useRef(null)
+  const reportPermGroupRef = useRef(null)
+  const noticePermGroupRef = useRef(null)
 
-    if (parsedGrants.accounts && !isEqual(parsedGrants.accounts, this.accountGrants))
-      this.accountGrants = parsedGrants.accounts
+  const parseGrants = useCallback(() => {
+    if (!grantsRef.current) return
+    const parsedGrants = helpers.parseRoleGrants(grantsRef.current)
 
-    if (parsedGrants.groups && !isEqual(parsedGrants.groups, this.groupGrants)) this.groupGrants = parsedGrants.groups
-    if (parsedGrants.teams && !isEqual(parsedGrants.teams, this.teamGrants)) this.teamGrants = parsedGrants.teams
-    if (parsedGrants.departments && !isEqual(parsedGrants.departments, this.departmentGrants))
-      this.departmentGrants = parsedGrants.departments
+    if (parsedGrants.tickets) setTicketGrants(prev => (isEqual(parsedGrants.tickets, prev) ? prev : parsedGrants.tickets))
+    if (parsedGrants.comments) setCommentGrants(prev => (isEqual(parsedGrants.comments, prev) ? prev : parsedGrants.comments))
+    if (parsedGrants.accounts) setAccountGrants(prev => (isEqual(parsedGrants.accounts, prev) ? prev : parsedGrants.accounts))
+    if (parsedGrants.groups) setGroupGrants(prev => (isEqual(parsedGrants.groups, prev) ? prev : parsedGrants.groups))
+    if (parsedGrants.teams) setTeamGrants(prev => (isEqual(parsedGrants.teams, prev) ? prev : parsedGrants.teams))
+    if (parsedGrants.departments) setDepartmentGrants(prev => (isEqual(parsedGrants.departments, prev) ? prev : parsedGrants.departments))
+    if (parsedGrants.reports) setReportGrants(prev => (isEqual(parsedGrants.reports, prev) ? prev : parsedGrants.reports))
+    if (parsedGrants.notices) setNoticeGrants(prev => (isEqual(parsedGrants.notices, prev) ? prev : parsedGrants.notices))
+  }, [])
 
-    if (parsedGrants.reports && !isEqual(parsedGrants.reports, this.reportGrants))
-      this.reportGrants = parsedGrants.reports
+  useEffect(() => {
+    setIsAdmin(role.get('isAdmin') || false)
+    setIsAgent(role.get('isAgent') || false)
+    setHasHierarchy(role.get('hierarchy') || false)
+    grantsRef.current = role.get('grants').toArray() || []
 
-    if (parsedGrants.notices && !isEqual(parsedGrants.notices, this.noticeGrants))
-      this.noticeGrants = parsedGrants.notices
-  }
+    parseGrants()
+  }, [])
 
-  onEnableSwitchChanged (e, name) {
-    this[name] = e.target.checked
-  }
+  useEffect(() => {
+    if (isAdmin === '') setIsAdmin(role.get('isAdmin') || false)
+    if (isAgent === '') setIsAgent(role.get('isAgent') || false)
+    if (hasHierarchy === '') setHasHierarchy(role.get('hierarchy') || false)
+    if (grantsRef.current.length < 1) grantsRef.current = role.get('grants').toArray() || []
 
-  static mapTicketSpecials () {
-    return [
-      { title: 'Print', perm: 'print' },
-      { title: 'Notes', perm: 'notes' },
-      { title: 'Manage Public Tickets', perm: 'public' },
-      { title: 'Can View All Tickets in Assigned Groups', perm: 'viewall' }
-    ]
-  }
+    parseGrants()
+  })
 
-  static mapAccountSpecials () {
-    return [{ title: 'Import', perm: 'import' }]
-  }
+  const onEnableSwitchChanged = useCallback((e, name) => {
+    if (name === 'isAdmin') setIsAdmin(e.target.checked)
+    else if (name === 'isAgent') setIsAgent(e.target.checked)
+    else if (name === 'hasHierarchy') setHasHierarchy(e.target.checked)
+  }, [])
 
-  static mapNoticeSpecials () {
-    return [
-      { title: 'Activate', perm: 'activate' },
-      { title: 'Deactivate', perm: 'deactivate' }
-    ]
-  }
+  const onSubmit = useCallback(
+    e => {
+      e.preventDefault()
+      const obj = {}
+      obj._id = role.get('_id')
+      if (isAdmin) {
+        obj.admin = ['*']
+        obj.settings = ['*']
+      }
+      if (isAgent) obj.agent = ['*']
+      obj.hierarchy = hasHierarchy
 
-  onSubmit (e) {
-    e.preventDefault()
-    const obj = {}
-    obj._id = this.props.role.get('_id')
-    if (this.isAdmin) {
-      obj.admin = ['*']
-      obj.settings = ['*']
-    }
-    if (this.isAgent) obj.agent = ['*']
-    obj.hierarchy = this.hasHierarchy
+      obj.tickets = buildPermArray(ticketPermGroupRef.current)
+      obj.comments = buildPermArray(commentPermGroupRef.current)
+      obj.accounts = buildPermArray(accountPermGroupRef.current)
+      obj.groups = buildPermArray(groupPermGroupRef.current)
+      obj.teams = buildPermArray(teamPermGroupRef.current)
+      obj.departments = buildPermArray(departmentPermGroupRef.current)
+      obj.reports = buildPermArray(reportPermGroupRef.current)
+      obj.notices = buildPermArray(noticePermGroupRef.current)
 
-    obj.tickets = PermissionBody.buildPermArray(this.ticketPermGroup)
-    obj.comments = PermissionBody.buildPermArray(this.commentPermGroup)
-    obj.accounts = PermissionBody.buildPermArray(this.accountPermGroup)
-    obj.groups = PermissionBody.buildPermArray(this.groupPermGroup)
-    obj.teams = PermissionBody.buildPermArray(this.teamPermGroup)
-    obj.departments = PermissionBody.buildPermArray(this.departmentPermGroup)
-    obj.reports = PermissionBody.buildPermArray(this.reportPermGroup)
-    obj.notices = PermissionBody.buildPermArray(this.noticePermGroup)
+      updatePermissions(obj)
+    },
+    [role, isAdmin, isAgent, hasHierarchy, updatePermissions]
+  )
 
-    this.props.updatePermissions(obj)
-  }
+  const showDeletePermissionRole = useCallback(
+    e => {
+      e.preventDefault()
+      showModal('DELETE_ROLE', { role })
+    },
+    [showModal, role]
+  )
 
-  static buildPermArray (permGroup) {
-    let arr = []
-    if (permGroup.all) arr = ['*']
-    else {
-      if (permGroup.create) arr.push('create')
-      if (permGroup.view) arr.push('view')
-      if (permGroup.update) arr.push('update')
-      if (permGroup.delete) arr.push('delete')
-      if (permGroup.special) arr.push(permGroup.special.join(' '))
-    }
-
-    return arr
-  }
-
-  showDeletePermissionRole (e) {
-    e.preventDefault()
-    this.props.showModal('DELETE_ROLE', { role: this.props.role })
-  }
-
-  render () {
-    return (
-      <div>
-        <form onSubmit={e => this.onSubmit(e)}>
-          <SettingItem
-            title={'Admin'}
-            tooltip={'Role is considered an admin. Enabling management of the trudesk instance.'}
-            subtitle={'Is this role defined as an admin role?'}
-            component={
-              <EnableSwitch
-                stateName={'isAdmin_' + this.props.role.get('_id')}
-                label={'Enable'}
-                checked={this.isAdmin}
-                onChange={e => this.onEnableSwitchChanged(e, 'isAdmin')}
-              />
-            }
-          />
-          <SettingItem
-            title={'Support Agent'}
-            subtitle={'Is this role defined as an agent role?'}
-            tooltip={'Role is considered an agent role. Enabling agent views and displaying in agent lists.'}
-            component={
-              <EnableSwitch
-                stateName={'isAgent_' + this.props.role.get('_id')}
-                label={'Enable'}
-                checked={this.isAgent}
-                onChange={e => this.onEnableSwitchChanged(e, 'isAgent')}
-              />
-            }
-          />
-          <SettingItem
-            title={'Enable Hierarchy'}
-            subtitle={'Allow this role to manage resources owned by roles defined under it.'}
-            component={
-              <EnableSwitch
-                stateName={'hasHierarchy_' + this.props.role.get('_id')}
-                label={'Enable'}
-                checked={this.hasHierarchy}
-                onChange={e => this.onEnableSwitchChanged(e, 'hasHierarchy')}
-              />
-            }
-          />
-          <PermissionGroupPartial
-            ref={i => (this.ticketPermGroup = i)}
-            title={'Tickets'}
-            role={this.props.role}
-            grants={this.ticketGrants}
-            roleSpecials={PermissionBody.mapTicketSpecials()}
-            subtitle={'Ticket Permissions'}
-          />
-          <PermissionGroupPartial
-            ref={i => (this.commentPermGroup = i)}
-            title={'Comments'}
-            role={this.props.role}
-            grants={this.commentGrants}
-            subtitle={'Ticket Comments Permissions'}
-          />
-          <PermissionGroupPartial
-            ref={i => (this.accountPermGroup = i)}
-            title={'Accounts'}
-            role={this.props.role}
-            roleSpecials={PermissionBody.mapAccountSpecials()}
-            grants={this.accountGrants}
-            subtitle={'Account Permissions'}
-          />
-          <PermissionGroupPartial
-            ref={i => (this.groupPermGroup = i)}
-            title={'Groups'}
-            role={this.props.role}
-            grants={this.groupGrants}
-            subtitle={'Group Permissions'}
-          />
-          <PermissionGroupPartial
-            ref={i => (this.teamPermGroup = i)}
-            title={'Teams'}
-            role={this.props.role}
-            grants={this.teamGrants}
-            subtitle={'Team Permissions'}
-          />
-          <PermissionGroupPartial
-            ref={i => (this.departmentPermGroup = i)}
-            title={'Departments'}
-            role={this.props.role}
-            grants={this.departmentGrants}
-            subtitle={'Department Permissions'}
-          />
-          <PermissionGroupPartial
-            ref={i => (this.reportPermGroup = i)}
-            title={'Reports'}
-            role={this.props.role}
-            grants={this.reportGrants}
-            subtitle={'Report Permissions'}
-          />
-          <PermissionGroupPartial
-            ref={i => (this.noticePermGroup = i)}
-            title={'Notices'}
-            role={this.props.role}
-            grants={this.noticeGrants}
-            roleSpecials={PermissionBody.mapNoticeSpecials()}
-            subtitle={'Notice Permissions'}
-          />
-          <div className={'uk-margin-large-bottom'}>
-            <h2 className='text-light'>Danger Zone</h2>
-            <div className='danger-zone'>
-              <div className='dz-box uk-clearfix'>
-                <div className='uk-float-left'>
-                  <h5>Delete this permission role?</h5>
-                  <p>Once you delete a permission role, there is no going back. Please be certain.</p>
-                </div>
-                <div className='uk-float-right' style={{ paddingTop: '10px' }}>
-                  <Button
-                    text={'Delete'}
-                    small={true}
-                    style={'danger'}
-                    onClick={e => this.showDeletePermissionRole(e)}
-                  />
-                </div>
+  return (
+    <div>
+      <form onSubmit={e => onSubmit(e)}>
+        <SettingItem
+          title={'Admin'}
+          tooltip={'Role is considered an admin. Enabling management of the trudesk instance.'}
+          subtitle={'Is this role defined as an admin role?'}
+          component={
+            <EnableSwitch
+              stateName={'isAdmin_' + role.get('_id')}
+              label={'Enable'}
+              checked={isAdmin}
+              onChange={e => onEnableSwitchChanged(e, 'isAdmin')}
+            />
+          }
+        />
+        <SettingItem
+          title={'Support Agent'}
+          subtitle={'Is this role defined as an agent role?'}
+          tooltip={'Role is considered an agent role. Enabling agent views and displaying in agent lists.'}
+          component={
+            <EnableSwitch
+              stateName={'isAgent_' + role.get('_id')}
+              label={'Enable'}
+              checked={isAgent}
+              onChange={e => onEnableSwitchChanged(e, 'isAgent')}
+            />
+          }
+        />
+        <SettingItem
+          title={'Enable Hierarchy'}
+          subtitle={'Allow this role to manage resources owned by roles defined under it.'}
+          component={
+            <EnableSwitch
+              stateName={'hasHierarchy_' + role.get('_id')}
+              label={'Enable'}
+              checked={hasHierarchy}
+              onChange={e => onEnableSwitchChanged(e, 'hasHierarchy')}
+            />
+          }
+        />
+        <PermissionGroupPartial
+          ref={ticketPermGroupRef}
+          title={'Tickets'}
+          role={role}
+          grants={ticketGrants}
+          roleSpecials={mapTicketSpecials()}
+          subtitle={'Ticket Permissions'}
+        />
+        <PermissionGroupPartial
+          ref={commentPermGroupRef}
+          title={'Comments'}
+          role={role}
+          grants={commentGrants}
+          subtitle={'Ticket Comments Permissions'}
+        />
+        <PermissionGroupPartial
+          ref={accountPermGroupRef}
+          title={'Accounts'}
+          role={role}
+          roleSpecials={mapAccountSpecials()}
+          grants={accountGrants}
+          subtitle={'Account Permissions'}
+        />
+        <PermissionGroupPartial
+          ref={groupPermGroupRef}
+          title={'Groups'}
+          role={role}
+          grants={groupGrants}
+          subtitle={'Group Permissions'}
+        />
+        <PermissionGroupPartial
+          ref={teamPermGroupRef}
+          title={'Teams'}
+          role={role}
+          grants={teamGrants}
+          subtitle={'Team Permissions'}
+        />
+        <PermissionGroupPartial
+          ref={departmentPermGroupRef}
+          title={'Departments'}
+          role={role}
+          grants={departmentGrants}
+          subtitle={'Department Permissions'}
+        />
+        <PermissionGroupPartial
+          ref={reportPermGroupRef}
+          title={'Reports'}
+          role={role}
+          grants={reportGrants}
+          subtitle={'Report Permissions'}
+        />
+        <PermissionGroupPartial
+          ref={noticePermGroupRef}
+          title={'Notices'}
+          role={role}
+          grants={noticeGrants}
+          roleSpecials={mapNoticeSpecials()}
+          subtitle={'Notice Permissions'}
+        />
+        <div className={'uk-margin-large-bottom'}>
+          <h2 className='text-light'>Danger Zone</h2>
+          <div className='danger-zone'>
+            <div className='dz-box uk-clearfix'>
+              <div className='uk-float-left'>
+                <h5>Delete this permission role?</h5>
+                <p>Once you delete a permission role, there is no going back. Please be certain.</p>
               </div>
-            </div>
-          </div>
-
-          <div>
-            <div className='box uk-clearfix'>
               <div className='uk-float-right' style={{ paddingTop: '10px' }}>
-                <Button type={'submit'} style={'success'} waves={true} text={'Save Permissions'} />
+                <Button
+                  text={'Delete'}
+                  small={true}
+                  style={'danger'}
+                  onClick={e => showDeletePermissionRole(e)}
+                />
               </div>
             </div>
           </div>
-        </form>
-      </div>
-    )
-  }
+        </div>
+
+        <div>
+          <div className='box uk-clearfix'>
+            <div className='uk-float-right' style={{ paddingTop: '10px' }}>
+              <Button type={'submit'} style={'success'} waves={true} text={'Save Permissions'} />
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  )
 }
 
 PermissionBody.propTypes = {

@@ -15,23 +15,20 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 
-class GridItem extends React.Component {
-  render () {
-    const { width, xLargeWidth, extraClass } = this.props
-    return (
-      <div
-        className={
-          'uk-width-' +
-          width +
-          (xLargeWidth ? ' uk-width-xLarge-' + xLargeWidth : '') +
-          (extraClass ? ' ' + extraClass : '')
-        }
-        style={this.props.style}
-      >
-        {this.props.children}
-      </div>
-    )
-  }
+const GridItem = ({ width, xLargeWidth, extraClass, style, children }) => {
+  return (
+    <div
+      className={
+        'uk-width-' +
+        width +
+        (xLargeWidth ? ' uk-width-xLarge-' + xLargeWidth : '') +
+        (extraClass ? ' ' + extraClass : '')
+      }
+      style={style}
+    >
+      {children}
+    </div>
+  )
 }
 
 GridItem.propTypes = {

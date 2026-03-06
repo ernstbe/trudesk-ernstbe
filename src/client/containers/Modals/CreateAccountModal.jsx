@@ -12,11 +12,9 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-import React from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
-import { observer } from 'mobx-react'
-import { makeObservable, observable } from 'mobx'
 import { withTranslation } from 'react-i18next'
 
 import { createAccount } from 'actions/accounts'
@@ -32,59 +30,67 @@ import MultiSelect from 'components/MultiSelect'
 import $ from 'jquery'
 import helpers from 'lib/helpers'
 
-@observer
-class CreateAccountModal extends React.Component {
-  @observable username = ''
-  @observable password = ''
-  @observable passwordConfirm = ''
-  @observable fullname = ''
-  @observable email = ''
-  @observable title = ''
-  selectedRole = ''
-  @observable isAgentRole = false
+function CreateAccountModal (props) {
+  const { t } = props
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const [passwordConfirm, setPasswordConfirm] = useState('')
+  const [fullname, setFullname] = useState('')
+  const [email, setEmail] = useState('')
+  const [title, setTitle] = useState('')
+  const [isAgentRole, setIsAgentRole] = useState(false)
 
-  constructor (props) {
-    super(props)
-    makeObservable(this)
-  }
+  const selectedRoleRef = useRef('')
+  const groupSelectRef = useRef(null)
+  const teamSelectRef = useRef(null)
+  const roleSelectErrorMessageRef = useRef(null)
+  const groupSelectErrorMessageRef = useRef(null)
 
-  componentDidMount () {
-    this.props.fetchGroups({ type: 'all' })
-    this.props.fetchTeams()
-    this.props.fetchRoles()
+  useEffect(() => {
+    props.fetchGroups({ type: 'all' })
+    props.fetchTeams()
+    props.fetchRoles()
 
     helpers.UI.inputs()
     helpers.formvalidator()
-  }
+  }, [])
 
-  componentDidUpdate () {
+  useEffect(() => {
     helpers.UI.reRenderInputs()
-  }
+  })
 
-  onInputChanged (e, name) {
-    this[name] = e.target.value
-  }
+  const onInputChanged = useCallback((e, name) => {
+    const setters = {
+      username: setUsername,
+      password: setPassword,
+      passwordConfirm: setPasswordConfirm,
+      fullname: setFullname,
+      email: setEmail,
+      title: setTitle
+    }
+    if (setters[name]) setters[name](e.target.value)
+  }, [])
 
-  onRoleSelectChange (e) {
-    this.selectedRole = e.target.value
+  const onRoleSelectChange = useCallback((e) => {
+    selectedRoleRef.current = e.target.value
 
-    const roleObject = this.props.roles.find(role => {
-      return role.get('_id') === this.selectedRole
+    const roleObject = props.roles.find(role => {
+      return role.get('_id') === selectedRoleRef.current
     })
 
-    this.isAgentRole = roleObject.get('isAdmin') || roleObject.get('isAgent')
+    setIsAgentRole(roleObject.get('isAdmin') || roleObject.get('isAgent'))
 
-    if (!this.selectedRole || this.selectedRole.length < 1) this.roleSelectErrorMessage.classList.remove('hide')
-    else this.roleSelectErrorMessage.classList.add('hide')
-  }
+    if (!selectedRoleRef.current || selectedRoleRef.current.length < 1) roleSelectErrorMessageRef.current.classList.remove('hide')
+    else roleSelectErrorMessageRef.current.classList.add('hide')
+  }, [props.roles])
 
-  onGroupSelectChange () {
-    const selectedGroups = this.groupSelect.getSelected()
-    if (!selectedGroups || selectedGroups.length < 1) this.groupSelectErrorMessage.classList.remove('hide')
-    else this.groupSelectErrorMessage.classList.add('hide')
-  }
+  const onGroupSelectChange = useCallback(() => {
+    const selectedGroups = groupSelectRef.current.getSelected()
+    if (!selectedGroups || selectedGroups.length < 1) groupSelectErrorMessageRef.current.classList.remove('hide')
+    else groupSelectErrorMessageRef.current.classList.add('hide')
+  }, [])
 
-  onFormSubmit (e) {
+  const onFormSubmit = useCallback((e) => {
     e.preventDefault()
     const $form = $(e.target)
 
@@ -92,196 +98,193 @@ class CreateAccountModal extends React.Component {
 
     if (!$form.isValid(null, null, false)) isValid = false
 
-    if (!this.selectedRole || this.selectedRole.length < 1) {
-      this.roleSelectErrorMessage.classList.remove('hide')
+    if (!selectedRoleRef.current || selectedRoleRef.current.length < 1) {
+      roleSelectErrorMessageRef.current.classList.remove('hide')
       if (isValid) isValid = false
-    } else this.roleSelectErrorMessage.classList.add('hide')
+    } else roleSelectErrorMessageRef.current.classList.add('hide')
 
-    const selectedGroups = this.groupSelect ? this.groupSelect.getSelected() : undefined
+    const selectedGroups = groupSelectRef.current ? groupSelectRef.current.getSelected() : undefined
     if (selectedGroups) {
       if (selectedGroups.length < 1) {
-        this.groupSelectErrorMessage.classList.remove('hide')
+        groupSelectErrorMessageRef.current.classList.remove('hide')
         if (isValid) isValid = false
-      } else this.groupSelectErrorMessage.classList.add('hide')
+      } else groupSelectErrorMessageRef.current.classList.add('hide')
     }
 
     if (!isValid) return
 
     const payload = {
-      username: this.username,
-      fullname: this.fullname,
-      title: this.title,
-      email: this.email,
-      groups: this.groupSelect ? this.groupSelect.getSelected() : undefined,
-      teams: this.teamSelect ? this.teamSelect.getSelected() : undefined,
-      role: this.selectedRole,
-      password: this.password.length > 3 ? this.password : undefined,
-      passwordConfirm: this.passwordConfirm.length > 3 ? this.passwordConfirm : undefined
+      username: username,
+      fullname: fullname,
+      title: title,
+      email: email,
+      groups: groupSelectRef.current ? groupSelectRef.current.getSelected() : undefined,
+      teams: teamSelectRef.current ? teamSelectRef.current.getSelected() : undefined,
+      role: selectedRoleRef.current,
+      password: password.length > 3 ? password : undefined,
+      passwordConfirm: passwordConfirm.length > 3 ? passwordConfirm : undefined
     }
 
-    this.props.createAccount(payload)
-  }
+    props.createAccount(payload)
+  }, [username, fullname, title, email, password, passwordConfirm])
 
-  render () {
-    const { t } = this.props
-    const roles = this.props.roles
-      .map(role => {
-        return { text: role.get('name'), value: role.get('_id') }
-      })
-      .toArray()
+  const roles = props.roles
+    .map(role => {
+      return { text: role.get('name'), value: role.get('_id') }
+    })
+    .toArray()
 
-    const groups = this.props.groups
-      .map(group => {
-        return { text: group.get('name'), value: group.get('_id') }
-      })
-      .toArray()
+  const groups = props.groups
+    .map(group => {
+      return { text: group.get('name'), value: group.get('_id') }
+    })
+    .toArray()
 
-    const teams = this.props.teams
-      .map(team => {
-        return { text: team.get('name'), value: team.get('_id') }
-      })
-      .toArray()
+  const teams = props.teams
+    .map(team => {
+      return { text: team.get('name'), value: team.get('_id') }
+    })
+    .toArray()
 
-    return (
-      <BaseModal parentExtraClass={'pt-0'} extraClass={'p-0 pb-25'}>
-        <div className='user-heading' style={{ minHeight: '130px', background: '#1976d2', padding: '24px' }}>
-          <div className='uk-width-1-1'>
-            <div style={{ width: '82px', height: '82px', float: 'left', marginRight: '24px', position: 'relative' }}>
-              <div className='mediumProfilePic' style={{ position: 'relative' }}>
-                <img src={`/uploads/users/defaultProfile.jpg`} alt='Profile Picture' />
-              </div>
-            </div>
-            <div className='user-heading-content'>
-              <h2>
-                <span className={'uk-text-truncate'}>{t('modals.createAccount.title')}</span>
-                <span className='sub-heading'>{t('modals.createAccount.subtitle')}</span>
-              </h2>
+  return (
+    <BaseModal parentExtraClass={'pt-0'} extraClass={'p-0 pb-25'}>
+      <div className='user-heading' style={{ minHeight: '130px', background: '#1976d2', padding: '24px' }}>
+        <div className='uk-width-1-1'>
+          <div style={{ width: '82px', height: '82px', float: 'left', marginRight: '24px', position: 'relative' }}>
+            <div className='mediumProfilePic' style={{ position: 'relative' }}>
+              <img src={`/uploads/users/defaultProfile.jpg`} alt='Profile Picture' />
             </div>
           </div>
+          <div className='user-heading-content'>
+            <h2>
+              <span className={'uk-text-truncate'}>{t('modals.createAccount.title')}</span>
+              <span className='sub-heading'>{t('modals.createAccount.subtitle')}</span>
+            </h2>
+          </div>
         </div>
-        <div style={{ margin: '24px 24px 0 24px' }}>
-          <form className='uk-form-stacked' onSubmit={e => this.onFormSubmit(e)}>
-            <div className='uk-margin-medium-bottom'>
-              <label className='uk-form-label'>{t('modals.createAccount.username')}</label>
+      </div>
+      <div style={{ margin: '24px 24px 0 24px' }}>
+        <form className='uk-form-stacked' onSubmit={e => onFormSubmit(e)}>
+          <div className='uk-margin-medium-bottom'>
+            <label className='uk-form-label'>{t('modals.createAccount.username')}</label>
+            <input
+              type='text'
+              className={'md-input'}
+              value={username}
+              onChange={e => onInputChanged(e, 'username')}
+              data-validation={'length'}
+              data-validation-length={'min4'}
+              data-validation-error-msg={t('modals.createAccount.usernameMinLength')}
+            />
+          </div>
+          <div className='uk-margin-medium-bottom uk-clearfix'>
+            <div className='uk-float-left' style={{ width: '50%', paddingRight: '20px' }}>
+              <label className={'uk-form-label'}>{t('modals.createAccount.name')}</label>
               <input
                 type='text'
                 className={'md-input'}
-                value={this.username}
-                onChange={e => this.onInputChanged(e, 'username')}
+                value={fullname}
+                onChange={e => onInputChanged(e, 'fullname')}
                 data-validation={'length'}
-                data-validation-length={'min4'}
-                data-validation-error-msg={t('modals.createAccount.usernameMinLength')}
+                data-validation-length={'min1'}
+                data-validation-error-msg={t('modals.createAccount.nameMinLength')}
               />
             </div>
-            <div className='uk-margin-medium-bottom uk-clearfix'>
-              <div className='uk-float-left' style={{ width: '50%', paddingRight: '20px' }}>
-                <label className={'uk-form-label'}>{t('modals.createAccount.name')}</label>
-                <input
-                  type='text'
-                  className={'md-input'}
-                  value={this.fullname}
-                  onChange={e => this.onInputChanged(e, 'fullname')}
-                  data-validation={'length'}
-                  data-validation-length={'min1'}
-                  data-validation-error-msg={t('modals.createAccount.nameMinLength')}
-                />
-              </div>
-              <div className='uk-float-left uk-width-1-2'>
-                <label className={'uk-form-label'}>{t('modals.createAccount.title_field')}</label>
-                <input
-                  type='text'
-                  className={'md-input'}
-                  value={this.title}
-                  onChange={e => this.onInputChanged(e, 'title')}
-                />
-              </div>
-            </div>
-            <div className='uk-margin-medium-bottom uk-clearfix'>
-              <div className='uk-float-left' style={{ width: '50%', paddingRight: '20px' }}>
-                <label className={'uk-form-label'}>{t('modals.createAccount.password')}</label>
-                <input
-                  type='password'
-                  className={'md-input'}
-                  name={'password_confirmation'}
-                  value={this.password}
-                  onChange={e => this.onInputChanged(e, 'password')}
-                />
-              </div>
-              <div className='uk-float-left uk-width-1-2'>
-                <label className={'uk-form-label'}>{t('modals.createAccount.confirmPassword')}</label>
-                <input
-                  type='password'
-                  className={'md-input'}
-                  name={'password'}
-                  value={this.passwordConfirm}
-                  onChange={e => this.onInputChanged(e, 'passwordConfirm')}
-                  data-validation='confirmation'
-                  data-validation-error-msg={t('modals.createAccount.passwordMismatch')}
-                />
-              </div>
-            </div>
-            <div className='uk-margin-medium-bottom'>
-              <label className='uk-form-label'>{t('modals.createAccount.email')}</label>
+            <div className='uk-float-left uk-width-1-2'>
+              <label className={'uk-form-label'}>{t('modals.createAccount.title_field')}</label>
               <input
-                type='email'
+                type='text'
                 className={'md-input'}
-                value={this.email}
-                onChange={e => this.onInputChanged(e, 'email')}
-                data-validation='email'
+                value={title}
+                onChange={e => onInputChanged(e, 'title')}
               />
             </div>
-            <div className='uk-margin-medium-bottom'>
-              <label className={'uk-form-label'}>{t('modals.createAccount.role')}</label>
-              <SingleSelect
-                items={roles}
-                width={'100'}
-                showTextbox={false}
-                onSelectChange={e => this.onRoleSelectChange(e)}
+          </div>
+          <div className='uk-margin-medium-bottom uk-clearfix'>
+            <div className='uk-float-left' style={{ width: '50%', paddingRight: '20px' }}>
+              <label className={'uk-form-label'}>{t('modals.createAccount.password')}</label>
+              <input
+                type='password'
+                className={'md-input'}
+                name={'password_confirmation'}
+                value={password}
+                onChange={e => onInputChanged(e, 'password')}
               />
-              <span
-                className='hide help-block'
-                style={{ display: 'inline-block', marginTop: '10px', fontWeight: 'bold', color: '#d85030' }}
-                ref={r => (this.roleSelectErrorMessage = r)}
-              >
-                {t('modals.createAccount.selectRole')}
-              </span>
             </div>
-            {!this.isAgentRole && (
-              <div>
-                <div className='uk-margin-medium-bottom'>
-                  <label className='uk-form-label'>{t('modals.createAccount.groups')}</label>
-                  <MultiSelect
-                    items={groups}
-                    onChange={e => this.onGroupSelectChange(e)}
-                    ref={r => (this.groupSelect = r)}
-                  />
-                  <span
-                    className={'hide help-block'}
-                    style={{ display: 'inline-block', marginTop: '3px', fontWeight: 'bold', color: '#d85030' }}
-                    ref={r => (this.groupSelectErrorMessage = r)}
-                  >
-                    {t('modals.createAccount.selectGroup')}
-                  </span>
-                </div>
-              </div>
-            )}
-            {this.isAgentRole && (
-              <div>
-                <div className='uk-margin-medium-bottom'>
-                  <label className='uk-form-label'>{t('modals.createAccount.teams')}</label>
-                  <MultiSelect items={teams} onChange={() => {}} ref={r => (this.teamSelect = r)} />
-                </div>
-              </div>
-            )}
-            <div className='uk-modal-footer uk-text-right'>
-              <Button text={t('common.close')} flat={true} waves={true} extraClass={'uk-modal-close'} />
-              <Button text={t('modals.createAccount.title')} flat={true} waves={true} style={'success'} type={'submit'} />
+            <div className='uk-float-left uk-width-1-2'>
+              <label className={'uk-form-label'}>{t('modals.createAccount.confirmPassword')}</label>
+              <input
+                type='password'
+                className={'md-input'}
+                name={'password'}
+                value={passwordConfirm}
+                onChange={e => onInputChanged(e, 'passwordConfirm')}
+                data-validation='confirmation'
+                data-validation-error-msg={t('modals.createAccount.passwordMismatch')}
+              />
             </div>
-          </form>
-        </div>
-      </BaseModal>
-    )
-  }
+          </div>
+          <div className='uk-margin-medium-bottom'>
+            <label className='uk-form-label'>{t('modals.createAccount.email')}</label>
+            <input
+              type='email'
+              className={'md-input'}
+              value={email}
+              onChange={e => onInputChanged(e, 'email')}
+              data-validation='email'
+            />
+          </div>
+          <div className='uk-margin-medium-bottom'>
+            <label className={'uk-form-label'}>{t('modals.createAccount.role')}</label>
+            <SingleSelect
+              items={roles}
+              width={'100'}
+              showTextbox={false}
+              onSelectChange={e => onRoleSelectChange(e)}
+            />
+            <span
+              className='hide help-block'
+              style={{ display: 'inline-block', marginTop: '10px', fontWeight: 'bold', color: '#d85030' }}
+              ref={r => (roleSelectErrorMessageRef.current = r)}
+            >
+              {t('modals.createAccount.selectRole')}
+            </span>
+          </div>
+          {!isAgentRole && (
+            <div>
+              <div className='uk-margin-medium-bottom'>
+                <label className='uk-form-label'>{t('modals.createAccount.groups')}</label>
+                <MultiSelect
+                  items={groups}
+                  onChange={e => onGroupSelectChange(e)}
+                  ref={r => (groupSelectRef.current = r)}
+                />
+                <span
+                  className={'hide help-block'}
+                  style={{ display: 'inline-block', marginTop: '3px', fontWeight: 'bold', color: '#d85030' }}
+                  ref={r => (groupSelectErrorMessageRef.current = r)}
+                >
+                  {t('modals.createAccount.selectGroup')}
+                </span>
+              </div>
+            </div>
+          )}
+          {isAgentRole && (
+            <div>
+              <div className='uk-margin-medium-bottom'>
+                <label className='uk-form-label'>{t('modals.createAccount.teams')}</label>
+                <MultiSelect items={teams} onChange={() => {}} ref={r => (teamSelectRef.current = r)} />
+              </div>
+            </div>
+          )}
+          <div className='uk-modal-footer uk-text-right'>
+            <Button text={t('common.close')} flat={true} waves={true} extraClass={'uk-modal-close'} />
+            <Button text={t('modals.createAccount.title')} flat={true} waves={true} style={'success'} type={'submit'} />
+          </div>
+        </form>
+      </div>
+    </BaseModal>
+  )
 }
 
 CreateAccountModal.propTypes = {

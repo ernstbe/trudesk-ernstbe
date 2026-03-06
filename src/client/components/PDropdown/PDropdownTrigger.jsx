@@ -12,36 +12,24 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-import React, { createRef } from 'react'
+import React, { useRef, useCallback } from 'react'
 import PropTypes from 'prop-types'
 
-class PDropdownTrigger extends React.Component {
-  containerRef = createRef()
+const PDropdownTrigger = ({ target, children }) => {
+  const containerRef = useRef(null)
 
-  constructor (props) {
-    super(props)
-  }
-
-  componentDidMount () {}
-
-  componentDidUpdate (prevProps, prevState, snapshot) {}
-
-  componentWillUnmount () {}
-
-  onTargetClick (e) {
+  const onTargetClick = useCallback(e => {
     e.preventDefault()
-    if (this.props.target && this.props.target.current && typeof this.props.target.current.show === 'function') {
-      this.props.target.current.show(this.containerRef.current)
+    if (target && target.current && typeof target.current.show === 'function') {
+      target.current.show(containerRef.current)
     }
-  }
+  }, [target])
 
-  render () {
-    return (
-      <div ref={this.containerRef} className={'uk-clearfix'} onClick={e => this.onTargetClick(e)}>
-        {this.props.children}
-      </div>
-    )
-  }
+  return (
+    <div ref={containerRef} className={'uk-clearfix'} onClick={onTargetClick}>
+      {children}
+    </div>
+  )
 }
 
 PDropdownTrigger.propTypes = {

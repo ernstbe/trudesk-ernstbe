@@ -12,7 +12,7 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-import React from 'react'
+import React, { useCallback } from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import { withTranslation } from 'react-i18next'
@@ -29,18 +29,14 @@ import api from 'api/index'
 
 import helpers from 'lib/helpers'
 
-class AddPriorityToTypeModal extends React.Component {
-  constructor (props) {
-    super(props)
-  }
-
-  getPriorities () {
-    return this.props.settings && this.props.settings.get('priorities')
-      ? this.props.settings.get('priorities').toArray()
+const AddPriorityToTypeModal = ({ settings, type, fetchSettings, t }) => {
+  const getPriorities = useCallback(() => {
+    return settings && settings.get('priorities')
+      ? settings.get('priorities').toArray()
       : []
-  }
+  }, [settings])
 
-  onAddClick (e, type, priority) {
+  const onAddClick = useCallback((e, type, priority) => {
     e.preventDefault()
     const $addButton = $(e.target)
     const $check = $addButton.siblings('i.material-icons')
@@ -72,78 +68,75 @@ class AddPriorityToTypeModal extends React.Component {
           )
         }
 
-        this.props.fetchSettings()
+        fetchSettings()
       })
       .catch(error => {
         const errorText = error.response.data.error
         Log.error(errorText, error.response)
         helpers.UI.showSnackbar(`Error: ${errorText}`, true)
       })
-  }
+  }, [fetchSettings])
 
-  render () {
-    const { type, t } = this.props
-    return (
-      <BaseModal>
-        <form className='uk-form-stacked'>
-          <div className='uk-margin-medium-bottom uk-clearfix'>
-            <h2>{t('modals.addPriority.title')}</h2>
-            <span>{t('modals.addPriority.hint', { typeName: type.get('name') })}</span>
-          </div>
-          <div className='priority-loop zone'>
-            {this.getPriorities().map(priority => {
-              if (some(type.get('priorities').toJS(), priority.toObject())) {
-                return (
-                  <div key={priority.get('_id')} className={'z-box uk-clearfix'}>
-                    <div className='uk-float-left'>
-                      <h5 style={{ color: priority.get('htmlColor'), fontWeight: 'bold' }}>{t('priorities.' + priority.get('name'), priority.get('name'))}</h5>
-                      <p className={'uk-text-muted'}>
-                        {t('modals.addPriority.slaOverdue')}: <strong>{priority.get('durationFormatted')}</strong>
-                      </p>
-                    </div>
-                    <div className='uk-float-right'>
-                      <i className='material-icons uk-text-success mt-10 mr-15' style={{ fontSize: '28px' }}>
-                        check
-                      </i>
-                    </div>
+  return (
+    <BaseModal>
+      <form className='uk-form-stacked'>
+        <div className='uk-margin-medium-bottom uk-clearfix'>
+          <h2>{t('modals.addPriority.title')}</h2>
+          <span>{t('modals.addPriority.hint', { typeName: type.get('name') })}</span>
+        </div>
+        <div className='priority-loop zone'>
+          {getPriorities().map(priority => {
+            if (some(type.get('priorities').toJS(), priority.toObject())) {
+              return (
+                <div key={priority.get('_id')} className={'z-box uk-clearfix'}>
+                  <div className='uk-float-left'>
+                    <h5 style={{ color: priority.get('htmlColor'), fontWeight: 'bold' }}>{t('priorities.' + priority.get('name'), priority.get('name'))}</h5>
+                    <p className={'uk-text-muted'}>
+                      {t('modals.addPriority.slaOverdue')}: <strong>{priority.get('durationFormatted')}</strong>
+                    </p>
                   </div>
-                )
-              } else {
-                return (
-                  <div key={priority.get('_id')} className={'z-box uk-clearfix'}>
-                    <div className='uk-float-left'>
-                      <h5 style={{ color: priority.get('htmlColor'), fontWeight: 'bold' }}>{t('priorities.' + priority.get('name'), priority.get('name'))}</h5>
-                      <p className={'uk-text-muted'}>
-                        {t('modals.addPriority.slaOverdue')}: <strong>{priority.get('durationFormatted')}</strong>
-                      </p>
-                    </div>
-                    <div className='uk-float-right'>
-                      <a
-                        type={'button'}
-                        className='uk-button uk-button-success mt-10 mr-10 no-ajaxy'
-                        onClick={e => this.onAddClick(e, type, priority)}
-                      >
-                        {t('common.add')}
-                      </a>
-                      <i
-                        className='material-icons uk-text-success mt-10 mr-15'
-                        style={{ display: 'none', opacity: 0, fontSize: '28px' }}
-                      >
-                        check
-                      </i>
-                    </div>
+                  <div className='uk-float-right'>
+                    <i className='material-icons uk-text-success mt-10 mr-15' style={{ fontSize: '28px' }}>
+                      check
+                    </i>
                   </div>
-                )
-              }
-            })}
-          </div>
-          <div className='uk-modal-footer uk-text-right'>
-            <Button type={'button'} flat={true} waves={true} text={t('common.close')} extraClass={'uk-modal-close'} />
-          </div>
-        </form>
-      </BaseModal>
-    )
-  }
+                </div>
+              )
+            } else {
+              return (
+                <div key={priority.get('_id')} className={'z-box uk-clearfix'}>
+                  <div className='uk-float-left'>
+                    <h5 style={{ color: priority.get('htmlColor'), fontWeight: 'bold' }}>{t('priorities.' + priority.get('name'), priority.get('name'))}</h5>
+                    <p className={'uk-text-muted'}>
+                      {t('modals.addPriority.slaOverdue')}: <strong>{priority.get('durationFormatted')}</strong>
+                    </p>
+                  </div>
+                  <div className='uk-float-right'>
+                    <a
+                      type={'button'}
+                      className='uk-button uk-button-success mt-10 mr-10 no-ajaxy'
+                      onClick={e => onAddClick(e, type, priority)}
+                    >
+                      {t('common.add')}
+                    </a>
+                    <i
+                      className='material-icons uk-text-success mt-10 mr-15'
+                      style={{ display: 'none', opacity: 0, fontSize: '28px' }}
+                    >
+                      check
+                    </i>
+                  </div>
+                </div>
+              )
+            }
+          })}
+        </div>
+        <div className='uk-modal-footer uk-text-right'>
+          <Button type={'button'} flat={true} waves={true} text={t('common.close')} extraClass={'uk-modal-close'} />
+        </div>
+      </form>
+    </BaseModal>
+  )
 }
 
 AddPriorityToTypeModal.propTypes = {

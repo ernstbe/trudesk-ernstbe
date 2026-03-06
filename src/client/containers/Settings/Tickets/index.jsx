@@ -12,7 +12,7 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-import React from 'react'
+import React, { useEffect, useCallback, useRef } from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import { withTranslation } from 'react-i18next'
@@ -45,530 +45,564 @@ import SpinLoader from 'components/SpinLoader'
 import EditStatusPartial from './editStatusPartial'
 import TicketStatusContainer from 'containers/Settings/Tickets/ticketStatusContainer'
 
-class TicketsSettings extends React.Component {
-  constructor (props) {
-    super(props)
-
-    this.getTicketTags = this.getTicketTags.bind(this)
+function toggleEditPriority (e) {
+  const $parent = $(e.target).parents('.priority-wrapper')
+  const $v = $parent.find('.view-priority')
+  const $e = $parent.find('.edit-priority')
+  if ($v && $e) {
+    $v.toggleClass('hide')
+    $e.toggleClass('hide')
   }
+}
 
-  static toggleEditPriority (e) {
-    const $parent = $(e.target).parents('.priority-wrapper')
-    const $v = $parent.find('.view-priority')
-    const $e = $parent.find('.edit-priority')
-    if ($v && $e) {
-      $v.toggleClass('hide')
-      $e.toggleClass('hide')
-    }
+function toggleEditStatus (e) {
+  const $parent = $(e.target).parents('.status-wrapper')
+  const $v = $parent.find('.view-status')
+  const $e = $parent.find('.edit-status')
+  if ($v && $e) {
+    $v.toggleClass('hide')
+    $e.toggleClass('hide')
   }
+}
 
-  static toggleEditStatus (e) {
-    const $parent = $(e.target).parents('.status-wrapper')
-    const $v = $parent.find('.view-status')
-    const $e = $parent.find('.edit-status')
-    if ($v && $e) {
-      $v.toggleClass('hide')
-      $e.toggleClass('hide')
-    }
+function toggleEditTag (e) {
+  const $target = $(e.target)
+  const $parent = $target.parents('.tag-wrapper')
+  const $v = $parent.find('.view-tag')
+  const $e = $parent.find('.edit-tag')
+  if ($v && $e) {
+    $v.toggleClass('hide')
+    $e.toggleClass('hide')
   }
+}
 
-  static toggleEditTag (e) {
-    const $target = $(e.target)
-    const $parent = $target.parents('.tag-wrapper')
-    const $v = $parent.find('.view-tag')
-    const $e = $parent.find('.edit-tag')
-    if ($v && $e) {
-      $v.toggleClass('hide')
-      $e.toggleClass('hide')
-    }
-  }
+const TicketsSettings = ({
+  active,
+  viewdata,
+  settings,
+  tagsSettings,
+  updateSetting,
+  getTagsWithPage,
+  tagsUpdateCurrentPage,
+  showModal,
+  deleteStatus,
+  t
+}) => {
+  const tagsPaginationRef = useRef(null)
 
-  componentDidMount () {
-    this.getTicketTags(null, 0)
+  const getTicketTags = useCallback(
+    (e, page) => {
+      if (e) e.preventDefault()
+      tagsUpdateCurrentPage(page)
+      getTagsWithPage({ limit: 16, page })
+    },
+    [tagsUpdateCurrentPage, getTagsWithPage]
+  )
+
+  useEffect(() => {
+    getTicketTags(null, 0)
     const $tagPagination = $('#tagPagination')
-    this.tagsPagination = UIKit.pagination($tagPagination, {
-      items: this.props.tagsSettings.totalCount ? this.props.tagsSettings.totalCount : 0,
+    tagsPaginationRef.current = UIKit.pagination($tagPagination, {
+      items: tagsSettings.totalCount ? tagsSettings.totalCount : 0,
       itemsOnPage: 16
     })
-    $tagPagination.on('select.uk.pagination', this.getTicketTags)
-  }
+    $tagPagination.on('select.uk.pagination', getTicketTags)
+  }, [])
 
-  componentDidUpdate (prevProps) {
-    if (prevProps.tagsSettings.totalCount !== this.props.tagsSettings.totalCount) {
-      this.tagsPagination.pages = Math.ceil(this.props.tagsSettings.totalCount / 16)
-        ? Math.ceil(this.props.tagsSettings.totalCount / 16)
+  useEffect(() => {
+    if (tagsPaginationRef.current) {
+      tagsPaginationRef.current.pages = Math.ceil(tagsSettings.totalCount / 16)
+        ? Math.ceil(tagsSettings.totalCount / 16)
         : 1
-      this.tagsPagination.render()
-      if (this.tagsPagination.currentPage > this.tagsPagination.pages - 1)
-        this.tagsPagination.selectPage(this.tagsPagination.pages - 1)
+      tagsPaginationRef.current.render()
+      if (tagsPaginationRef.current.currentPage > tagsPaginationRef.current.pages - 1)
+        tagsPaginationRef.current.selectPage(tagsPaginationRef.current.pages - 1)
     }
-  }
+  }, [tagsSettings.totalCount])
 
-  getSetting (name) {
-    return this.props.settings.getIn(['settings', name, 'value'])
-      ? this.props.settings.getIn(['settings', name, 'value'])
-      : ''
-  }
+  const getSetting = useCallback(
+    name => {
+      return settings.getIn(['settings', name, 'value']) ? settings.getIn(['settings', name, 'value']) : ''
+    },
+    [settings]
+  )
 
-  getTicketTypes () {
-    return this.props.settings && this.props.settings.get('ticketTypes')
-      ? this.props.settings.get('ticketTypes').toArray()
-      : []
-  }
+  const getTicketTypes = useCallback(() => {
+    return settings && settings.get('ticketTypes') ? settings.get('ticketTypes').toArray() : []
+  }, [settings])
 
-  getPriorities () {
-    return this.props.settings && this.props.settings.get('priorities')
-      ? this.props.settings.get('priorities').toArray()
-      : []
-  }
+  const getPriorities = useCallback(() => {
+    return settings && settings.get('priorities') ? settings.get('priorities').toArray() : []
+  }, [settings])
 
-  getStatus () {
-    return this.props.settings && this.props.settings.get('status') ? this.props.settings.get('status').toArray() : []
-  }
+  const getStatus = useCallback(() => {
+    return settings && settings.get('status') ? settings.get('status').toArray() : []
+  }, [settings])
 
-  getTicketTags (e, page) {
-    if (e) e.preventDefault()
-    this.props.tagsUpdateCurrentPage(page)
-    this.props.getTagsWithPage({ limit: 16, page })
-  }
+  const onDefaultTicketTypeChange = useCallback(
+    e => {
+      updateSetting({ name: 'ticket:type:default', value: e.target.value, stateName: 'defaultTicketType' })
+    },
+    [updateSetting]
+  )
 
-  onDefaultTicketTypeChange (e) {
-    this.props.updateSetting({ name: 'ticket:type:default', value: e.target.value, stateName: 'defaultTicketType' })
-  }
-
-  onAllowPublicTicketsChange (e) {
-    this.props.updateSetting({
-      name: 'allowPublicTickets:enable',
-      value: e.target.checked,
-      stateName: 'allowPublicTickets',
-      noSnackbar: true
-    })
-  }
-
-  onAllowAgentUserTicketsChange (e) {
-    this.props.updateSetting({
-      name: 'allowAgentUserTickets:enable',
-      value: e.target.checked,
-      stateName: 'allowAgentUserTickets',
-      noSnackbar: true
-    })
-  }
-
-  onShowOverdueChange (e) {
-    this.props.updateSetting({
-      name: 'showOverdueTickets:enable',
-      value: e.target.checked,
-      stateName: 'showOverdueTickets',
-      noSnackbar: true
-    })
-  }
-
-  onPlayNewTicketSoundChange (e) {
-    this.props.updateSetting({
-      name: 'playNewTicketSound:enable',
-      value: e.target.checked,
-      stateName: 'playNewTicketSound',
-      noSnackbar: true
-    })
-  }
-
-  showModal (e, modal, props) {
-    e.preventDefault()
-    this.props.showModal(modal, props)
-  }
-
-  onRemovePriorityClicked (e, priority) {
-    e.preventDefault()
-    this.props.showModal('DELETE_PRIORITY', { priority })
-  }
-
-  onRemoveStatusClicked (e, stat) {
-    e.preventDefault()
-    console.log(stat)
-    console.log(stat.get('_id'))
-    this.props.deleteStatus(stat.get('id'))
-  }
-
-  onSubmitUpdateTag (e, tagId) {
-    e.preventDefault()
-    e.persist()
-    const name = e.target.name.value
-    if (name.length < 2) return helpers.UI.showSnackbar('Invalid Tag Name', true)
-
-    axios
-      .put(`/api/v1/tags/${tagId}`, { name })
-      .then(res => {
-        TicketsSettings.toggleEditTag(e)
-        helpers.UI.showSnackbar(`Tag: ${res.data.tag.name} updated successfully`)
-        this.getTicketTags(null, this.tagsPagination.currentPage)
+  const onAllowPublicTicketsChange = useCallback(
+    e => {
+      updateSetting({
+        name: 'allowPublicTickets:enable',
+        value: e.target.checked,
+        stateName: 'allowPublicTickets',
+        noSnackbar: true
       })
-      .catch(err => {
-        if (!err.response) return Log.error(err)
+    },
+    [updateSetting]
+  )
 
-        const errorText = err.response.data.error
-        Log.error(errorText, err.response)
-        helpers.UI.showSnackbar(`Error: ${errorText}`, true)
+  const onAllowAgentUserTicketsChange = useCallback(
+    e => {
+      updateSetting({
+        name: 'allowAgentUserTickets:enable',
+        value: e.target.checked,
+        stateName: 'allowAgentUserTickets',
+        noSnackbar: true
       })
-  }
+    },
+    [updateSetting]
+  )
 
-  onRemoveTagClicked (e, tag) {
-    UIKit.modal.confirm(
-      `Really delete tag <strong>${tag.get()}</strong><br />
+  const onShowOverdueChange = useCallback(
+    e => {
+      updateSetting({
+        name: 'showOverdueTickets:enable',
+        value: e.target.checked,
+        stateName: 'showOverdueTickets',
+        noSnackbar: true
+      })
+    },
+    [updateSetting]
+  )
+
+  const onPlayNewTicketSoundChange = useCallback(
+    e => {
+      updateSetting({
+        name: 'playNewTicketSound:enable',
+        value: e.target.checked,
+        stateName: 'playNewTicketSound',
+        noSnackbar: true
+      })
+    },
+    [updateSetting]
+  )
+
+  const doShowModal = useCallback(
+    (e, modal, props) => {
+      e.preventDefault()
+      showModal(modal, props)
+    },
+    [showModal]
+  )
+
+  const onRemovePriorityClicked = useCallback(
+    (e, priority) => {
+      e.preventDefault()
+      showModal('DELETE_PRIORITY', { priority })
+    },
+    [showModal]
+  )
+
+  const onRemoveStatusClicked = useCallback(
+    (e, stat) => {
+      e.preventDefault()
+      console.log(stat)
+      console.log(stat.get('_id'))
+      deleteStatus(stat.get('id'))
+    },
+    [deleteStatus]
+  )
+
+  const onSubmitUpdateTag = useCallback(
+    (e, tagId) => {
+      e.preventDefault()
+      e.persist()
+      const name = e.target.name.value
+      if (name.length < 2) return helpers.UI.showSnackbar('Invalid Tag Name', true)
+
+      axios
+        .put(`/api/v1/tags/${tagId}`, { name })
+        .then(res => {
+          toggleEditTag(e)
+          helpers.UI.showSnackbar(`Tag: ${res.data.tag.name} updated successfully`)
+          getTicketTags(null, tagsPaginationRef.current.currentPage)
+        })
+        .catch(err => {
+          if (!err.response) return Log.error(err)
+
+          const errorText = err.response.data.error
+          Log.error(errorText, err.response)
+          helpers.UI.showSnackbar(`Error: ${errorText}`, true)
+        })
+    },
+    [getTicketTags]
+  )
+
+  const onRemoveTagClicked = useCallback(
+    (e, tag) => {
+      UIKit.modal.confirm(
+        `Really delete tag <strong>${tag.get()}</strong><br />
         <i style="font-size: 13px; color: #e53935">This will remove the tag from all associated tickets.</i>`,
-      () => {
-        axios
-          .delete(`/api/v1/tags/${tag.get('_id')}`)
-          .then(res => {
-            if (res.data.success) {
-              helpers.UI.showSnackbar(`Successfully removed tag: ${tag.get('name')}`)
+        () => {
+          axios
+            .delete(`/api/v1/tags/${tag.get('_id')}`)
+            .then(res => {
+              if (res.data.success) {
+                helpers.UI.showSnackbar(`Successfully removed tag: ${tag.get('name')}`)
 
-              this.getTicketTags(null, this.tagsPagination.currentPage)
-            }
-          })
-          .catch(error => {
-            const errorText = error.response.data.error
-            helpers.UI.showSnackbar(`Error: ${errorText}`, true)
-            Log.error(errorText, error.response)
-          })
-      },
-      {
-        labels: { Ok: 'Yes', Cancel: 'No' },
-        confirmButtonClass: 'md-btn-danger'
-      }
-    )
-  }
-
-  render () {
-    const { active, viewdata, t } = this.props
-    const mappedTypes = this.getTicketTypes().map(function (type) {
-      return { text: type.get('name'), value: type.get('_id') }
-    })
-
-    return (
-      <div className={active ? 'active' : 'hide'}>
-        <SettingItem
-          title={t('settings.defaultTicketType')}
-          subtitle={t('settings.defaultTicketTypeHint')}
-          component={
-            <SingleSelect
-              items={mappedTypes}
-              defaultValue={this.getSetting('defaultTicketType')}
-              onSelectChange={e => {
-                this.onDefaultTicketTypeChange(e)
-              }}
-              width={'50%'}
-              showTextbox={false}
-            />
-          }
-        />
-        <SettingItem
-          title={t('settings.allowPublicTickets')}
-          subtitle={
-            <div>
-              {t('settings.allowPublicTicketsHint')} (
-              <a href={viewdata.get('hosturl') + '/newissue'}>{viewdata.get('hosturl') + '/newissue'}</a>)
-            </div>
-          }
-          component={
-            <EnableSwitch
-              stateName={'allowPublicTickets'}
-              label={t('settings.enable')}
-              checked={this.getSetting('allowPublicTickets')}
-              onChange={e => {
-                this.onAllowPublicTicketsChange(e)
-              }}
-            />
-          }
-        />
-        <SettingItem
-          title={t('settings.allowAgentUserTickets')}
-          subtitle={<div>{t('settings.allowAgentUserTicketsHint')}</div>}
-          tooltip={t('settings.allowAgentUserTicketsTooltip')}
-          component={
-            <EnableSwitch
-              stateName={'allowAgentUserTickets'}
-              label={t('settings.enable')}
-              checked={this.getSetting('allowAgentUserTickets')}
-              onChange={e => {
-                this.onAllowAgentUserTicketsChange(e)
-              }}
-            />
-          }
-        />
-        <SettingItem
-          title={t('settings.showOverdueTickets')}
-          subtitle={t('settings.showOverdueTicketsHint')}
-          tooltip={t('settings.showOverdueTicketsTooltip')}
-          component={
-            <EnableSwitch
-              stateName={'showOverdueTickets'}
-              label={t('settings.enable')}
-              checked={this.getSetting('showOverdueTickets')}
-              onChange={e => {
-                this.onShowOverdueChange(e)
-              }}
-            />
-          }
-        />
-        {/* TODO: MOVE TO USER PREFS WHEN IMPL */}
-        {/*<SettingItem*/}
-        {/*  title={'Play New Ticket Sound'}*/}
-        {/*  subtitle={'Enable/Disable playing an audio notification when a new ticket is submitted.'}*/}
-        {/*  tooltip={'[GLOBAL] This setting applies to all users.'}*/}
-        {/*  component={*/}
-        {/*    <EnableSwitch*/}
-        {/*      stateName={'playNewTicketSound'}*/}
-        {/*      label={'Enable'}*/}
-        {/*      checked={this.getSetting('playNewTicketSound')}*/}
-        {/*      onChange={e => {*/}
-        {/*        this.onPlayNewTicketSoundChange(e)*/}
-        {/*      }}*/}
-        {/*    />*/}
-        {/*  }*/}
-        {/*/>*/}
-        <SettingItem
-          title={t('settings.minSubjectLength')}
-          subtitle={t('settings.minSubjectLengthHint')}
-          component={
-            <NumberWithSave
-              stateName={'minSubjectLength'}
-              settingName={'ticket:minlength:subject'}
-              value={this.getSetting('minSubjectLength')}
-              width={'40%'}
-            />
-          }
-        />
-        <SettingItem
-          title={t('settings.minIssueLength')}
-          subtitle={t('settings.minIssueLengthHint')}
-          component={
-            <NumberWithSave
-              stateName={'minIssueLength'}
-              settingName={'ticket:minlength:issue'}
-              value={this.getSetting('minIssueLength')}
-              width={'40%'}
-            />
-          }
-        />
-        <SplitSettingsPanel
-          title={t('settings.ticketTypes')}
-          subtitle={t('common.create') + '/' + t('common.edit') + ' ' + t('settings.ticketTypes')}
-          rightComponent={
-            <Button
-              text={t('common.create')}
-              style={'success'}
-              flat={true}
-              extraClass={'md-btn-wave'}
-              onClick={e => {
-                this.showModal(e, 'CREATE_TICKET_TYPE')
-              }}
-            />
-          }
-          menuItems={this.getTicketTypes().map(function (type) {
-            return { key: type.get('_id'), title: type.get('name'), bodyComponent: <TicketTypeBody type={type} /> }
-          })}
-        />
-        <SettingItem
-          title={t('settings.ticketPriorities')}
-          subtitle={t('settings.ticketPrioritiesHint')}
-          component={
-            <Button
-              text={t('common.create')}
-              style={'success'}
-              flat={true}
-              waves={true}
-              extraClass={'mt-10 right'}
-              onClick={e => this.showModal(e, 'CREATE_PRIORITY')}
-            />
-          }
-        >
-          <Zone>
-            {this.getPriorities().map(p => {
-              const disableRemove = p.get('default') ? p.get('default') : false
-              return (
-                <ZoneBox key={p.get('_id')} extraClass={'priority-wrapper'}>
-                  <SettingSubItem
-                    parentClass={'view-priority'}
-                    title={p.get('name')}
-                    titleCss={{ color: p.get('htmlColor') }}
-                    subtitle={
-                      <div>
-                        {t('settings.slaOverdue')}: <strong>{p.get('durationFormatted')}</strong>
-                      </div>
-                    }
-                    component={
-                      <ButtonGroup classNames={'uk-float-right'}>
-                        <Button text={t('common.edit')} small={true} onClick={e => TicketsSettings.toggleEditPriority(e)} />
-                        <Button
-                          text={t('settings.remove')}
-                          small={true}
-                          style={'danger'}
-                          disabled={disableRemove}
-                          onClick={e => this.onRemovePriorityClicked(e, p)}
-                        />
-                      </ButtonGroup>
-                    }
-                  />
-                  <EditPriorityPartial priority={p} />
-                </ZoneBox>
-              )
-            })}
-          </Zone>
-        </SettingItem>
-        <TicketStatusContainer statuses={this.getStatus()} />
-
-        {/*<SettingItem*/}
-        {/*  title={'Ticket Status'}*/}
-        {/*  subtitle={'Ticket status sets the current status options available'}*/}
-        {/*  component={*/}
-        {/*    <Button*/}
-        {/*      text={'Create'}*/}
-        {/*      style={'success'}*/}
-        {/*      flat={true}*/}
-        {/*      waves={true}*/}
-        {/*      extraClass={'mt-10 right'}*/}
-        {/*      onClick={e => this.showModal(e, 'CREATE_STATUS')}*/}
-        {/*    />*/}
-        {/*  }*/}
-        {/*>*/}
-        {/*  <Zone>*/}
-        {/*    {this.getStatus().map(p => {*/}
-        {/*      return (*/}
-        {/*        <ZoneBox key={p.get('_id')} extraClass={'status-wrapper'}>*/}
-        {/*          <SettingSubItem*/}
-        {/*            parentClass={'view-status'}*/}
-        {/*            title={p.get('name')}*/}
-        {/*            titleCss={{ color: p.get('htmlColor') }}*/}
-        {/*            component={*/}
-        {/*              <ButtonGroup classNames={'uk-float-right'}>*/}
-        {/*                <Button*/}
-        {/*                  text={'Remove'}*/}
-        {/*                  small={true}*/}
-        {/*                  style={'danger'}*/}
-        {/*                  disabled={p.get('isLocked')}*/}
-        {/*                  onClick={e => this.onRemoveStatusClicked(e, p)}*/}
-        {/*                />*/}
-
-        {/*                <Button text={'Edit'} small={true} onClick={e => TicketsSettings.toggleEditStatus(e)} />*/}
-        {/*              </ButtonGroup>*/}
-        {/*            }*/}
-        {/*          />*/}
-        {/*          <EditStatusPartial status={p} />*/}
-        {/*        </ZoneBox>*/}
-        {/*      )*/}
-        {/*    })}*/}
-        {/*  </Zone>*/}
-        {/*</SettingItem>*/}
-
-        <SettingItem
-          title={t('settings.ticketTags')}
-          subtitle={t('common.create') + '/' + t('common.edit') + ' ' + t('settings.ticketTags')}
-          component={
-            <Button
-              text={t('common.create')}
-              style={'success'}
-              flat={true}
-              waves={true}
-              extraClass={'mt-10 right'}
-              onClick={e =>
-                this.showModal(e, 'CREATE_TAG', { page: 'settings', currentPage: this.props.tagsSettings.currentPage })
+                getTicketTags(null, tagsPaginationRef.current.currentPage)
               }
-            />
-          }
-          footer={<ul id={'tagPagination'} className={'uk-pagination'} />}
-        >
-          <Grid extraClass={'uk-margin-medium-bottom'}>
-            {this.props.tagsSettings.tags.size < 1 && (
-              <div style={{ width: '100%', padding: '55px', textAlign: 'center' }}>
-                <h3 style={{ fontSize: '24px', fontWeight: '300' }}>{t('settings.noTagsFound')}</h3>
-              </div>
-            )}
-            <SpinLoader active={this.props.tagsSettings.loading} extraClass={'panel-bg'} />
-            <GridItem width={'1-1'}>
-              <Grid extraClass={'zone ml-0'}>
-                {this.props.tagsSettings.tags.map(i => {
-                  return (
-                    <GridItem width={'1-2'} key={i.get('_id')} extraClass={'tag-wrapper br bb'}>
-                      <Grid extraClass={'view-tag'}>
-                        <GridItem width={'1-1'}>
-                          <ZoneBox>
-                            <Grid>
-                              <GridItem width={'1-2'}>
-                                <h5
-                                  style={{
-                                    fontSize: '16px',
-                                    lineHeight: '31px',
-                                    margin: 0,
-                                    padding: 0,
-                                    fontWeight: 300
-                                  }}
-                                >
-                                  {i.get('name')}
-                                </h5>
-                              </GridItem>
-                              <GridItem width={'1-2'} extraClass={'uk-text-right'}>
-                                <ButtonGroup classNames={'mt-5'}>
-                                  <Button
-                                    text={t('common.edit')}
-                                    flat={true}
-                                    waves={true}
-                                    small={true}
-                                    onClick={e => TicketsSettings.toggleEditTag(e)}
-                                  />
-                                  <Button
-                                    text={t('settings.remove')}
-                                    flat={true}
-                                    waves={true}
-                                    style={'danger'}
-                                    small={true}
-                                    onClick={e => this.onRemoveTagClicked(e, i)}
-                                  />
-                                </ButtonGroup>
-                              </GridItem>
-                            </Grid>
-                          </ZoneBox>
-                        </GridItem>
-                      </Grid>
-                      <Grid extraClass={'edit-tag z-box uk-clearfix nbt hide'} style={{ paddingTop: '5px' }}>
-                        <GridItem width={'1-1'}>
-                          <form onSubmit={e => this.onSubmitUpdateTag(e, i.get('_id'))}>
-                            <Grid>
-                              <GridItem width={'2-3'}>
-                                <input type='text' className={'md-input'} name={'name'} defaultValue={i.get('name')} />
-                              </GridItem>
-                              <GridItem width={'1-3'} style={{ paddingTop: '10px' }}>
-                                <ButtonGroup classNames={'uk-float-right uk-text-right'}>
-                                  <Button
-                                    text={t('common.cancel')}
-                                    flat={true}
-                                    waves={true}
-                                    small={true}
-                                    onClick={e => TicketsSettings.toggleEditTag(e)}
-                                  />
-                                  <Button
-                                    type={'submit'}
-                                    text={t('common.save')}
-                                    flat={true}
-                                    waves={true}
-                                    small={true}
-                                    style={'success'}
-                                  />
-                                </ButtonGroup>
-                              </GridItem>
-                            </Grid>
-                          </form>
-                        </GridItem>
-                      </Grid>
-                    </GridItem>
-                  )
-                })}
-              </Grid>
-            </GridItem>
-          </Grid>
-        </SettingItem>
-      </div>
-    )
-  }
+            })
+            .catch(error => {
+              const errorText = error.response.data.error
+              helpers.UI.showSnackbar(`Error: ${errorText}`, true)
+              Log.error(errorText, error.response)
+            })
+        },
+        {
+          labels: { Ok: 'Yes', Cancel: 'No' },
+          confirmButtonClass: 'md-btn-danger'
+        }
+      )
+    },
+    [getTicketTags]
+  )
+
+  const mappedTypes = getTicketTypes().map(function (type) {
+    return { text: type.get('name'), value: type.get('_id') }
+  })
+
+  return (
+    <div className={active ? 'active' : 'hide'}>
+      <SettingItem
+        title={t('settings.defaultTicketType')}
+        subtitle={t('settings.defaultTicketTypeHint')}
+        component={
+          <SingleSelect
+            items={mappedTypes}
+            defaultValue={getSetting('defaultTicketType')}
+            onSelectChange={e => {
+              onDefaultTicketTypeChange(e)
+            }}
+            width={'50%'}
+            showTextbox={false}
+          />
+        }
+      />
+      <SettingItem
+        title={t('settings.allowPublicTickets')}
+        subtitle={
+          <div>
+            {t('settings.allowPublicTicketsHint')} (
+            <a href={viewdata.get('hosturl') + '/newissue'}>{viewdata.get('hosturl') + '/newissue'}</a>)
+          </div>
+        }
+        component={
+          <EnableSwitch
+            stateName={'allowPublicTickets'}
+            label={t('settings.enable')}
+            checked={getSetting('allowPublicTickets')}
+            onChange={e => {
+              onAllowPublicTicketsChange(e)
+            }}
+          />
+        }
+      />
+      <SettingItem
+        title={t('settings.allowAgentUserTickets')}
+        subtitle={<div>{t('settings.allowAgentUserTicketsHint')}</div>}
+        tooltip={t('settings.allowAgentUserTicketsTooltip')}
+        component={
+          <EnableSwitch
+            stateName={'allowAgentUserTickets'}
+            label={t('settings.enable')}
+            checked={getSetting('allowAgentUserTickets')}
+            onChange={e => {
+              onAllowAgentUserTicketsChange(e)
+            }}
+          />
+        }
+      />
+      <SettingItem
+        title={t('settings.showOverdueTickets')}
+        subtitle={t('settings.showOverdueTicketsHint')}
+        tooltip={t('settings.showOverdueTicketsTooltip')}
+        component={
+          <EnableSwitch
+            stateName={'showOverdueTickets'}
+            label={t('settings.enable')}
+            checked={getSetting('showOverdueTickets')}
+            onChange={e => {
+              onShowOverdueChange(e)
+            }}
+          />
+        }
+      />
+      {/* TODO: MOVE TO USER PREFS WHEN IMPL */}
+      {/*<SettingItem*/}
+      {/*  title={'Play New Ticket Sound'}*/}
+      {/*  subtitle={'Enable/Disable playing an audio notification when a new ticket is submitted.'}*/}
+      {/*  tooltip={'[GLOBAL] This setting applies to all users.'}*/}
+      {/*  component={*/}
+      {/*    <EnableSwitch*/}
+      {/*      stateName={'playNewTicketSound'}*/}
+      {/*      label={'Enable'}*/}
+      {/*      checked={getSetting('playNewTicketSound')}*/}
+      {/*      onChange={e => {*/}
+      {/*        onPlayNewTicketSoundChange(e)*/}
+      {/*      }}*/}
+      {/*    />*/}
+      {/*  }*/}
+      {/*/>*/}
+      <SettingItem
+        title={t('settings.minSubjectLength')}
+        subtitle={t('settings.minSubjectLengthHint')}
+        component={
+          <NumberWithSave
+            stateName={'minSubjectLength'}
+            settingName={'ticket:minlength:subject'}
+            value={getSetting('minSubjectLength')}
+            width={'40%'}
+          />
+        }
+      />
+      <SettingItem
+        title={t('settings.minIssueLength')}
+        subtitle={t('settings.minIssueLengthHint')}
+        component={
+          <NumberWithSave
+            stateName={'minIssueLength'}
+            settingName={'ticket:minlength:issue'}
+            value={getSetting('minIssueLength')}
+            width={'40%'}
+          />
+        }
+      />
+      <SplitSettingsPanel
+        title={t('settings.ticketTypes')}
+        subtitle={t('common.create') + '/' + t('common.edit') + ' ' + t('settings.ticketTypes')}
+        rightComponent={
+          <Button
+            text={t('common.create')}
+            style={'success'}
+            flat={true}
+            extraClass={'md-btn-wave'}
+            onClick={e => {
+              doShowModal(e, 'CREATE_TICKET_TYPE')
+            }}
+          />
+        }
+        menuItems={getTicketTypes().map(function (type) {
+          return { key: type.get('_id'), title: type.get('name'), bodyComponent: <TicketTypeBody type={type} /> }
+        })}
+      />
+      <SettingItem
+        title={t('settings.ticketPriorities')}
+        subtitle={t('settings.ticketPrioritiesHint')}
+        component={
+          <Button
+            text={t('common.create')}
+            style={'success'}
+            flat={true}
+            waves={true}
+            extraClass={'mt-10 right'}
+            onClick={e => doShowModal(e, 'CREATE_PRIORITY')}
+          />
+        }
+      >
+        <Zone>
+          {getPriorities().map(p => {
+            const disableRemove = p.get('default') ? p.get('default') : false
+            return (
+              <ZoneBox key={p.get('_id')} extraClass={'priority-wrapper'}>
+                <SettingSubItem
+                  parentClass={'view-priority'}
+                  title={p.get('name')}
+                  titleCss={{ color: p.get('htmlColor') }}
+                  subtitle={
+                    <div>
+                      {t('settings.slaOverdue')}: <strong>{p.get('durationFormatted')}</strong>
+                    </div>
+                  }
+                  component={
+                    <ButtonGroup classNames={'uk-float-right'}>
+                      <Button text={t('common.edit')} small={true} onClick={e => toggleEditPriority(e)} />
+                      <Button
+                        text={t('settings.remove')}
+                        small={true}
+                        style={'danger'}
+                        disabled={disableRemove}
+                        onClick={e => onRemovePriorityClicked(e, p)}
+                      />
+                    </ButtonGroup>
+                  }
+                />
+                <EditPriorityPartial priority={p} />
+              </ZoneBox>
+            )
+          })}
+        </Zone>
+      </SettingItem>
+      <TicketStatusContainer statuses={getStatus()} />
+
+      {/*<SettingItem*/}
+      {/*  title={'Ticket Status'}*/}
+      {/*  subtitle={'Ticket status sets the current status options available'}*/}
+      {/*  component={*/}
+      {/*    <Button*/}
+      {/*      text={'Create'}*/}
+      {/*      style={'success'}*/}
+      {/*      flat={true}*/}
+      {/*      waves={true}*/}
+      {/*      extraClass={'mt-10 right'}*/}
+      {/*      onClick={e => doShowModal(e, 'CREATE_STATUS')}*/}
+      {/*    />*/}
+      {/*  }*/}
+      {/*>*/}
+      {/*  <Zone>*/}
+      {/*    {getStatus().map(p => {*/}
+      {/*      return (*/}
+      {/*        <ZoneBox key={p.get('_id')} extraClass={'status-wrapper'}>*/}
+      {/*          <SettingSubItem*/}
+      {/*            parentClass={'view-status'}*/}
+      {/*            title={p.get('name')}*/}
+      {/*            titleCss={{ color: p.get('htmlColor') }}*/}
+      {/*            component={*/}
+      {/*              <ButtonGroup classNames={'uk-float-right'}>*/}
+      {/*                <Button*/}
+      {/*                  text={'Remove'}*/}
+      {/*                  small={true}*/}
+      {/*                  style={'danger'}*/}
+      {/*                  disabled={p.get('isLocked')}*/}
+      {/*                  onClick={e => onRemoveStatusClicked(e, p)}*/}
+      {/*                />*/}
+
+      {/*                <Button text={'Edit'} small={true} onClick={e => toggleEditStatus(e)} />*/}
+      {/*              </ButtonGroup>*/}
+      {/*            }*/}
+      {/*          />*/}
+      {/*          <EditStatusPartial status={p} />*/}
+      {/*        </ZoneBox>*/}
+      {/*      )*/}
+      {/*    })}*/}
+      {/*  </Zone>*/}
+      {/*</SettingItem>*/}
+
+      <SettingItem
+        title={t('settings.ticketTags')}
+        subtitle={t('common.create') + '/' + t('common.edit') + ' ' + t('settings.ticketTags')}
+        component={
+          <Button
+            text={t('common.create')}
+            style={'success'}
+            flat={true}
+            waves={true}
+            extraClass={'mt-10 right'}
+            onClick={e =>
+              doShowModal(e, 'CREATE_TAG', { page: 'settings', currentPage: tagsSettings.currentPage })
+            }
+          />
+        }
+        footer={<ul id={'tagPagination'} className={'uk-pagination'} />}
+      >
+        <Grid extraClass={'uk-margin-medium-bottom'}>
+          {tagsSettings.tags.size < 1 && (
+            <div style={{ width: '100%', padding: '55px', textAlign: 'center' }}>
+              <h3 style={{ fontSize: '24px', fontWeight: '300' }}>{t('settings.noTagsFound')}</h3>
+            </div>
+          )}
+          <SpinLoader active={tagsSettings.loading} extraClass={'panel-bg'} />
+          <GridItem width={'1-1'}>
+            <Grid extraClass={'zone ml-0'}>
+              {tagsSettings.tags.map(i => {
+                return (
+                  <GridItem width={'1-2'} key={i.get('_id')} extraClass={'tag-wrapper br bb'}>
+                    <Grid extraClass={'view-tag'}>
+                      <GridItem width={'1-1'}>
+                        <ZoneBox>
+                          <Grid>
+                            <GridItem width={'1-2'}>
+                              <h5
+                                style={{
+                                  fontSize: '16px',
+                                  lineHeight: '31px',
+                                  margin: 0,
+                                  padding: 0,
+                                  fontWeight: 300
+                                }}
+                              >
+                                {i.get('name')}
+                              </h5>
+                            </GridItem>
+                            <GridItem width={'1-2'} extraClass={'uk-text-right'}>
+                              <ButtonGroup classNames={'mt-5'}>
+                                <Button
+                                  text={t('common.edit')}
+                                  flat={true}
+                                  waves={true}
+                                  small={true}
+                                  onClick={e => toggleEditTag(e)}
+                                />
+                                <Button
+                                  text={t('settings.remove')}
+                                  flat={true}
+                                  waves={true}
+                                  style={'danger'}
+                                  small={true}
+                                  onClick={e => onRemoveTagClicked(e, i)}
+                                />
+                              </ButtonGroup>
+                            </GridItem>
+                          </Grid>
+                        </ZoneBox>
+                      </GridItem>
+                    </Grid>
+                    <Grid extraClass={'edit-tag z-box uk-clearfix nbt hide'} style={{ paddingTop: '5px' }}>
+                      <GridItem width={'1-1'}>
+                        <form onSubmit={e => onSubmitUpdateTag(e, i.get('_id'))}>
+                          <Grid>
+                            <GridItem width={'2-3'}>
+                              <input type='text' className={'md-input'} name={'name'} defaultValue={i.get('name')} />
+                            </GridItem>
+                            <GridItem width={'1-3'} style={{ paddingTop: '10px' }}>
+                              <ButtonGroup classNames={'uk-float-right uk-text-right'}>
+                                <Button
+                                  text={t('common.cancel')}
+                                  flat={true}
+                                  waves={true}
+                                  small={true}
+                                  onClick={e => toggleEditTag(e)}
+                                />
+                                <Button
+                                  type={'submit'}
+                                  text={t('common.save')}
+                                  flat={true}
+                                  waves={true}
+                                  small={true}
+                                  style={'success'}
+                                />
+                              </ButtonGroup>
+                            </GridItem>
+                          </Grid>
+                        </form>
+                      </GridItem>
+                    </Grid>
+                  </GridItem>
+                )
+              })}
+            </Grid>
+          </GridItem>
+        </Grid>
+      </SettingItem>
+    </div>
+  )
 }
 
 TicketsSettings.propTypes = {

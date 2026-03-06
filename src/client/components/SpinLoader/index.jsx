@@ -12,48 +12,53 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-import React, { createRef } from 'react'
+import React, { useRef, useEffect } from 'react'
 import PropTypes from 'prop-types'
 import clsx from 'clsx'
 
 import $ from 'jquery'
 
-class SpinLoader extends React.Component {
-  constructor (props) {
-    super(props)
+const SpinLoader = ({
+  active,
+  extraClass,
+  style,
+  spinnerStyle,
+  animate = false,
+  animateDelay = 700
+}) => {
+  const spinnerRef = useRef(null)
+  const prevActiveRef = useRef(active)
 
-    this.spinnerRef = createRef()
-  }
+  useEffect(() => {
+    const prevActive = prevActiveRef.current
+    prevActiveRef.current = active
 
-  componentDidUpdate (prevProps, prevState, snapshot) {
-    if (this.spinnerRef.current && this.props.animate) {
-      const $spinnerRef = $(this.spinnerRef.current)
+    if (spinnerRef.current && animate) {
+      const $spinnerRef = $(spinnerRef.current)
 
       // Becoming Active
-      if (!prevProps.active && this.props.active) {
+      if (!prevActive && active) {
         $spinnerRef.css({ opacity: 1 }).show()
       }
 
       // Becoming Inactive
-      if (prevProps.active && !this.props.active) {
-        $spinnerRef.animate({ opacity: 0 }, this.props.animateDelay, () => {
+      if (prevActive && !active) {
+        $spinnerRef.animate({ opacity: 0 }, animateDelay, () => {
           $spinnerRef.hide()
         })
       }
     }
-  }
+  }, [active, animate, animateDelay])
 
-  render () {
-    return (
-      <div
-        ref={this.spinnerRef}
-        className={clsx('card-spinner', this.props.extraClass, !this.props.active && !this.props.animate && 'hide')}
-        style={this.props.style}
-      >
-        <div className='spinner' style={this.props.spinnerStyle} />
-      </div>
-    )
-  }
+  return (
+    <div
+      ref={spinnerRef}
+      className={clsx('card-spinner', extraClass, !active && !animate && 'hide')}
+      style={style}
+    >
+      <div className='spinner' style={spinnerStyle} />
+    </div>
+  )
 }
 
 SpinLoader.propTypes = {
@@ -63,11 +68,6 @@ SpinLoader.propTypes = {
   spinnerStyle: PropTypes.object,
   animate: PropTypes.bool,
   animateDelay: PropTypes.number
-}
-
-SpinLoader.defaultProps = {
-  animate: false,
-  animateDelay: 700
 }
 
 export default SpinLoader

@@ -12,11 +12,9 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-import React, { createRef } from 'react'
+import React, { useRef, useState, useEffect, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
-import { observer } from 'mobx-react'
-import { makeObservable, observable } from 'mobx'
 import { withTranslation } from 'react-i18next'
 import { size } from 'lodash'
 
@@ -36,235 +34,220 @@ import helpers from 'lib/helpers'
 import Cookies from 'jscookie'
 import { NOTIFICATIONS_UPDATE, USERS_UPDATE, NOTICE_UI_SHOW, NOTICE_UI_CLEAR } from 'serverSocket/socketEventConsts'
 
-@observer
-class TopbarContainer extends React.Component {
-  conversationsDropdownPartial = createRef()
-  notificationsDropdownPartial = createRef()
-  profileDropdownPartial = createRef()
+function TopbarContainer ({
+  socket,
+  sessionUser,
+  fetchViewData: fetchViewDataAction,
+  loadingViewData,
+  viewdata,
+  showModal: showModalAction,
+  hideModal: hideModalAction,
+  showNotice: showNoticeAction,
+  clearNotice: clearNoticeAction,
+  notice,
+  t
+}) {
+  const conversationsDropdownPartial = useRef(null)
+  const notificationsDropdownPartial = useRef(null)
+  const profileDropdownPartial = useRef(null)
 
-  @observable notificationCount = 0
-  @observable activeUserCount = 0
+  const [notificationCount, setNotificationCount] = useState(0)
+  const [activeUserCount, setActiveUserCount] = useState(0)
+  const [showInfoBanner, setShowInfoBanner] = useState(true)
 
-  @observable showInfoBanner = true
-
-  constructor (props) {
-    super(props)
-    makeObservable(this)
-
-    this.onSocketUpdateNotifications = this.onSocketUpdateNotifications.bind(this)
-    this.onSocketUpdateUsers = this.onSocketUpdateUsers.bind(this)
-
-    this.onSocketShowNotice = this.onSocketShowNotice.bind(this)
-    this.onSocketClearNotice = this.onSocketClearNotice.bind(this)
-  }
-
-  componentDidMount () {
-    this.props.fetchViewData().then(() => {
-      if (this.props.viewdata.get('notice'))
-        this.showNotice(this.props.viewdata.get('notice').toJS(), this.props.viewdata.get('noticeCookieName'))
-    })
-
-    this.props.socket.on(NOTIFICATIONS_UPDATE, this.onSocketUpdateNotifications)
-    this.props.socket.on(USERS_UPDATE, this.onSocketUpdateUsers)
-    this.props.socket.on(NOTICE_UI_SHOW, this.onSocketShowNotice)
-    this.props.socket.on(NOTICE_UI_CLEAR, this.onSocketClearNotice)
-
-    // Call for an update on Mount
-    this.props.socket.emit(NOTIFICATIONS_UPDATE)
-    this.props.socket.emit(USERS_UPDATE)
-
-    // this.shouldShowBanner()
-  }
-
-  componentWillUnmount () {
-    this.props.socket.off(NOTIFICATIONS_UPDATE, this.onSocketUpdateNotifications)
-    this.props.socket.off(USERS_UPDATE, this.onSocketUpdateUsers)
-    this.props.socket.off(NOTICE_UI_SHOW, this.onSocketShowNotice)
-    this.props.socket.off(NOTICE_UI_CLEAR, this.onSocketClearNotice)
-  }
-
-  shouldShowBanner () {
-    const hasSeen = Cookies.get('trudesk_info_banner_closed') === 'true'
-    if (hasSeen) this.showInfoBanner = false
-  }
-
-  closeInfo () {
-    Cookies.set('trudesk_info_banner_closed', 'true')
-    this.showInfoBanner = false
-  }
-
-  showNotice (notice, cookieName) {
-    // We Will move this sooner or later to somewhere more appropriate
-    this.props.showNotice(notice)
+  const showNoticeHandler = useCallback((noticeData, cookieName) => {
+    showNoticeAction(noticeData)
 
     if (cookieName) {
       const showNoticeWindow = Cookies.get(cookieName) !== 'false'
       if (showNoticeWindow)
-        this.props.showModal('NOTICE_ALERT', {
+        showModalAction('NOTICE_ALERT', {
           modalTag: 'NOTICE_ALERT',
-          notice,
+          notice: noticeData,
           noticeCookieName: cookieName,
-          shortDateFormat: this.props.viewdata.get('shortDateFormat'),
-          timeFormat: this.props.viewdata.get('timeFormat')
+          shortDateFormat: viewdata.get('shortDateFormat'),
+          timeFormat: viewdata.get('timeFormat')
         })
     }
-  }
+  }, [showNoticeAction, showModalAction, viewdata])
 
-  onSocketShowNotice (data) {
-    this.props.showNotice(data)
-    const cookieName = data.name + '_' + helpers.formatDate(data.activeDate, 'MMMDDYYYY_HHmmss')
-    this.showNotice(data, cookieName)
+  const onSocketUpdateNotifications = useCallback((data) => {
+    setNotificationCount(prev => data.count !== prev ? data.count : prev)
+  }, [])
 
-    helpers.resizeAll()
-  }
-
-  onSocketClearNotice () {
-    this.props.clearNotice()
-    this.props.hideModal('NOTICE_ALERT')
-
-    helpers.resizeAll()
-  }
-
-  onSocketUpdateNotifications (data) {
-    if (data.count !== this.notificationCount) this.notificationCount = data.count
-  }
-
-  onSocketUpdateUsers (data) {
-    delete data[this.props.sessionUser.username]
+  const onSocketUpdateUsers = useCallback((data) => {
+    if (sessionUser) {
+      delete data[sessionUser.username]
+    }
     const count = size(data)
-    if (count !== this.activeUserCount) this.activeUserCount = count
-  }
+    setActiveUserCount(prev => count !== prev ? count : prev)
+  }, [sessionUser])
 
-  static onConversationsClicked (e) {
+  const onSocketShowNotice = useCallback((data) => {
+    showNoticeAction(data)
+    const cookieName = data.name + '_' + helpers.formatDate(data.activeDate, 'MMMDDYYYY_HHmmss')
+    showNoticeHandler(data, cookieName)
+
+    helpers.resizeAll()
+  }, [showNoticeAction, showNoticeHandler])
+
+  const onSocketClearNotice = useCallback(() => {
+    clearNoticeAction()
+    hideModalAction('NOTICE_ALERT')
+
+    helpers.resizeAll()
+  }, [clearNoticeAction, hideModalAction])
+
+  useEffect(() => {
+    fetchViewDataAction().then(() => {
+      if (viewdata.get('notice'))
+        showNoticeHandler(viewdata.get('notice').toJS(), viewdata.get('noticeCookieName'))
+    })
+
+    socket.on(NOTIFICATIONS_UPDATE, onSocketUpdateNotifications)
+    socket.on(USERS_UPDATE, onSocketUpdateUsers)
+    socket.on(NOTICE_UI_SHOW, onSocketShowNotice)
+    socket.on(NOTICE_UI_CLEAR, onSocketClearNotice)
+
+    // Call for an update on Mount
+    socket.emit(NOTIFICATIONS_UPDATE)
+    socket.emit(USERS_UPDATE)
+
+    return () => {
+      socket.off(NOTIFICATIONS_UPDATE, onSocketUpdateNotifications)
+      socket.off(USERS_UPDATE, onSocketUpdateUsers)
+      socket.off(NOTICE_UI_SHOW, onSocketShowNotice)
+      socket.off(NOTICE_UI_CLEAR, onSocketClearNotice)
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const onConversationsClicked = (e) => {
     e.preventDefault()
   }
 
-  render () {
-    const { loadingViewData, viewdata, sessionUser, t } = this.props
-    if (loadingViewData || !sessionUser) return <div />
-    return (
-      <div>
-        {this.props.notice && <NoticeBanner notice={this.props.notice} />}
-        <div className={'uk-grid top-nav'}>
-          <div className='uk-width-1-1'>
-            <div className='top-bar' data-topbar>
-              <div className='title-area uk-float-left'>
-                <div className='logo'>
-                  <img src={viewdata.get('logoImage')} alt='Logo' className={'site-logo'} />
-                </div>
+  if (loadingViewData || !sessionUser) return <div />
+  return (
+    <div>
+      {notice && <NoticeBanner notice={notice} />}
+      <div className={'uk-grid top-nav'}>
+        <div className='uk-width-1-1'>
+          <div className='top-bar' data-topbar>
+            <div className='title-area uk-float-left'>
+              <div className='logo'>
+                <img src={viewdata.get('logoImage')} alt='Logo' className={'site-logo'} />
               </div>
-              <section className='top-bar-section uk-clearfix'>
-                <div className='top-menu uk-float-right'>
-                  <ul className='uk-subnav uk-margin-bottom-remove'>
-                    {/* Start Create Ticket Perm */}
-                    {sessionUser && helpers.canUser('tickets:create') && (
-                      <li className='top-bar-icon nopadding'>
-                        <button
-                          title={t('topbar.createTicket')}
-                          className={'anchor'}
-                          onClick={() => this.props.showModal('CREATE_TICKET')}
-                        >
-                          <i className='material-icons'>&#xE145;</i>
-                        </button>
-                      </li>
-                    )}
-                    {sessionUser && helpers.canUser('tickets:create') && (
-                      <li className='top-bar-icon nopadding nohover'>
-                        <i className='material-icons separator'>remove</i>
-                      </li>
-                    )}
-                    {/* End Create Ticket Perm */}
-                    <li className='top-bar-icon'>
-                      <PDropdownTrigger target={this.conversationsDropdownPartial}>
-                        <a
-                          title={t('topbar.conversations')}
-                          className='no-ajaxy uk-vertical-align'
-                          onClick={e => TopbarContainer.onConversationsClicked(e)}
-                        >
-                          <i className='material-icons'>question_answer</i>
-                        </a>
-                      </PDropdownTrigger>
+            </div>
+            <section className='top-bar-section uk-clearfix'>
+              <div className='top-menu uk-float-right'>
+                <ul className='uk-subnav uk-margin-bottom-remove'>
+                  {/* Start Create Ticket Perm */}
+                  {sessionUser && helpers.canUser('tickets:create') && (
+                    <li className='top-bar-icon nopadding'>
+                      <button
+                        title={t('topbar.createTicket')}
+                        className={'anchor'}
+                        onClick={() => showModalAction('CREATE_TICKET')}
+                      >
+                        <i className='material-icons'>&#xE145;</i>
+                      </button>
                     </li>
-                    <li className='top-bar-icon'>
-                      <PDropdownTrigger target={this.notificationsDropdownPartial}>
-                        <a title={t('topbar.notifications')} className={'no-ajaxy uk-vertical-align'}>
-                          <i className='material-icons'>notifications</i>
-                          <span
-                            className={'alert uk-border-circle label ' + (this.notificationCount < 1 ? 'hide' : '')}
-                          >
-                            {this.notificationCount}
-                          </span>
-                        </a>
-                      </PDropdownTrigger>
-                    </li>
-                    {/*<li className='top-bar-icon'>*/}
-                    {/*  <OffCanvasTrigger target={'online-user-list'}>*/}
-                    {/*    <a title={'Online Users'} className='no-ajaxy'>*/}
-                    {/*      <i className='material-icons'>people_alt</i>*/}
-                    {/*      <span*/}
-                    {/*        className={*/}
-                    {/*          'online-user-count alert uk-border-circle label ' +*/}
-                    {/*          (this.activeUserCount < 1 ? 'hide' : '')*/}
-                    {/*        }*/}
-                    {/*      >*/}
-                    {/*        {this.activeUserCount}*/}
-                    {/*      </span>*/}
-                    {/*    </a>*/}
-                    {/*  </OffCanvasTrigger>*/}
-                    {/*</li>*/}
+                  )}
+                  {sessionUser && helpers.canUser('tickets:create') && (
                     <li className='top-bar-icon nopadding nohover'>
                       <i className='material-icons separator'>remove</i>
                     </li>
+                  )}
+                  {/* End Create Ticket Perm */}
+                  <li className='top-bar-icon'>
+                    <PDropdownTrigger target={conversationsDropdownPartial}>
+                      <a
+                        title={t('topbar.conversations')}
+                        className='no-ajaxy uk-vertical-align'
+                        onClick={e => onConversationsClicked(e)}
+                      >
+                        <i className='material-icons'>question_answer</i>
+                      </a>
+                    </PDropdownTrigger>
+                  </li>
+                  <li className='top-bar-icon'>
+                    <PDropdownTrigger target={notificationsDropdownPartial}>
+                      <a title={t('topbar.notifications')} className={'no-ajaxy uk-vertical-align'}>
+                        <i className='material-icons'>notifications</i>
+                        <span
+                          className={'alert uk-border-circle label ' + (notificationCount < 1 ? 'hide' : '')}
+                        >
+                          {notificationCount}
+                        </span>
+                      </a>
+                    </PDropdownTrigger>
+                  </li>
+                  {/*<li className='top-bar-icon'>*/}
+                  {/*  <OffCanvasTrigger target={'online-user-list'}>*/}
+                  {/*    <a title={'Online Users'} className='no-ajaxy'>*/}
+                  {/*      <i className='material-icons'>people_alt</i>*/}
+                  {/*      <span*/}
+                  {/*        className={*/}
+                  {/*          'online-user-count alert uk-border-circle label ' +*/}
+                  {/*          (activeUserCount < 1 ? 'hide' : '')*/}
+                  {/*        }*/}
+                  {/*      >*/}
+                  {/*        {activeUserCount}*/}
+                  {/*      </span>*/}
+                  {/*    </a>*/}
+                  {/*  </OffCanvasTrigger>*/}
+                  {/*</li>*/}
+                  <li className='top-bar-icon nopadding nohover'>
+                    <i className='material-icons separator'>remove</i>
+                  </li>
 
-                    <li className='profile-area profile-name'>
-                      <span style={{ fontSize: 16 }}>{sessionUser.fullname}</span>
-                      <div className='uk-position-relative uk-display-inline-block'>
-                        <PDropdownTrigger target={this.profileDropdownPartial}>
-                          <a
-                            href='#'
-                            title={sessionUser.fullname}
-                            className={'profile-pic no-ajaxy uk-vertical-align-middle'}
-                          >
-                            <Avatar
-                              image={sessionUser.image}
-                              showOnlineBubble={true}
-                              userId={sessionUser._id}
-                              size={35}
-                              overrideBubbleSize={15}
-                            />
-                          </a>
-                        </PDropdownTrigger>
-                      </div>
-                    </li>
-                  </ul>
-                  <NotificationsDropdownPartial
-                    forwardedRef={this.notificationsDropdownPartial}
-                    shortDateFormat={viewdata.get('shortDateFormat')}
-                    timezone={viewdata.get('timezone')}
-                    onViewAllNotificationsClick={() => this.props.showModal('VIEW_ALL_NOTIFICATIONS')}
-                  />
-                  <ConversationsDropdownPartial
-                    forwardedRef={this.conversationsDropdownPartial}
-                    shortDateFormat={viewdata.get('shortDateFormat')}
-                    timezone={viewdata.get('timezone')}
-                    socket={this.props.socket}
-                  />
-                  <ProfileDropdownPartial forwardedRef={this.profileDropdownPartial} />
-                </div>
-              </section>
-            </div>
+                  <li className='profile-area profile-name'>
+                    <span style={{ fontSize: 16 }}>{sessionUser.fullname}</span>
+                    <div className='uk-position-relative uk-display-inline-block'>
+                      <PDropdownTrigger target={profileDropdownPartial}>
+                        <a
+                          href='#'
+                          title={sessionUser.fullname}
+                          className={'profile-pic no-ajaxy uk-vertical-align-middle'}
+                        >
+                          <Avatar
+                            image={sessionUser.image}
+                            showOnlineBubble={true}
+                            userId={sessionUser._id}
+                            size={35}
+                            overrideBubbleSize={15}
+                          />
+                        </a>
+                      </PDropdownTrigger>
+                    </div>
+                  </li>
+                </ul>
+                <NotificationsDropdownPartial
+                  forwardedRef={notificationsDropdownPartial}
+                  shortDateFormat={viewdata.get('shortDateFormat')}
+                  timezone={viewdata.get('timezone')}
+                  onViewAllNotificationsClick={() => showModalAction('VIEW_ALL_NOTIFICATIONS')}
+                />
+                <ConversationsDropdownPartial
+                  forwardedRef={conversationsDropdownPartial}
+                  shortDateFormat={viewdata.get('shortDateFormat')}
+                  timezone={viewdata.get('timezone')}
+                  socket={socket}
+                />
+                <ProfileDropdownPartial forwardedRef={profileDropdownPartial} />
+              </div>
+            </section>
           </div>
-
-          <OnlineUserListPartial
-            timezone={viewdata.get('timezone')}
-            users={viewdata.get('users').toArray()}
-            sessionUser={this.props.sessionUser}
-            socket={this.props.socket}
-          />
         </div>
+
+        <OnlineUserListPartial
+          timezone={viewdata.get('timezone')}
+          users={viewdata.get('users').toArray()}
+          sessionUser={sessionUser}
+          socket={socket}
+        />
       </div>
-    )
-  }
+    </div>
+  )
 }
 
 TopbarContainer.propTypes = {

@@ -12,12 +12,10 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-import React from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import { withTranslation } from 'react-i18next'
-import { makeObservable, observable } from 'mobx'
-import { observer } from 'mobx-react'
 
 import { fetchAccounts, unloadAccounts } from 'actions/accounts'
 import { createGroup } from 'actions/groups'
@@ -29,86 +27,79 @@ import Button from 'components/Button'
 import helpers from 'lib/helpers'
 import $ from 'jquery'
 
-@observer
-class CreateGroupModal extends React.Component {
-  @observable name = ''
+function CreateGroupModal (props) {
+  const { t } = props
+  const [name, setName] = useState('')
+  const membersSelectRef = useRef(null)
 
-  constructor (props) {
-    super(props)
-    makeObservable(this)
-  }
-
-  componentDidMount () {
-    this.props.fetchAccounts({ type: 'customers' })
+  useEffect(() => {
+    props.fetchAccounts({ type: 'customers' })
 
     helpers.UI.inputs()
     helpers.UI.reRenderInputs()
     helpers.formvalidator()
-  }
 
-  componentDidUpdate () {
+    return () => {
+      props.unloadAccounts()
+    }
+  }, [])
+
+  useEffect(() => {
     helpers.UI.reRenderInputs()
-  }
+  })
 
-  componentWillUnmount () {
-    this.props.unloadAccounts()
-  }
+  const onInputChange = useCallback((e) => {
+    setName(e.target.value)
+  }, [])
 
-  onInputChange (e) {
-    this.name = e.target.value
-  }
-
-  onFormSubmit (e) {
+  const onFormSubmit = useCallback((e) => {
     e.preventDefault()
 
     const $form = $(e.target)
     if (!$form.isValid(null, null, false)) return false
 
     const postData = {
-      name: this.name,
-      members: this.membersSelect.getSelected() || []
+      name: name,
+      members: membersSelectRef.current.getSelected() || []
     }
 
-    this.props.createGroup(postData)
-  }
+    props.createGroup(postData)
+  }, [name])
 
-  render () {
-    const { t } = this.props
-    const mappedAccounts = this.props.accounts
-      .map(account => {
-        return { text: account.get('fullname'), value: account.get('_id') }
-      })
-      .toArray()
-    return (
-      <BaseModal>
-        <div className={'mb-25'}>
-          <h2>{t('modals.createGroup.title')}</h2>
+  const mappedAccounts = props.accounts
+    .map(account => {
+      return { text: account.get('fullname'), value: account.get('_id') }
+    })
+    .toArray()
+  return (
+    <BaseModal>
+      <div className={'mb-25'}>
+        <h2>{t('modals.createGroup.title')}</h2>
+      </div>
+      <form className={'uk-form-stacked'} onSubmit={e => onFormSubmit(e)}>
+        <div className={'uk-margin-medium-bottom'}>
+          <label>{t('modals.createGroup.groupName')}</label>
+          <input
+            type='text'
+            className={'md-input'}
+            value={name}
+            onChange={e => onInputChange(e)}
+            data-validation='length'
+            data-validation-length={'min2'}
+            data-validation-error-msg={t('modals.createGroup.validName')}
+          />
         </div>
-        <form className={'uk-form-stacked'} onSubmit={e => this.onFormSubmit(e)}>
-          <div className={'uk-margin-medium-bottom'}>
-            <label>{t('modals.createGroup.groupName')}</label>
-            <input
-              type='text'
-              className={'md-input'}
-              value={this.name}
-              onChange={e => this.onInputChange(e)}
-              data-validation='length'
-              data-validation-length={'min2'}
-              data-validation-error-msg={t('modals.createGroup.validName')}
-            />
-          </div>
-          <div className={'uk-margin-medium-bottom'}>
-            <label style={{ marginBottom: 5 }}>{t('modals.createGroup.groupMembers')}</label>
-            <MultiSelect items={mappedAccounts} onChange={() => {}} ref={r => (this.membersSelect = r)} />
-          </div>
-          <div className='uk-modal-footer uk-text-right'>
-            <Button text={t('common.close')} flat={true} waves={true} extraClass={'uk-modal-close'} />
-            <Button text={t('modals.createGroup.createButton')} flat={true} waves={true} style={'primary'} type={'submit'} />
-          </div>
-        </form>
-      </BaseModal>
-    )
-  }
+        <div className={'uk-margin-medium-bottom'}>
+          <label style={{ marginBottom: 5 }}>{t('modals.createGroup.groupMembers')}</label>
+          <MultiSelect items={mappedAccounts} onChange={() => {}} ref={r => (membersSelectRef.current = r)} />
+        </div>
+        <div className='uk-modal-footer uk-text-right'>
+          <Button text={t('common.close')} flat={true} waves={true} extraClass={'uk-modal-close'} />
+          <Button text={t('modals.createGroup.createButton')} flat={true} waves={true} style={'primary'} type={'submit'} />
+        </div>
+      </form>
+    </BaseModal>
+  )
 }
 
 CreateGroupModal.propTypes = {

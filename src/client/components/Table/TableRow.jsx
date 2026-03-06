@@ -15,22 +15,19 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 
-class TableRow extends React.Component {
-  render () {
-    const { clickable } = this.props
-    const clickableStyle = { cursor: 'pointer' }
-    let style = this.props.style
-    if (clickable) {
-      style = this.props.style ? Object.assign(this.props.style, clickableStyle) : clickableStyle
-    } else {
-      style = this.props.style ? Object.assign(this.props.style, { cursor: 'default' }) : { cursor: 'default' }
-    }
-    return (
-      <tr className={this.props.className} style={style} onClick={this.props.onClick}>
-        {this.props.children}
-      </tr>
-    )
+const TableRow = ({ clickable = false, onClick, style: styleProp, className, children }) => {
+  const clickableStyle = { cursor: 'pointer' }
+  let style
+  if (clickable) {
+    style = styleProp ? Object.assign(styleProp, clickableStyle) : clickableStyle
+  } else {
+    style = styleProp ? Object.assign(styleProp, { cursor: 'default' }) : { cursor: 'default' }
   }
+  return (
+    <tr className={className} style={style} onClick={onClick}>
+      {children}
+    </tr>
+  )
 }
 
 TableRow.propTypes = {
@@ -39,10 +36,6 @@ TableRow.propTypes = {
   style: PropTypes.object,
   className: PropTypes.any,
   children: PropTypes.oneOfType([PropTypes.arrayOf(PropTypes.node), PropTypes.node]).isRequired
-}
-
-TableRow.defaultProps = {
-  clickable: false
 }
 
 export default TableRow

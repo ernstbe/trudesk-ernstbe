@@ -12,7 +12,7 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-import React from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import findIndex from 'lodash/findIndex'
 import Menu from 'components/Settings/Menu'
@@ -21,107 +21,95 @@ import SplitSettingsPanelBody from './body'
 
 import helpers from 'lib/helpers'
 
-class SplitSettingsPanel extends React.Component {
-  constructor (props) {
-    super(props)
-    this.state = {
-      activeChild: ''
-    }
-  }
+const SplitSettingsPanel = ({ title, subtitle, rightComponent, menuItems, tooltip, menuDraggable, menuOnDrag, scrollable, maxHeight, footer }) => {
+  const [activeChild, setActiveChild] = useState('')
 
-  componentDidMount () {
+  useEffect(() => {
     helpers.setupScrollers()
-  }
+  }, [])
 
-  componentDidUpdate () {
-    if (findIndex(this.props.menuItems, ['key', this.state.activeChild]) === -1 && this.props.menuItems.length > 0) {
-      this.setState({
-        activeChild: this.props.menuItems[0].key
-      })
+  useEffect(() => {
+    if (findIndex(menuItems, ['key', activeChild]) === -1 && menuItems.length > 0) {
+      setActiveChild(menuItems[0].key)
     }
-  }
+  })
 
-  switchChild (key) {
-    this.setState({
-      activeChild: key
-    })
-  }
+  const switchChild = useCallback((key) => {
+    setActiveChild(key)
+  }, [])
 
-  render () {
-    const { title, subtitle, rightComponent, menuItems, tooltip } = this.props
-    return (
-      <div className='setting-item-wrap uk-margin-medium-bottom'>
-        <div
-          className='panel trupanel nopadding no-hover-shadow uk-overflow-hidden'
-          style={{ minHeight: '60px', height: 'auto' }}
-        >
-          <div className='left'>
-            <h6 style={{ padding: '0 0 0 15px', margin: '15px 0 0 0', fontSize: '16px', lineHeight: '14px' }}>
-              {title}
-              {tooltip && (
-                <i
-                  className='material-icons'
-                  style={{ color: '#888', fontSize: '16px', cursor: 'pointer', lineHeight: '3px', marginLeft: '4px' }}
-                  data-uk-tooltip="{cls:'long-text'}"
-                  title={tooltip}
-                >
-                  error
-                </i>
-              )}
-            </h6>
-            <h5 style={{ padding: '0 0 10px 15px', margin: '2px 0 0 0', fontSize: '12px' }} className={'uk-text-muted'}>
-              {subtitle}
-            </h5>
-          </div>
-          <div className='right'>
-            <div style={{ margin: '12px 10px 0 0' }}>{rightComponent}</div>
-          </div>
-          <hr className='nomargin-top clear' />
-          <div className='panel-body2'>
-            <div className='uk-grid uk-grid-collapse'>
-              <div
-                className='split-panel-categories uk-width-1-4 uk-width-large-1-5 scrollable br'
-                style={{ minHeight: '300px', overflow: 'hidden auto' }}
+  return (
+    <div className='setting-item-wrap uk-margin-medium-bottom'>
+      <div
+        className='panel trupanel nopadding no-hover-shadow uk-overflow-hidden'
+        style={{ minHeight: '60px', height: 'auto' }}
+      >
+        <div className='left'>
+          <h6 style={{ padding: '0 0 0 15px', margin: '15px 0 0 0', fontSize: '16px', lineHeight: '14px' }}>
+            {title}
+            {tooltip && (
+              <i
+                className='material-icons'
+                style={{ color: '#888', fontSize: '16px', cursor: 'pointer', lineHeight: '3px', marginLeft: '4px' }}
+                data-uk-tooltip="{cls:'long-text'}"
+                title={tooltip}
               >
-                <Menu hideBorders={true} draggable={this.props.menuDraggable} onMenuDrag={this.props.menuOnDrag}>
-                  {menuItems.map(item => {
-                    return (
-                      <MenuItem
-                        active={this.state.activeChild === item.key}
-                        key={item.key}
-                        dragKey={item.key}
-                        title={item.title}
-                        content={item.content}
-                        onClick={() => {
-                          this.switchChild(item.key)
-                        }}
-                        draggable={this.props.menuDraggable}
-                      />
-                    )
-                  })}
-                </Menu>
-              </div>
-              <div
-                className={'uk-width-3-4 uk-width-large-4-5' + (this.props.scrollable ? ' scrollable' : '')}
-                style={{ padding: '20px 15px 15px 15px', maxHeight: this.props.maxHeight || 'auto' }}
-              >
-                {menuItems.map(menuItem => {
+                error
+              </i>
+            )}
+          </h6>
+          <h5 style={{ padding: '0 0 10px 15px', margin: '2px 0 0 0', fontSize: '12px' }} className={'uk-text-muted'}>
+            {subtitle}
+          </h5>
+        </div>
+        <div className='right'>
+          <div style={{ margin: '12px 10px 0 0' }}>{rightComponent}</div>
+        </div>
+        <hr className='nomargin-top clear' />
+        <div className='panel-body2'>
+          <div className='uk-grid uk-grid-collapse'>
+            <div
+              className='split-panel-categories uk-width-1-4 uk-width-large-1-5 scrollable br'
+              style={{ minHeight: '300px', overflow: 'hidden auto' }}
+            >
+              <Menu hideBorders={true} draggable={menuDraggable} onMenuDrag={menuOnDrag}>
+                {menuItems.map(item => {
                   return (
-                    <SplitSettingsPanelBody
-                      active={this.state.activeChild === menuItem.key}
-                      key={menuItem.key}
-                      component={menuItem.bodyComponent}
+                    <MenuItem
+                      active={activeChild === item.key}
+                      key={item.key}
+                      dragKey={item.key}
+                      title={item.title}
+                      content={item.content}
+                      onClick={() => {
+                        switchChild(item.key)
+                      }}
+                      draggable={menuDraggable}
                     />
                   )
                 })}
-              </div>
+              </Menu>
+            </div>
+            <div
+              className={'uk-width-3-4 uk-width-large-4-5' + (scrollable ? ' scrollable' : '')}
+              style={{ padding: '20px 15px 15px 15px', maxHeight: maxHeight || 'auto' }}
+            >
+              {menuItems.map(menuItem => {
+                return (
+                  <SplitSettingsPanelBody
+                    active={activeChild === menuItem.key}
+                    key={menuItem.key}
+                    component={menuItem.bodyComponent}
+                  />
+                )
+              })}
             </div>
           </div>
-          {this.props.footer && <div className={'panel-footer'}>{this.props.footer}</div>}
         </div>
+        {footer && <div className={'panel-footer'}>{footer}</div>}
       </div>
-    )
-  }
+    </div>
+  )
 }
 
 SplitSettingsPanel.propTypes = {

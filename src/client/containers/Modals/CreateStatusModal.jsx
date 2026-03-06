@@ -12,12 +12,10 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-import React from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import { withTranslation } from 'react-i18next'
-import { observer } from 'mobx-react'
-import { makeObservable, observable } from 'mobx'
 import { createStatus } from 'actions/tickets'
 import BaseModal from './BaseModal'
 import Button from 'components/Button'
@@ -27,99 +25,91 @@ import $ from 'jquery'
 import helpers from 'lib/helpers'
 import EnableSwitch from 'components/Settings/EnableSwitch'
 
-@observer
-class CreateStatusModal extends React.Component {
-  @observable name = ''
-  @observable htmlColor = '#29B995'
-  @observable slatimer = true
-  @observable isResolved = false
+function CreateStatusModal (props) {
+  const { t } = props
+  const [name, setName] = useState('')
+  const [htmlColor, setHtmlColor] = useState('#29B995')
+  const [slatimer, setSlatimer] = useState(true)
+  const [isResolved, setIsResolved] = useState(false)
 
-  constructor (props) {
-    super(props)
-    makeObservable(this)
-  }
-
-  componentDidMount () {
+  useEffect(() => {
     helpers.UI.inputs()
     helpers.formvalidator()
-  }
+  }, [])
 
-  onCreateStatusSubmit (e) {
+  const onCreateStatusSubmit = useCallback((e) => {
     e.preventDefault()
     const $form = $(e.target)
     if (!$form.isValid(null, null, false)) return true
 
     //  Form is valid... Submit..
-    this.props.createStatus({
-      name: this.name,
-      htmlColor: this.htmlColor,
-      slatimer: this.slatimer,
-      isResolved: this.isResolved
+    props.createStatus({
+      name: name,
+      htmlColor: htmlColor,
+      slatimer: slatimer,
+      isResolved: isResolved
     })
-  }
+  }, [name, htmlColor, slatimer, isResolved])
 
-  render () {
-    const { t } = this.props
-    return (
-      <BaseModal {...this.props} large={true}>
-        <form className={'uk-form-stacked'} onSubmit={e => this.onCreateStatusSubmit(e)}>
-          <div className='uk-margin-medium-bottom uk-clearfix'>
-            <h2>{t('modals.createStatus.title')}</h2>
-          </div>
+  return (
+    <BaseModal {...props} large={true}>
+      <form className={'uk-form-stacked'} onSubmit={e => onCreateStatusSubmit(e)}>
+        <div className='uk-margin-medium-bottom uk-clearfix'>
+          <h2>{t('modals.createStatus.title')}</h2>
+        </div>
 
-          <div>
-            <div className='uk-clearfix'>
-              <div className='z-box uk-grid uk-grid-collpase uk-clearfix'>
-                <div className='uk-width-1-4'>
-                  <label>{t('modals.createStatus.statusName')}</label>
-                  <input
-                    type='text'
-                    className={'md-input'}
-                    value={this.name}
-                    onChange={e => (this.name = e.target.value)}
-                    data-validation='length'
-                    data-validation-length='min3'
-                    data-validation-error-msg={t('modals.createStatus.validName')}
-                  />
-                </div>
-
-                <div className='uk-width-1-4'>
-                  <ColorSelector
-                    hideRevert={true}
-                    defaultColor={'#29B995'}
-                    validationEnabled={true}
-                    onChange={e => (this.htmlColor = e.target.value)}
-                  />
-                </div>
-                <div className={'uk-width-1-4'}>
-                  <div className={'uk-float-left'}>
-                    <EnableSwitch
-                      stateName={'slatimer'}
-                      label={t('modals.createStatus.sla')}
-                      checked={this.slatimer}
-                      onChange={e => (this.slatimer = e.target.checked)}
-                    />
-                  </div>
-                  <div className={'uk-float-left'}>
-                    <EnableSwitch
-                      stateName={'isResolved'}
-                      label={t('modals.createStatus.isResolved')}
-                      checked={this.isResolved}
-                      onChange={e => (this.isResolved = e.target.checked)}
-                    />
-                  </div>
-                </div>
+        <div>
+          <div className='uk-clearfix'>
+            <div className='z-box uk-grid uk-grid-collpase uk-clearfix'>
+              <div className='uk-width-1-4'>
+                <label>{t('modals.createStatus.statusName')}</label>
+                <input
+                  type='text'
+                  className={'md-input'}
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  data-validation='length'
+                  data-validation-length='min3'
+                  data-validation-error-msg={t('modals.createStatus.validName')}
+                />
               </div>
-              <div className='uk-modal-footer uk-text-right'>
-                <Button text={t('common.cancel')} type={'button'} extraClass={'uk-modal-close'} flat={true} waves={true} />
-                <Button text={t('common.create')} type={'submit'} flat={true} waves={true} style={'success'} />
+
+              <div className='uk-width-1-4'>
+                <ColorSelector
+                  hideRevert={true}
+                  defaultColor={'#29B995'}
+                  validationEnabled={true}
+                  onChange={e => setHtmlColor(e.target.value)}
+                />
+              </div>
+              <div className={'uk-width-1-4'}>
+                <div className={'uk-float-left'}>
+                  <EnableSwitch
+                    stateName={'slatimer'}
+                    label={t('modals.createStatus.sla')}
+                    checked={slatimer}
+                    onChange={e => setSlatimer(e.target.checked)}
+                  />
+                </div>
+                <div className={'uk-float-left'}>
+                  <EnableSwitch
+                    stateName={'isResolved'}
+                    label={t('modals.createStatus.isResolved')}
+                    checked={isResolved}
+                    onChange={e => setIsResolved(e.target.checked)}
+                  />
+                </div>
               </div>
             </div>
+            <div className='uk-modal-footer uk-text-right'>
+              <Button text={t('common.cancel')} type={'button'} extraClass={'uk-modal-close'} flat={true} waves={true} />
+              <Button text={t('common.create')} type={'submit'} flat={true} waves={true} style={'success'} />
+            </div>
           </div>
-        </form>
-      </BaseModal>
-    )
-  }
+        </div>
+      </form>
+    </BaseModal>
+  )
 }
 
 CreateStatusModal.propTypes = {

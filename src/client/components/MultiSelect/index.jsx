@@ -12,100 +12,120 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-import React from 'react'
+import React, { useRef, useEffect, useCallback, useImperativeHandle, forwardRef } from 'react'
 import PropTypes from 'prop-types'
 import { each } from 'lodash'
 
 import $ from 'jquery'
 import helpers from 'lib/helpers'
 
-class MultiSelect extends React.Component {
-  componentDidMount () {
-    const $select = $(this.select)
+const MultiSelect = forwardRef(({
+  id,
+  items,
+  initialSelected,
+  onChange,
+  disabled
+}, ref) => {
+  const selectRef = useRef(null)
+  const prevItemsRef = useRef(items)
+  const prevInitialSelectedRef = useRef(initialSelected)
+
+  useEffect(() => {
+    const $select = $(selectRef.current)
     helpers.UI.multiSelect({
-      afterSelect: this.props.onChange,
-      afterDeselect: this.props.onChange
+      afterSelect: onChange,
+      afterDeselect: onChange
     })
 
-    if (this.props.initialSelected) {
-      $select.multiSelect('select', this.props.initialSelected)
+    if (initialSelected) {
+      $select.multiSelect('select', initialSelected)
       $select.multiSelect('refresh')
     }
 
-    if (this.props.disabled) {
+    if (disabled) {
       $select.attr('disabled', 'disabled')
       $select.multiSelect('refresh')
     }
-  }
+  }, [])
 
-  componentDidUpdate (prevProps) {
-    const $select = $(this.select)
-    if (!helpers.arrayIsEqual(prevProps.items, this.props.items)) {
+  useEffect(() => {
+    const prevItems = prevItemsRef.current
+    const prevInitialSelected = prevInitialSelectedRef.current
+    prevItemsRef.current = items
+    prevInitialSelectedRef.current = initialSelected
+
+    const $select = $(selectRef.current)
+    if (!helpers.arrayIsEqual(prevItems, items)) {
       $select.empty().multiSelect('refresh')
-      each(this.props.items, i => {
+      each(items, i => {
         $select.append(`<option value='${i.value}'>${i.text}</option>`)
       })
 
       $select.attr('disabled', false)
       $select.multiSelect('refresh')
 
-      if (this.props.initialSelected) {
-        $select.multiSelect('select', this.props.initialSelected)
+      if (initialSelected) {
+        $select.multiSelect('select', initialSelected)
         $select.multiSelect('refresh')
       }
     } else {
-      if (prevProps.initialSelected !== this.props.initialSelected) {
-        $select.multiSelect('select', this.props.initialSelected)
+      if (prevInitialSelected !== initialSelected) {
+        $select.multiSelect('select', initialSelected)
         $select.multiSelect('refresh')
       }
     }
 
-    $select.attr('disabled', this.props.disabled)
+    $select.attr('disabled', disabled)
     $select.multiSelect('refresh')
-  }
+  }, [items, initialSelected, disabled])
 
-  getSelected () {
-    const $select = $(this.select)
+  const getSelected = useCallback(() => {
+    const $select = $(selectRef.current)
     if (!$select) return []
     return $select.val()
-  }
+  }, [])
 
-  selectAll () {
-    const $select = $(this.select)
+  const selectAll = useCallback(() => {
+    const $select = $(selectRef.current)
     if ($select) {
-      if (this.props.items && this.props.items.length > 0) {
+      if (items && items.length > 0) {
         $select.multiSelect('select_all')
         $select.multiSelect('refresh')
       }
     }
-  }
+  }, [items])
 
-  deselectAll () {
-    const $select = $(this.select)
+  const deselectAll = useCallback(() => {
+    const $select = $(selectRef.current)
     if ($select) {
-      if (this.props.items && this.props.items.length > 0) {
+      if (items && items.length > 0) {
         $select.multiSelect('deselect_all')
         $select.multiSelect('refresh')
       }
     }
-  }
+  }, [items])
 
-  render () {
-    const { id, items } = this.props
-    return (
-      <select id={id} multiple={'multiple'} className={'multiselect'} ref={r => (this.select = r)}>
-        {items &&
-          items.map((item, i) => {
-            return (
-              <option key={i} value={item.value}>
-                {item.text}
-              </option>
-            )
-          })}
-      </select>
-    )
-  }
-}
+  useImperativeHandle(ref, () => ({
+    getSelected,
+    selectAll,
+    deselectAll
+  }), [getSelected, selectAll, deselectAll])
+
+  return (
+    <select id={id} multiple={'multiple'} className={'multiselect'} ref={selectRef}>
+      {items &&
+        items.map((item, i) => {
+          return (
+            <option key={i} value={item.value}>
+              {item.text}
+            </option>
+          )
+        })}
+    </select>
+  )
+})
+
+MultiSelect.displayName = 'MultiSelect'
 
 MultiSelect.propTypes = {
   id: PropTypes.string,

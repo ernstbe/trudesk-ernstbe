@@ -12,56 +12,70 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-import React, { createRef } from 'react'
+import React, { useRef, useCallback, useImperativeHandle, forwardRef } from 'react'
 import PropTypes from 'prop-types'
 import clsx from 'clsx'
 
-class PDropDown extends React.Component {
-  dropRef = createRef()
-  pTriggerRef = null
+const PDropDown = forwardRef(({
+  id,
+  title,
+  titleHref,
+  showTitlebar = true,
+  leftArrow = false,
+  showArrow = true,
+  override = false,
+  topOffset = '0',
+  leftOffset = '0',
+  rightComponent,
+  children,
+  className,
+  footerComponent,
+  minHeight = 0,
+  minWidth,
+  isListItems = true,
+  onShow = () => {}
+}, ref) => {
+  const dropRef = useRef(null)
+  const pTriggerRefStore = useRef(null)
 
-  constructor (props) {
-    super(props)
+  const closeOnClick = useCallback(() => {
+    if (dropRef.current) {
+      document.removeEventListener('mouseup', hideDropdownOnMouseUpRef.current)
+      dropRef.current.classList.remove('pDropOpen')
+    }
+  }, [])
 
-    this.hideDropdownOnMouseUp = this.hideDropdownOnMouseUp.bind(this)
-    this.closeOnClick = this.closeOnClick.bind(this)
-  }
-
-  hideDropdownOnMouseUp (e) {
-    if (this.dropRef.current) {
-      if (!this.dropRef.current.contains(e.target) && !this.pTriggerRef.contains(e.target)) {
-        document.removeEventListener('mouseup', this.hideDropdownOnMouseUp)
-        this.dropRef.current.classList.remove('pDropOpen')
+  const hideDropdownOnMouseUp = useCallback(e => {
+    if (dropRef.current) {
+      if (!dropRef.current.contains(e.target) && !pTriggerRefStore.current.contains(e.target)) {
+        document.removeEventListener('mouseup', hideDropdownOnMouseUpRef.current)
+        dropRef.current.classList.remove('pDropOpen')
       }
     }
-  }
+  }, [])
 
-  closeOnClick () {
-    if (this.dropRef.current) {
-      document.removeEventListener('mouseup', this.hideDropdownOnMouseUp)
-      this.dropRef.current.classList.remove('pDropOpen')
-    }
-  }
+  const hideDropdownOnMouseUpRef = useRef(hideDropdownOnMouseUp)
+  hideDropdownOnMouseUpRef.current = hideDropdownOnMouseUp
 
-  show (pTrigger) {
+  const show = useCallback(pTrigger => {
     if (!pTrigger) {
       console.error('Invalid pTrigger sent to show method')
       return true
     }
 
-    this.pTriggerRef = pTrigger
+    pTriggerRefStore.current = pTrigger
 
-    if (this.dropRef.current) {
-      const ref = this.dropRef.current
-      if (ref.classList.contains('pDropOpen')) {
-        ref.classList.remove('pDropOpen')
+    if (dropRef.current) {
+      const refEl = dropRef.current
+      if (refEl.classList.contains('pDropOpen')) {
+        refEl.classList.remove('pDropOpen')
 
         return true
       }
 
       // Bind Doc event
-      document.removeEventListener('mouseup', this.hideDropdownOnMouseUp)
-      document.addEventListener('mouseup', this.hideDropdownOnMouseUp)
+      document.removeEventListener('mouseup', hideDropdownOnMouseUpRef.current)
+      document.addEventListener('mouseup', hideDropdownOnMouseUpRef.current)
 
       const pageContent = document.getElementById('page-content')
       if (pageContent) {
@@ -72,8 +86,8 @@ class PDropDown extends React.Component {
         const pTriggerHeight = pTrigger.offsetHeight
 
         let left0 = 250
-        if (ref.classList.contains('pSmall')) left0 = 180
-        if (ref.classList.contains('p-dropdown-left')) left0 = 0
+        if (refEl.classList.contains('pSmall')) left0 = 180
+        if (refEl.classList.contains('p-dropdown-left')) left0 = 0
 
         if (pageContent.contains(pTrigger)) {
           pageOffsetLeft = pageContent.clientLeft
@@ -86,99 +100,87 @@ class PDropDown extends React.Component {
 
         let left = pTriggerOffsetLeft - window.scrollX - pageOffsetLeft - left0
 
-        if (this.props.leftOffset) left += Number(this.props.leftOffset)
+        if (leftOffset) left += Number(leftOffset)
 
         left = left + 'px'
 
-        const topOffset = pTriggerOffsetTop - window.scrollY + pageOffsetTop
-        let top = pTriggerHeight + topOffset
+        const topOffsetCalc = pTriggerOffsetTop - window.scrollY + pageOffsetTop
+        let top = pTriggerHeight + topOffsetCalc
 
-        if (this.props.topOffset) top += Number(this.props.topOffset)
+        if (topOffset) top += Number(topOffset)
 
         const noticeFrame = document.getElementById('notice-banner')
         let hasNotice = false
         if (noticeFrame) hasNotice = !noticeFrame.classList.contains('uk-hidden')
-        if (hasNotice && !ref.classList.contains('opt-ignore-notice')) top -= 30
+        if (hasNotice && !refEl.classList.contains('opt-ignore-notice')) top -= 30
 
         top = top + 'px'
 
-        const aLinks = ref.querySelectorAll('a')
+        const aLinks = refEl.querySelectorAll('a')
         // eslint-disable-next-line no-unused-vars
         for (const link of aLinks) {
-          link.removeEventListener('click', this.closeOnClick)
-          link.addEventListener('click', this.closeOnClick)
+          link.removeEventListener('click', closeOnClick)
+          link.addEventListener('click', closeOnClick)
         }
 
-        const closeOnClick = ref.querySelectorAll('.close-on-click')
+        const closeOnClickEls = refEl.querySelectorAll('.close-on-click')
         // eslint-disable-next-line no-unused-vars
-        for (const link of closeOnClick) {
-          link.removeEventListener('click', this.closeOnClick)
-          link.addEventListener('click', this.closeOnClick)
+        for (const link of closeOnClickEls) {
+          link.removeEventListener('click', closeOnClick)
+          link.addEventListener('click', closeOnClick)
         }
 
-        ref.style.position = 'absolute'
-        ref.style.left = left
-        ref.style.top = top
-        ref.classList.add('pDropOpen')
+        refEl.style.position = 'absolute'
+        refEl.style.left = left
+        refEl.style.top = top
+        refEl.classList.add('pDropOpen')
 
-        this.props.onShow()
+        onShow()
       }
     }
-  }
+  }, [leftOffset, topOffset, closeOnClick, onShow])
 
-  render () {
-    const {
-      title,
-      titleHref,
-      showTitlebar,
-      leftArrow,
-      showArrow,
-      override,
-      topOffset,
-      leftOffset,
-      rightComponent,
-      children,
-      className,
-      footerComponent,
-      minHeight,
-      minWidth,
-      isListItems
-    } = this.props
-    return (
-      <div
-        id={this.props.id}
-        ref={this.dropRef}
-        className={clsx('p-dropdown', leftArrow && 'p-dropdown-left', !showArrow && 'p-dropdown-hide-arrow', className)}
-        data-override={override}
-        data-top-offset={topOffset}
-        data-left-offset={leftOffset}
-        style={{ minHeight, minWidth }}
-      >
-        {showTitlebar && (
-          <div className='actions'>
-            {titleHref && <a href={titleHref}>{title}</a>}
-            {!titleHref && <span style={{ paddingLeft: '5px' }}>{title}</span>}
-            {rightComponent && <div className='uk-float-right'>{rightComponent}</div>}
-          </div>
-        )}
-        {isListItems && (
-          <div className='items close-on-click'>
-            <ul>{children}</ul>
-          </div>
-        )}
-        {!isListItems && <div>{children}</div>}
-        {footerComponent && (
-          <div
-            className={'bottom-actions actions uk-float-left'}
-            style={{ borderBottom: 'none', borderTop: '1px solid rgba(0,0,0,0.2)' }}
-          >
-            {footerComponent}
-          </div>
-        )}
-      </div>
-    )
-  }
-}
+  useImperativeHandle(ref, () => ({
+    show,
+    closeOnClick
+  }), [show, closeOnClick])
+
+  return (
+    <div
+      id={id}
+      ref={dropRef}
+      className={clsx('p-dropdown', leftArrow && 'p-dropdown-left', !showArrow && 'p-dropdown-hide-arrow', className)}
+      data-override={override}
+      data-top-offset={topOffset}
+      data-left-offset={leftOffset}
+      style={{ minHeight, minWidth }}
+    >
+      {showTitlebar && (
+        <div className='actions'>
+          {titleHref && <a href={titleHref}>{title}</a>}
+          {!titleHref && <span style={{ paddingLeft: '5px' }}>{title}</span>}
+          {rightComponent && <div className='uk-float-right'>{rightComponent}</div>}
+        </div>
+      )}
+      {isListItems && (
+        <div className='items close-on-click'>
+          <ul>{children}</ul>
+        </div>
+      )}
+      {!isListItems && <div>{children}</div>}
+      {footerComponent && (
+        <div
+          className={'bottom-actions actions uk-float-left'}
+          style={{ borderBottom: 'none', borderTop: '1px solid rgba(0,0,0,0.2)' }}
+        >
+          {footerComponent}
+        </div>
+      )}
+    </div>
+  )
+})
+
+PDropDown.displayName = 'PDropDown'
 
 PDropDown.propTypes = {
   id: PropTypes.string.isRequired,
@@ -198,18 +200,6 @@ PDropDown.propTypes = {
   className: PropTypes.string,
   onShow: PropTypes.func.isRequired,
   children: PropTypes.oneOfType([PropTypes.arrayOf(PropTypes.node), PropTypes.node]).isRequired
-}
-
-PDropDown.defaultProps = {
-  showTitlebar: true,
-  leftArrow: false,
-  showArrow: true,
-  override: false,
-  topOffset: '0',
-  leftOffset: '0',
-  minHeight: 0,
-  isListItems: true,
-  onShow: () => {}
 }
 
 export default PDropDown

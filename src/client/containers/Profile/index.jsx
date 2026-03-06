@@ -1,8 +1,6 @@
-import React from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
-import { observer } from 'mobx-react'
-import { makeObservable, observable } from 'mobx'
 import { withTranslation, Trans } from 'react-i18next'
 import axios from 'axios'
 import moment from 'moment-timezone'
@@ -28,76 +26,77 @@ import SingleSelect from 'components/SingleSelect'
 import helpers from 'lib/helpers'
 import RGrid from 'components/RGrid'
 
-@observer
-class ProfileContainer extends React.Component {
-  @observable editingProfile = false
+function ProfileContainer ({
+  t,
+  sessionUser,
+  setSessionUser: setSessionUserAction,
+  socket,
+  showModal: showModalAction,
+  hideModal: hideModalAction,
+  saveProfile: saveProfileAction,
+  genMFA: genMFAAction
+}) {
+  const [editingProfile, setEditingProfile] = useState(false)
 
-  @observable fullname = null
-  @observable title = null
-  @observable email = null
-  @observable workNumber = null
-  @observable mobileNumber = null
-  @observable companyName = null
-  @observable facebookUrl = null
-  @observable linkedinUrl = null
-  @observable twitterUrl = null
+  const [fullname, setFullname] = useState(null)
+  const [title, setTitle] = useState(null)
+  const [email, setEmail] = useState(null)
+  const [workNumber, setWorkNumber] = useState(null)
+  const [mobileNumber, setMobileNumber] = useState(null)
+  const [companyName, setCompanyName] = useState(null)
+  const [facebookUrl, setFacebookUrl] = useState(null)
+  const [linkedinUrl, setLinkedinUrl] = useState(null)
+  const [twitterUrl, setTwitterUrl] = useState(null)
 
   // Security
   // -- Password
-  @observable currentPassword = null
-  @observable newPassword = null
-  @observable confirmPassword = null
+  const [currentPassword, setCurrentPassword] = useState(null)
+  const [newPassword, setNewPassword] = useState(null)
+  const [confirmPassword, setConfirmPassword] = useState(null)
   // -- Two Factor
-  @observable l2Key = null
-  @observable l2URI = null
-  @observable l2Step2 = null
-  @observable l2ShowCantSeeQR = null
-  @observable l2VerifyText = null
+  const [l2Key, setL2Key] = useState(null)
+  const [l2URI, setL2URI] = useState(null)
+  const [l2Step2, setL2Step2] = useState(null)
+  const [l2ShowCantSeeQR, setL2ShowCantSeeQR] = useState(null)
+  const [l2VerifyText, setL2VerifyText] = useState(null)
 
   // Prefs
-  @observable timezone = null
+  const [timezone, setTimezone] = useState(null)
 
-  constructor (props) {
-    super(props)
-
-    makeObservable(this)
-  }
-
-  componentDidMount () {
+  useEffect(() => {
     // This will update the profile with the latest values
-    this.props.setSessionUser()
-  }
+    setSessionUserAction()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  componentDidUpdate (prevProps, prevState, snapshot) {
-    // This should load initial state values
-    if (prevProps.sessionUser !== this.props.sessionUser) {
-      this.fullname = this.props.sessionUser.fullname
-      this.title = this.props.sessionUser.title
-      this.email = this.props.sessionUser.email
-      this.workNumber = this.props.sessionUser.workNumber
-      this.mobileNumber = this.props.sessionUser.mobileNumber
-      this.companyName = this.props.sessionUser.companyName
-      this.facebookUrl = this.props.sessionUser.facebookUrl
-      this.linkedinUrl = this.props.sessionUser.linkedinUrl
-      this.twitterUrl = this.props.sessionUser.twitterUrl
+  useEffect(() => {
+    if (sessionUser) {
+      setFullname(sessionUser.fullname)
+      setTitle(sessionUser.title)
+      setEmail(sessionUser.email)
+      setWorkNumber(sessionUser.workNumber)
+      setMobileNumber(sessionUser.mobileNumber)
+      setCompanyName(sessionUser.companyName)
+      setFacebookUrl(sessionUser.facebookUrl)
+      setLinkedinUrl(sessionUser.linkedinUrl)
+      setTwitterUrl(sessionUser.twitterUrl)
 
-      if (this.props.sessionUser.preferences) {
-        this.timezone = this.props.sessionUser.preferences.timezone
+      if (sessionUser.preferences) {
+        setTimezone(sessionUser.preferences.timezone)
       }
     }
-  }
+  }, [sessionUser])
 
-  _validateEmail (email) {
-    if (!email) return false
-    return email
+  const _validateEmail = useCallback((emailVal) => {
+    if (!emailVal) return false
+    return emailVal
       .toString()
       .toLowerCase()
       .match(
         /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
       )
-  }
+  }, [])
 
-  _getTimezones () {
+  const _getTimezones = useCallback(() => {
     return moment.tz
       .names()
       .map(function (name) {
@@ -112,75 +111,72 @@ class ProfileContainer extends React.Component {
       .sort(function (a, b) {
         return a.utc - b.utc
       })
-  }
+  }, [])
 
-  onTimezoneSelectChange = e => {
-    this.timezone = e.target.value
-  }
+  const onTimezoneSelectChange = useCallback((e) => {
+    setTimezone(e.target.value)
+  }, [])
 
-  onSaveProfileClicked = e => {
+  const onSaveProfileClicked = useCallback((e) => {
     e.preventDefault()
-    const { t } = this.props
-    if ((this.fullname && this.fullname.length) > 50 || (this.email && this.email.length > 50)) {
+    if ((fullname && fullname.length) > 50 || (email && email.length > 50)) {
       helpers.UI.showSnackbar(t('profile.fieldTooLong'), true)
       return
     }
 
-    if (!this._validateEmail(this.email)) {
+    if (!_validateEmail(email)) {
       helpers.UI.showSnackbar(t('profile.invalidEmail'), true)
       return
     }
 
-    this.props
-      .saveProfile({
-        _id: this.props.sessionUser._id,
-        username: this.props.sessionUser.username,
+    saveProfileAction({
+      _id: sessionUser._id,
+      username: sessionUser.username,
 
-        fullname: this.fullname,
-        title: this.title,
-        workNumber: this.workNumber,
-        mobileNumber: this.mobileNumber,
-        companyName: this.companyName,
-        facebookUrl: this.facebookUrl,
-        linkedinUrl: this.linkedinUrl,
-        twitterUrl: this.twitterUrl,
-        preferences: {
-          timezone: this.timezone
-        }
-      })
+      fullname: fullname,
+      title: title,
+      workNumber: workNumber,
+      mobileNumber: mobileNumber,
+      companyName: companyName,
+      facebookUrl: facebookUrl,
+      linkedinUrl: linkedinUrl,
+      twitterUrl: twitterUrl,
+      preferences: {
+        timezone: timezone
+      }
+    })
       .then(() => {
-        this.editingProfile = false
+        setEditingProfile(false)
         helpers.forceSessionUpdate().then(() => {
-          this.props.setSessionUser()
+          setSessionUserAction()
           helpers.UI.showSnackbar(t('profile.profileSaved'))
         })
       })
-  }
+  }, [fullname, title, email, workNumber, mobileNumber, companyName, facebookUrl, linkedinUrl, twitterUrl, timezone, sessionUser, saveProfileAction, setSessionUserAction, _validateEmail, t])
 
-  onUpdatePasswordClicked = e => {
+  const onUpdatePasswordClicked = useCallback((e) => {
     e.preventDefault()
-    const { t } = this.props
 
-    if (!this.currentPassword || !this.newPassword || !this.confirmPassword) {
+    if (!currentPassword || !newPassword || !confirmPassword) {
       helpers.UI.showSnackbar(t('profile.invalidFormData'))
       return
     }
 
-    if (this.currentPassword.length < 4 || this.newPassword.length < 4 || this.confirmPassword.length < 4) {
+    if (currentPassword.length < 4 || newPassword.length < 4 || confirmPassword.length < 4) {
       helpers.UI.showSnackbar(t('profile.passwordTooShort'), true)
       return
     }
 
-    if (this.currentPassword.length > 255 || this.newPassword.length > 255 || this.confirmPassword.length > 255) {
+    if (currentPassword.length > 255 || newPassword.length > 255 || confirmPassword.length > 255) {
       helpers.UI.showSnackbar(t('profile.passwordTooLong'), true)
       return
     }
 
     axios
       .post('/api/v2/accounts/profile/update-password', {
-        currentPassword: this.currentPassword,
-        newPassword: this.newPassword,
-        confirmPassword: this.confirmPassword
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+        confirmPassword: confirmPassword
       })
       .then(res => {
         if (res.data && res.data.success) {
@@ -197,35 +193,34 @@ class ProfileContainer extends React.Component {
 
         helpers.UI.showSnackbar(errorMsg, true)
       })
-  }
+  }, [currentPassword, newPassword, confirmPassword, t])
 
-  onEnableMFAClicked = e => {
+  const onEnableMFAClicked = useCallback((e) => {
     e.preventDefault()
-    this.props
-      .genMFA({
-        _id: this.props.sessionUser._id,
-        username: this.props.sessionUser.username
-      })
+    genMFAAction({
+      _id: sessionUser._id,
+      username: sessionUser.username
+    })
       .then(res => {
-        this.l2Key = res.key
-        this.l2URI = res.uri
-        this.l2Step2 = true
+        setL2Key(res.key)
+        setL2URI(res.uri)
+        setL2Step2(true)
       })
-  }
+  }, [sessionUser, genMFAAction])
 
-  onVerifyMFAClicked = e => {
+  const onVerifyMFAClicked = useCallback((e) => {
     e.preventDefault()
     axios
       .post('/api/v2/accounts/profile/mfa/verify', {
-        tOTPKey: this.l2Key,
-        code: this.l2VerifyText
+        tOTPKey: l2Key,
+        code: l2VerifyText
       })
       .then(res => {
         if (res.data && res.data.success) {
           // Refresh Session User
-          this.props.setSessionUser()
-          this.l2Step2 = null
-          this.l2ShowCantSeeQR = null
+          setSessionUserAction()
+          setL2Step2(null)
+          setL2ShowCantSeeQR(null)
         }
       })
       .catch(e => {
@@ -233,413 +228,410 @@ class ProfileContainer extends React.Component {
           helpers.UI.showSnackbar(e.response.data.error, true)
         }
       })
-  }
+  }, [l2Key, l2VerifyText, setSessionUserAction])
 
-  onDisableMFAClicked = e => {
+  const onDisableMFAClicked = useCallback((e) => {
     e.preventDefault()
     const onVerifyComplete = success => {
       if (success) {
-        this.l2Step2 = null
-        this.l2ShowCantSeeQR = null
-        this.props.setSessionUser()
+        setL2Step2(null)
+        setL2ShowCantSeeQR(null)
+        setSessionUserAction()
       }
     }
 
-    this.props.showModal('PASSWORD_PROMPT', { user: this.props.sessionUser, onVerifyComplete })
+    showModalAction('PASSWORD_PROMPT', { user: sessionUser, onVerifyComplete })
+  }, [sessionUser, showModalAction, setSessionUserAction])
+
+  // return (
+  //   <div>
+  //     <PageTitle title={'Dashboard'} />
+  //     <PageContent>
+  //       <RGrid />
+  //     </PageContent>
+  //   </div>
+  // )
+  if (!sessionUser) return <div />
+
+  const InfoItem = ({ label, prop, paddingLeft, paddingRight, isRequired, onUpdate }) => {
+    return (
+      <div style={{ width: '33%', paddingRight: paddingRight, paddingLeft: paddingLeft }}>
+        <label style={{ cursor: 'default', fontSize: '13px', fontWeight: 400, marginRight: 15 }}>
+          {label}
+          {isRequired && <span style={{ color: 'red' }}>*</span>}
+        </label>
+        <Spacer top={5} bottom={0} />
+        {editingProfile && <Input defaultValue={prop || ''} onChange={onUpdate} />}
+        {!editingProfile && (
+          <p
+            style={{
+              fontSize: '14px',
+              lineHeight: '21px',
+              margin: 0,
+              fontWeight: 600,
+              textOverflow: 'ellipsis',
+              overflow: 'hidden'
+            }}
+          >
+            {prop || '-'}
+          </p>
+        )}
+      </div>
+    )
   }
 
-  render () {
-    // return (
-    //   <div>
-    //     <PageTitle title={'Dashboard'} />
-    //     <PageContent>
-    //       <RGrid />
-    //     </PageContent>
-    //   </div>
-    // )
-    if (!this.props.sessionUser) return <div />
-    const { t } = this.props
-
-    const InfoItem = ({ label, prop, paddingLeft, paddingRight, isRequired, onUpdate }) => {
-      return (
-        <div style={{ width: '33%', paddingRight: paddingRight, paddingLeft: paddingLeft }}>
-          <label style={{ cursor: 'default', fontSize: '13px', fontWeight: 400, marginRight: 15 }}>
-            {label}
-            {isRequired && <span style={{ color: 'red' }}>*</span>}
-          </label>
-          <Spacer top={5} bottom={0} />
-          {this.editingProfile && <Input defaultValue={prop || ''} onChange={onUpdate} />}
-          {!this.editingProfile && (
-            <p
-              style={{
-                fontSize: '14px',
-                lineHeight: '21px',
-                margin: 0,
-                fontWeight: 600,
-                textOverflow: 'ellipsis',
-                overflow: 'hidden'
-              }}
-            >
-              {prop || '-'}
-            </p>
-          )}
-        </div>
-      )
-    }
-
-    return (
-      <>
-        <PageTitle title={t('profile.title')} />
-        <PageContent>
-          <TruCard
-            header={<div />}
-            hover={false}
-            content={
-              <>
-                <div className={'uk-position-relative'}>
-                  <Avatar
-                    userId={this.props.sessionUser._id}
-                    image={this.props.sessionUser.image}
-                    enableImageUpload={true}
-                    username={this.props.sessionUser.username}
-                    socket={this.props.socket}
-                    showOnlineBubble={false}
-                    showBorder={true}
-                    size={72}
-                  />
-                  <div className={'uk-clearfix'} style={{ paddingLeft: 85 }}>
-                    <h2
-                      className={'ml-15'}
-                      style={{ fontSize: 24, lineHeight: '36px', letterSpacing: '0.5px', fontWeight: 600 }}
+  return (
+    <>
+      <PageTitle title={t('profile.title')} />
+      <PageContent>
+        <TruCard
+          header={<div />}
+          hover={false}
+          content={
+            <>
+              <div className={'uk-position-relative'}>
+                <Avatar
+                  userId={sessionUser._id}
+                  image={sessionUser.image}
+                  enableImageUpload={true}
+                  username={sessionUser.username}
+                  socket={socket}
+                  showOnlineBubble={false}
+                  showBorder={true}
+                  size={72}
+                />
+                <div className={'uk-clearfix'} style={{ paddingLeft: 85 }}>
+                  <h2
+                    className={'ml-15'}
+                    style={{ fontSize: 24, lineHeight: '36px', letterSpacing: '0.5px', fontWeight: 600 }}
+                  >
+                    {sessionUser.fullname}
+                  </h2>
+                  <p className={'ml-15'} style={{ lineHeight: '9px' }}>
+                    <span style={{ marginRight: 10 }}>{sessionUser.email}</span>|
+                    <span style={{ margin: '0 10px' }}>{sessionUser.title}</span>|
+                    <span
+                      style={{
+                        boxSizing: 'border-box',
+                        margin: '0 10px',
+                        padding: '5px 8px',
+                        background: '#d9eeda',
+                        border: '1px solid #b5dfb7',
+                        borderRadius: 3,
+                        color: '#4caf50'
+                      }}
                     >
-                      {this.props.sessionUser.fullname}
-                    </h2>
-                    <p className={'ml-15'} style={{ lineHeight: '9px' }}>
-                      <span style={{ marginRight: 10 }}>{this.props.sessionUser.email}</span>|
-                      <span style={{ margin: '0 10px' }}>{this.props.sessionUser.title}</span>|
-                      <span
-                        style={{
-                          boxSizing: 'border-box',
-                          margin: '0 10px',
-                          padding: '5px 8px',
-                          background: '#d9eeda',
-                          border: '1px solid #b5dfb7',
-                          borderRadius: 3,
-                          color: '#4caf50'
-                        }}
-                      >
-                        {this.props.sessionUser.role.name.toUpperCase()}
-                      </span>
-                    </p>
-                  </div>
-                  <Button
-                    text={t('profile.editProfile')}
-                    small={true}
-                    waves={true}
-                    style={'primary'}
-                    styleOverride={{ position: 'absolute', top: '5px', right: 5 }}
-                    disabled={this.editingProfile}
-                    onClick={() => {
-                      this.fullname = this.props.sessionUser.fullname
-                      this.editingProfile = !this.editingProfile
-                    }}
-                  />
+                      {sessionUser.role.name.toUpperCase()}
+                    </span>
+                  </p>
                 </div>
-              </>
-            }
-          />
-          <Spacer />
-          <TruCard
-            hover={false}
-            content={
-              <div>
-                <TruTabWrapper style={{ padding: '0' }}>
-                  <TruTabSelectors showTrack={true}>
-                    <TruTabSelector selectorId={0} label={t('profile.title')} active={true} />
-                    <TruTabSelector selectorId={1} label={t('profile.security')} />
-                    <TruTabSelector selectorId={2} label={t('profile.preferences')} />
-                  </TruTabSelectors>
-                  <TruTabSection sectionId={0} active={true} style={{ minHeight: 480 }}>
-                    <div style={{ maxWidth: 900, padding: '10px 25px' }}>
-                      <h4 style={{ marginBottom: 15 }}>{t('profile.workInformation')}</h4>
-                      <div style={{ display: 'flex' }}>
-                        <InfoItem
-                          label={t('profile.name')}
-                          prop={this.props.sessionUser.fullname}
-                          paddingLeft={0}
-                          paddingRight={30}
-                          isRequired={true}
-                          onUpdate={val => (this.fullname = val)}
-                        />
-                        <InfoItem
-                          label={t('profile.titleField')}
-                          prop={this.props.sessionUser.title}
-                          paddingLeft={30}
-                          paddingRight={30}
-                          onUpdate={val => (this.title = val)}
-                        />
-                        <InfoItem
-                          label={t('profile.companyName')}
-                          prop={this.props.sessionUser.companyName}
-                          paddingRight={0}
-                          paddingLeft={30}
-                          onUpdate={val => (this.companyName = val)}
-                        />
-                      </div>
-                      <div style={{ display: 'flex', marginTop: 25 }}>
-                        <InfoItem
-                          label={t('profile.workNumber')}
-                          prop={this.props.sessionUser.workNumber}
-                          paddingRight={30}
-                          paddingLeft={0}
-                          onUpdate={val => (this.workNumber = val)}
-                        />
-                        <InfoItem
-                          label={t('profile.mobileNumber')}
-                          prop={this.props.sessionUser.mobileNumber}
-                          paddingLeft={30}
-                          paddingRight={0}
-                          onUpdate={val => (this.mobileNumber = val)}
-                        />
-                      </div>
-                      <Spacer top={25} bottom={25} showBorder={true} />
-                      <h4 style={{ marginBottom: 15 }}>{t('profile.otherInformation')}</h4>
-                      <div style={{ display: 'flex', marginTop: 25 }}>
-                        <InfoItem
-                          label={t('profile.facebookUrl')}
-                          prop={this.props.sessionUser.facebookUrl}
-                          paddingLeft={0}
-                          paddingRight={30}
-                          onUpdate={val => (this.facebookUrl = val)}
-                        />
-                        <InfoItem
-                          label={t('profile.linkedinUrl')}
-                          prop={this.props.sessionUser.linkedinUrl}
-                          paddingLeft={30}
-                          paddingRight={30}
-                          onUpdate={val => (this.linkedinUrl = val)}
-                        />
-                        <InfoItem
-                          label={t('profile.twitterUrl')}
-                          prop={this.props.sessionUser.twitterUrl}
-                          paddingLeft={30}
-                          paddingRight={0}
-                          onUpdate={val => (this.twitterUrl = val)}
-                        />
-                      </div>
-                      {this.editingProfile && (
-                        <div className={'uk-display-flex uk-margin-large-top'}>
-                          <Button
-                            text={t('common.save')}
-                            style={'primary'}
-                            small={true}
-                            onClick={e => this.onSaveProfileClicked(e)}
-                          />
-                          <Button text={t('common.cancel')} small={true} onClick={() => (this.editingProfile = false)} />
-                        </div>
-                      )}
-                    </div>
-                  </TruTabSection>
-                  <TruTabSection sectionId={1} style={{ minHeight: 480 }}>
-                    <div style={{ maxWidth: 600, padding: '25px 0' }}>
-                      <TruAccordion
-                        headerContent={t('profile.changePassword')}
-                        content={
-                          <div>
-                            <form onSubmit={e => this.onUpdatePasswordClicked(e)}>
-                              <div
-                                className={'uk-alert uk-alert-warning'}
-                                style={{ display: 'flex', alignItems: 'center' }}
-                              >
-                                <i className='material-icons mr-10' style={{ opacity: 0.5 }}>
-                                  info
-                                </i>
-                                <p style={{ lineHeight: '18px' }}>
-                                  {t('profile.passwordWarning')}
-                                </p>
-                              </div>
-                              <div>
-                                <div className={'uk-margin-medium-bottom'}>
-                                  <label>{t('profile.currentPassword')}</label>
-                                  <Input type={'password'} onChange={v => (this.currentPassword = v)} />
-                                </div>
-                                <div className={'uk-margin-medium-bottom'}>
-                                  <label>{t('profile.newPassword')}</label>
-                                  <Input type={'password'} onChange={v => (this.newPassword = v)} />
-                                </div>
-                                <div className={'uk-margin-medium-bottom'}>
-                                  <label>{t('profile.confirmPassword')}</label>
-                                  <Input type={'password'} onChange={v => (this.confirmPassword = v)} />
-                                </div>
-                              </div>
-                              <div>
-                                <Button
-                                  type={'submit'}
-                                  text={t('profile.updatePassword')}
-                                  style={'primary'}
-                                  small={true}
-                                  extraClass={'uk-width-1-1'}
-                                  onClick={e => this.onUpdatePasswordClicked(e)}
-                                />
-                              </div>
-                            </form>
-                          </div>
-                        }
+                <Button
+                  text={t('profile.editProfile')}
+                  small={true}
+                  waves={true}
+                  style={'primary'}
+                  styleOverride={{ position: 'absolute', top: '5px', right: 5 }}
+                  disabled={editingProfile}
+                  onClick={() => {
+                    setFullname(sessionUser.fullname)
+                    setEditingProfile(!editingProfile)
+                  }}
+                />
+              </div>
+            </>
+          }
+        />
+        <Spacer />
+        <TruCard
+          hover={false}
+          content={
+            <div>
+              <TruTabWrapper style={{ padding: '0' }}>
+                <TruTabSelectors showTrack={true}>
+                  <TruTabSelector selectorId={0} label={t('profile.title')} active={true} />
+                  <TruTabSelector selectorId={1} label={t('profile.security')} />
+                  <TruTabSelector selectorId={2} label={t('profile.preferences')} />
+                </TruTabSelectors>
+                <TruTabSection sectionId={0} active={true} style={{ minHeight: 480 }}>
+                  <div style={{ maxWidth: 900, padding: '10px 25px' }}>
+                    <h4 style={{ marginBottom: 15 }}>{t('profile.workInformation')}</h4>
+                    <div style={{ display: 'flex' }}>
+                      <InfoItem
+                        label={t('profile.name')}
+                        prop={sessionUser.fullname}
+                        paddingLeft={0}
+                        paddingRight={30}
+                        isRequired={true}
+                        onUpdate={val => setFullname(val)}
                       />
-                      <TruAccordion
-                        headerContent={t('profile.twoFactorAuth')}
-                        content={
-                          <div>
-                            {!this.props.sessionUser.hasL2Auth && (
-                              <div>
-                                {!this.l2Step2 && (
+                      <InfoItem
+                        label={t('profile.titleField')}
+                        prop={sessionUser.title}
+                        paddingLeft={30}
+                        paddingRight={30}
+                        onUpdate={val => setTitle(val)}
+                      />
+                      <InfoItem
+                        label={t('profile.companyName')}
+                        prop={sessionUser.companyName}
+                        paddingRight={0}
+                        paddingLeft={30}
+                        onUpdate={val => setCompanyName(val)}
+                      />
+                    </div>
+                    <div style={{ display: 'flex', marginTop: 25 }}>
+                      <InfoItem
+                        label={t('profile.workNumber')}
+                        prop={sessionUser.workNumber}
+                        paddingRight={30}
+                        paddingLeft={0}
+                        onUpdate={val => setWorkNumber(val)}
+                      />
+                      <InfoItem
+                        label={t('profile.mobileNumber')}
+                        prop={sessionUser.mobileNumber}
+                        paddingLeft={30}
+                        paddingRight={0}
+                        onUpdate={val => setMobileNumber(val)}
+                      />
+                    </div>
+                    <Spacer top={25} bottom={25} showBorder={true} />
+                    <h4 style={{ marginBottom: 15 }}>{t('profile.otherInformation')}</h4>
+                    <div style={{ display: 'flex', marginTop: 25 }}>
+                      <InfoItem
+                        label={t('profile.facebookUrl')}
+                        prop={sessionUser.facebookUrl}
+                        paddingLeft={0}
+                        paddingRight={30}
+                        onUpdate={val => setFacebookUrl(val)}
+                      />
+                      <InfoItem
+                        label={t('profile.linkedinUrl')}
+                        prop={sessionUser.linkedinUrl}
+                        paddingLeft={30}
+                        paddingRight={30}
+                        onUpdate={val => setLinkedinUrl(val)}
+                      />
+                      <InfoItem
+                        label={t('profile.twitterUrl')}
+                        prop={sessionUser.twitterUrl}
+                        paddingLeft={30}
+                        paddingRight={0}
+                        onUpdate={val => setTwitterUrl(val)}
+                      />
+                    </div>
+                    {editingProfile && (
+                      <div className={'uk-display-flex uk-margin-large-top'}>
+                        <Button
+                          text={t('common.save')}
+                          style={'primary'}
+                          small={true}
+                          onClick={e => onSaveProfileClicked(e)}
+                        />
+                        <Button text={t('common.cancel')} small={true} onClick={() => setEditingProfile(false)} />
+                      </div>
+                    )}
+                  </div>
+                </TruTabSection>
+                <TruTabSection sectionId={1} style={{ minHeight: 480 }}>
+                  <div style={{ maxWidth: 600, padding: '25px 0' }}>
+                    <TruAccordion
+                      headerContent={t('profile.changePassword')}
+                      content={
+                        <div>
+                          <form onSubmit={e => onUpdatePasswordClicked(e)}>
+                            <div
+                              className={'uk-alert uk-alert-warning'}
+                              style={{ display: 'flex', alignItems: 'center' }}
+                            >
+                              <i className='material-icons mr-10' style={{ opacity: 0.5 }}>
+                                info
+                              </i>
+                              <p style={{ lineHeight: '18px' }}>
+                                {t('profile.passwordWarning')}
+                              </p>
+                            </div>
+                            <div>
+                              <div className={'uk-margin-medium-bottom'}>
+                                <label>{t('profile.currentPassword')}</label>
+                                <Input type={'password'} onChange={v => setCurrentPassword(v)} />
+                              </div>
+                              <div className={'uk-margin-medium-bottom'}>
+                                <label>{t('profile.newPassword')}</label>
+                                <Input type={'password'} onChange={v => setNewPassword(v)} />
+                              </div>
+                              <div className={'uk-margin-medium-bottom'}>
+                                <label>{t('profile.confirmPassword')}</label>
+                                <Input type={'password'} onChange={v => setConfirmPassword(v)} />
+                              </div>
+                            </div>
+                            <div>
+                              <Button
+                                type={'submit'}
+                                text={t('profile.updatePassword')}
+                                style={'primary'}
+                                small={true}
+                                extraClass={'uk-width-1-1'}
+                                onClick={e => onUpdatePasswordClicked(e)}
+                              />
+                            </div>
+                          </form>
+                        </div>
+                      }
+                    />
+                    <TruAccordion
+                      headerContent={t('profile.twoFactorAuth')}
+                      content={
+                        <div>
+                          {!sessionUser.hasL2Auth && (
+                            <div>
+                              {!l2Step2 && (
+                                <div>
+                                  <h4 style={{ fontWeight: 500 }}>{t('profile.twoFactorNotEnabled')}</h4>
+                                  <p style={{ fontSize: '12px', fontWeight: 400 }}>
+                                    {t('profile.twoFactorDescription')}
+                                  </p>
                                   <div>
-                                    <h4 style={{ fontWeight: 500 }}>{t('profile.twoFactorNotEnabled')}</h4>
-                                    <p style={{ fontSize: '12px', fontWeight: 400 }}>
-                                      {t('profile.twoFactorDescription')}
-                                    </p>
-                                    <div>
-                                      <Button
-                                        text={t('settings.enable')}
-                                        style={'primary'}
-                                        small={true}
-                                        waves={true}
-                                        onClick={e => this.onEnableMFAClicked(e)}
-                                      />
-                                    </div>
+                                    <Button
+                                      text={t('settings.enable')}
+                                      style={'primary'}
+                                      small={true}
+                                      waves={true}
+                                      onClick={e => onEnableMFAClicked(e)}
+                                    />
                                   </div>
-                                )}
-                                {this.l2Step2 && (
-                                  <div style={{ display: 'flex', justifyContent: 'center' }}>
-                                    <div style={{ width: 400 }}>
-                                      <div style={{ display: 'flex', marginTop: 15, flexDirection: 'column' }}>
-                                        <p style={{ fontWeight: 500, marginBottom: 40 }}>
-                                          {t('profile.scanQrCode')}
-                                        </p>
-                                        <div style={{ alignSelf: 'center', marginBottom: 40 }}>
-                                          <div>
-                                            <QRCode
-                                              size={180}
-                                              code={this.l2URI || 'INVALID_CODE'}
-                                              css={{ marginBottom: 5 }}
-                                            />
-                                            <a
-                                              href='#'
+                                </div>
+                              )}
+                              {l2Step2 && (
+                                <div style={{ display: 'flex', justifyContent: 'center' }}>
+                                  <div style={{ width: 400 }}>
+                                    <div style={{ display: 'flex', marginTop: 15, flexDirection: 'column' }}>
+                                      <p style={{ fontWeight: 500, marginBottom: 40 }}>
+                                        {t('profile.scanQrCode')}
+                                      </p>
+                                      <div style={{ alignSelf: 'center', marginBottom: 40 }}>
+                                        <div>
+                                          <QRCode
+                                            size={180}
+                                            code={l2URI || 'INVALID_CODE'}
+                                            css={{ marginBottom: 5 }}
+                                          />
+                                          <a
+                                            href='#'
+                                            style={{
+                                              display: 'inline-block',
+                                              fontSize: '12px',
+                                              width: '100%',
+                                              textAlign: 'right'
+                                            }}
+                                            onClick={e => {
+                                              e.preventDefault()
+                                              setL2ShowCantSeeQR(true)
+                                            }}
+                                          >
+                                            {t('profile.cantScanQr')}
+                                          </a>
+                                        </div>
+                                      </div>
+                                      {l2ShowCantSeeQR && (
+                                        <div style={{ alignSelf: 'center', marginBottom: 15 }}>
+                                          <p style={{ fontSize: '13px' }}>
+                                            {t('profile.manualKeyHint')}
+                                          </p>
+                                          <p style={{ textAlign: 'center' }}>
+                                            <span
                                               style={{
                                                 display: 'inline-block',
-                                                fontSize: '12px',
-                                                width: '100%',
-                                                textAlign: 'right'
-                                              }}
-                                              onClick={e => {
-                                                e.preventDefault()
-                                                this.l2ShowCantSeeQR = true
+                                                padding: '5px 25px',
+                                                background: 'white',
+                                                color: 'black',
+                                                fontWeight: 500,
+                                                border: '1px solid rgba(0,0,0,0.1)'
                                               }}
                                             >
-                                              {t('profile.cantScanQr')}
-                                            </a>
-                                          </div>
+                                              {l2Key}
+                                            </span>
+                                          </p>
                                         </div>
-                                        {this.l2ShowCantSeeQR && (
-                                          <div style={{ alignSelf: 'center', marginBottom: 15 }}>
-                                            <p style={{ fontSize: '13px' }}>
-                                              {t('profile.manualKeyHint')}
-                                            </p>
-                                            <p style={{ textAlign: 'center' }}>
-                                              <span
-                                                style={{
-                                                  display: 'inline-block',
-                                                  padding: '5px 25px',
-                                                  background: 'white',
-                                                  color: 'black',
-                                                  fontWeight: 500,
-                                                  border: '1px solid rgba(0,0,0,0.1)'
-                                                }}
-                                              >
-                                                {this.l2Key}
-                                              </span>
-                                            </p>
-                                          </div>
-                                        )}
-                                        <p style={{ fontWeight: 500 }}>
-                                          {t('profile.verifyCodeHint')}
-                                        </p>
-                                        <label>{t('profile.verificationCode')}</label>
-                                        <Input type={'text'} onChange={val => (this.l2VerifyText = val)} />
-                                        <div style={{ marginTop: 25 }}>
-                                          <Button
-                                            text={t('profile.verifyAndContinue')}
-                                            style={'primary'}
-                                            small={true}
-                                            waves={true}
-                                            extraClass={'uk-width-1-1'}
-                                            onClick={e => this.onVerifyMFAClicked(e)}
-                                          />
-                                        </div>
+                                      )}
+                                      <p style={{ fontWeight: 500 }}>
+                                        {t('profile.verifyCodeHint')}
+                                      </p>
+                                      <label>{t('profile.verificationCode')}</label>
+                                      <Input type={'text'} onChange={val => setL2VerifyText(val)} />
+                                      <div style={{ marginTop: 25 }}>
+                                        <Button
+                                          text={t('profile.verifyAndContinue')}
+                                          style={'primary'}
+                                          small={true}
+                                          waves={true}
+                                          extraClass={'uk-width-1-1'}
+                                          onClick={e => onVerifyMFAClicked(e)}
+                                        />
                                       </div>
                                     </div>
                                   </div>
-                                )}
-                              </div>
-                            )}
-                            {this.props.sessionUser.hasL2Auth && (
-                              <div>
-                                <h4 style={{ fontWeight: 500 }}>
-                                  <Trans i18nKey="profile.twoFactorEnabled">
-                                    Two-factor authentication is{' '}
-                                    <span className={'uk-text-success'} style={{ fontWeight: 600 }}>
-                                      enabled
-                                    </span>
-                                  </Trans>
-                                </h4>
-                                <p style={{ fontSize: '12px' }}>
-                                  {t('profile.twoFactorDisableHint')}
-                                </p>
-                                <div>
-                                  <Button
-                                    text={'Disable'}
-                                    style={'danger'}
-                                    small={true}
-                                    onClick={e => this.onDisableMFAClicked(e)}
-                                  />
                                 </div>
+                              )}
+                            </div>
+                          )}
+                          {sessionUser.hasL2Auth && (
+                            <div>
+                              <h4 style={{ fontWeight: 500 }}>
+                                <Trans i18nKey="profile.twoFactorEnabled">
+                                  Two-factor authentication is{' '}
+                                  <span className={'uk-text-success'} style={{ fontWeight: 600 }}>
+                                    enabled
+                                  </span>
+                                </Trans>
+                              </h4>
+                              <p style={{ fontSize: '12px' }}>
+                                {t('profile.twoFactorDisableHint')}
+                              </p>
+                              <div>
+                                <Button
+                                  text={'Disable'}
+                                  style={'danger'}
+                                  small={true}
+                                  onClick={e => onDisableMFAClicked(e)}
+                                />
                               </div>
-                            )}
-                          </div>
-                        }
+                            </div>
+                          )}
+                        </div>
+                      }
+                    />
+                  </div>
+                </TruTabSection>
+                <TruTabSection sectionId={2} style={{ minHeight: 480 }}>
+                  <div style={{ maxWidth: 450, padding: '10px 25px' }}>
+                    <h4 style={{ marginBottom: 15 }}>{t('profile.uiPreferences')}</h4>
+                    <div className={'uk-clearfix uk-margin-large-bottom'}>
+                      <label style={{ fontSize: '13px' }}>{t('profile.timezone')}</label>
+                      <SingleSelect
+                        items={_getTimezones()}
+                        defaultValue={timezone || undefined}
+                        onSelectChange={e => onTimezoneSelectChange(e)}
                       />
                     </div>
-                  </TruTabSection>
-                  <TruTabSection sectionId={2} style={{ minHeight: 480 }}>
-                    <div style={{ maxWidth: 450, padding: '10px 25px' }}>
-                      <h4 style={{ marginBottom: 15 }}>{t('profile.uiPreferences')}</h4>
-                      <div className={'uk-clearfix uk-margin-large-bottom'}>
-                        <label style={{ fontSize: '13px' }}>{t('profile.timezone')}</label>
-                        <SingleSelect
-                          items={this._getTimezones()}
-                          defaultValue={this.timezone || undefined}
-                          onSelectChange={e => this.onTimezoneSelectChange(e)}
-                        />
-                      </div>
-                      <div>
-                        <Button
-                          text={t('profile.savePreferences')}
-                          style={'primary'}
-                          small={true}
-                          type={'button'}
-                          onClick={e => this.onSaveProfileClicked(e)}
-                        />
-                      </div>
+                    <div>
+                      <Button
+                        text={t('profile.savePreferences')}
+                        style={'primary'}
+                        small={true}
+                        type={'button'}
+                        onClick={e => onSaveProfileClicked(e)}
+                      />
                     </div>
-                  </TruTabSection>
-                </TruTabWrapper>
-              </div>
-            }
-          />
-        </PageContent>
-      </>
-    )
-  }
+                  </div>
+                </TruTabSection>
+              </TruTabWrapper>
+            </div>
+          }
+        />
+      </PageContent>
+    </>
+  )
 }
 
 ProfileContainer.propTypes = {

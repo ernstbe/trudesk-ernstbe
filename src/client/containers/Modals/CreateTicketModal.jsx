@@ -12,11 +12,9 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-import React from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
-import { observer } from 'mobx-react'
-import { makeObservable, observable, when } from 'mobx'
 import { withTranslation } from 'react-i18next'
 import { head, orderBy } from 'lodash'
 import axios from 'axios'
@@ -36,89 +34,88 @@ import SpinLoader from 'components/SpinLoader'
 import Button from 'components/Button'
 import EasyMDE from 'components/EasyMDE'
 
-@observer
-class CreateTicketModal extends React.Component {
-  @observable priorities = []
-  @observable allAccounts = this.props.accounts || []
-  @observable groupAccounts = []
-  @observable selectedPriority = ''
-  issueText = ''
+function CreateTicketModal (props) {
+  const { shared, viewdata, t, socket, accounts, groups, ticketTypes, ticketTags } = props
 
-  constructor (props) {
-    super(props)
-    makeObservable(this)
-  }
+  const [priorities, setPriorities] = useState([])
+  const [selectedPriority, setSelectedPriority] = useState('')
+  const issueTextRef = useRef('')
 
-  componentDidMount () {
-    this.props.fetchTicketTypes()
-    this.props.getTagsWithPage({ limit: -1 })
-    this.props.fetchGroups()
-    this.props.fetchAccountsCreateTicket({ type: 'all', limit: 1000 })
+  const ownerSelectRef = useRef(null)
+  const groupSelectRef = useRef(null)
+  const typeSelectRef = useRef(null)
+  const tagSelectRef = useRef(null)
+  const issueMdeRef = useRef(null)
+  const priorityLoaderRef = useRef(null)
+  const priorityWrapperRef = useRef(null)
+
+  useEffect(() => {
+    props.fetchTicketTypes()
+    props.getTagsWithPage({ limit: -1 })
+    props.fetchGroups()
+    props.fetchAccountsCreateTicket({ type: 'all', limit: 1000 })
     helpers.UI.inputs()
     helpers.formvalidator()
-    this.defaultTicketTypeWatcher = when(
-      () => this.props.viewdata.get('defaultTicketType'),
-      () => {
-        this.priorities = orderBy(this.props.viewdata.toJS().defaultTicketType.priorities, ['migrationNum'])
-        this.selectedPriority = head(this.priorities) ? head(this.priorities)._id : ''
-      }
-    )
-  }
+  }, [])
 
-  componentDidUpdate () {}
+  useEffect(() => {
+    const defaultTicketType = viewdata.get('defaultTicketType')
+    if (defaultTicketType) {
+      const prios = orderBy(viewdata.toJS().defaultTicketType.priorities, ['migrationNum'])
+      setPriorities(prios)
+      setSelectedPriority(head(prios) ? head(prios)._id : '')
+    }
+  }, [viewdata])
 
-  componentWillUnmount () {
-    if (this.defaultTicketTypeWatcher) this.defaultTicketTypeWatcher()
-  }
-
-  onTicketTypeSelectChange (e) {
-    this.priorityWrapper.classList.add('hide')
-    this.priorityLoader.classList.remove('hide')
+  const onTicketTypeSelectChange = useCallback((e) => {
+    priorityWrapperRef.current.classList.add('hide')
+    priorityLoaderRef.current.classList.remove('hide')
     axios
       .get(`/api/v1/tickets/type/${e.target.value}`)
       .then(res => {
         const type = res.data.type
         if (type && type.priorities) {
-          this.priorities = orderBy(type.priorities, ['migrationNum'])
-          this.selectedPriority = head(orderBy(type.priorities, ['migrationNum']))
+          const newPriorities = orderBy(type.priorities, ['migrationNum'])
+          setPriorities(newPriorities)
+          setSelectedPriority(head(orderBy(type.priorities, ['migrationNum']))
             ? head(orderBy(type.priorities, ['migrationNum']))._id
-            : ''
+            : '')
 
           setTimeout(() => {
-            this.priorityLoader.classList.add('hide')
-            this.priorityWrapper.classList.remove('hide')
+            priorityLoaderRef.current.classList.add('hide')
+            priorityWrapperRef.current.classList.remove('hide')
           }, 500)
         }
       })
       .catch(error => {
-        this.priorityLoader.classList.add('hide')
+        priorityLoaderRef.current.classList.add('hide')
         Log.error(error)
         helpers.UI.showSnackbar(`Error: ${error.response.data.error}`)
       })
-  }
+  }, [])
 
-  onPriorityRadioChange (e) {
-    this.selectedPriority = e.target.value
-  }
+  const onPriorityRadioChange = useCallback((e) => {
+    setSelectedPriority(e.target.value)
+  }, [])
 
-  onFormSubmit (e) {
+  const onFormSubmit = useCallback((e) => {
     e.preventDefault()
     const $form = $(e.target)
 
     const data = {}
-    if (this.issueText.length < 1) return
+    if (issueTextRef.current.length < 1) return
     const allowAgentUserTickets =
-      this.props.viewdata.get('ticketSettings').get('allowAgentUserTickets') &&
-      (this.props.shared.sessionUser.role.isAdmin || this.props.shared.sessionUser.role.isAgent)
+      viewdata.get('ticketSettings').get('allowAgentUserTickets') &&
+      (shared.sessionUser.role.isAdmin || shared.sessionUser.role.isAgent)
 
-    const minIssueLength = this.props.viewdata.get('ticketSettings').get('minIssue')
+    const minIssueLength = viewdata.get('ticketSettings').get('minIssue')
     let $mdeError
-    const $issueTextbox = $(this.issueMde.element)
+    const $issueTextbox = $(issueMdeRef.current.element)
     const $errorBorderWrap = $issueTextbox.parents('.error-border-wrap')
-    if (this.issueText.length < minIssueLength) {
+    if (issueTextRef.current.length < minIssueLength) {
       $errorBorderWrap.css({ border: '1px solid #E74C3C' })
       const mdeError = $(
-        `<div class="mde-error uk-float-left uk-text-left">${this.props.t('modals.createTicket.validIssue', { min: minIssueLength })}</div>`
+        `<div class="mde-error uk-float-left uk-text-left">${t('modals.createTicket.validIssue', { min: minIssueLength })}</div>`
       )
       $mdeError = $issueTextbox.siblings('.editor-statusbar').find('.mde-error')
       if ($mdeError.length < 1) $issueTextbox.siblings('.editor-statusbar').prepend(mdeError)
@@ -132,20 +129,20 @@ class CreateTicketModal extends React.Component {
 
     if (!$form.isValid(null, null, false)) return true
 
-    if (allowAgentUserTickets) data.owner = this.ownerSelect.value
+    if (allowAgentUserTickets) data.owner = ownerSelectRef.current.value
 
     data.subject = e.target.subject.value
-    data.group = this.groupSelect.value
-    data.type = this.typeSelect.value
-    data.tags = this.tagSelect.value
-    data.priority = this.selectedPriority
-    data.issue = this.issueMde.easymde.value()
-    data.socketid = this.props.socket.io.engine.id
+    data.group = groupSelectRef.current.value
+    data.type = typeSelectRef.current.value
+    data.tags = tagSelectRef.current.value
+    data.priority = selectedPriority
+    data.issue = issueMdeRef.current.easymde.value()
+    data.socketid = socket.io.engine.id
 
-    this.props.createTicket(data)
-  }
+    props.createTicket(data)
+  }, [viewdata, shared, selectedPriority, socket, t])
 
-  onGroupSelectChange (e) {
+  const onGroupSelectChange = useCallback((e) => {
     // this.groupAccounts = this.props.groups
     //   .filter(grp => grp.get('_id') === e.target.value)
     //   .first()
@@ -154,164 +151,161 @@ class CreateTicketModal extends React.Component {
     //     return { text: a.get('fullname'), value: a.get('_id') }
     //   })
     //   .toArray()
-  }
+  }, [])
 
-  render () {
-    const { shared, viewdata, t } = this.props
-    const allowAgentUserTickets =
-      viewdata.get('ticketSettings').get('allowAgentUserTickets') &&
-      (shared.sessionUser.role.isAdmin || shared.sessionUser.role.isAgent)
+  const allowAgentUserTickets =
+    viewdata.get('ticketSettings').get('allowAgentUserTickets') &&
+    (shared.sessionUser.role.isAdmin || shared.sessionUser.role.isAgent)
 
-    const mappedAccounts = this.props.accounts
-      .map(a => {
-        return { text: a.get('fullname'), value: a.get('_id') }
-      })
-      .toArray()
-
-    const mappedGroups = this.props.groups
-      .map(grp => {
-        return { text: grp.get('name'), value: grp.get('_id') }
-      })
-      .toArray()
-
-    const mappedTicketTypes = this.props.ticketTypes.toArray().map(type => {
-      return { text: type.get('name'), value: type.get('_id') }
+  const mappedAccounts = accounts
+    .map(a => {
+      return { text: a.get('fullname'), value: a.get('_id') }
     })
-    const mappedTicketTags = this.props.ticketTags.toArray().map(tag => {
-      return { text: tag.get('name'), value: tag.get('_id') }
+    .toArray()
+
+  const mappedGroups = groups
+    .map(grp => {
+      return { text: grp.get('name'), value: grp.get('_id') }
     })
-    return (
-      <BaseModal {...this.props} options={{ bgclose: false }}>
-        <form className={'uk-form-stacked'} onSubmit={e => this.onFormSubmit(e)}>
-          <div className='uk-margin-medium-bottom'>
-            <label>{t('modals.createTicket.subject')}</label>
-            <input
-              type='text'
-              name={'subject'}
-              className={'md-input'}
-              data-validation='length'
-              data-validation-length={`min${viewdata.get('ticketSettings').get('minSubject')}`}
-              data-validation-error-msg={t('modals.createTicket.validSubject', { min: viewdata.get('ticketSettings').get('minSubject') })}
+    .toArray()
+
+  const mappedTicketTypes = ticketTypes.toArray().map(type => {
+    return { text: type.get('name'), value: type.get('_id') }
+  })
+  const mappedTicketTags = ticketTags.toArray().map(tag => {
+    return { text: tag.get('name'), value: tag.get('_id') }
+  })
+  return (
+    <BaseModal {...props} options={{ bgclose: false }}>
+      <form className={'uk-form-stacked'} onSubmit={e => onFormSubmit(e)}>
+        <div className='uk-margin-medium-bottom'>
+          <label>{t('modals.createTicket.subject')}</label>
+          <input
+            type='text'
+            name={'subject'}
+            className={'md-input'}
+            data-validation='length'
+            data-validation-length={`min${viewdata.get('ticketSettings').get('minSubject')}`}
+            data-validation-error-msg={t('modals.createTicket.validSubject', { min: viewdata.get('ticketSettings').get('minSubject') })}
+          />
+        </div>
+        <div className='uk-margin-medium-bottom'>
+          <Grid>
+            {allowAgentUserTickets && (
+              <GridItem width={'1-3'}>
+                <label className={'uk-form-label'}>{t('modals.createTicket.owner')}</label>
+                <SingleSelect
+                  showTextbox={true}
+                  items={mappedAccounts}
+                  defaultValue={shared.sessionUser._id}
+                  width={'100%'}
+                  ref={i => (ownerSelectRef.current = i)}
+                />
+              </GridItem>
+            )}
+            <GridItem width={allowAgentUserTickets ? '2-3' : '1-1'}>
+              <label className={'uk-form-label'}>{t('modals.createTicket.group')}</label>
+              <SingleSelect
+                showTextbox={false}
+                items={mappedGroups}
+                defaultValue={head(mappedGroups) ? head(mappedGroups).value : ''}
+                onSelectChange={e => onGroupSelectChange(e)}
+                width={'100%'}
+                ref={i => (groupSelectRef.current = i)}
+              />
+            </GridItem>
+          </Grid>
+        </div>
+        <div className='uk-margin-medium-bottom'>
+          <Grid>
+            <GridItem width={'1-3'}>
+              <label className={'uk-form-label'}>{t('modals.createTicket.type')}</label>
+              <SingleSelect
+                showTextbox={false}
+                items={mappedTicketTypes}
+                width={'100%'}
+                defaultValue={viewdata.get('defaultTicketType').get('_id')}
+                onSelectChange={e => {
+                  onTicketTypeSelectChange(e)
+                }}
+                ref={i => (typeSelectRef.current = i)}
+              />
+            </GridItem>
+            <GridItem width={'2-3'}>
+              <label className={'uk-form-label'}>{t('modals.createTicket.tags')}</label>
+              <SingleSelect
+                showTextbox={false}
+                items={mappedTicketTags}
+                width={'100%'}
+                multiple={true}
+                ref={i => (tagSelectRef.current = i)}
+              />
+            </GridItem>
+          </Grid>
+        </div>
+        <div className='uk-margin-medium-bottom'>
+          <label className={'uk-form-label'}>{t('modals.createTicket.priority')}</label>
+          <div
+            ref={priorityLoaderRef}
+            style={{ height: '32px', width: '32px', position: 'relative' }}
+            className={'hide'}
+          >
+            <SpinLoader
+              style={{ background: 'transparent' }}
+              spinnerStyle={{ width: '24px', height: '24px' }}
+              active={true}
             />
           </div>
-          <div className='uk-margin-medium-bottom'>
-            <Grid>
-              {allowAgentUserTickets && (
-                <GridItem width={'1-3'}>
-                  <label className={'uk-form-label'}>{t('modals.createTicket.owner')}</label>
-                  <SingleSelect
-                    showTextbox={true}
-                    items={mappedAccounts}
-                    defaultValue={this.props.shared.sessionUser._id}
-                    width={'100%'}
-                    ref={i => (this.ownerSelect = i)}
-                  />
-                </GridItem>
-              )}
-              <GridItem width={allowAgentUserTickets ? '2-3' : '1-1'}>
-                <label className={'uk-form-label'}>{t('modals.createTicket.group')}</label>
-                <SingleSelect
-                  showTextbox={false}
-                  items={mappedGroups}
-                  defaultValue={head(mappedGroups) ? head(mappedGroups).value : ''}
-                  onSelectChange={e => this.onGroupSelectChange(e)}
-                  width={'100%'}
-                  ref={i => (this.groupSelect = i)}
-                />
-              </GridItem>
-            </Grid>
+          <div ref={priorityWrapperRef} className={'uk-clearfix'}>
+            {priorities.map(priority => {
+              return (
+                <div key={priority._id} className={'uk-float-left'}>
+                  <span className={'icheck-inline'}>
+                    <input
+                      id={'p___' + priority._id}
+                      name={'priority'}
+                      type='radio'
+                      className={'with-gap'}
+                      value={priority._id}
+                      onChange={e => {
+                        onPriorityRadioChange(e)
+                      }}
+                      checked={selectedPriority === priority._id}
+                      data-md-icheck
+                    />
+                    <label htmlFor={'p___' + priority._id} className={'mb-10 inline-label'}>
+                      <span className='uk-badge' style={{ backgroundColor: priority.htmlColor }}>
+                        {t('priorities.' + priority.name, priority.name)}
+                      </span>
+                    </label>
+                  </span>
+                </div>
+              )
+            })}
           </div>
-          <div className='uk-margin-medium-bottom'>
-            <Grid>
-              <GridItem width={'1-3'}>
-                <label className={'uk-form-label'}>{t('modals.createTicket.type')}</label>
-                <SingleSelect
-                  showTextbox={false}
-                  items={mappedTicketTypes}
-                  width={'100%'}
-                  defaultValue={this.props.viewdata.get('defaultTicketType').get('_id')}
-                  onSelectChange={e => {
-                    this.onTicketTypeSelectChange(e)
-                  }}
-                  ref={i => (this.typeSelect = i)}
-                />
-              </GridItem>
-              <GridItem width={'2-3'}>
-                <label className={'uk-form-label'}>{t('modals.createTicket.tags')}</label>
-                <SingleSelect
-                  showTextbox={false}
-                  items={mappedTicketTags}
-                  width={'100%'}
-                  multiple={true}
-                  ref={i => (this.tagSelect = i)}
-                />
-              </GridItem>
-            </Grid>
+        </div>
+        <div className='uk-margin-medium-bottom'>
+          <span>{t('modals.createTicket.description')}</span>
+          <div className='error-border-wrap uk-clearfix'>
+            <EasyMDE
+              ref={i => (issueMdeRef.current = i)}
+              onChange={val => (issueTextRef.current = val)}
+              allowImageUpload={true}
+              inlineImageUploadUrl={'/tickets/uploadmdeimage'}
+              inlineImageUploadHeaders={{ ticketid: 'uploads' }}
+            />
           </div>
-          <div className='uk-margin-medium-bottom'>
-            <label className={'uk-form-label'}>{t('modals.createTicket.priority')}</label>
-            <div
-              ref={i => (this.priorityLoader = i)}
-              style={{ height: '32px', width: '32px', position: 'relative' }}
-              className={'hide'}
-            >
-              <SpinLoader
-                style={{ background: 'transparent' }}
-                spinnerStyle={{ width: '24px', height: '24px' }}
-                active={true}
-              />
-            </div>
-            <div ref={i => (this.priorityWrapper = i)} className={'uk-clearfix'}>
-              {this.priorities.map(priority => {
-                return (
-                  <div key={priority._id} className={'uk-float-left'}>
-                    <span className={'icheck-inline'}>
-                      <input
-                        id={'p___' + priority._id}
-                        name={'priority'}
-                        type='radio'
-                        className={'with-gap'}
-                        value={priority._id}
-                        onChange={e => {
-                          this.onPriorityRadioChange(e)
-                        }}
-                        checked={this.selectedPriority === priority._id}
-                        data-md-icheck
-                      />
-                      <label htmlFor={'p___' + priority._id} className={'mb-10 inline-label'}>
-                        <span className='uk-badge' style={{ backgroundColor: priority.htmlColor }}>
-                          {t('priorities.' + priority.name, priority.name)}
-                        </span>
-                      </label>
-                    </span>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-          <div className='uk-margin-medium-bottom'>
-            <span>{t('modals.createTicket.description')}</span>
-            <div className='error-border-wrap uk-clearfix'>
-              <EasyMDE
-                ref={i => (this.issueMde = i)}
-                onChange={val => (this.issueText = val)}
-                allowImageUpload={true}
-                inlineImageUploadUrl={'/tickets/uploadmdeimage'}
-                inlineImageUploadHeaders={{ ticketid: 'uploads' }}
-              />
-            </div>
-            <span style={{ marginTop: '6px', display: 'inline-block', fontSize: '11px' }} className={'uk-text-muted'}>
-              {t('modals.createTicket.descriptionHint')}
-            </span>
-          </div>
-          <div className='uk-modal-footer uk-text-right'>
-            <Button text={t('common.cancel')} flat={true} waves={true} extraClass={'uk-modal-close'} />
-            <Button text={t('common.create')} style={'primary'} flat={true} type={'submit'} />
-          </div>
-        </form>
-      </BaseModal>
-    )
-  }
+          <span style={{ marginTop: '6px', display: 'inline-block', fontSize: '11px' }} className={'uk-text-muted'}>
+            {t('modals.createTicket.descriptionHint')}
+          </span>
+        </div>
+        <div className='uk-modal-footer uk-text-right'>
+          <Button text={t('common.cancel')} flat={true} waves={true} extraClass={'uk-modal-close'} />
+          <Button text={t('common.create')} style={'primary'} flat={true} type={'submit'} />
+        </div>
+      </form>
+    </BaseModal>
+  )
 }
 
 CreateTicketModal.propTypes = {

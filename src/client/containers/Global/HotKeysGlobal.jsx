@@ -1,12 +1,12 @@
-import React from 'react'
+import React, { useCallback } from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import ReactHotkeys from 'react-hot-keys'
 
-class HotKeysGlobal extends React.Component {
-  keyList = ['g+d', 'g+t', 'shift+/']
+const keyList = ['g+d', 'g+t', 'shift+/']
 
-  onKeyDown (keyName, e, handle) {
+function HotKeysGlobal ({ sessionUser }) {
+  const onKeyDown = useCallback((keyName, e, handle) => {
     // Route Change
     if (keyName === 'g+d') History.pushState(null, null, '/dashboard')
     if (keyName === 'g+t') History.pushState(null, null, '/tickets/active')
@@ -15,20 +15,19 @@ class HotKeysGlobal extends React.Component {
 
     // Help
     if (keyName === 'shift+/') console.log('Show shortcut help')
-  }
+  }, [])
 
-  render () {
-    const hasKeyboardShortcutEnabled = this.props.sessionUser
-      ? this.props.sessionUser.preferences.keyboardShortcuts
-      : true
-    return (
-      <>
-        {hasKeyboardShortcutEnabled && (
-          <ReactHotkeys keyName={this.keyList.join(',')} onKeyDown={this.onKeyDown.bind(this)} />
-        )}
-      </>
-    )
-  }
+  const hasKeyboardShortcutEnabled = sessionUser
+    ? sessionUser.preferences.keyboardShortcuts
+    : true
+
+  return (
+    <>
+      {hasKeyboardShortcutEnabled && (
+        <ReactHotkeys keyName={keyList.join(',')} onKeyDown={onKeyDown} />
+      )}
+    </>
+  )
 }
 
 HotKeysGlobal.propTypes = {

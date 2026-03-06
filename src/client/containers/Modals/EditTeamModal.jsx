@@ -12,10 +12,8 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-import React from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import PropTypes from 'prop-types'
-import { makeObservable, observable } from 'mobx'
-import { observer } from 'mobx-react'
 import { connect } from 'react-redux'
 import { withTranslation } from 'react-i18next'
 
@@ -30,99 +28,92 @@ import MultiSelect from 'components/MultiSelect'
 import $ from 'jquery'
 import SpinLoader from 'components/SpinLoader'
 
-@observer
-class EditTeamModal extends React.Component {
-  @observable name = ''
+function EditTeamModal (props) {
+  const { t, team } = props
+  const [name, setName] = useState('')
+  const membersSelectRef = useRef(null)
 
-  constructor (props) {
-    super(props)
-    makeObservable(this)
-  }
-
-  componentDidMount () {
-    this.props.fetchAccounts({ type: 'all', limit: -1 })
-    this.name = this.props.team.name
+  useEffect(() => {
+    props.fetchAccounts({ type: 'all', limit: -1 })
+    setName(team.name)
 
     helpers.UI.inputs()
     helpers.UI.reRenderInputs()
     helpers.formvalidator()
-  }
 
-  componentDidUpdate () {
+    return () => {
+      props.unloadAccounts()
+    }
+  }, [])
+
+  useEffect(() => {
     helpers.UI.reRenderInputs()
-  }
+  })
 
-  componentWillUnmount () {
-    this.props.unloadAccounts()
-  }
+  const onInputChange = useCallback((e) => {
+    setName(e.target.value)
+  }, [])
 
-  onInputChange (e) {
-    this.name = e.target.value
-  }
-
-  onSaveTeamEdit (e) {
+  const onSaveTeamEdit = useCallback((e) => {
     e.preventDefault()
     const $form = $(e.target)
     if (!$form.isValid(null, null, false)) return false
 
     const payload = {
-      _id: this.props.team._id,
-      name: this.name,
-      members: this.membersSelect.getSelected() || []
+      _id: team._id,
+      name: name,
+      members: membersSelectRef.current.getSelected() || []
     }
 
-    this.props.saveEditTeam(payload)
-  }
+    props.saveEditTeam(payload)
+  }, [name, team._id])
 
-  render () {
-    const { t } = this.props
-    const mappedAccounts = this.props.accounts
-      .filter(account => {
-        return account.getIn(['role', 'isAgent']) === true && !account.get('deleted')
-      })
-      .map(account => {
-        return { text: account.get('fullname'), value: account.get('_id') }
-      })
-      .toArray()
+  const mappedAccounts = props.accounts
+    .filter(account => {
+      return account.getIn(['role', 'isAgent']) === true && !account.get('deleted')
+    })
+    .map(account => {
+      return { text: account.get('fullname'), value: account.get('_id') }
+    })
+    .toArray()
 
-    const selectedMembers = this.props.team.members
+  const selectedMembers = team.members
 
-    return (
-      <BaseModal {...this.props} options={{ bgclose: false }}>
-        <SpinLoader active={this.props.accountsLoading} />
-        <div className={'mb-25'}>
-          <h2>{t('modals.editTeam.title')}</h2>
+  return (
+    <BaseModal {...props} options={{ bgclose: false }}>
+      <SpinLoader active={props.accountsLoading} />
+      <div className={'mb-25'}>
+        <h2>{t('modals.editTeam.title')}</h2>
+      </div>
+      <form className={'uk-form-stacked'} onSubmit={e => onSaveTeamEdit(e)}>
+        <div className={'uk-margin-medium-bottom'}>
+          <label>{t('modals.createTeam.teamName')}</label>
+          <input
+            type='text'
+            className={'md-input'}
+            value={name}
+            onChange={e => onInputChange(e)}
+            data-validation='length'
+            data-validation-length={'2-25'}
+            data-validation-error-msg={t('modals.createTeam.validName')}
+          />
         </div>
-        <form className={'uk-form-stacked'} onSubmit={e => this.onSaveTeamEdit(e)}>
-          <div className={'uk-margin-medium-bottom'}>
-            <label>{t('modals.createTeam.teamName')}</label>
-            <input
-              type='text'
-              className={'md-input'}
-              value={this.name}
-              onChange={e => this.onInputChange(e)}
-              data-validation='length'
-              data-validation-length={'2-25'}
-              data-validation-error-msg={t('modals.createTeam.validName')}
-            />
-          </div>
-          <div className={'uk-margin-medium-bottom'}>
-            <label style={{ marginBottom: 5 }}>{t('modals.createTeam.teamMembers')}</label>
-            <MultiSelect
-              items={mappedAccounts}
-              initialSelected={selectedMembers}
-              onChange={() => {}}
-              ref={r => (this.membersSelect = r)}
-            />
-          </div>
-          <div className='uk-modal-footer uk-text-right'>
-            <Button text={t('common.close')} flat={true} waves={true} extraClass={'uk-modal-close'} />
-            <Button text={t('modals.editTeam.saveButton')} flat={true} waves={true} style={'primary'} type={'submit'} />
-          </div>
-        </form>
-      </BaseModal>
-    )
-  }
+        <div className={'uk-margin-medium-bottom'}>
+          <label style={{ marginBottom: 5 }}>{t('modals.createTeam.teamMembers')}</label>
+          <MultiSelect
+            items={mappedAccounts}
+            initialSelected={selectedMembers}
+            onChange={() => {}}
+            ref={r => (membersSelectRef.current = r)}
+          />
+        </div>
+        <div className='uk-modal-footer uk-text-right'>
+          <Button text={t('common.close')} flat={true} waves={true} extraClass={'uk-modal-close'} />
+          <Button text={t('modals.editTeam.saveButton')} flat={true} waves={true} style={'primary'} type={'submit'} />
+        </div>
+      </form>
+    </BaseModal>
+  )
 }
 
 EditTeamModal.propTypes = {

@@ -1,41 +1,37 @@
-import React from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import PropTypes from 'prop-types'
-import { observer } from 'mobx-react'
-import { observable } from 'mobx'
 
 import helpers from 'lib/helpers'
 
-@observer
-class Input extends React.Component {
-  @observable value = ''
+const Input = ({
+  name,
+  type = 'text',
+  defaultValue,
+  onChange
+}) => {
+  const [value, setValue] = useState('')
 
-  constructor (props) {
-    super(props)
-  }
-
-  componentDidMount () {
+  useEffect(() => {
     helpers.UI.inputs()
-  }
+  }, [])
 
-  handleChange = e => {
-    this.value = e.target.value
-    if (this.props.onChange) this.props.onChange(this.value)
-  }
+  const handleChange = useCallback(e => {
+    const newValue = e.target.value
+    setValue(newValue)
+    if (onChange) onChange(newValue)
+  }, [onChange])
 
-  render () {
-    const { name, type, defaultValue } = this.props
-    return (
-      <div>
-        <input
-          className={'md-input'}
-          name={name}
-          type={type}
-          defaultValue={defaultValue}
-          onChange={e => this.handleChange(e)}
-        />
-      </div>
-    )
-  }
+  return (
+    <div>
+      <input
+        className={'md-input'}
+        name={name}
+        type={type}
+        defaultValue={defaultValue}
+        onChange={handleChange}
+      />
+    </div>
+  )
 }
 
 Input.propTypes = {
@@ -43,10 +39,6 @@ Input.propTypes = {
   type: PropTypes.string,
   defaultValue: PropTypes.string,
   onChange: PropTypes.func
-}
-
-Input.defaultProps = {
-  type: 'text'
 }
 
 export default Input

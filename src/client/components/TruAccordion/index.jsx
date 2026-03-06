@@ -1,66 +1,67 @@
-import React from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import clsx from 'clsx'
-import { observer } from 'mobx-react'
-import { makeObservable, observable } from 'mobx'
 
-@observer
-class TruAccordion extends React.Component {
-  @observable expanded = false
-  @observable expandedContentShown = false
+const TruAccordion = ({ startExpanded = false, onExpandedChange, contentPadding, headerContent, content }) => {
+  const [expanded, setExpanded] = useState(false)
+  const [expandedContentShown, setExpandedContentShown] = useState(false)
+  const expandedRef = useRef(false)
 
-  constructor (props) {
-    super(props)
+  useEffect(() => {
+    setExpanded(startExpanded)
+    setExpandedContentShown(startExpanded)
+    expandedRef.current = startExpanded
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-    makeObservable(this)
-  }
+  const onHeaderClick = useCallback(
+    e => {
+      e.preventDefault()
 
-  componentDidMount () {
-    this.expanded = this.props.startExpanded
-    this.expandedContentShown = this.props.startExpanded
-  }
+      // If currently collapsed, show content container immediately (before expand animation)
+      if (expandedRef.current === false) setExpandedContentShown(true)
 
-  onHeaderClick = e => {
-    e.preventDefault()
-    if (this.expanded === false) this.expandedContentShown = true
-    setTimeout(() => {
-      this.expanded = !this.expanded
-    }, 10)
+      // Fire onExpandedChange with the current (pre-toggle) value, matching original behavior
+      if (onExpandedChange) onExpandedChange(expandedRef.current)
 
-    setTimeout(() => {
-      this.expandedContentShown = this.expanded
-    }, 300)
+      // Toggle expanded state after 10ms delay (for animation)
+      setTimeout(() => {
+        const next = !expandedRef.current
+        expandedRef.current = next
+        setExpanded(next)
+      }, 10)
 
-    if (this.props.onExpandedChange) this.props.onExpandedChange(this.expanded)
-  }
+      // After 300ms (animation complete), sync content visibility with expanded state
+      setTimeout(() => {
+        setExpandedContentShown(expandedRef.current)
+      }, 300)
+    },
+    [onExpandedChange]
+  )
 
-  render () {
-    const { headerContent, content, contentPadding } = this.props
-    const contentStyle = {}
-    if (typeof contentPadding !== 'undefined') contentStyle.padding = contentPadding
+  const contentStyle = {}
+  if (typeof contentPadding !== 'undefined') contentStyle.padding = contentPadding
 
-    return (
-      <div className={clsx('truaccordion-wrapper', this.expanded && ' expanded')}>
-        <div className={'truaccordion-header'} role={'button'} onClick={e => this.onHeaderClick(e)}>
-          <div className={'truaccordion-header-content'}>
-            <h4>{headerContent}</h4>
-            <div className={'arrow'}>
-              <span>
-                <i className={'material-icons'}>chevron_right</i>
-              </span>
-            </div>
+  return (
+    <div className={clsx('truaccordion-wrapper', expanded && ' expanded')}>
+      <div className={'truaccordion-header'} role={'button'} onClick={onHeaderClick}>
+        <div className={'truaccordion-header-content'}>
+          <h4>{headerContent}</h4>
+          <div className={'arrow'}>
+            <span>
+              <i className={'material-icons'}>chevron_right</i>
+            </span>
           </div>
         </div>
-        {this.expandedContentShown && (
-          <div className={'truaccordion-content'}>
-            <div className={'truaccordion-content-inner'} style={contentStyle}>
-              {content}
-            </div>
-          </div>
-        )}
       </div>
-    )
-  }
+      {expandedContentShown && (
+        <div className={'truaccordion-content'}>
+          <div className={'truaccordion-content-inner'} style={contentStyle}>
+            {content}
+          </div>
+        </div>
+      )}
+    </div>
+  )
 }
 
 TruAccordion.propTypes = {
@@ -70,10 +71,6 @@ TruAccordion.propTypes = {
 
   headerContent: PropTypes.string.isRequired,
   content: PropTypes.node.isRequired
-}
-
-TruAccordion.defaultProps = {
-  startExpanded: false
 }
 
 export default TruAccordion

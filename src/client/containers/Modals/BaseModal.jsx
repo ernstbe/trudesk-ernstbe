@@ -12,7 +12,7 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-import React from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import $ from 'jquery'
@@ -20,59 +20,43 @@ import UIKit from 'uikit'
 
 import { hideModal, clearModal } from 'actions/common'
 
-class BaseModal extends React.Component {
-  constructor (props) {
-    super(props)
-    this.state = {
-      modal: null
+const BaseModal = ({ large, options, modalTag, hideModal, clearModal, parentExtraClass, extraClass, children }) => {
+  const [modal, setModal] = useState(null)
+  const modalRef = useRef(null)
+
+  const clearModalHandler = useCallback(() => {
+    clearModal()
+  }, [clearModal])
+
+  useEffect(() => {
+    const uiModal = UIKit.modal(modalRef.current, options)
+    setModal(uiModal)
+    uiModal.show()
+    $(modalRef.current).on('hide.uk.modal', clearModalHandler)
+
+    return () => {
+      $(modalRef.current).off('hide.uk.modal', clearModalHandler)
     }
-    this.clearModal = this.clearModal.bind(this)
-  }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  componentDidMount () {
-    this.setState(
-      {
-        modal: UIKit.modal(this.modal, this.props.options)
-      },
-      () => {
-        this.state.modal.show()
-        $(this.modal).on('hide.uk.modal', this.clearModal)
-      }
-    )
-  }
-
-  show () {
-    if (this.state.modal) this.state.modal.show()
-  }
-
-  hide () {
-    this.props.hideModal()
-  }
-
-  clearModal () {
-    this.props.clearModal()
-  }
-
-  render () {
-    return (
+  return (
+    <div
+      id={'uk-modal'}
+      className={'uk-modal' + (parentExtraClass ? ' ' + parentExtraClass : '')}
+      ref={modalRef}
+      data-modal-tag={modalTag}
+    >
       <div
-        id={'uk-modal'}
-        className={'uk-modal' + (this.props.parentExtraClass ? ' ' + this.props.parentExtraClass : '')}
-        ref={i => (this.modal = i)}
-        data-modal-tag={this.props.modalTag}
+        className={
+          'uk-modal-dialog' +
+          (large ? ' uk-modal-dialog-large' : '') +
+          (extraClass ? ' ' + extraClass : '')
+        }
       >
-        <div
-          className={
-            'uk-modal-dialog' +
-            (this.props.large ? ' uk-modal-dialog-large' : '') +
-            (this.props.extraClass ? ' ' + this.props.extraClass : '')
-          }
-        >
-          {this.props.children}
-        </div>
+        {children}
       </div>
-    )
-  }
+    </div>
+  )
 }
 
 BaseModal.propTypes = {

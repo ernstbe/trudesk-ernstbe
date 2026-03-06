@@ -1,8 +1,6 @@
-import React, { createRef } from 'react'
+import React, { useRef, useState, useEffect, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
-import { observer } from 'mobx-react'
-import { makeObservable, observable } from 'mobx'
 
 import {
   MESSAGES_UI_USER_TYPING,
@@ -18,179 +16,171 @@ import $ from 'jquery'
 import 'autogrow'
 import helpers from 'lib/helpers'
 
-@observer
-class ChatWindow extends React.Component {
-  containerRef = createRef()
-  messageBoxRef = createRef()
-  messagesRef = createRef()
+function ChatWindow ({
+  sessionUser,
+  setSessionUser: setSessionUserAction,
+  socket,
+  sendMessage: sendMessageAction,
+  conversationId
+}) {
+  const containerRef = useRef(null)
+  const messageBoxRef = useRef(null)
+  const messagesRef = useRef(null)
 
-  @observable conversation = null
-  @observable messagesPage = 0
+  const [conversation, setConversation] = useState(null)
+  const [messagesPage, setMessagesPage] = useState(0)
 
-  constructor (props) {
-    super(props)
+  const onChatTextBoxGrow = useCallback((self, oldHeight, newHeight) => {
+    if (oldHeight === newHeight || !messagesRef.current) return
 
-    makeObservable(this)
-
-    this.onChatTextBoxGrow = this.onChatTextBoxGrow.bind(this)
-    this.onUserTyping = this.onUserTyping.bind(this)
-    this.onSaveChatWindowComplete = this.onSaveChatWindowComplete.bind(this)
-  }
-
-  componentDidMount () {
-    this.getConversation()
-    this.props.socket.on(MESSAGES_UI_USER_TYPING, this.onUserTyping)
-    this.props.socket.on(MESSAGES_SAVE_CHAT_WINDOW_COMPLETE, this.onSaveChatWindowComplete)
-  }
-
-  componentDidUpdate (prevProps, prevState, snapshot) {
-    helpers.setupScrollers()
-    if (this.messagesRef.current) {
-      helpers.scrollToBottom(this.messagesRef.current)
-    }
-
-    if (this.messageBoxRef.current) {
-      const pThis = this
-      $(this.messageBoxRef.current).autogrow({
-        postGrowCallback: this.onChatTextBoxGrow,
-        enterPressed: (self, v) => {
-          pThis.onSendMessage(v)
-        }
-      })
-    }
-  }
-
-  componentWillUnmount () {
-    this.props.socket.off(MESSAGES_UI_USER_TYPING, this.onUserTyping)
-    this.props.socket.off(MESSAGES_SAVE_CHAT_WINDOW_COMPLETE, this.onSaveChatWindowComplete)
-  }
-
-  onUserTyping (data) {
-    // console.log(data)
-  }
-
-  onChatTextBoxGrow (self, oldHeight, newHeight) {
-    if (oldHeight === newHeight || !this.messagesRef.current) return
-
-    const $messages = $(this.messagesRef.current)
+    const $messages = $(messagesRef.current)
     $messages.css({ 'min-height': '170px', 'max-height': '220px' })
     self.parent().css({ 'max-height': '77px', 'min-height': '16px' })
 
     if (newHeight < 80) $messages.height($messages.height() - (newHeight - oldHeight))
 
     $messages.scrollTop($messages[0].scrollHeight)
-  }
+  }, [])
 
-  getConversation () {
-    if (!this.props.conversationId) return
+  const onSendMessage = useCallback((text) => {
+    console.log(text)
+  }, [])
+
+  const onUserTyping = useCallback((data) => {
+    // console.log(data)
+  }, [])
+
+  const onSaveChatWindowComplete = useCallback(() => {
+    setSessionUserAction()
+  }, [setSessionUserAction])
+
+  const getConversation = useCallback(() => {
+    if (!conversationId) return
 
     axios
-      .get(`/api/v2/messages/conversations/${this.props.conversationId}`)
+      .get(`/api/v2/messages/conversations/${conversationId}`)
       .then(res => {
         console.log(res.data)
-        if (res.data.success && res.data.conversation) this.conversation = res.data.conversation
+        if (res.data.success && res.data.conversation) setConversation(res.data.conversation)
       })
       .catch(e => {
         console.log(e)
       })
-  }
+  }, [conversationId])
 
-  onSendMessage (text) {
-    console.log(text)
-  }
+  useEffect(() => {
+    getConversation()
+    socket.on(MESSAGES_UI_USER_TYPING, onUserTyping)
+    socket.on(MESSAGES_SAVE_CHAT_WINDOW_COMPLETE, onSaveChatWindowComplete)
 
-  onTitleClicked (e) {
+    return () => {
+      socket.off(MESSAGES_UI_USER_TYPING, onUserTyping)
+      socket.off(MESSAGES_SAVE_CHAT_WINDOW_COMPLETE, onSaveChatWindowComplete)
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    helpers.setupScrollers()
+    if (messagesRef.current) {
+      helpers.scrollToBottom(messagesRef.current)
+    }
+
+    if (messageBoxRef.current) {
+      $(messageBoxRef.current).autogrow({
+        postGrowCallback: onChatTextBoxGrow,
+        enterPressed: (self, v) => {
+          onSendMessage(v)
+        }
+      })
+    }
+  })
+
+  const onTitleClicked = useCallback((e) => {
     e.preventDefault()
 
-    if (this.containerRef.current) {
-      const topValue = this.containerRef.current.offsetTop
+    if (containerRef.current) {
+      const topValue = containerRef.current.offsetTop
       anime({
-        targets: this.containerRef.current,
+        targets: containerRef.current,
         top: topValue === -280 ? '-29px' : '-280px',
         duration: 250,
         easing: 'easeInOutCirc'
       })
     }
-  }
+  }, [])
 
-  onCloseClicked (e) {
+  const onCloseClicked = useCallback((e) => {
     e.preventDefault()
-    if (this.containerRef.current) {
-      $(this.containerRef.current).hide()
+    if (containerRef.current) {
+      $(containerRef.current).hide()
     }
 
     // Save chat window
-    this.props.socket.emit(MESSAGES_SAVE_CHAT_WINDOW, {
-      userId: this.props.sessionUser._id,
-      convoId: this.props.conversationId,
+    socket.emit(MESSAGES_SAVE_CHAT_WINDOW, {
+      userId: sessionUser._id,
+      convoId: conversationId,
       remove: true
     })
-  }
+  }, [socket, sessionUser, conversationId])
 
-  onSaveChatWindowComplete () {
-    this.props.setSessionUser()
-  }
-
-  render () {
-    if (!this.props.sessionUser || !this.conversation) return null
-    return (
-      <div ref={this.containerRef} className='chat-box-position'>
-        <div className='chat-box'>
-          <div className='chat-box-title'>
-            <div className='chat-box-title-buttons right'>
-              <a href='#' className='chatCloseBtn no-ajaxy'>
-                <i className='material-icons material-icons-small' onClick={e => this.onCloseClicked(e)}>
-                  close
-                </i>
-              </a>
-            </div>
-            <h4 className='chat-box-title-text-wrapper' onClick={e => this.onTitleClicked(e)}>
-              <a href='#' className={'no-ajaxy'}>
-                {this.conversation.partner.fullname}
-              </a>
-            </h4>
+  if (!sessionUser || !conversation) return null
+  return (
+    <div ref={containerRef} className='chat-box-position'>
+      <div className='chat-box'>
+        <div className='chat-box-title'>
+          <div className='chat-box-title-buttons right'>
+            <a href='#' className='chatCloseBtn no-ajaxy'>
+              <i className='material-icons material-icons-small' onClick={e => onCloseClicked(e)}>
+                close
+              </i>
+            </a>
           </div>
-          <div ref={this.messagesRef} className='chat-box-messages scrollable'>
-            {this.conversation.messages.map(message => {
-              if (message.owner._id.toString() === this.props.sessionUser._id.toString()) {
-                return (
-                  <div key={message._id} className={'chat-message chat-message-user uk-clearfix'}>
-                    <div className='chat-text-wrapper'>
-                      <div className='chat-text chat-text-user'>
-                        <div className='chat-text-inner'>
-                          <span>{message.body.replace(/\n\r?/g, '<br />')}</span>
-                        </div>
+          <h4 className='chat-box-title-text-wrapper' onClick={e => onTitleClicked(e)}>
+            <a href='#' className={'no-ajaxy'}>
+              {conversation.partner.fullname}
+            </a>
+          </h4>
+        </div>
+        <div ref={messagesRef} className='chat-box-messages scrollable'>
+          {conversation.messages.map(message => {
+            if (message.owner._id.toString() === sessionUser._id.toString()) {
+              return (
+                <div key={message._id} className={'chat-message chat-message-user uk-clearfix'}>
+                  <div className='chat-text-wrapper'>
+                    <div className='chat-text chat-text-user'>
+                      <div className='chat-text-inner'>
+                        <span>{message.body.replace(/\n\r?/g, '<br />')}</span>
                       </div>
                     </div>
                   </div>
-                )
-              } else {
-                // From Partner
-                const imageUrl = message.owner.image || 'defaultProfile.jpg'
-                return (
-                  <div key={message._id} className={'chat-message uk-clearfix'}>
-                    <div className='chat-user-profile'>
-                      <img src={`/uploads/users/${imageUrl}`} alt={message.owner.fullname} />
-                    </div>
-                    <div className='chat-text-wrapper'>
-                      <div className='chat-text'>
-                        <div className='chat-text-inner'>
-                          <span>{message.body.replace(/\n\r?/g, '<br />')}</span>
-                        </div>
+                </div>
+              )
+            } else {
+              // From Partner
+              const imageUrl = message.owner.image || 'defaultProfile.jpg'
+              return (
+                <div key={message._id} className={'chat-message uk-clearfix'}>
+                  <div className='chat-user-profile'>
+                    <img src={`/uploads/users/${imageUrl}`} alt={message.owner.fullname} />
+                  </div>
+                  <div className='chat-text-wrapper'>
+                    <div className='chat-text'>
+                      <div className='chat-text-inner'>
+                        <span>{message.body.replace(/\n\r?/g, '<br />')}</span>
                       </div>
                     </div>
                   </div>
-                )
-              }
-            })}
-          </div>
-          <div className='chat-box-text'>
-            <textarea ref={this.messageBoxRef} rows='1' className='textAreaAutogrow autogrow-short'></textarea>
-          </div>
+                </div>
+              )
+            }
+          })}
+        </div>
+        <div className='chat-box-text'>
+          <textarea ref={messageBoxRef} rows='1' className='textAreaAutogrow autogrow-short'></textarea>
         </div>
       </div>
-    )
-  }
+    </div>
+  )
 }
 
 ChatWindow.propTypes = {
