@@ -11,49 +11,56 @@
  *  Copyright (c) 2014-2019 Trudesk, Inc. All rights reserved.
  */
 
-import React, { Fragment } from 'react'
+import React, { Fragment, useRef, useEffect } from 'react'
 import PropTypes from 'prop-types'
 import clsx from 'clsx'
 
 import $ from 'jquery'
 import helpers from 'lib/helpers'
 
-class DatePicker extends React.Component {
-  componentDidMount () {
-    $(this.datepicker).on('change.uk.datepicker', e => {
-      if (this.props.onChange) this.props.onChange(e)
+const DatePicker = ({
+  format,
+  name,
+  onChange,
+  value,
+  small = false,
+  validation = 'shortDate',
+  readOnly = true
+}) => {
+  const datepickerRef = useRef(null)
+
+  useEffect(() => {
+    const node = datepickerRef.current
+    $(node).on('change.uk.datepicker', e => {
+      if (onChange) onChange(e)
     })
-  }
 
-  componentDidUpdate () {
-    if (this.props.value) $(this.datepicker).val(helpers.formatDate(this.props.value, this.props.format))
-    if (this.props.value === undefined) $(this.datepicker).val('')
-  }
+    return () => {
+      $(node).off('change.uk.datepicker')
+    }
+  }, [onChange])
 
-  componentWillUnmount () {
-    $(this.datepicker).off('change.uk.datepicker')
-  }
+  useEffect(() => {
+    if (value) $(datepickerRef.current).val(helpers.formatDate(value, format))
+    if (value === undefined) $(datepickerRef.current).val('')
+  }, [value, format])
 
-  render () {
-    const { value, small, name, validation, readOnly } = this.props
-
-    return (
-      <Fragment>
-        <input
-          ref={r => (this.datepicker = r)}
-          id={name}
-          name={name}
-          type='text'
-          readOnly
-          className={clsx('md-input', small && 'small-font', small && 'p-0')}
-          data-uk-datepicker={`{format:'${this.props.format}'}`}
-          data-validation={validation}
-          style={this.style || { width: '97%' }}
-          defaultValue={value ? helpers.formatDate(value, this.props.format) : ''}
-        />
-      </Fragment>
-    )
-  }
+  return (
+    <Fragment>
+      <input
+        ref={datepickerRef}
+        id={name}
+        name={name}
+        type='text'
+        readOnly
+        className={clsx('md-input', small && 'small-font', small && 'p-0')}
+        data-uk-datepicker={`{format:'${format}'}`}
+        data-validation={validation}
+        style={{ width: '97%' }}
+        defaultValue={value ? helpers.formatDate(value, format) : ''}
+      />
+    </Fragment>
+  )
 }
 
 DatePicker.propTypes = {
@@ -64,12 +71,6 @@ DatePicker.propTypes = {
   small: PropTypes.bool,
   validation: PropTypes.string,
   readOnly: PropTypes.bool
-}
-
-DatePicker.defaultProps = {
-  small: false,
-  validation: 'shortDate',
-  readOnly: true
 }
 
 export default DatePicker

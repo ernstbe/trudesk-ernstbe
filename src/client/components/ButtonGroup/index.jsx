@@ -15,14 +15,12 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 
-class ButtonGroup extends React.Component {
-  render () {
-    return (
-      <div className={'md-btn-group mt-5' + (this.props.classNames ? ' ' + this.props.classNames : '')}>
-        {this.props.children}
-      </div>
-    )
-  }
+const ButtonGroup = ({ classNames, children }) => {
+  return (
+    <div className={'md-btn-group mt-5' + (classNames ? ' ' + classNames : '')}>
+      {children}
+    </div>
+  )
 }
 
 ButtonGroup.propTypes = {

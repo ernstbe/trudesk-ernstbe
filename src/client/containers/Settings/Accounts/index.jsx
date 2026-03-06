@@ -12,7 +12,7 @@
  *  Copyright (c) 2014-2022. All rights reserved.
  */
 
-import React from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import { withTranslation } from 'react-i18next'
@@ -25,43 +25,29 @@ import helpers from 'lib/helpers'
 import axios from 'axios'
 import Log from '../../../logger'
 import EnableSwitch from 'components/Settings/EnableSwitch'
-import { observer } from 'mobx-react'
-import { makeObservable, observable } from 'mobx'
 import UIKit from 'uikit'
 
-@observer
-class AccountsSettingsContainer extends React.Component {
-  @observable passwordComplexityEnabled = false
-  @observable allowUserRegistrationEnabled = false
+const AccountsSettingsContainer = ({ active, updateSetting, updateMultipleSettings, settings, t }) => {
+  const [passwordComplexityEnabled, setPasswordComplexityEnabled] = useState(false)
+  const [allowUserRegistrationEnabled, setAllowUserRegistrationEnabled] = useState(false)
+  const [restarting, setRestarting] = useState(false)
 
-  constructor (props) {
-    super(props)
+  const getSetting = useCallback(
+    stateName => {
+      return settings.getIn(['settings', stateName, 'value']) ? settings.getIn(['settings', stateName, 'value']) : ''
+    },
+    [settings]
+  )
 
-    makeObservable(this)
+  useEffect(() => {
+    const pcVal = getSetting('accountsPasswordComplexity')
+    if (passwordComplexityEnabled !== pcVal) setPasswordComplexityEnabled(pcVal)
+    const aurVal = getSetting('allowUserRegistration')
+    if (allowUserRegistrationEnabled !== aurVal) setAllowUserRegistrationEnabled(aurVal)
+  }, [settings])
 
-    this.state = {
-      restarting: false
-    }
-
-    this.restartServer = this.restartServer.bind(this)
-  }
-
-  componentDidMount () {
-    // helpers.UI.inputs()
-  }
-
-  componentDidUpdate (prevProps) {
-    // helpers.UI.reRenderInputs()
-    if (prevProps.settings !== this.props.settings) {
-      if (this.passwordComplexityEnabled !== this.getSetting('accountsPasswordComplexity'))
-        this.passwordComplexityEnabled = this.getSetting('accountsPasswordComplexity')
-      if (this.allowUserRegistrationEnabled !== this.getSetting('allowUserRegistration'))
-        this.allowUserRegistrationEnabled = this.getSetting('allowUserRegistration')
-    }
-  }
-
-  restartServer () {
-    this.setState({ restarting: true })
+  const restartServer = useCallback(() => {
+    setRestarting(true)
 
     const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content')
     axios
@@ -81,56 +67,50 @@ class AccountsSettingsContainer extends React.Component {
         helpers.UI.showSnackbar('Unable to restart server. Are you an Administrator?', true)
       })
       .then(() => {
-        this.setState({ restarting: false })
+        setRestarting(false)
       })
-  }
+  }, [])
 
-  getSetting (stateName) {
-    return this.props.settings.getIn(['settings', stateName, 'value'])
-      ? this.props.settings.getIn(['settings', stateName, 'value'])
-      : ''
-  }
+  const doUpdateSetting = useCallback(
+    (stateName, name, value) => {
+      updateSetting({ stateName, name, value })
+    },
+    [updateSetting]
+  )
 
-  updateSetting (stateName, name, value) {
-    this.props.updateSetting({ stateName, name, value })
-  }
-
-  render () {
-    const { active, t } = this.props
-    return (
-      <div className={active ? 'active' : 'hide'}>
-        <SettingItem
-          title={t('settings.allowUserRegistration')}
-          subtitle={t('settings.allowUserRegistrationHint')}
-          component={
-            <EnableSwitch
-              stateName='allowUserRegistration'
-              label={t('settings.enable')}
-              checked={this.allowUserRegistrationEnabled}
-              onChange={e => {
-                this.updateSetting('allowUserRegistration', 'allowUserRegistration:enable', e.target.checked)
-              }}
-            />
-          }
-        />
-        <SettingItem
-          title={t('settings.passwordComplexity')}
-          subtitle={t('settings.passwordComplexityHint')}
-          tooltip={t('settings.passwordComplexityTooltip')}
-          component={
-            <EnableSwitch
-              stateName={'accountsPasswordComplexity'}
-              label={t('settings.enable')}
-              checked={this.passwordComplexityEnabled}
-              onChange={e => {
-                this.updateSetting('accountsPasswordComplexity', 'accountsPasswordComplexity:enable', e.target.checked)
-              }}
-            />
-          }
-        />
-      </div>
-    )
-  }
+  return (
+    <div className={active ? 'active' : 'hide'}>
+      <SettingItem
+        title={t('settings.allowUserRegistration')}
+        subtitle={t('settings.allowUserRegistrationHint')}
+        component={
+          <EnableSwitch
+            stateName='allowUserRegistration'
+            label={t('settings.enable')}
+            checked={allowUserRegistrationEnabled}
+            onChange={e => {
+              doUpdateSetting('allowUserRegistration', 'allowUserRegistration:enable', e.target.checked)
+            }}
+          />
+        }
+      />
+      <SettingItem
+        title={t('settings.passwordComplexity')}
+        subtitle={t('settings.passwordComplexityHint')}
+        tooltip={t('settings.passwordComplexityTooltip')}
+        component={
+          <EnableSwitch
+            stateName={'accountsPasswordComplexity'}
+            label={t('settings.enable')}
+            checked={passwordComplexityEnabled}
+            onChange={e => {
+              doUpdateSetting('accountsPasswordComplexity', 'accountsPasswordComplexity:enable', e.target.checked)
+            }}
+          />
+        }
+      />
+    </div>
+  )
 }
 
 AccountsSettingsContainer.propTypes = {

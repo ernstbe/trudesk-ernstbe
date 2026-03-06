@@ -12,7 +12,7 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-import React from 'react'
+import React, { useState, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import { withTranslation } from 'react-i18next'
@@ -21,57 +21,47 @@ import Button from 'components/Button'
 
 import { createTag } from 'actions/tickets'
 
-class CreateTagModal extends React.Component {
-  constructor (props) {
-    super(props)
-    this.state = {
-      name: ''
-    }
-  }
+const CreateTagModal = ({ createTag, page, currentPage, t }) => {
+  const [name, setName] = useState('')
 
-  onNameChange (e) {
-    this.setState({
-      name: e.target.value
-    })
-  }
+  const onNameChange = useCallback((e) => {
+    setName(e.target.value)
+  }, [])
 
-  onSubmit (e) {
+  const onSubmit = useCallback((e) => {
     e.preventDefault()
-    if (this.props.page === 'settings')
-      return this.props.createTag({ name: this.state.name, currentPage: this.props.currentPage })
+    if (page === 'settings')
+      return createTag({ name, currentPage })
 
-    this.props.createTag({ name: this.state.name })
-  }
+    createTag({ name })
+  }, [name, page, currentPage, createTag])
 
-  render () {
-    const { t } = this.props
-    return (
-      <BaseModal>
-        <form className='uk-form-stacked' onSubmit={e => this.onSubmit(e)}>
-          <div>
-            <h2 className={'nomargin mb-5'}>{t('modals.createTag.title')}</h2>
-            <p className='uk-text-muted'>{t('modals.createTag.hint')}</p>
+  return (
+    <BaseModal>
+      <form className='uk-form-stacked' onSubmit={e => onSubmit(e)}>
+        <div>
+          <h2 className={'nomargin mb-5'}>{t('modals.createTag.title')}</h2>
+          <p className='uk-text-muted'>{t('modals.createTag.hint')}</p>
 
-            <label>{t('modals.createTag.tagName')}</label>
-            <input
-              type='text'
-              className={'md-input'}
-              name={'name'}
-              data-validation='length'
-              data-validation-length='min2'
-              data-validation-error-msg={t('modals.createTag.validName')}
-              value={this.state.name}
-              onChange={e => this.onNameChange(e)}
-            />
-          </div>
-          <div className='uk-modal-footer uk-text-right'>
-            <Button text={t('common.close')} extraClass={'uk-modal-close'} flat={true} waves={true} />
-            <Button text={t('common.create')} type={'submit'} flat={true} waves={true} style={'success'} />
-          </div>
-        </form>
-      </BaseModal>
-    )
-  }
+          <label>{t('modals.createTag.tagName')}</label>
+          <input
+            type='text'
+            className={'md-input'}
+            name={'name'}
+            data-validation='length'
+            data-validation-length='min2'
+            data-validation-error-msg={t('modals.createTag.validName')}
+            value={name}
+            onChange={e => onNameChange(e)}
+          />
+        </div>
+        <div className='uk-modal-footer uk-text-right'>
+          <Button text={t('common.close')} extraClass={'uk-modal-close'} flat={true} waves={true} />
+          <Button text={t('common.create')} type={'submit'} flat={true} waves={true} style={'success'} />
+        </div>
+      </form>
+    </BaseModal>
+  )
 }
 
 CreateTagModal.propTypes = {

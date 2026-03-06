@@ -12,7 +12,7 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-import React from 'react'
+import React, { useState, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import { withTranslation } from 'react-i18next'
@@ -24,80 +24,71 @@ import { deletePriority } from 'actions/tickets'
 
 import helpers from 'lib/helpers'
 
-class DeletePriorityModal extends React.Component {
-  constructor (props) {
-    super(props)
-    this.state = {
-      selectedPriority: ''
-    }
-  }
+const DeletePriorityModal = ({ priority, settings, deletePriority, t }) => {
+  const [selectedPriority, setSelectedPriority] = useState('')
 
-  onSubmit (e) {
+  const onSubmit = useCallback((e) => {
     e.preventDefault()
-    if (!this.state.selectedPriority) {
+    if (!selectedPriority) {
       helpers.UI.showSnackbar('Unable to get new priority. Aborting...', true)
       return true
     }
 
-    this.props.deletePriority({ id: this.props.priority.get('_id'), newPriority: this.state.selectedPriority })
-  }
+    deletePriority({ id: priority.get('_id'), newPriority: selectedPriority })
+  }, [selectedPriority, priority, deletePriority])
 
-  getPriorities () {
-    return this.props.settings && this.props.settings.get('priorities')
-      ? this.props.settings.get('priorities').toArray()
+  const getPriorities = useCallback(() => {
+    return settings && settings.get('priorities')
+      ? settings.get('priorities').toArray()
       : []
-  }
+  }, [settings])
 
-  onSelectChanged (e) {
-    this.setState({
-      selectedPriority: e.target.value
+  const onSelectChanged = useCallback((e) => {
+    setSelectedPriority(e.target.value)
+  }, [])
+
+  const mappedPriorities = getPriorities()
+    .filter(obj => {
+      return priority.get('name') !== obj.get('name')
     })
-  }
+    .map(p => {
+      return { text: t('priorities.' + p.get('name'), p.get('name')), value: p.get('_id') }
+    })
 
-  render () {
-    const { priority, t } = this.props
-    const mappedPriorities = this.getPriorities()
-      .filter(obj => {
-        return priority.get('name') !== obj.get('name')
-      })
-      .map(p => {
-        return { text: t('priorities.' + p.get('name'), p.get('name')), value: p.get('_id') }
-      })
-    return (
-      <BaseModal>
-        <div>
-          <form onSubmit={e => this.onSubmit(e)}>
-            <div className='uk-margin-medium-bottom uk-clearfix'>
-              <h2>{t('modals.deletePriority.title')}</h2>
-              <span>{t('modals.deletePriority.hint')}</span>
-              <hr style={{ margin: '10px 0' }} />
+  return (
+    <BaseModal>
+      <div>
+        <form onSubmit={e => onSubmit(e)}>
+          <div className='uk-margin-medium-bottom uk-clearfix'>
+            <h2>{t('modals.deletePriority.title')}</h2>
+            <span>{t('modals.deletePriority.hint')}</span>
+            <hr style={{ margin: '10px 0' }} />
+          </div>
+          <div className='uk-margin-medium-bottom uk-clearfix'>
+            <div className='uk-float-left' style={{ width: '100%' }}>
+              <label className={'uk-form-label'}>{t('common.priority')}</label>
+              <SingleSelect
+                items={mappedPriorities}
+                showTextbox={false}
+                width={'100%'}
+                value={selectedPriority}
+                onSelectChange={e => onSelectChanged(e)}
+              />
             </div>
-            <div className='uk-margin-medium-bottom uk-clearfix'>
-              <div className='uk-float-left' style={{ width: '100%' }}>
-                <label className={'uk-form-label'}>{t('common.priority')}</label>
-                <SingleSelect
-                  items={mappedPriorities}
-                  showTextbox={false}
-                  width={'100%'}
-                  value={this.state.selectedPriority}
-                  onSelectChange={e => this.onSelectChanged(e)}
-                />
-              </div>
-            </div>
-            <div className='uk-margin-medium-bottom uk-clearfix'>
-              <span className='uk-text-danger'>
-                {t('modals.deletePriority.warning')} <strong>{t('priorities.' + priority.get('name'), priority.get('name'))}</strong> {t('modals.deletePriority.toSelected')}
-              </span>
-            </div>
-            <div className='uk-modal-footer uk-text-right'>
-              <Button type={'button'} flat={true} waves={true} text={t('common.cancel')} extraClass={'uk-modal-close'} />
-              <Button type={'submit'} flat={true} waves={true} text={t('common.delete')} style={'danger'} />
-            </div>
-          </form>
-        </div>
-      </BaseModal>
-    )
-  }
+          </div>
+          <div className='uk-margin-medium-bottom uk-clearfix'>
+            <span className='uk-text-danger'>
+              {t('modals.deletePriority.warning')} <strong>{t('priorities.' + priority.get('name'), priority.get('name'))}</strong> {t('modals.deletePriority.toSelected')}
+            </span>
+          </div>
+          <div className='uk-modal-footer uk-text-right'>
+            <Button type={'button'} flat={true} waves={true} text={t('common.cancel')} extraClass={'uk-modal-close'} />
+            <Button type={'submit'} flat={true} waves={true} text={t('common.delete')} style={'danger'} />
+          </div>
+        </form>
+      </div>
+    </BaseModal>
+  )
 }
 
 DeletePriorityModal.propTypes = {

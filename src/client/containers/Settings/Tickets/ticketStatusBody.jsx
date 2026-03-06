@@ -12,12 +12,10 @@
  *  Copyright (c) 2014-2023. All rights reserved.
  */
 
-import React from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
-import { observer } from 'mobx-react'
 import Input from 'components/Input'
-import { makeObservable, observable } from 'mobx'
 import { fetchSettings } from 'actions/settings'
 import { showModal, hideModal } from 'actions/common'
 import ColorSelector from 'components/ColorSelector'
@@ -27,130 +25,125 @@ import EnableSwitch from 'components/Settings/EnableSwitch'
 import api from 'api'
 import helpers from 'lib/helpers'
 
-@observer
-class TicketStatusBody extends React.Component {
-  @observable statusName = ''
-  @observable htmlColor = ''
-  @observable slatimer = ''
-  @observable isResolved = ''
-  constructor (props) {
-    super(props)
-    makeObservable(this)
-  }
+const TicketStatusBody = ({ status, fetchSettings, showModal }) => {
+  const [statusName, setStatusName] = useState('')
+  const [htmlColor, setHtmlColor] = useState('')
+  const [slatimer, setSlatimer] = useState('')
+  const [isResolved, setIsResolved] = useState('')
 
-  componentDidMount () {
-    this.statusName = this.props.status.get('name') || ''
-    this.htmlColor = this.props.status.get('htmlColor') || ''
-    this.isResolved = this.props.status.get('isResolved') || false
-    this.slatimer = this.props.status.get('slatimer') || false
-  }
+  useEffect(() => {
+    setStatusName(status.get('name') || '')
+    setHtmlColor(status.get('htmlColor') || '')
+    setIsResolved(status.get('isResolved') || false)
+    setSlatimer(status.get('slatimer') || false)
+  }, [])
 
-  componentDidUpdate (prevProps, prevState, snapshot) {
-    if (this.statusName === '') this.statusName = this.props.status.get('name') || ''
-    if (this.htmlColor === '') this.htmlColor = this.props.status.get('htmlColor') || ''
-    if (this.isResolved === '') this.isResolved = this.props.status.get('isResolved') || false
-    if (this.slatimer === '') this.slatimer = this.props.status.get('slatimer') || false
-  }
+  useEffect(() => {
+    if (statusName === '') setStatusName(status.get('name') || '')
+    if (htmlColor === '') setHtmlColor(status.get('htmlColor') || '')
+    if (isResolved === '') setIsResolved(status.get('isResolved') || false)
+    if (slatimer === '') setSlatimer(status.get('slatimer') || false)
+  })
 
-  onSaveClicked (e) {
-    const id = this.props.status.get('_id')
-    const name = this.statusName
-    const htmlColor = this.htmlColor
-    const isResolved = this.isResolved
-    const slatimer = this.slatimer
+  const onSaveClicked = useCallback(
+    e => {
+      const id = status.get('_id')
 
-    api.tickets
-      .updateStatus({ id, name, htmlColor, isResolved, slatimer })
-      .then(res => {
-        helpers.UI.showSnackbar('Status updated')
-        this.props.fetchSettings()
-      })
-      .catch(e => {
-        console.log(e)
-        helpers.UI.showSnackbar(e, true)
-      })
-  }
+      api.tickets
+        .updateStatus({ id, name: statusName, htmlColor, isResolved, slatimer })
+        .then(res => {
+          helpers.UI.showSnackbar('Status updated')
+          fetchSettings()
+        })
+        .catch(e => {
+          console.log(e)
+          helpers.UI.showSnackbar(e, true)
+        })
+    },
+    [status, statusName, htmlColor, isResolved, slatimer, fetchSettings]
+  )
 
-  showDeleteTicketStatusModal (e, status) {
-    this.props.showModal('DELETE_STATUS', { status })
-  }
+  const showDeleteTicketStatusModal = useCallback(
+    (e, status) => {
+      showModal('DELETE_STATUS', { status })
+    },
+    [showModal]
+  )
 
-  render () {
-    return (
-      <div>
-        <form>
-          <div className={'ticket-status-general-wrapper'}>
-            <h2 className='text-light'>General</h2>
-            <hr style={{ margin: '5px 0 25px 0' }} />
-            <div style={{ marginBottom: 15 }}>
-              <label style={{ display: 'inline-block', cursor: 'pointer' }}>Status Name</label>
-              <Input defaultValue={this.statusName} onChange={v => (this.statusName = v)} />
-            </div>
-            <div style={{ marginBottom: 15 }}>
-              <label style={{ display: 'inline-block', cursor: 'pointer' }}>Status Color</label>
-              <ColorSelector
-                showLabel={false}
-                hideRevert={true}
-                defaultColor={this.htmlColor}
-                onChange={e => (this.htmlColor = e.target.value)}
-              />
-            </div>
-          </div>
-          <h2 className='text-light mt-25'>Properties</h2>
+  return (
+    <div>
+      <form>
+        <div className={'ticket-status-general-wrapper'}>
+          <h2 className='text-light'>General</h2>
           <hr style={{ margin: '5px 0 25px 0' }} />
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
-            <h4 className={'uk-width-1-2'} style={{ flexGrow: 1 }}>
-              SLA Timer
-            </h4>
-            <EnableSwitch
-              stateName={`slatimer_${this.props.status.get('_id')}`}
-              label={'Yes'}
-              checked={this.slatimer}
-              onChange={e => (this.slatimer = e.target.checked)}
+          <div style={{ marginBottom: 15 }}>
+            <label style={{ display: 'inline-block', cursor: 'pointer' }}>Status Name</label>
+            <Input defaultValue={statusName} onChange={v => setStatusName(v)} />
+          </div>
+          <div style={{ marginBottom: 15 }}>
+            <label style={{ display: 'inline-block', cursor: 'pointer' }}>Status Color</label>
+            <ColorSelector
+              showLabel={false}
+              hideRevert={true}
+              defaultColor={htmlColor}
+              onChange={e => setHtmlColor(e.target.value)}
             />
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
-            <h4 className={'uk-width-1-2'} style={{ flexGrow: 1 }}>
-              Is Resolved
-            </h4>
-            <EnableSwitch
-              stateName={`isResolved_${this.props.status.get('_id')}`}
-              label={'Yes'}
-              checked={this.isResolved}
-              onChange={e => (this.isResolved = e.target.checked)}
-            />
-          </div>
-          <div className={'uk-margin-large-top'} style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <Button text={'Save Status'} style={'success'} onClick={e => this.onSaveClicked(e)} />
-          </div>
-        </form>
-        {!this.props.status.get('isLocked') && (
-          <>
-            <div className={'uk-margin-large-top'} style={{ display: 'block', height: 15 }} />
-            <div className={'uk-margin-large-top'}>
-              <h2 className='text-light'>Danger Zone</h2>
-              <div className='danger-zone'>
-                <div className='dz-box uk-clearfix'>
-                  <div className='uk-float-left'>
-                    <h5>Delete this status</h5>
-                    <p>Once you delete a ticket status, there is no going back. Please be certain.</p>
-                  </div>
-                  <div className='uk-float-right' style={{ paddingTop: '10px' }}>
-                    <Button
-                      text={'Delete'}
-                      small={true}
-                      style={'danger'}
-                      onClick={e => this.showDeleteTicketStatusModal(e, this.props.status)}
-                    />
-                  </div>
+        </div>
+        <h2 className='text-light mt-25'>Properties</h2>
+        <hr style={{ margin: '5px 0 25px 0' }} />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
+          <h4 className={'uk-width-1-2'} style={{ flexGrow: 1 }}>
+            SLA Timer
+          </h4>
+          <EnableSwitch
+            stateName={`slatimer_${status.get('_id')}`}
+            label={'Yes'}
+            checked={slatimer}
+            onChange={e => setSlatimer(e.target.checked)}
+          />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
+          <h4 className={'uk-width-1-2'} style={{ flexGrow: 1 }}>
+            Is Resolved
+          </h4>
+          <EnableSwitch
+            stateName={`isResolved_${status.get('_id')}`}
+            label={'Yes'}
+            checked={isResolved}
+            onChange={e => setIsResolved(e.target.checked)}
+          />
+        </div>
+        <div className={'uk-margin-large-top'} style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <Button text={'Save Status'} style={'success'} onClick={e => onSaveClicked(e)} />
+        </div>
+      </form>
+      {!status.get('isLocked') && (
+        <>
+          <div className={'uk-margin-large-top'} style={{ display: 'block', height: 15 }} />
+          <div className={'uk-margin-large-top'}>
+            <h2 className='text-light'>Danger Zone</h2>
+            <div className='danger-zone'>
+              <div className='dz-box uk-clearfix'>
+                <div className='uk-float-left'>
+                  <h5>Delete this status</h5>
+                  <p>Once you delete a ticket status, there is no going back. Please be certain.</p>
+                </div>
+                <div className='uk-float-right' style={{ paddingTop: '10px' }}>
+                  <Button
+                    text={'Delete'}
+                    small={true}
+                    style={'danger'}
+                    onClick={e => showDeleteTicketStatusModal(e, status)}
+                  />
                 </div>
               </div>
             </div>
-          </>
-        )}
-      </div>
-    )
-  }
+          </div>
+        </>
+      )}
+    </div>
+  )
 }
 
 TicketStatusBody.propTypes = {

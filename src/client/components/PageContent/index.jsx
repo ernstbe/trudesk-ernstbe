@@ -12,28 +12,26 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-import React from 'react'
+import React, { useEffect } from 'react'
 import PropTypes from 'prop-types'
 
 import helpers from 'lib/helpers'
 
-class PageContent extends React.Component {
-  componentDidMount () {
+const PageContent = ({ id, padding = 25, paddingBottom = 100, extraClass, children }) => {
+  useEffect(() => {
     helpers.resizeFullHeight()
     helpers.setupScrollers()
-  }
+  }, [])
 
-  render () {
-    return (
-      <div
-        id={this.props.id}
-        className={'page-content no-border-top full-height scrollable ' + (this.props.extraClass || '')}
-        style={{ padding: this.props.padding }}
-      >
-        <div style={{ paddingBottom: this.props.paddingBottom }}>{this.props.children}</div>
-      </div>
-    )
-  }
+  return (
+    <div
+      id={id}
+      className={'page-content no-border-top full-height scrollable ' + (extraClass || '')}
+      style={{ padding: padding }}
+    >
+      <div style={{ paddingBottom: paddingBottom }}>{children}</div>
+    </div>
+  )
 }
 
 PageContent.propTypes = {
@@ -42,11 +40,6 @@ PageContent.propTypes = {
   paddingBottom: PropTypes.number,
   extraClass: PropTypes.string,
   children: PropTypes.oneOfType([PropTypes.arrayOf(PropTypes.node), PropTypes.node]).isRequired
-}
-
-PageContent.defaultProps = {
-  padding: 25,
-  paddingBottom: 100
 }
 
 export default PageContent

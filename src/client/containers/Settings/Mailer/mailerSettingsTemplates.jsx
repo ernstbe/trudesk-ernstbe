@@ -12,13 +12,11 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-import React from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import { withTranslation } from 'react-i18next'
 import { updateSetting } from 'actions/settings'
-import { observer } from 'mobx-react'
-import { makeObservable, observable } from 'mobx'
 import Log from '../../../logger'
 import axios from 'axios'
 
@@ -83,122 +81,123 @@ templateBody.propTypes = {
   t: PropTypes.func.isRequired
 }
 
-@observer
-class MailerSettingsTemplates extends React.Component {
-  @observable betaEnabled = false
-  @observable templates = []
+function onOpenEditor (e, name) {
+  e.preventDefault()
+  const url = `/settings/editor/${name}/`
+  History.pushState(null, null, url)
+}
 
-  constructor (props) {
-    super(props)
-    makeObservable(this)
-  }
+const MailerSettingsTemplates = ({ updateSetting, settings, t }) => {
+  const [betaEnabled, setBetaEnabled] = useState(false)
+  const [templates, setTemplates] = useState([])
 
-  componentDidMount () {
+  useEffect(() => {
     helpers.UI.inputs()
-  }
+  }, [])
 
-  componentDidUpdate (prevProps) {
+  useEffect(() => {
     helpers.UI.reRenderInputs()
-    if (prevProps.settings !== this.props.settings) {
-      if (this.betaEnabled !== this.getSetting('emailBeta')) this.betaEnabled = this.getSetting('emailBeta')
-      if (this.props.settings.get('mailTemplates').toArray() !== this.templates) {
-        this.templates = this.props.settings.get('mailTemplates').toArray()
-      }
+  })
+
+  useEffect(() => {
+    const newBetaEnabled = getSetting('emailBeta')
+    if (betaEnabled !== newBetaEnabled) setBetaEnabled(newBetaEnabled)
+    const mailTemplates = settings.get('mailTemplates')
+    if (mailTemplates) {
+      setTemplates(mailTemplates.toArray())
     }
-  }
+  }, [settings])
 
-  getSetting (name) {
-    return this.props.settings.getIn(['settings', name, 'value']) !== undefined
-      ? this.props.settings.getIn(['settings', name, 'value'])
-      : ''
-  }
+  const getSetting = useCallback(
+    name => {
+      return settings.getIn(['settings', name, 'value']) !== undefined
+        ? settings.getIn(['settings', name, 'value'])
+        : ''
+    },
+    [settings]
+  )
 
-  onEmailBetaChange (e) {
-    const self = this
-    const val = e.target.checked
-    this.props.updateSetting({ name: 'beta:email', value: val, stateName: 'betaEmail', noSnackbar: true }).then(() => {
-      self.betaEnabled = val
-    })
-  }
-
-  onSaveSubject (e) {
-    e.preventDefault()
-    const { t } = this.props
-    const subject = e.target.subject
-    if (!subject) return
-    axios
-      .put(`/api/v1/settings/mailer/template/${e.target.id.value}`, {
-        subject: subject.value
+  const onEmailBetaChange = useCallback(
+    e => {
+      const val = e.target.checked
+      updateSetting({ name: 'beta:email', value: val, stateName: 'betaEmail', noSnackbar: true }).then(() => {
+        setBetaEnabled(val)
       })
-      .then(res => {
-        if (res.data && res.data.success) helpers.UI.showSnackbar(t('settings.templateSaved'))
-      })
-      .catch(error => {
-        const errorText = error.response ? error.response.error : error
-        helpers.UI.showSnackbar(`Error: ${errorText}`, true)
-        Log.error(errorText, error)
-      })
-  }
+    },
+    [updateSetting]
+  )
 
-  static onOpenEditor (e, name) {
-    e.preventDefault()
-    const url = `/settings/editor/${name}/`
-    History.pushState(null, null, url)
-  }
+  const onSaveSubject = useCallback(
+    e => {
+      e.preventDefault()
+      const subject = e.target.subject
+      if (!subject) return
+      axios
+        .put(`/api/v1/settings/mailer/template/${e.target.id.value}`, {
+          subject: subject.value
+        })
+        .then(res => {
+          if (res.data && res.data.success) helpers.UI.showSnackbar(t('settings.templateSaved'))
+        })
+        .catch(error => {
+          const errorText = error.response ? error.response.error : error
+          helpers.UI.showSnackbar(`Error: ${errorText}`, true)
+          Log.error(errorText, error)
+        })
+    },
+    [t]
+  )
 
-  mapTemplateMenu () {
-    const { t } = this.props
-    return this.templates.map((template, idx) => {
+  const mapTemplateMenu = useCallback(() => {
+    return templates.map((template, idx) => {
       const templateJS = template.toJS()
       return {
         key: idx,
         title: template.get('displayName'),
         bodyComponent: templateBody({
           template: templateJS,
-          handleSaveSubject: e => this.onSaveSubject(e),
-          handleOpenEditor: e => MailerSettingsTemplates.onOpenEditor(e, templateJS.name),
+          handleSaveSubject: e => onSaveSubject(e),
+          handleOpenEditor: e => onOpenEditor(e, templateJS.name),
           t
         })
       }
     })
-  }
+  }, [templates, onSaveSubject, t])
 
-  render () {
-    const { t } = this.props
-    const mappedValues = this.mapTemplateMenu()
-    return (
-      <div>
-        <SettingItem
-          title={t('settings.enableNewEmailTemplates')}
-          subtitle={
-            <div>
-              {t('settings.enableNewEmailTemplatesHint')}{' '}
-              <a href='https://forum.trudesk.io/t/beta-email-notification-templates'>Email Notification Templates</a>
-            </div>
-          }
-          component={
-            <EnableSwitch
-              stateName={'emailBeta'}
-              label={t('settings.enable')}
-              checked={this.betaEnabled}
-              onChange={e => this.onEmailBetaChange(e)}
-            />
-          }
-        />
-        <SplitSettingsPanel
-          title={t('settings.notificationTemplates')}
-          subtitle={
-            <div>
-              {t('settings.notificationTemplatesHint')}
-              <strong> {t('settings.notificationTemplatesNote')}</strong>
-            </div>
-          }
-          rightComponent={<h4 className={'uk-display-block uk-text-danger mt-20 mr-20'}>{t('settings.betaFeature')}</h4>}
-          menuItems={mappedValues}
-        />
-      </div>
-    )
-  }
+  const mappedValues = mapTemplateMenu()
+
+  return (
+    <div>
+      <SettingItem
+        title={t('settings.enableNewEmailTemplates')}
+        subtitle={
+          <div>
+            {t('settings.enableNewEmailTemplatesHint')}{' '}
+            <a href='https://forum.trudesk.io/t/beta-email-notification-templates'>Email Notification Templates</a>
+          </div>
+        }
+        component={
+          <EnableSwitch
+            stateName={'emailBeta'}
+            label={t('settings.enable')}
+            checked={betaEnabled}
+            onChange={e => onEmailBetaChange(e)}
+          />
+        }
+      />
+      <SplitSettingsPanel
+        title={t('settings.notificationTemplates')}
+        subtitle={
+          <div>
+            {t('settings.notificationTemplatesHint')}
+            <strong> {t('settings.notificationTemplatesNote')}</strong>
+          </div>
+        }
+        rightComponent={<h4 className={'uk-display-block uk-text-danger mt-20 mr-20'}>{t('settings.betaFeature')}</h4>}
+        menuItems={mappedValues}
+      />
+    </div>
+  )
 }
 
 MailerSettingsTemplates.propTypes = {

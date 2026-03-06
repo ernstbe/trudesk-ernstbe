@@ -15,10 +15,8 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 
-class TableCell extends React.Component {
-  render () {
-    return <td {...this.props}>{this.props.children}</td>
-  }
+const TableCell = ({ children, ...rest }) => {
+  return <td {...rest}>{children}</td>
 }
 
 TableCell.propTypes = {

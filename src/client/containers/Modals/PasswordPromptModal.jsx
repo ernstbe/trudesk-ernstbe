@@ -1,8 +1,6 @@
-import React from 'react'
+import React, { useState, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
-import { observer } from 'mobx-react'
-import { observable } from 'mobx'
 
 import { withTranslation } from 'react-i18next'
 
@@ -15,57 +13,53 @@ import BaseModal from 'containers/Modals/BaseModal'
 import axios from 'axios'
 import helpers from 'lib/helpers'
 
-@observer
-class PasswordPromptModal extends React.Component {
-  @observable confirmPassword = ''
+const PasswordPromptModal = ({ user, titleOverride, textOverride, onVerifyComplete, hideModal, t }) => {
+  const [confirmPassword, setConfirmPassword] = useState('')
 
-  onVerifyPassword = e => {
+  const onVerifyPassword = useCallback(e => {
     e.preventDefault()
 
     axios
       .post('/api/v2/accounts/profile/mfa/disable', {
-        confirmPassword: this.confirmPassword
+        confirmPassword
       })
       .then(res => {
-        this.props.hideModal()
+        hideModal()
 
-        if (this.props.onVerifyComplete) this.props.onVerifyComplete(true)
+        if (onVerifyComplete) onVerifyComplete(true)
       })
       .catch(error => {
-        let errMessage = this.props.t('modals.passwordPrompt.error')
+        let errMessage = t('modals.passwordPrompt.error')
         if (error.response && error.response.data && error.response.data.error) errMessage = error.response.data.error
 
         helpers.UI.showSnackbar(errMessage, true)
 
-        if (this.props.onVerifyComplete) this.props.onVerifyComplete(false)
+        if (onVerifyComplete) onVerifyComplete(false)
       })
-  }
+  }, [confirmPassword, hideModal, onVerifyComplete, t])
 
-  render () {
-    const { titleOverride, textOverride, t } = this.props
-    return (
-      <BaseModal options={{ bgclose: false }}>
-        <div>
-          <h2>{titleOverride || t('modals.passwordPrompt.title')}</h2>
-          <p>{textOverride || t('modals.passwordPrompt.message')}</p>
-        </div>
-        <div className={'uk-margin-medium-bottom'}>
-          <label>{t('modals.passwordPrompt.currentPassword')}</label>
-          <Input name={'current-password'} type={'password'} onChange={val => (this.confirmPassword = val)} />
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <Button text={t('common.cancel')} small={true} flat={true} waves={false} onClick={() => this.props.hideModal()} />
-          <Button
-            text={t('modals.passwordPrompt.verifyPassword')}
-            style={'primary'}
-            small={true}
-            waves={true}
-            onClick={e => this.onVerifyPassword(e)}
-          />
-        </div>
-      </BaseModal>
-    )
-  }
+  return (
+    <BaseModal options={{ bgclose: false }}>
+      <div>
+        <h2>{titleOverride || t('modals.passwordPrompt.title')}</h2>
+        <p>{textOverride || t('modals.passwordPrompt.message')}</p>
+      </div>
+      <div className={'uk-margin-medium-bottom'}>
+        <label>{t('modals.passwordPrompt.currentPassword')}</label>
+        <Input name={'current-password'} type={'password'} onChange={val => setConfirmPassword(val)} />
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <Button text={t('common.cancel')} small={true} flat={true} waves={false} onClick={() => hideModal()} />
+        <Button
+          text={t('modals.passwordPrompt.verifyPassword')}
+          style={'primary'}
+          small={true}
+          waves={true}
+          onClick={e => onVerifyPassword(e)}
+        />
+      </div>
+    </BaseModal>
+  )
 }
 
 PasswordPromptModal.propTypes = {

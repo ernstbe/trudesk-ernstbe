@@ -12,7 +12,7 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-import React from 'react'
+import React, { useEffect, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import { withTranslation } from 'react-i18next'
@@ -28,29 +28,43 @@ import PermissionBody from './permissionBody'
 
 import $ from 'jquery'
 
-class PermissionsSettingsContainer extends React.Component {
-  componentDidMount () {
-    this.props.fetchRoles()
-  }
+const PermissionsSettingsContainer = ({
+  active,
+  roles,
+  roleOrder,
+  settings,
+  fetchRoles,
+  updateRoleOrder,
+  showModal,
+  updateSetting,
+  t
+}) => {
+  useEffect(() => {
+    fetchRoles()
+  }, [])
 
-  getSetting (name) {
-    return this.props.settings.getIn(['settings', name, 'value'])
-      ? this.props.settings.getIn(['settings', name, 'value'])
-      : ''
-  }
+  const getSetting = useCallback(
+    name => {
+      return settings.getIn(['settings', name, 'value']) ? settings.getIn(['settings', name, 'value']) : ''
+    },
+    [settings]
+  )
 
-  onRoleOrderChanged (e) {
-    const children = $(e.target).children('li')
-    const arr = []
-    for (let i = 0; i < children.length; i++) arr.push($(children[i]).attr('data-key'))
+  const onRoleOrderChanged = useCallback(
+    e => {
+      const children = $(e.target).children('li')
+      const arr = []
+      for (let i = 0; i < children.length; i++) arr.push($(children[i]).attr('data-key'))
 
-    this.props.updateRoleOrder({ roleOrder: arr })
-  }
+      updateRoleOrder({ roleOrder: arr })
+    },
+    [updateRoleOrder]
+  )
 
-  getRoleMenu () {
-    if (this.props.roleOrder && this.props.roleOrder.get('order') && this.props.roles) {
-      const menu = this.props.roleOrder.get('order').map(o => {
-        return this.props.roles.find(v => {
+  const getRoleMenu = useCallback(() => {
+    if (roleOrder && roleOrder.get('order') && roles) {
+      const menu = roleOrder.get('order').map(o => {
+        return roles.find(v => {
           return v.get('_id') === o
         })
       })
@@ -59,72 +73,75 @@ class PermissionsSettingsContainer extends React.Component {
     }
 
     return []
-  }
+  }, [roleOrder, roles])
 
-  onCreateRoleClicked (e) {
-    e.preventDefault()
+  const onCreateRoleClicked = useCallback(
+    e => {
+      e.preventDefault()
 
-    this.props.showModal('CREATE_ROLE')
-  }
+      showModal('CREATE_ROLE')
+    },
+    [showModal]
+  )
 
-  onDefaultUserRoleChange (e) {
-    this.props.updateSetting({ name: 'role:user:default', value: e.target.value, stateName: 'defaultUserRole' })
-  }
+  const onDefaultUserRoleChange = useCallback(
+    e => {
+      updateSetting({ name: 'role:user:default', value: e.target.value, stateName: 'defaultUserRole' })
+    },
+    [updateSetting]
+  )
 
-  render () {
-    const { t } = this.props
-    const mappedRoles = this.props.roles
-      .map(role => {
-        return { text: role.get('name'), value: role.get('_id') }
-      })
-      .toArray()
+  const mappedRoles = roles
+    .map(role => {
+      return { text: role.get('name'), value: role.get('_id') }
+    })
+    .toArray()
 
-    return (
-      <div className={this.props.active ? '' : 'hide'}>
-        <SettingItem
-          title={t('settings.defaultUserRole')}
-          subtitle={t('settings.defaultUserRoleHint')}
-          component={
-            <SingleSelect
-              items={mappedRoles}
-              defaultValue={this.getSetting('defaultUserRole')}
-              onSelectChange={e => {
-                this.onDefaultUserRoleChange(e)
-              }}
-              width={'50%'}
-              showTextbox={false}
-            />
-          }
-        />
-        <SplitSettingsPanel
-          title={t('settings.permissions')}
-          tooltip={t('settings.permissionsTooltip')}
-          subtitle={
-            <div>
-              {t('settings.permissionsHint')}{' '}
-              <span className={'uk-text-danger'}>{t('settings.permissionsNote')}</span>
-            </div>
-          }
-          rightComponent={
-            <Button
-              text={t('common.create')}
-              style={'success'}
-              flat={true}
-              waves={true}
-              onClick={e => this.onCreateRoleClicked(e)}
-            />
-          }
-          menuItems={this.getRoleMenu().map(role => {
-            return { key: role.get('_id'), title: role.get('name'), bodyComponent: <PermissionBody role={role} /> }
-          })}
-          menuDraggable={true}
-          menuOnDrag={e => {
-            this.onRoleOrderChanged(e)
-          }}
-        />
-      </div>
-    )
-  }
+  return (
+    <div className={active ? '' : 'hide'}>
+      <SettingItem
+        title={t('settings.defaultUserRole')}
+        subtitle={t('settings.defaultUserRoleHint')}
+        component={
+          <SingleSelect
+            items={mappedRoles}
+            defaultValue={getSetting('defaultUserRole')}
+            onSelectChange={e => {
+              onDefaultUserRoleChange(e)
+            }}
+            width={'50%'}
+            showTextbox={false}
+          />
+        }
+      />
+      <SplitSettingsPanel
+        title={t('settings.permissions')}
+        tooltip={t('settings.permissionsTooltip')}
+        subtitle={
+          <div>
+            {t('settings.permissionsHint')}{' '}
+            <span className={'uk-text-danger'}>{t('settings.permissionsNote')}</span>
+          </div>
+        }
+        rightComponent={
+          <Button
+            text={t('common.create')}
+            style={'success'}
+            flat={true}
+            waves={true}
+            onClick={e => onCreateRoleClicked(e)}
+          />
+        }
+        menuItems={getRoleMenu().map(role => {
+          return { key: role.get('_id'), title: role.get('name'), bodyComponent: <PermissionBody role={role} /> }
+        })}
+        menuDraggable={true}
+        menuOnDrag={e => {
+          onRoleOrderChanged(e)
+        }}
+      />
+    </div>
+  )
 }
 
 PermissionsSettingsContainer.propTypes = {

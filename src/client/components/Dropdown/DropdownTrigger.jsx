@@ -12,42 +12,44 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-import React from 'react'
+import React, { useEffect, useRef } from 'react'
 import PropTypes from 'prop-types'
 
 import UIkit from 'uikit'
 
-class DropdownTrigger extends React.Component {
-  constructor (props) {
-    super(props)
-  }
+const DropdownTrigger = ({
+  mode = 'click',
+  pos = 'bottom-left',
+  offset,
+  extraClass,
+  children
+}) => {
+  const dropRef = useRef(null)
 
-  componentDidMount () {
-    if (this.drop) {
-      UIkit.dropdown(this.drop, {
-        mode: this.props.mode,
-        pos: this.props.pos,
-        offset: this.props.offset
+  useEffect(() => {
+    if (dropRef.current) {
+      UIkit.dropdown(dropRef.current, {
+        mode: mode,
+        pos: pos,
+        offset: offset
       })
     }
-  }
 
-  componentWillUnmount () {
-    if (this.drop) this.drop = null
-  }
+    return () => {
+      // cleanup
+    }
+  }, [mode, pos, offset])
 
-  render () {
-    return (
-      <div
-        ref={i => (this.drop = i)}
-        className={'uk-position-relative' + (this.props.extraClass ? ' ' + this.props.extraClass : '')}
-        aria-haspopup={true}
-        aria-expanded={false}
-      >
-        {this.props.children}
-      </div>
-    )
-  }
+  return (
+    <div
+      ref={dropRef}
+      className={'uk-position-relative' + (extraClass ? ' ' + extraClass : '')}
+      aria-haspopup={true}
+      aria-expanded={false}
+    >
+      {children}
+    </div>
+  )
 }
 
 DropdownTrigger.propTypes = {
@@ -56,11 +58,6 @@ DropdownTrigger.propTypes = {
   offset: PropTypes.number,
   extraClass: PropTypes.string,
   children: PropTypes.oneOfType([PropTypes.arrayOf(PropTypes.node), PropTypes.node]).isRequired
-}
-
-DropdownTrigger.defaultProps = {
-  mode: 'click',
-  pos: 'bottom-left'
 }
 
 export default DropdownTrigger

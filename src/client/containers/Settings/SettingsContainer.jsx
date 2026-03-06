@@ -12,7 +12,7 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-import React from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import { withTranslation } from 'react-i18next'
@@ -35,151 +35,137 @@ import LegalSettingsContainer from 'containers/Settings/Legal'
 
 import helpers from 'lib/helpers'
 
-class SettingsContainer extends React.Component {
-  constructor (props) {
-    super(props)
-    this.state = {
-      activeCategory: 'settings-general'
-    }
-  }
+const SettingsContainer = ({ fetchSettings, t }) => {
+  const [activeCategory, setActiveCategory] = useState('settings-general')
+  const pageRef = useRef(null)
 
-  componentDidMount () {
+  useEffect(() => {
     const location = window.location.pathname.replace(/^(\/settings(\/?))/, '')
     if (location) {
-      this.setState({
-        activeCategory: 'settings-' + location
-      })
+      setActiveCategory('settings-' + location)
     }
 
-    this.props.fetchSettings()
+    fetchSettings()
 
     helpers.resizeAll()
-  }
+  }, [])
 
-  onMenuItemClick (e, category) {
-    if (this.state.activeCategory === 'settings-' + category) return
+  const onMenuItemClick = useCallback((e, category) => {
+    setActiveCategory(prev => {
+      if (prev === 'settings-' + category) return prev
+      if (pageRef.current) pageRef.current.scrollTop = 0
+      return 'settings-' + category
+    })
+  }, [])
 
-    this.setState(
-      {
-        activeCategory: 'settings-' + category
-      },
-      () => {
-        if (this.page) this.page.scrollTop = 0
-      }
-    )
-  }
-
-  render () {
-    const { t } = this.props
-    return (
-      <div className='uk-grid uk-grid-collapse'>
-        <div className='uk-width-1-6 uk-width-xLarge-1-10 message-list full-height' data-offset='68'>
-          <div
-            className='page-title noshadow nopadding-right'
-            style={{ borderTop: 'none', borderBottom: 'none', height: '68px', paddingLeft: '20px' }}
-          >
-            <div style={{ position: 'relative' }}>
-              <p style={{ fontSize: '24px' }}>{t('settings.title')}</p>
-            </div>
-          </div>
-          <div className='page-content-left noborder full-height'>
-            <Menu>
-              <MenuItem
-                title={t('settings.general')}
-                active={this.state.activeCategory === 'settings-general'}
-                onClick={e => {
-                  this.onMenuItemClick(e, 'general')
-                }}
-              />
-              <MenuItem
-                title={t('accounts.title')}
-                active={this.state.activeCategory === 'settings-accounts'}
-                onClick={e => {
-                  this.onMenuItemClick(e, 'accounts')
-                }}
-              />
-              <MenuItem
-                title={t('settings.appearance')}
-                active={this.state.activeCategory === 'settings-appearance'}
-                onClick={e => {
-                  this.onMenuItemClick(e, 'appearance')
-                }}
-              />
-              <MenuItem
-                title={t('settings.permissions')}
-                active={this.state.activeCategory === 'settings-permissions'}
-                onClick={e => {
-                  this.onMenuItemClick(e, 'permissions')
-                }}
-              />
-              <MenuItem
-                title={t('nav.tickets')}
-                active={this.state.activeCategory === 'settings-tickets'}
-                onClick={e => {
-                  this.onMenuItemClick(e, 'tickets')
-                }}
-              />
-              <MenuItem
-                title={t('settings.mailer')}
-                active={this.state.activeCategory === 'settings-mailer'}
-                onClick={e => {
-                  this.onMenuItemClick(e, 'mailer')
-                }}
-              />
-              <MenuItem
-                title={'Elasticsearch'}
-                active={this.state.activeCategory === 'settings-elasticsearch'}
-                onClick={e => {
-                  this.onMenuItemClick(e, 'elasticsearch')
-                }}
-              />
-              <MenuItem
-                title={t('settings.backup')}
-                active={this.state.activeCategory === 'settings-backup'}
-                onClick={e => {
-                  this.onMenuItemClick(e, 'backup')
-                }}
-              />
-              <MenuItem
-                title={t('settings.server')}
-                active={this.state.activeCategory === 'settings-server'}
-                onClick={e => {
-                  this.onMenuItemClick(e, 'server')
-                }}
-              />
-              <MenuItem
-                title={t('settings.legal')}
-                active={this.state.activeCategory === 'settings-legal'}
-                onClick={e => {
-                  this.onMenuItemClick(e, 'legal')
-                }}
-              />
-            </Menu>
+  return (
+    <div className='uk-grid uk-grid-collapse'>
+      <div className='uk-width-1-6 uk-width-xLarge-1-10 message-list full-height' data-offset='68'>
+        <div
+          className='page-title noshadow nopadding-right'
+          style={{ borderTop: 'none', borderBottom: 'none', height: '68px', paddingLeft: '20px' }}
+        >
+          <div style={{ position: 'relative' }}>
+            <p style={{ fontSize: '24px' }}>{t('settings.title')}</p>
           </div>
         </div>
-        <div className='uk-width-5-6 uk-width-xLarge-9-10'>
-          <div
-            className='page-title-right noshadow page-title-border-bottom'
-            style={{ borderTop: 'none', height: '69px' }}
-          />
-          <div className='page-wrapper full-height scrollable no-overflow-x' ref={i => (this.page = i)}>
-            <div className='settings-wrap'>
-              <GeneralSettings active={this.state.activeCategory === 'settings-general'} />
-              <AccountsSettings active={this.state.activeCategory === 'settings-accounts'} />
-              <AppearanceSettings active={this.state.activeCategory === 'settings-appearance'} />
-              <PermissionsSettingsContainer active={this.state.activeCategory === 'settings-permissions'} />
-              <TicketsSettings active={this.state.activeCategory === 'settings-tickets'} />
-              <MailerSettingsContainer active={this.state.activeCategory === 'settings-mailer'} />
-              <ElasticsearchSettingsContainer active={this.state.activeCategory === 'settings-elasticsearch'} />
-              <BackupRestoreSettingsContainer active={this.state.activeCategory === 'settings-backup'} />
-              <ServerSettingsController active={this.state.activeCategory === 'settings-server'} />
-              <LegalSettingsContainer active={this.state.activeCategory === 'settings-legal'} />
-            </div>
+        <div className='page-content-left noborder full-height'>
+          <Menu>
+            <MenuItem
+              title={t('settings.general')}
+              active={activeCategory === 'settings-general'}
+              onClick={e => {
+                onMenuItemClick(e, 'general')
+              }}
+            />
+            <MenuItem
+              title={t('accounts.title')}
+              active={activeCategory === 'settings-accounts'}
+              onClick={e => {
+                onMenuItemClick(e, 'accounts')
+              }}
+            />
+            <MenuItem
+              title={t('settings.appearance')}
+              active={activeCategory === 'settings-appearance'}
+              onClick={e => {
+                onMenuItemClick(e, 'appearance')
+              }}
+            />
+            <MenuItem
+              title={t('settings.permissions')}
+              active={activeCategory === 'settings-permissions'}
+              onClick={e => {
+                onMenuItemClick(e, 'permissions')
+              }}
+            />
+            <MenuItem
+              title={t('nav.tickets')}
+              active={activeCategory === 'settings-tickets'}
+              onClick={e => {
+                onMenuItemClick(e, 'tickets')
+              }}
+            />
+            <MenuItem
+              title={t('settings.mailer')}
+              active={activeCategory === 'settings-mailer'}
+              onClick={e => {
+                onMenuItemClick(e, 'mailer')
+              }}
+            />
+            <MenuItem
+              title={'Elasticsearch'}
+              active={activeCategory === 'settings-elasticsearch'}
+              onClick={e => {
+                onMenuItemClick(e, 'elasticsearch')
+              }}
+            />
+            <MenuItem
+              title={t('settings.backup')}
+              active={activeCategory === 'settings-backup'}
+              onClick={e => {
+                onMenuItemClick(e, 'backup')
+              }}
+            />
+            <MenuItem
+              title={t('settings.server')}
+              active={activeCategory === 'settings-server'}
+              onClick={e => {
+                onMenuItemClick(e, 'server')
+              }}
+            />
+            <MenuItem
+              title={t('settings.legal')}
+              active={activeCategory === 'settings-legal'}
+              onClick={e => {
+                onMenuItemClick(e, 'legal')
+              }}
+            />
+          </Menu>
+        </div>
+      </div>
+      <div className='uk-width-5-6 uk-width-xLarge-9-10'>
+        <div
+          className='page-title-right noshadow page-title-border-bottom'
+          style={{ borderTop: 'none', height: '69px' }}
+        />
+        <div className='page-wrapper full-height scrollable no-overflow-x' ref={pageRef}>
+          <div className='settings-wrap'>
+            <GeneralSettings active={activeCategory === 'settings-general'} />
+            <AccountsSettings active={activeCategory === 'settings-accounts'} />
+            <AppearanceSettings active={activeCategory === 'settings-appearance'} />
+            <PermissionsSettingsContainer active={activeCategory === 'settings-permissions'} />
+            <TicketsSettings active={activeCategory === 'settings-tickets'} />
+            <MailerSettingsContainer active={activeCategory === 'settings-mailer'} />
+            <ElasticsearchSettingsContainer active={activeCategory === 'settings-elasticsearch'} />
+            <BackupRestoreSettingsContainer active={activeCategory === 'settings-backup'} />
+            <ServerSettingsController active={activeCategory === 'settings-server'} />
+            <LegalSettingsContainer active={activeCategory === 'settings-legal'} />
           </div>
         </div>
       </div>
-    )
-  }
+    </div>
+  )
 }
 
 SettingsContainer.propTypes = {

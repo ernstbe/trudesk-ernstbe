@@ -12,10 +12,8 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-import React from 'react'
+import React, { useState, useCallback } from 'react'
 import PropTypes from 'prop-types'
-import { observer } from 'mobx-react'
-import { makeObservable, observable } from 'mobx'
 import { connect } from 'react-redux'
 import { withTranslation } from 'react-i18next'
 
@@ -24,61 +22,53 @@ import { createRole } from 'actions/settings'
 import Button from 'components/Button'
 import BaseModal from './BaseModal'
 
-@observer
-class CreateRoleModal extends React.Component {
-  @observable name = ''
+function CreateRoleModal (props) {
+  const { t } = props
+  const [name, setName] = useState('')
 
-  constructor (props) {
-    super(props)
-    makeObservable(this)
-  }
+  const onNameChange = useCallback((e) => {
+    setName(e.target.value)
+  }, [])
 
-  onNameChange (e) {
-    this.name = e.target.value
-  }
-
-  onCreateRoleClicked (e) {
+  const onCreateRoleClicked = useCallback((e) => {
     e.preventDefault()
 
-    this.props.createRole({ name: this.name })
-  }
+    props.createRole({ name: name })
+  }, [name])
 
-  render () {
-    const { t } = this.props
-    return (
-      <BaseModal>
-        <div className={'uk-form-stacked'}>
-          <div>
-            <h2 className={'nomargin mb-5'}>{t('modals.createRole.title')}</h2>
-            <p className='uk-text-muted'>{t('modals.createRole.hint')}</p>
+  return (
+    <BaseModal>
+      <div className={'uk-form-stacked'}>
+        <div>
+          <h2 className={'nomargin mb-5'}>{t('modals.createRole.title')}</h2>
+          <p className='uk-text-muted'>{t('modals.createRole.hint')}</p>
 
-            <label>{t('modals.createRole.roleName')}</label>
-            <input
-              type='text'
-              className={'md-input'}
-              name={'name'}
-              data-validation='length'
-              data-validation-length='min3'
-              data-validation-error-msg={t('modals.createRole.validName')}
-              value={this.name}
-              onChange={e => this.onNameChange(e)}
-            />
-          </div>
-          <div className='uk-modal-footer uk-text-right'>
-            <Button text={t('common.close')} extraClass={'uk-modal-close'} flat={true} waves={true} />
-            <Button
-              text={t('common.create')}
-              type={'button'}
-              flat={true}
-              waves={true}
-              style={'success'}
-              onClick={e => this.onCreateRoleClicked(e)}
-            />
-          </div>
+          <label>{t('modals.createRole.roleName')}</label>
+          <input
+            type='text'
+            className={'md-input'}
+            name={'name'}
+            data-validation='length'
+            data-validation-length='min3'
+            data-validation-error-msg={t('modals.createRole.validName')}
+            value={name}
+            onChange={e => onNameChange(e)}
+          />
         </div>
-      </BaseModal>
-    )
-  }
+        <div className='uk-modal-footer uk-text-right'>
+          <Button text={t('common.close')} extraClass={'uk-modal-close'} flat={true} waves={true} />
+          <Button
+            text={t('common.create')}
+            type={'button'}
+            flat={true}
+            waves={true}
+            style={'success'}
+            onClick={e => onCreateRoleClicked(e)}
+          />
+        </div>
+      </div>
+    </BaseModal>
+  )
 }
 
 CreateRoleModal.propTypes = {

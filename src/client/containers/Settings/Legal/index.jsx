@@ -12,7 +12,7 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-import React from 'react'
+import React, { useState, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import { withTranslation } from 'react-i18next'
@@ -23,60 +23,54 @@ import { updateSetting } from 'actions/settings'
 import helpers from 'lib/helpers'
 import SettingItem from 'components/Settings/SettingItem'
 
-class LegalSettingsContainer extends React.Component {
-  constructor (props) {
-    super(props)
-    this.state = {
-      privacyPolicy: ''
-    }
-  }
+const LegalSettingsContainer = ({ active, settings, updateSetting, t }) => {
+  const [privacyPolicy, setPrivacyPolicy] = useState('')
 
-  getSetting (name) {
-    return this.props.settings.getIn(['settings', name, 'value'])
-      ? this.props.settings.getIn(['settings', name, 'value'])
-      : ''
-  }
+  const getSetting = useCallback(
+    name => {
+      return settings.getIn(['settings', name, 'value']) ? settings.getIn(['settings', name, 'value']) : ''
+    },
+    [settings]
+  )
 
-  onSavePrivacyPolicyClicked (e) {
-    e.preventDefault()
-    console.log(this.state.privacyPolicy)
-    this.props
-      .updateSetting({
+  const onSavePrivacyPolicyClicked = useCallback(
+    e => {
+      e.preventDefault()
+      console.log(privacyPolicy)
+      updateSetting({
         stateName: 'privacyPolicy',
         name: 'legal:privacypolicy',
-        value: this.state.privacyPolicy,
+        value: privacyPolicy,
         noSnackbar: true
-      })
-      .then(() => {
+      }).then(() => {
         helpers.UI.showSnackbar('Privacy Policy Updated')
       })
-  }
+    },
+    [privacyPolicy, updateSetting]
+  )
 
-  render () {
-    const { active, t } = this.props
-    return (
-      <div className={!active ? 'hide' : ''}>
-        <SettingItem title={t('settings.privacyPolicy')} subtitle={t('settings.privacyPolicyHint')}>
-          <div>
-            <EasyMDE
-              defaultValue={this.getSetting('privacyPolicy')}
-              onChange={v => this.setState({ privacyPolicy: v })}
-            />
-          </div>
-          <div className='uk-clearfix'>
-            <Button
-              text={t('common.save')}
-              extraClass={'uk-float-right'}
-              flat={true}
-              style={'success'}
-              waves={true}
-              onClick={e => this.onSavePrivacyPolicyClicked(e)}
-            />
-          </div>
-        </SettingItem>
-      </div>
-    )
-  }
+  return (
+    <div className={!active ? 'hide' : ''}>
+      <SettingItem title={t('settings.privacyPolicy')} subtitle={t('settings.privacyPolicyHint')}>
+        <div>
+          <EasyMDE
+            defaultValue={getSetting('privacyPolicy')}
+            onChange={v => setPrivacyPolicy(v)}
+          />
+        </div>
+        <div className='uk-clearfix'>
+          <Button
+            text={t('common.save')}
+            extraClass={'uk-float-right'}
+            flat={true}
+            style={'success'}
+            waves={true}
+            onClick={e => onSavePrivacyPolicyClicked(e)}
+          />
+        </div>
+      </SettingItem>
+    </div>
+  )
 }
 
 LegalSettingsContainer.propTypes = {

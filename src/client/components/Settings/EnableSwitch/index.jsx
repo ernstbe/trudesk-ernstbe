@@ -12,42 +12,40 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-import React, { createRef } from 'react'
+import React, { useRef, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import { merge } from 'lodash'
 import clsx from 'clsx'
 
-class EnableSwitch extends React.Component {
-  labelRef = createRef()
+const EnableSwitch = ({ stateName, label, labelStyle, sublabel, style, leverClass, onChange, checked, disabled }) => {
+  const labelRef = useRef(null)
 
-  onLevelClick (e) {
+  const onLevelClick = useCallback((e) => {
     e.preventDefault()
-    if (this.labelRef.current) {
-      this.labelRef.current.click()
+    if (labelRef.current) {
+      labelRef.current.click()
     }
-  }
+  }, [])
 
-  render () {
-    const combinedStyle = merge({ margin: '17px 0 0 0' }, this.props.style)
-    return (
-      <div className='md-switch-wrapper md-switch md-green uk-float-right uk-clearfix' style={combinedStyle}>
-        <label ref={this.labelRef} htmlFor={this.props.stateName} style={this.props.labelStyle || {}}>
-          {this.props.label}
-          {this.props.sublabel}
-        </label>
+  const combinedStyle = merge({ margin: '17px 0 0 0' }, style)
+  return (
+    <div className='md-switch-wrapper md-switch md-green uk-float-right uk-clearfix' style={combinedStyle}>
+      <label ref={labelRef} htmlFor={stateName} style={labelStyle || {}}>
+        {label}
+        {sublabel}
+      </label>
 
-        <input
-          type='checkbox'
-          id={this.props.stateName}
-          name={this.props.stateName}
-          onChange={this.props.onChange}
-          checked={this.props.checked}
-          disabled={this.props.disabled}
-        />
-        <span className={clsx('lever', this.props.leverClass)} onClick={e => this.onLevelClick(e)} />
-      </div>
-    )
-  }
+      <input
+        type='checkbox'
+        id={stateName}
+        name={stateName}
+        onChange={onChange}
+        checked={checked}
+        disabled={disabled}
+      />
+      <span className={clsx('lever', leverClass)} onClick={onLevelClick} />
+    </div>
+  )
 }
 
 EnableSwitch.propTypes = {

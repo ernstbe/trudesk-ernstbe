@@ -12,7 +12,7 @@
  *  Copyright (c) 2014-2021. All rights reserved.
  */
 
-import React from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import { withTranslation } from 'react-i18next'
@@ -25,40 +25,28 @@ import helpers from 'lib/helpers'
 import axios from 'axios'
 import Log from '../../../logger'
 import EnableSwitch from 'components/Settings/EnableSwitch'
-import { observer } from 'mobx-react'
-import { makeObservable, observable } from 'mobx'
 import UIKit from 'uikit'
 
-@observer
-class ServerSettingsController extends React.Component {
-  @observable maintenanceModeEnabled = false
+const ServerSettingsController = ({ active, updateSetting, updateMultipleSettings, settings, t }) => {
+  const [maintenanceModeEnabled, setMaintenanceModeEnabled] = useState(false)
+  const [restarting, setRestarting] = useState(false)
 
-  constructor (props) {
-    super(props)
+  const getSetting = useCallback(
+    stateName => {
+      return settings.getIn(['settings', stateName, 'value'])
+        ? settings.getIn(['settings', stateName, 'value'])
+        : ''
+    },
+    [settings]
+  )
 
-    makeObservable(this)
+  useEffect(() => {
+    const val = getSetting('maintenanceMode')
+    if (maintenanceModeEnabled !== val) setMaintenanceModeEnabled(val)
+  }, [settings])
 
-    this.state = {
-      restarting: false
-    }
-
-    this.restartServer = this.restartServer.bind(this)
-  }
-
-  componentDidMount () {
-    // helpers.UI.inputs()
-  }
-
-  componentDidUpdate (prevProps) {
-    // helpers.UI.reRenderInputs()
-    if (prevProps.settings !== this.props.settings) {
-      if (this.maintenanceModeEnabled !== this.getSetting('maintenanceMode'))
-        this.maintenanceModeEnabled = this.getSetting('maintenanceMode')
-    }
-  }
-
-  restartServer () {
-    this.setState({ restarting: true })
+  const restartServer = useCallback(() => {
+    setRestarting(true)
 
     const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content')
     axios
@@ -78,87 +66,77 @@ class ServerSettingsController extends React.Component {
         helpers.UI.showSnackbar('Unable to restart server. Are you an Administrator?', true)
       })
       .then(() => {
-        this.setState({ restarting: false })
+        setRestarting(false)
       })
-  }
+  }, [])
 
-  getSetting (stateName) {
-    return this.props.settings.getIn(['settings', stateName, 'value'])
-      ? this.props.settings.getIn(['settings', stateName, 'value'])
-      : ''
-  }
+  const onMaintenanceModeChange = useCallback(
+    e => {
+      const val = e.target.checked
 
-  onMaintenanceModeChange (e) {
-    const self = this
-    const val = e.target.checked
-
-    if (val === true) {
-      UIKit.modal.confirm(
-        `<h2>Are you sure?</h2>
+      if (val === true) {
+        UIKit.modal.confirm(
+          `<h2>Are you sure?</h2>
         <p style="font-size: 15px;">
-            <span class="uk-text-danger" style="font-size: 15px;">This will force logout every user and prevent non-administrators from logging in.</span> 
+            <span class="uk-text-danger" style="font-size: 15px;">This will force logout every user and prevent non-administrators from logging in.</span>
         </p>
         `,
-        () => {
-          this.props
-            .updateSetting({
+          () => {
+            updateSetting({
               name: 'maintenanceMode:enable',
               value: val,
               stateName: 'maintenanceMode',
               noSnackbar: true
+            }).then(() => {
+              setMaintenanceModeEnabled(val)
             })
-            .then(() => {
-              self.maintenanceModeEnabled = val
-            })
-        },
-        {
-          labels: { Ok: 'Yes', Cancel: 'No' },
-          confirmButtonClass: 'md-btn-danger'
-        }
-      )
-    } else {
-      this.props
-        .updateSetting({ name: 'maintenanceMode:enable', value: val, stateName: 'maintenanceMode', noSnackbar: true })
-        .then(() => {
-          self.maintenanceModeEnabled = val
-        })
-    }
-  }
+          },
+          {
+            labels: { Ok: 'Yes', Cancel: 'No' },
+            confirmButtonClass: 'md-btn-danger'
+          }
+        )
+      } else {
+        updateSetting({ name: 'maintenanceMode:enable', value: val, stateName: 'maintenanceMode', noSnackbar: true })
+          .then(() => {
+            setMaintenanceModeEnabled(val)
+          })
+      }
+    },
+    [updateSetting]
+  )
 
-  render () {
-    const { active, t } = this.props
-    return (
-      <div className={active ? 'active' : 'hide'}>
-        <SettingItem
-          title={t('settings.restartServer')}
-          subtitle={t('settings.restartServerHint')}
-          component={
-            <Button
-              text={t('settings.restart')}
-              flat={false}
-              waves={true}
-              style={'danger'}
-              extraClass={'right mt-8 mr-5'}
-              onClick={this.restartServer}
-              disabled={this.state.restarting}
-            />
-          }
-        />
-        <SettingItem
-          title={t('settings.maintenanceMode')}
-          subtitle={t('settings.maintenanceModeHint')}
-          component={
-            <EnableSwitch
-              stateName={'maintenanceMode'}
-              label={t('settings.enable')}
-              checked={this.maintenanceModeEnabled}
-              onChange={e => this.onMaintenanceModeChange(e)}
-            />
-          }
-        />
-      </div>
-    )
-  }
+  return (
+    <div className={active ? 'active' : 'hide'}>
+      <SettingItem
+        title={t('settings.restartServer')}
+        subtitle={t('settings.restartServerHint')}
+        component={
+          <Button
+            text={t('settings.restart')}
+            flat={false}
+            waves={true}
+            style={'danger'}
+            extraClass={'right mt-8 mr-5'}
+            onClick={restartServer}
+            disabled={restarting}
+          />
+        }
+      />
+      <SettingItem
+        title={t('settings.maintenanceMode')}
+        subtitle={t('settings.maintenanceModeHint')}
+        component={
+          <EnableSwitch
+            stateName={'maintenanceMode'}
+            label={t('settings.enable')}
+            checked={maintenanceModeEnabled}
+            onChange={e => onMaintenanceModeChange(e)}
+          />
+        }
+      />
+    </div>
+  )
 }
 
 ServerSettingsController.propTypes = {

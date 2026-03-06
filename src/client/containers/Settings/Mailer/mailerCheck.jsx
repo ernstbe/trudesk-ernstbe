@@ -12,7 +12,7 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-import React from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import { withTranslation } from 'react-i18next'
@@ -28,126 +28,131 @@ import UIKit from 'uikit'
 import axios from 'axios'
 import helpers from 'lib/helpers'
 
-class Mailer_MailerCheck extends React.Component {
-  constructor (props) {
-    super(props)
-    this.state = {
-      mailerCheckHost: '',
-      mailerCheckPort: '',
-      mailerCheckUsername: '',
-      mailerCheckPassword: '',
-      mailerCheckSelfSign: '',
-      mailerCheckPolling: '',
-      mailerCheckCreateAccount: '',
-      mailerCheckDeleteMessage: '',
-      mailerCheckTicketType: '',
-      mailerCheckTicketPriority: '',
+function getTypePriorities (ticketTypes, typeId) {
+  if (!ticketTypes && !typeId) return []
+  return ticketTypes
+    .filter(item => {
+      return item.get('_id') === typeId
+    })
+    .first()
+    .get('priorities')
+    .map(p => {
+      return { text: p.get('name'), value: p.get('_id') }
+    })
+    .toArray()
+}
 
-      typePriorities: []
-    }
-  }
+const Mailer_MailerCheck = ({ settings, updateSetting, updateMultipleSettings, t }) => {
+  const [mailerCheckHost, setMailerCheckHost] = useState('')
+  const [mailerCheckPort, setMailerCheckPort] = useState('')
+  const [mailerCheckUsername, setMailerCheckUsername] = useState('')
+  const [mailerCheckPassword, setMailerCheckPassword] = useState('')
+  const [mailerCheckSelfSign, setMailerCheckSelfSign] = useState('')
+  const [mailerCheckPolling, setMailerCheckPolling] = useState('')
+  const [mailerCheckCreateAccount, setMailerCheckCreateAccount] = useState('')
+  const [mailerCheckDeleteMessage, setMailerCheckDeleteMessage] = useState('')
+  const [mailerCheckTicketType, setMailerCheckTicketType] = useState('')
+  const [mailerCheckTicketPriority, setMailerCheckTicketPriority] = useState('')
+  const [typePriorities, setTypePriorities] = useState([])
 
-  componentDidMount () {
+  useEffect(() => {
     helpers.UI.inputs()
-  }
+  }, [])
 
-  componentDidUpdate () {
+  useEffect(() => {
     helpers.UI.reRenderInputs()
-  }
+  })
 
-  static getDerivedStateFromProps (nextProps, state) {
-    // Load those settings Up to state!
-    if (nextProps.settings) {
-      let stateObj = { ...state }
-      if (!state.mailerCheckHost)
-        stateObj.mailerCheckHost = nextProps.settings.getIn(['settings', 'mailerCheckHost', 'value']) || ''
-      if (!state.mailerCheckPort)
-        stateObj.mailerCheckPort = nextProps.settings.getIn(['settings', 'mailerCheckPort', 'value']) || ''
-      if (!state.mailerCheckUsername)
-        stateObj.mailerCheckUsername = nextProps.settings.getIn(['settings', 'mailerCheckUsername', 'value']) || ''
-      if (!state.mailerCheckPassword)
-        stateObj.mailerCheckPassword = nextProps.settings.getIn(['settings', 'mailerCheckPassword', 'value']) || ''
-      if (state.mailerCheckSelfSign === '')
-        stateObj.mailerCheckSelfSign = nextProps.settings.getIn(['settings', 'mailerCheckSelfSign', 'value']) || ''
-      if (state.mailerCheckPolling === '')
-        stateObj.mailerCheckPolling =
-          parseInt(nextProps.settings.getIn(['settings', 'mailerCheckPolling', 'value'])) / 60000 || ''
-      if (state.mailerCheckCreateAccount === '')
-        stateObj.mailerCheckCreateAccount =
-          nextProps.settings.getIn(['settings', 'mailerCheckCreateAccount', 'value']) || ''
-      if (state.mailerCheckDeleteMessage === '')
-        stateObj.mailerCheckDeleteMessage =
-          nextProps.settings.getIn(['settings', 'mailerCheckDeleteMessage', 'value']) || ''
-      if (!state.mailerCheckTicketType)
-        stateObj.mailerCheckTicketType = nextProps.settings.getIn(['settings', 'mailerCheckTicketType', 'value']) || ''
-      if (stateObj.mailerCheckTicketType)
-        stateObj.typePriorities = Mailer_MailerCheck.getTypePriorities(
-          nextProps.settings.get('ticketTypes'),
-          stateObj.mailerCheckTicketType
+  useEffect(() => {
+    if (settings) {
+      if (!mailerCheckHost) setMailerCheckHost(settings.getIn(['settings', 'mailerCheckHost', 'value']) || '')
+      if (!mailerCheckPort) setMailerCheckPort(settings.getIn(['settings', 'mailerCheckPort', 'value']) || '')
+      if (!mailerCheckUsername)
+        setMailerCheckUsername(settings.getIn(['settings', 'mailerCheckUsername', 'value']) || '')
+      if (!mailerCheckPassword)
+        setMailerCheckPassword(settings.getIn(['settings', 'mailerCheckPassword', 'value']) || '')
+      if (mailerCheckSelfSign === '')
+        setMailerCheckSelfSign(settings.getIn(['settings', 'mailerCheckSelfSign', 'value']) || '')
+      if (mailerCheckPolling === '')
+        setMailerCheckPolling(
+          parseInt(settings.getIn(['settings', 'mailerCheckPolling', 'value'])) / 60000 || ''
         )
-      if (!state.mailerCheckTicketPriority)
-        stateObj.mailerCheckTicketPriority =
-          nextProps.settings.getIn(['settings', 'mailerCheckTicketPriority', 'value']) || ''
-
-      return stateObj
+      if (mailerCheckCreateAccount === '')
+        setMailerCheckCreateAccount(
+          settings.getIn(['settings', 'mailerCheckCreateAccount', 'value']) || ''
+        )
+      if (mailerCheckDeleteMessage === '')
+        setMailerCheckDeleteMessage(
+          settings.getIn(['settings', 'mailerCheckDeleteMessage', 'value']) || ''
+        )
+      let ticketType = mailerCheckTicketType
+      if (!mailerCheckTicketType) {
+        ticketType = settings.getIn(['settings', 'mailerCheckTicketType', 'value']) || ''
+        setMailerCheckTicketType(ticketType)
+      }
+      if (ticketType) setTypePriorities(getTypePriorities(settings.get('ticketTypes'), ticketType))
+      if (!mailerCheckTicketPriority)
+        setMailerCheckTicketPriority(
+          settings.getIn(['settings', 'mailerCheckTicketPriority', 'value']) || ''
+        )
     }
+  }, [settings])
 
-    return null
-  }
+  const getSetting = useCallback(
+    stateName => {
+      return settings.getIn(['settings', stateName, 'value'])
+        ? settings.getIn(['settings', stateName, 'value'])
+        : ''
+    },
+    [settings]
+  )
 
-  getSetting (stateName) {
-    return this.props.settings.getIn(['settings', stateName, 'value'])
-      ? this.props.settings.getIn(['settings', stateName, 'value'])
-      : ''
-  }
+  const getTicketTypes = useCallback(() => {
+    return settings.get('ticketTypes') ? settings.get('ticketTypes').toArray() : []
+  }, [settings])
 
-  getTicketTypes () {
-    return this.props.settings.get('ticketTypes') ? this.props.settings.get('ticketTypes').toArray() : []
-  }
+  const onFormSubmit = useCallback(
+    e => {
+      e.preventDefault()
 
-  static getTypePriorities (ticketTypes, typeId) {
-    if (!ticketTypes && !typeId) return []
-    return ticketTypes
-      .filter(item => {
-        return item.get('_id') === typeId
-      })
-      .first()
-      .get('priorities')
-      .map(p => {
-        return { text: p.get('name'), value: p.get('_id') }
-      })
-      .toArray()
-  }
+      const mailCheckSettings = [
+        { name: 'mailer:check:polling', value: mailerCheckPolling * 60000 },
+        { name: 'mailer:check:host', value: mailerCheckHost },
+        { name: 'mailer:check:port', value: mailerCheckPort },
+        { name: 'mailer:check:username', value: mailerCheckUsername },
+        { name: 'mailer:check:password', value: mailerCheckPassword },
+        { name: 'mailer:check:selfsign', value: mailerCheckSelfSign },
+        { name: 'mailer:check:ticketype', value: mailerCheckTicketType },
+        { name: 'mailer:check:ticketpriority', value: mailerCheckTicketPriority },
+        { name: 'mailer:check:createaccount', value: mailerCheckCreateAccount },
+        { name: 'mailer:check:deletemessage', value: mailerCheckDeleteMessage }
+      ]
 
-  onFormSubmit (e) {
-    e.preventDefault()
-
-    const mailCheckSettings = [
-      { name: 'mailer:check:polling', value: this.state.mailerCheckPolling * 60000 },
-      { name: 'mailer:check:host', value: this.state.mailerCheckHost },
-      { name: 'mailer:check:port', value: this.state.mailerCheckPort },
-      { name: 'mailer:check:username', value: this.state.mailerCheckUsername },
-      { name: 'mailer:check:password', value: this.state.mailerCheckPassword },
-      { name: 'mailer:check:selfsign', value: this.state.mailerCheckSelfSign },
-      { name: 'mailer:check:ticketype', value: this.state.mailerCheckTicketType },
-      { name: 'mailer:check:ticketpriority', value: this.state.mailerCheckTicketPriority },
-      { name: 'mailer:check:createaccount', value: this.state.mailerCheckCreateAccount },
-      { name: 'mailer:check:deletemessage', value: this.state.mailerCheckDeleteMessage }
+      updateMultipleSettings(mailCheckSettings)
+    },
+    [
+      mailerCheckPolling,
+      mailerCheckHost,
+      mailerCheckPort,
+      mailerCheckUsername,
+      mailerCheckPassword,
+      mailerCheckSelfSign,
+      mailerCheckTicketType,
+      mailerCheckTicketPriority,
+      mailerCheckCreateAccount,
+      mailerCheckDeleteMessage,
+      updateMultipleSettings
     ]
+  )
 
-    this.props.updateMultipleSettings(mailCheckSettings)
-  }
-
-  onEnableMailerCheckChanged (e) {
-    const { t } = this.props
-    this.props
-      .updateSetting({
+  const onEnableMailerCheckChanged = useCallback(
+    e => {
+      updateSetting({
         name: 'mailer:check:enable',
         stateName: 'mailerCheckEnabled',
         value: e.target.checked,
         noSnackbar: true
-      })
-      .then(() => {
+      }).then(() => {
         UIKit.modal.confirm(
           t('settings.restartConfirm'),
           () => {
@@ -164,277 +169,279 @@ class Mailer_MailerCheck extends React.Component {
           }
         )
       })
-  }
+    },
+    [updateSetting, t]
+  )
 
-  onInputValueChanged (e, stateName) {
-    this.setState({
-      [stateName]: e.target.value
-    })
-  }
+  const onInputValueChanged = useCallback((e, stateName) => {
+    const value = e.target.value
+    if (stateName === 'mailerCheckHost') setMailerCheckHost(value)
+    else if (stateName === 'mailerCheckPort') setMailerCheckPort(value)
+    else if (stateName === 'mailerCheckUsername') setMailerCheckUsername(value)
+    else if (stateName === 'mailerCheckPassword') setMailerCheckPassword(value)
+  }, [])
 
-  onPollingChanged (e) {
-    this.setState({
-      mailerCheckPolling: e.target.value
-    })
-  }
+  const onPollingChanged = useCallback(e => {
+    setMailerCheckPolling(e.target.value)
+  }, [])
 
-  onCheckboxChanged (e, stateName) {
-    this.setState({
-      [stateName]: e.target.checked
-    })
-  }
+  const onCheckboxChanged = useCallback((e, stateName) => {
+    const checked = e.target.checked
+    if (stateName === 'mailerCheckSelfSign') setMailerCheckSelfSign(checked)
+    else if (stateName === 'mailerCheckCreateAccount') setMailerCheckCreateAccount(checked)
+    else if (stateName === 'mailerCheckDeleteMessage') setMailerCheckDeleteMessage(checked)
+  }, [])
 
-  onTicketTypeSelectChanged (e) {
-    this.setState({
-      mailerCheckTicketType: e.target.value,
-      typePriorities: Mailer_MailerCheck.getTypePriorities(this.props.settings.get('ticketTypes'), e.target.value)
-    })
-  }
+  const onTicketTypeSelectChanged = useCallback(
+    e => {
+      setMailerCheckTicketType(e.target.value)
+      setTypePriorities(getTypePriorities(settings.get('ticketTypes'), e.target.value))
+    },
+    [settings]
+  )
 
-  onSingleSelectChanged (e, stateName) {
-    this.setState({
-      [stateName]: e.target.value
-    })
-  }
+  const onSingleSelectChanged = useCallback((e, stateName) => {
+    if (stateName === 'mailerCheckTicketPriority') setMailerCheckTicketPriority(e.target.value)
+  }, [])
 
-  onCheckNowClicked (e) {
-    const { t } = this.props
-    axios
-      .get(`/api/v2/mailer/check`)
-      .then(function (res) {
-        if (res.data && res.data.success) helpers.UI.showSnackbar(t('settings.fetchMailScheduled'))
-      })
-      .catch(function (err) {
-        Log.error(err)
-        helpers.UI.showSnackbar(err, true)
-      })
-  }
+  const onCheckNowClicked = useCallback(
+    e => {
+      axios
+        .get(`/api/v2/mailer/check`)
+        .then(function (res) {
+          if (res.data && res.data.success) helpers.UI.showSnackbar(t('settings.fetchMailScheduled'))
+        })
+        .catch(function (err) {
+          Log.error(err)
+          helpers.UI.showSnackbar(err, true)
+        })
+    },
+    [t]
+  )
 
-  render () {
-    const { t } = this.props
-    const mappedTicketTypes = this.getTicketTypes().map(type => {
-      return { text: type.get('name'), value: type.get('_id') }
-    })
-    return (
-      <SettingItem
-        title={t('settings.mailerCheck')}
-        subtitle={
-          <div>
-            {t('settings.mailerCheckHint')} - <i>{t('settings.settingsAppliedAfterRestart')}</i>
-          </div>
-        }
-        component={
-          <EnableSwitch
-            stateName={'mailerCheckEnabled'}
-            label={t('settings.enabled')}
-            checked={this.getSetting('mailerCheckEnabled')}
-            onChange={e => this.onEnableMailerCheckChanged(e)}
-          />
-        }
-      >
+  const mappedTicketTypes = getTicketTypes().map(type => {
+    return { text: type.get('name'), value: type.get('_id') }
+  })
+
+  return (
+    <SettingItem
+      title={t('settings.mailerCheck')}
+      subtitle={
         <div>
-          <form onSubmit={e => this.onFormSubmit(e)}>
-            <div className='uk-margin-medium-bottom'>
-              <label>{t('settings.mailServer')}</label>
-              <input
-                type='text'
-                className={'md-input md-input-width-medium'}
-                name={'mailerCheckHost'}
-                value={this.state.mailerCheckHost}
-                onChange={e => this.onInputValueChanged(e, 'mailerCheckHost')}
-                disabled={!this.getSetting('mailerCheckEnabled')}
-              />
-            </div>
-            <div className='uk-margin-medium-bottom'>
-              <label>{t('settings.port')}</label>
-              <input
-                type='text'
-                className={'md-input md-input-width-medium'}
-                name={'mailerCheckPort'}
-                value={this.state.mailerCheckPort}
-                onChange={e => this.onInputValueChanged(e, 'mailerCheckPort')}
-                disabled={!this.getSetting('mailerCheckEnabled')}
-              />
-            </div>
-            <div className='uk-margin-medium-bottom'>
-              <label>{t('common.username')}</label>
-              <input
-                type='text'
-                className={'md-input md-input-width-medium'}
-                name={'mailerCheckUsername'}
-                value={this.state.mailerCheckUsername}
-                onChange={e => this.onInputValueChanged(e, 'mailerCheckUsername')}
-                disabled={!this.getSetting('mailerCheckEnabled')}
-              />
-            </div>
-            <div className='uk-margin-medium-bottom'>
-              <label>{t('common.password')}</label>
-              <input
-                type='password'
-                className={'md-input md-input-width-medium'}
-                name={'mailerCheckPassword'}
-                value={this.state.mailerCheckPassword}
-                onChange={e => this.onInputValueChanged(e, 'mailerCheckPassword')}
-                disabled={!this.getSetting('mailerCheckEnabled')}
-              />
-            </div>
-            <div className='uk-clearfix uk-margin-medium-bottom'>
-              <div className='uk-float-left'>
-                <h6 style={{ padding: 0, margin: '5px 0 0 0', fontSize: '16px', lineHeight: '14px' }}>
-                  {t('settings.allowSelfSignedCert')}
-                </h6>
-                <h5
-                  style={{ padding: '0 0 10px 0', margin: '2px 0 0 0', fontSize: '12px' }}
-                  className={'uk-text-muted'}
-                >
-                  {t('settings.allowSelfSignedCertHint')}
-                </h5>
-              </div>
-              <div className='uk-float-right'>
-                <EnableSwitch
-                  label={t('settings.enable')}
-                  stateName={'mailerCheckSelfSign'}
-                  checked={this.state.mailerCheckSelfSign}
-                  onChange={e => this.onCheckboxChanged(e, 'mailerCheckSelfSign')}
-                  disabled={!this.getSetting('mailerCheckEnabled')}
-                />
-              </div>
-              <hr style={{ float: 'left', marginTop: '10px' }} />
-            </div>
-            <div className='uk-clearfix uk-margin-medium-bottom'>
-              <div className='uk-float-left'>
-                <h6 style={{ padding: 0, margin: '5px 0 0 0', fontSize: '16px', lineHeight: '14px' }}>
-                  {t('settings.pollingInterval')}
-                  <i
-                    className={'material-icons'}
-                    style={{
-                      color: '#888',
-                      fontSize: '16px',
-                      cursor: 'pointer',
-                      lineHeight: '20px',
-                      marginLeft: '5px'
-                    }}
-                    data-uk-tooltip="{cls:'long-text'}"
-                    title={t('settings.pollingIntervalTooltip')}
-                  >
-                    error
-                  </i>
-                </h6>
-                <h5
-                  style={{ padding: '0 0 10px 0', margin: '2px 0 0 0', fontSize: '12px' }}
-                  className={'uk-text-muted'}
-                >
-                  {t('settings.pollingIntervalHint')}
-                </h5>
-              </div>
-              <div className='uk-float-right' style={{ position: 'relative' }}>
-                <div className='uk-float-left' style={{ width: '90px', paddingRight: '10px' }}>
-                  <input
-                    type={'number'}
-                    className={'md-input md-input-width-small'}
-                    name={'mailerCheckPolling'}
-                    disabled={!this.getSetting('mailerCheckEnabled')}
-                    value={this.state.mailerCheckPolling}
-                    onChange={e => this.onPollingChanged(e)}
-                  />
-                </div>
-              </div>
-              <hr style={{ float: 'left', marginTop: '10px' }} />
-            </div>
-            <div className='uk-clearfix uk-margin-medium-bottom'>
-              <div className='uk-float-left'>
-                <h6 style={{ padding: 0, margin: '5px 0 0 0', fontSize: '16px', lineHeight: '14px' }}>
-                  {t('settings.createAccount')}
-                </h6>
-                <h5
-                  style={{ padding: '0 0 10px 0', margin: '2px 0 0 0', fontSize: '12px' }}
-                  className={'uk-text-muted'}
-                >
-                  {t('settings.createAccountHint')}
-                </h5>
-              </div>
-              <div className='uk-float-right'>
-                <EnableSwitch
-                  label={t('settings.enable')}
-                  stateName={'mailerCheckCreateAccount'}
-                  checked={this.state.mailerCheckCreateAccount}
-                  onChange={e => this.onCheckboxChanged(e, 'mailerCheckCreateAccount')}
-                  disabled={!this.getSetting('mailerCheckEnabled')}
-                />
-              </div>
-              <hr style={{ float: 'left', marginTop: '10px' }} />
-            </div>
-            <div className='uk-clearfix uk-margin-medium-bottom'>
-              <div className='uk-float-left'>
-                <h6 style={{ padding: 0, margin: '5px 0 0 0', fontSize: '16px', lineHeight: '14px' }}>
-                  {t('settings.deleteMessage')}
-                </h6>
-                <h5
-                  style={{ padding: '0 0 10px 0', margin: '2px 0 0 0', fontSize: '12px' }}
-                  className={'uk-text-muted'}
-                >
-                  {t('settings.deleteMessageHint')}
-                </h5>
-              </div>
-              <div className='uk-float-right'>
-                <EnableSwitch
-                  label={t('settings.enable')}
-                  stateName={'mailerCheckDeleteMessage'}
-                  checked={this.state.mailerCheckDeleteMessage}
-                  onChange={e => this.onCheckboxChanged(e, 'mailerCheckDeleteMessage')}
-                  disabled={!this.getSetting('mailerCheckEnabled')}
-                />
-              </div>
-              <hr style={{ float: 'left', marginTop: '10px' }} />
-            </div>
-            <div className='uk-margin-medium-bottom uk-clearfix'>
-              <label>{t('settings.defaultTicketType')}</label>
-              <SingleSelect
-                showTextbox={false}
-                width={'100%'}
-                items={mappedTicketTypes}
-                defaultValue={this.state.mailerCheckTicketType}
-                disabled={!this.getSetting('mailerCheckEnabled')}
-                onSelectChange={e => this.onTicketTypeSelectChanged(e)}
-              />
-            </div>
-            <div className='uk-margin-medium-bottom uk-clearfix'>
-              <label>{t('settings.defaultTicketPriority')}</label>
-              <SingleSelect
-                showTextbox={false}
-                width={'100%'}
-                items={this.state.typePriorities}
-                defaultValue={this.state.mailerCheckTicketPriority}
-                disabled={!this.getSetting('mailerCheckEnabled')}
-                onSelectChange={e => this.onSingleSelectChanged(e, 'mailerCheckTicketPriority')}
-              />
-            </div>
-            <div className='uk-clearfix'>
-              <Button
-                text={t('settings.checkNow')}
-                type={'button'}
-                extraClass={'uk-float-left'}
-                flat={true}
-                waves={true}
-                style={'primary'}
-                onClick={e => this.onCheckNowClicked(e)}
-                disabled={!this.getSetting('mailerCheckEnabled')}
-              />
-              <Button
-                text={t('settings.apply')}
-                type={'submit'}
-                extraClass={'uk-float-right'}
-                flat={true}
-                waves={true}
-                style={'success'}
-                disabled={!this.getSetting('mailerCheckEnabled')}
-              />
-            </div>
-          </form>
+          {t('settings.mailerCheckHint')} - <i>{t('settings.settingsAppliedAfterRestart')}</i>
         </div>
-      </SettingItem>
-    )
-  }
+      }
+      component={
+        <EnableSwitch
+          stateName={'mailerCheckEnabled'}
+          label={t('settings.enabled')}
+          checked={getSetting('mailerCheckEnabled')}
+          onChange={e => onEnableMailerCheckChanged(e)}
+        />
+      }
+    >
+      <div>
+        <form onSubmit={e => onFormSubmit(e)}>
+          <div className='uk-margin-medium-bottom'>
+            <label>{t('settings.mailServer')}</label>
+            <input
+              type='text'
+              className={'md-input md-input-width-medium'}
+              name={'mailerCheckHost'}
+              value={mailerCheckHost}
+              onChange={e => onInputValueChanged(e, 'mailerCheckHost')}
+              disabled={!getSetting('mailerCheckEnabled')}
+            />
+          </div>
+          <div className='uk-margin-medium-bottom'>
+            <label>{t('settings.port')}</label>
+            <input
+              type='text'
+              className={'md-input md-input-width-medium'}
+              name={'mailerCheckPort'}
+              value={mailerCheckPort}
+              onChange={e => onInputValueChanged(e, 'mailerCheckPort')}
+              disabled={!getSetting('mailerCheckEnabled')}
+            />
+          </div>
+          <div className='uk-margin-medium-bottom'>
+            <label>{t('common.username')}</label>
+            <input
+              type='text'
+              className={'md-input md-input-width-medium'}
+              name={'mailerCheckUsername'}
+              value={mailerCheckUsername}
+              onChange={e => onInputValueChanged(e, 'mailerCheckUsername')}
+              disabled={!getSetting('mailerCheckEnabled')}
+            />
+          </div>
+          <div className='uk-margin-medium-bottom'>
+            <label>{t('common.password')}</label>
+            <input
+              type='password'
+              className={'md-input md-input-width-medium'}
+              name={'mailerCheckPassword'}
+              value={mailerCheckPassword}
+              onChange={e => onInputValueChanged(e, 'mailerCheckPassword')}
+              disabled={!getSetting('mailerCheckEnabled')}
+            />
+          </div>
+          <div className='uk-clearfix uk-margin-medium-bottom'>
+            <div className='uk-float-left'>
+              <h6 style={{ padding: 0, margin: '5px 0 0 0', fontSize: '16px', lineHeight: '14px' }}>
+                {t('settings.allowSelfSignedCert')}
+              </h6>
+              <h5
+                style={{ padding: '0 0 10px 0', margin: '2px 0 0 0', fontSize: '12px' }}
+                className={'uk-text-muted'}
+              >
+                {t('settings.allowSelfSignedCertHint')}
+              </h5>
+            </div>
+            <div className='uk-float-right'>
+              <EnableSwitch
+                label={t('settings.enable')}
+                stateName={'mailerCheckSelfSign'}
+                checked={mailerCheckSelfSign}
+                onChange={e => onCheckboxChanged(e, 'mailerCheckSelfSign')}
+                disabled={!getSetting('mailerCheckEnabled')}
+              />
+            </div>
+            <hr style={{ float: 'left', marginTop: '10px' }} />
+          </div>
+          <div className='uk-clearfix uk-margin-medium-bottom'>
+            <div className='uk-float-left'>
+              <h6 style={{ padding: 0, margin: '5px 0 0 0', fontSize: '16px', lineHeight: '14px' }}>
+                {t('settings.pollingInterval')}
+                <i
+                  className={'material-icons'}
+                  style={{
+                    color: '#888',
+                    fontSize: '16px',
+                    cursor: 'pointer',
+                    lineHeight: '20px',
+                    marginLeft: '5px'
+                  }}
+                  data-uk-tooltip="{cls:'long-text'}"
+                  title={t('settings.pollingIntervalTooltip')}
+                >
+                  error
+                </i>
+              </h6>
+              <h5
+                style={{ padding: '0 0 10px 0', margin: '2px 0 0 0', fontSize: '12px' }}
+                className={'uk-text-muted'}
+              >
+                {t('settings.pollingIntervalHint')}
+              </h5>
+            </div>
+            <div className='uk-float-right' style={{ position: 'relative' }}>
+              <div className='uk-float-left' style={{ width: '90px', paddingRight: '10px' }}>
+                <input
+                  type={'number'}
+                  className={'md-input md-input-width-small'}
+                  name={'mailerCheckPolling'}
+                  disabled={!getSetting('mailerCheckEnabled')}
+                  value={mailerCheckPolling}
+                  onChange={e => onPollingChanged(e)}
+                />
+              </div>
+            </div>
+            <hr style={{ float: 'left', marginTop: '10px' }} />
+          </div>
+          <div className='uk-clearfix uk-margin-medium-bottom'>
+            <div className='uk-float-left'>
+              <h6 style={{ padding: 0, margin: '5px 0 0 0', fontSize: '16px', lineHeight: '14px' }}>
+                {t('settings.createAccount')}
+              </h6>
+              <h5
+                style={{ padding: '0 0 10px 0', margin: '2px 0 0 0', fontSize: '12px' }}
+                className={'uk-text-muted'}
+              >
+                {t('settings.createAccountHint')}
+              </h5>
+            </div>
+            <div className='uk-float-right'>
+              <EnableSwitch
+                label={t('settings.enable')}
+                stateName={'mailerCheckCreateAccount'}
+                checked={mailerCheckCreateAccount}
+                onChange={e => onCheckboxChanged(e, 'mailerCheckCreateAccount')}
+                disabled={!getSetting('mailerCheckEnabled')}
+              />
+            </div>
+            <hr style={{ float: 'left', marginTop: '10px' }} />
+          </div>
+          <div className='uk-clearfix uk-margin-medium-bottom'>
+            <div className='uk-float-left'>
+              <h6 style={{ padding: 0, margin: '5px 0 0 0', fontSize: '16px', lineHeight: '14px' }}>
+                {t('settings.deleteMessage')}
+              </h6>
+              <h5
+                style={{ padding: '0 0 10px 0', margin: '2px 0 0 0', fontSize: '12px' }}
+                className={'uk-text-muted'}
+              >
+                {t('settings.deleteMessageHint')}
+              </h5>
+            </div>
+            <div className='uk-float-right'>
+              <EnableSwitch
+                label={t('settings.enable')}
+                stateName={'mailerCheckDeleteMessage'}
+                checked={mailerCheckDeleteMessage}
+                onChange={e => onCheckboxChanged(e, 'mailerCheckDeleteMessage')}
+                disabled={!getSetting('mailerCheckEnabled')}
+              />
+            </div>
+            <hr style={{ float: 'left', marginTop: '10px' }} />
+          </div>
+          <div className='uk-margin-medium-bottom uk-clearfix'>
+            <label>{t('settings.defaultTicketType')}</label>
+            <SingleSelect
+              showTextbox={false}
+              width={'100%'}
+              items={mappedTicketTypes}
+              defaultValue={mailerCheckTicketType}
+              disabled={!getSetting('mailerCheckEnabled')}
+              onSelectChange={e => onTicketTypeSelectChanged(e)}
+            />
+          </div>
+          <div className='uk-margin-medium-bottom uk-clearfix'>
+            <label>{t('settings.defaultTicketPriority')}</label>
+            <SingleSelect
+              showTextbox={false}
+              width={'100%'}
+              items={typePriorities}
+              defaultValue={mailerCheckTicketPriority}
+              disabled={!getSetting('mailerCheckEnabled')}
+              onSelectChange={e => onSingleSelectChanged(e, 'mailerCheckTicketPriority')}
+            />
+          </div>
+          <div className='uk-clearfix'>
+            <Button
+              text={t('settings.checkNow')}
+              type={'button'}
+              extraClass={'uk-float-left'}
+              flat={true}
+              waves={true}
+              style={'primary'}
+              onClick={e => onCheckNowClicked(e)}
+              disabled={!getSetting('mailerCheckEnabled')}
+            />
+            <Button
+              text={t('settings.apply')}
+              type={'submit'}
+              extraClass={'uk-float-right'}
+              flat={true}
+              waves={true}
+              style={'success'}
+              disabled={!getSetting('mailerCheckEnabled')}
+            />
+          </div>
+        </form>
+      </div>
+    </SettingItem>
+  )
 }
 
 Mailer_MailerCheck.propTypes = {

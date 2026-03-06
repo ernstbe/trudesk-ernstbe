@@ -12,7 +12,7 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-import React from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 
@@ -20,61 +20,47 @@ import helpers from 'lib/helpers'
 
 import { updateSetting } from 'actions/settings'
 
-class NumberWithSave extends React.Component {
-  constructor (props) {
-    super(props)
-    this.state = {
-      value: this.props.value
-    }
-  }
+const NumberWithSave = ({ updateSetting, settingName, stateName, value: propValue, width }) => {
+  const [value, setValue] = useState(propValue)
 
-  componentDidMount () {
+  useEffect(() => {
     helpers.UI.inputs()
-  }
+  }, [])
 
-  static getDerivedStateFromProps (nextProps, state) {
-    if (!state.value) {
-      return {
-        value: nextProps.value
-      }
+  useEffect(() => {
+    if (!value) {
+      setValue(propValue)
     }
+  }, [propValue])
 
-    return null
-  }
+  const onSaveClicked = useCallback(() => {
+    updateSetting({ name: settingName, value: value, stateName: stateName })
+  }, [updateSetting, settingName, value, stateName])
 
-  onSaveClicked () {
-    this.props.updateSetting({ name: this.props.settingName, value: this.state.value, stateName: this.props.stateName })
-  }
+  const updateValue = useCallback((evt) => {
+    setValue(evt.target.value)
+  }, [])
 
-  updateValue (evt) {
-    this.setState({
-      value: evt.target.value
-    })
-  }
+  const w = width || '75%'
 
-  render () {
-    let width = '75%'
-    if (this.props.width) width = this.props.width
-
-    return (
-      <div className='uk-width-3-4 uk-float-right'>
-        <div className='uk-width-1-4 uk-float-right' style={{ marginTop: '10px', textAlign: 'center' }}>
-          <button className='md-btn md-btn-small' onClick={e => this.onSaveClicked(e)}>
-            Save
-          </button>
-        </div>
-        <div className='uk-width-3-4 uk-float-right' style={{ paddingRight: '10px', width: width }}>
-          <input
-            id={this.props.stateName}
-            className='md-input'
-            type='number'
-            value={this.state.value}
-            onChange={evt => this.updateValue(evt)}
-          />
-        </div>
+  return (
+    <div className='uk-width-3-4 uk-float-right'>
+      <div className='uk-width-1-4 uk-float-right' style={{ marginTop: '10px', textAlign: 'center' }}>
+        <button className='md-btn md-btn-small' onClick={onSaveClicked}>
+          Save
+        </button>
       </div>
-    )
-  }
+      <div className='uk-width-3-4 uk-float-right' style={{ paddingRight: '10px', width: w }}>
+        <input
+          id={stateName}
+          className='md-input'
+          type='number'
+          value={value}
+          onChange={updateValue}
+        />
+      </div>
+    </div>
+  )
 }
 
 NumberWithSave.propTypes = {

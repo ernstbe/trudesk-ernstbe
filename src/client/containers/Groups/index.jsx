@@ -12,7 +12,7 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-import React from 'react'
+import React, { useEffect, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 
@@ -34,21 +34,26 @@ import ButtonGroup from 'components/ButtonGroup'
 import UIKit from 'uikit'
 import helpers from 'lib/helpers'
 
-class GroupsContainer extends React.Component {
-  componentDidMount () {
-    this.props.fetchGroups({ type: 'all' })
-  }
+function GroupsContainer ({
+  groups,
+  fetchGroups: fetchGroupsAction,
+  deleteGroup: deleteGroupAction,
+  showModal: showModalAction,
+  t
+}) {
+  useEffect(() => {
+    fetchGroupsAction({ type: 'all' })
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  onCreateGroupClick () {
-    this.props.showModal('CREATE_GROUP')
-  }
+  const onCreateGroupClick = useCallback(() => {
+    showModalAction('CREATE_GROUP')
+  }, [showModalAction])
 
-  onEditGroupClick (group) {
-    this.props.showModal('EDIT_GROUP', { group })
-  }
+  const onEditGroupClick = useCallback((group) => {
+    showModalAction('EDIT_GROUP', { group })
+  }, [showModalAction])
 
-  onDeleteGroupClick (_id) {
-    const { t } = this.props
+  const onDeleteGroupClick = useCallback((_id) => {
     UIKit.modal.confirm(
       `<h2>${t('modals.areYouSure')}</h2>
         <p style="font-size: 15px;">
@@ -60,98 +65,94 @@ class GroupsContainer extends React.Component {
         <span>${t('groups.deleteAssociatedWarning')}</span>
         `,
       () => {
-        this.props.deleteGroup({ _id })
+        deleteGroupAction({ _id })
       },
       {
         labels: { Ok: t('common.yes'), Cancel: t('common.no') },
         confirmButtonClass: 'md-btn-danger'
       }
     )
-  }
+  }, [t, deleteGroupAction])
 
-  render () {
-    const { groups, t } = this.props
-
-    const tableItems = groups.map(group => {
-      return (
-        <TableRow key={group.get('_id')} className={'vam nbb'}>
-          <TableCell style={{ fontWeight: 500, padding: '18px 15px' }}>{group.get('name')}</TableCell>
-          <TableCell style={{ padding: '13px 20px 8px 8px' }}>
-            {group.get('members') &&
-              group.get('members').size > 0 &&
-              group
-                .get('members')
-                .filter(user => {
-                  return !user.get('deleted')
-                })
-                .map(user => {
-                  const profilePic = user.get('image') || 'defaultProfile.jpg'
-                  return (
-                    <div
-                      key={user.get('_id')}
-                      className={'uk-float-left uk-position-relative mb-10'}
-                      data-uk-tooltip={'{pos: "bottom"}'}
-                      title={user.get('fullname')}
-                    >
-                      <Avatar size={25} style={{ marginRight: 5 }} image={profilePic} userId={user.get('_id')} />
-                    </div>
-                  )
-                })}
-            {!group.get('members') && <div />}
-          </TableCell>
-          <TableCell style={{ textAlign: 'right', paddingRight: 15 }}>
-            <ButtonGroup>
-              {helpers.canUser('groups:update', true) && (
-                <Button text={t('common.edit')} small={true} waves={true} onClick={() => this.onEditGroupClick(group.toJS())} />
-              )}
-              {helpers.canUser('groups:delete', true) && (
-                <Button
-                  text={t('common.delete')}
-                  style={'danger'}
-                  small={true}
-                  waves={true}
-                  onClick={() => this.onDeleteGroupClick(group.get('_id'))}
-                />
-              )}
-            </ButtonGroup>
-          </TableCell>
-        </TableRow>
-      )
-    })
-
+  const tableItems = groups.map(group => {
     return (
-      <div>
-        <PageTitle
-          title={t('groups.title')}
-          rightComponent={
-            <div className={'uk-grid uk-grid-collapse'}>
-              <div className={'uk-width-1-1 mt-15 uk-text-right'}>
-                <Button
-                  text={t('common.create')}
-                  flat={false}
-                  small={true}
-                  waves={false}
-                  extraClass={'hover-accent'}
-                  onClick={() => this.onCreateGroupClick()}
-                />
-              </div>
-            </div>
-          }
-        />
-        <PageContent padding={0} paddingBottom={0}>
-          <Table
-            headers={[
-              <TableHeader key={0} width={'25%'} height={40} text={t('common.name')} padding={'8px 8px 8px 15px'} />,
-              <TableHeader key={1} width={'50%'} text={t('groups.groupMembers')} />,
-              <TableHeader key={2} width={130} text={t('groups.groupActions')} />
-            ]}
-          >
-            {tableItems}
-          </Table>
-        </PageContent>
-      </div>
+      <TableRow key={group.get('_id')} className={'vam nbb'}>
+        <TableCell style={{ fontWeight: 500, padding: '18px 15px' }}>{group.get('name')}</TableCell>
+        <TableCell style={{ padding: '13px 20px 8px 8px' }}>
+          {group.get('members') &&
+            group.get('members').size > 0 &&
+            group
+              .get('members')
+              .filter(user => {
+                return !user.get('deleted')
+              })
+              .map(user => {
+                const profilePic = user.get('image') || 'defaultProfile.jpg'
+                return (
+                  <div
+                    key={user.get('_id')}
+                    className={'uk-float-left uk-position-relative mb-10'}
+                    data-uk-tooltip={'{pos: "bottom"}'}
+                    title={user.get('fullname')}
+                  >
+                    <Avatar size={25} style={{ marginRight: 5 }} image={profilePic} userId={user.get('_id')} />
+                  </div>
+                )
+              })}
+          {!group.get('members') && <div />}
+        </TableCell>
+        <TableCell style={{ textAlign: 'right', paddingRight: 15 }}>
+          <ButtonGroup>
+            {helpers.canUser('groups:update', true) && (
+              <Button text={t('common.edit')} small={true} waves={true} onClick={() => onEditGroupClick(group.toJS())} />
+            )}
+            {helpers.canUser('groups:delete', true) && (
+              <Button
+                text={t('common.delete')}
+                style={'danger'}
+                small={true}
+                waves={true}
+                onClick={() => onDeleteGroupClick(group.get('_id'))}
+              />
+            )}
+          </ButtonGroup>
+        </TableCell>
+      </TableRow>
     )
-  }
+  })
+
+  return (
+    <div>
+      <PageTitle
+        title={t('groups.title')}
+        rightComponent={
+          <div className={'uk-grid uk-grid-collapse'}>
+            <div className={'uk-width-1-1 mt-15 uk-text-right'}>
+              <Button
+                text={t('common.create')}
+                flat={false}
+                small={true}
+                waves={false}
+                extraClass={'hover-accent'}
+                onClick={() => onCreateGroupClick()}
+              />
+            </div>
+          </div>
+        }
+      />
+      <PageContent padding={0} paddingBottom={0}>
+        <Table
+          headers={[
+            <TableHeader key={0} width={'25%'} height={40} text={t('common.name')} padding={'8px 8px 8px 15px'} />,
+            <TableHeader key={1} width={'50%'} text={t('groups.groupMembers')} />,
+            <TableHeader key={2} width={130} text={t('groups.groupActions')} />
+          ]}
+        >
+          {tableItems}
+        </Table>
+      </PageContent>
+    </div>
+  )
 }
 
 GroupsContainer.propTypes = {

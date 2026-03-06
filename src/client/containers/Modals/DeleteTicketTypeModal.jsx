@@ -12,7 +12,7 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-import React from 'react'
+import React, { useState, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import { withTranslation } from 'react-i18next'
@@ -23,78 +23,69 @@ import SingleSelect from 'components/SingleSelect'
 
 import helpers from 'lib/helpers'
 
-class DeleteTicketTypeModal extends React.Component {
-  constructor (props) {
-    super(props)
-    this.state = {
-      selectedType: ''
-    }
-  }
+const DeleteTicketTypeModal = ({ type, settings, deleteTicketType, t, ...rest }) => {
+  const [selectedType, setSelectedType] = useState('')
 
-  getTicketTypes () {
-    return this.props.settings && this.props.settings.get('ticketTypes')
-      ? this.props.settings.get('ticketTypes').toArray()
+  const getTicketTypes = useCallback(() => {
+    return settings && settings.get('ticketTypes')
+      ? settings.get('ticketTypes').toArray()
       : []
-  }
+  }, [settings])
 
-  onSelectChanged (e) {
-    this.setState({
-      selectedType: e.target.value
-    })
-  }
+  const onSelectChanged = useCallback((e) => {
+    setSelectedType(e.target.value)
+  }, [])
 
-  onFormSubmit (e) {
+  const onFormSubmit = useCallback((e) => {
     e.preventDefault()
-    if (!this.state.selectedType) {
+    if (!selectedType) {
       helpers.UI.showSnackbar('Unable to get new ticket type. Aborting...', true)
       return true
     }
 
-    this.props.deleteTicketType(this.props.type.get('_id'), this.state.selectedType)
-  }
+    deleteTicketType(type.get('_id'), selectedType)
+  }, [selectedType, type, deleteTicketType])
 
-  render () {
-    const { type, t } = this.props
-    const mappedTypes = this.getTicketTypes()
-      .filter(obj => {
-        return type.get('name') !== obj.get('name')
-      })
-      .map(item => {
-        return { text: item.get('name'), value: item.get('_id') }
-      })
-    return (
-      <BaseModal {...this.props} options={{ bgclose: false }}>
-        <form className={'uk-form-stacked'} onSubmit={e => this.onFormSubmit(e)}>
-          <div className='uk-margin-medium-bottom uk-clearfix'>
-            <h2>{t('modals.deleteType.title')}</h2>
-            <span>{t('modals.deleteType.hint')}</span>
+  const mappedTypes = getTicketTypes()
+    .filter(obj => {
+      return type.get('name') !== obj.get('name')
+    })
+    .map(item => {
+      return { text: item.get('name'), value: item.get('_id') }
+    })
+
+  return (
+    <BaseModal {...rest} type={type} settings={settings} deleteTicketType={deleteTicketType} t={t} options={{ bgclose: false }}>
+      <form className={'uk-form-stacked'} onSubmit={e => onFormSubmit(e)}>
+        <div className='uk-margin-medium-bottom uk-clearfix'>
+          <h2>{t('modals.deleteType.title')}</h2>
+          <span>{t('modals.deleteType.hint')}</span>
+        </div>
+        <div className='uk-margin-medium-bottom uk-clearfix'>
+          <div className='uk-float-left' style={{ width: '100%' }}>
+            <label className={'uk-form-label nopadding nomargin'}>{t('common.type')}</label>
+            <SingleSelect
+              showTextbox={false}
+              items={mappedTypes}
+              onSelectChange={e => onSelectChanged(e)}
+              value={selectedType}
+            />
           </div>
-          <div className='uk-margin-medium-bottom uk-clearfix'>
-            <div className='uk-float-left' style={{ width: '100%' }}>
-              <label className={'uk-form-label nopadding nomargin'}>{t('common.type')}</label>
-              <SingleSelect
-                showTextbox={false}
-                items={mappedTypes}
-                onSelectChange={e => this.onSelectChanged(e)}
-                value={this.state.selectedType}
-              />
-            </div>
-          </div>
-          <div className='uk-margin-medium-bottom uk-clearfix'>
-            <span className='uk-text-danger'>
-              {t('modals.deleteType.warning')} <strong>{type.get('name')}</strong> {t('modals.deleteType.toSelected')}
-              <br />
-              <strong>{t('modals.deleteRole.permanent')}</strong>
-            </span>
-          </div>
-          <div className='uk-modal-footer uk-text-right'>
-            <Button text={t('common.cancel')} flat={true} waves={true} extraClass={'uk-modal-close'} />
-            <Button text={t('common.delete')} style={'danger'} flat={true} type={'submit'} />
-          </div>
-        </form>
-      </BaseModal>
-    )
-  }
+        </div>
+        <div className='uk-margin-medium-bottom uk-clearfix'>
+          <span className='uk-text-danger'>
+            {t('modals.deleteType.warning')} <strong>{type.get('name')}</strong> {t('modals.deleteType.toSelected')}
+            <br />
+            <strong>{t('modals.deleteRole.permanent')}</strong>
+          </span>
+        </div>
+        <div className='uk-modal-footer uk-text-right'>
+          <Button text={t('common.cancel')} flat={true} waves={true} extraClass={'uk-modal-close'} />
+          <Button text={t('common.delete')} style={'danger'} flat={true} type={'submit'} />
+        </div>
+      </form>
+    </BaseModal>
+  )
 }
 
 DeleteTicketTypeModal.propTypes = {

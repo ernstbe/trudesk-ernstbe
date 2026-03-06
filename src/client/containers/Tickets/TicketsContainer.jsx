@@ -11,11 +11,9 @@
  *  Copyright (c) 2014-2019 Trudesk, Inc. All rights reserved.
  */
 
-import React from 'react'
+import React, { useEffect, useRef, useState, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
-import { observer } from 'mobx-react'
-import { makeObservable, observable } from 'mobx'
 import { withTranslation } from 'react-i18next'
 import { each, without, uniq } from 'lodash'
 
@@ -50,38 +48,87 @@ import anime from 'animejs'
 import moment from 'moment-timezone'
 import SearchResults from 'components/SearchResults'
 
-@observer
-class TicketsContainer extends React.Component {
-  @observable searchTerm = ''
+function TicketsContainer (props) {
+  const {
+    socket,
+    view = 'active',
+    page = 0,
+    prevPage,
+    nextPage,
+    prevEnabled = true,
+    nextEnabled = true,
+    tickets,
+    totalCount,
+    loading,
+    fetchTickets: propsFetchTickets,
+    deleteTicket: propsDeleteTicket,
+    ticketEvent: propsTicketEvent,
+    unloadTickets: propsUnloadTickets,
+    ticketUpdated: propsTicketUpdated,
+    showModal: propsShowModal,
+    fetchSearchResults: propsFetchSearchResults,
+    common,
+    filter,
+    ticketStatuses,
+    fetchTicketStatus: propsFetchTicketStatus,
+    t
+  } = props
 
-  selectedTickets = []
-  constructor (props) {
-    super(props)
-    makeObservable(this)
+  const [searchTerm, setSearchTerm] = useState('')
+  const selectedTicketsRef = useRef([])
+  const ticketsTableRef = useRef(null)
+  const selectAllCheckboxRef = useRef(null)
+  const searchContainerRef = useRef(null)
+  const timelineRef = useRef(null)
 
-    this.onTicketCreated = this.onTicketCreated.bind(this)
-    this.onTicketUpdated = this.onTicketUpdated.bind(this)
-    this.onTicketDeleted = this.onTicketDeleted.bind(this)
-  }
+  const onTicketCreated = useCallback(
+    ticket => {
+      if (page === '0') propsTicketEvent({ type: 'created', data: ticket })
+    },
+    [page, propsTicketEvent]
+  )
 
-  componentDidMount () {
-    this.props.socket.on('$trudesk:client:ticket:created', this.onTicketCreated)
-    this.props.socket.on('$trudesk:client:ticket:updated', this.onTicketUpdated)
-    this.props.socket.on('$trudesk:client:ticket:deleted', this.onTicketDeleted)
+  const onTicketUpdated = useCallback(
+    data => {
+      propsTicketUpdated(data)
+    },
+    [propsTicketUpdated]
+  )
 
-    this.props.fetchTickets({ limit: 50, page: this.props.page, type: this.props.view, filter: this.props.filter })
-    this.props.fetchTicketStatus()
-  }
+  const onTicketDeleted = useCallback(
+    id => {
+      propsTicketEvent({ type: 'deleted', data: id })
+    },
+    [propsTicketEvent]
+  )
 
-  componentDidUpdate () {
-    if (this.timeline) {
-      this.timeline.pause()
-      this.timeline.seek(0)
+  useEffect(() => {
+    socket.on('$trudesk:client:ticket:created', onTicketCreated)
+    socket.on('$trudesk:client:ticket:updated', onTicketUpdated)
+    socket.on('$trudesk:client:ticket:deleted', onTicketDeleted)
+
+    propsFetchTickets({ limit: 50, page: page, type: view, filter: filter })
+    propsFetchTicketStatus()
+
+    return () => {
+      anime.remove('tr.overdue td')
+      timelineRef.current = null
+      propsUnloadTickets()
+      socket.off('$trudesk:client:ticket:created', onTicketCreated)
+      socket.off('$trudesk:client:ticket:updated', onTicketUpdated)
+      socket.off('$trudesk:client:ticket:deleted', onTicketDeleted)
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (timelineRef.current) {
+      timelineRef.current.pause()
+      timelineRef.current.seek(0)
     }
 
     anime.remove('tr.overdue td')
 
-    this.timeline = anime.timeline({
+    timelineRef.current = anime.timeline({
       direction: 'alternate',
       duration: 800,
       autoPlay: false,
@@ -90,356 +137,328 @@ class TicketsContainer extends React.Component {
       backgroundColor: 'blue'
     })
 
-    this.timeline.add({
+    timelineRef.current.add({
       targets: 'tr.overdue td',
       backgroundColor: '#b71c1c',
       color: '#ffffff'
     })
 
-    this.timeline.play()
-  }
+    timelineRef.current.play()
+  })
 
-  componentWillUnmount () {
-    anime.remove('tr.overdue td')
-    this.timeline = null
-    this.props.unloadTickets()
-    this.props.socket.off('$trudesk:client:ticket:created', this.onTicketCreated)
-    this.props.socket.off('$trudesk:client:ticket:updated', this.onTicketUpdated)
-    this.props.socket.off('$trudesk:client:ticket:deleted', this.onTicketDeleted)
-  }
-
-  onTicketCreated (ticket) {
-    if (this.props.page === '0') this.props.ticketEvent({ type: 'created', data: ticket })
-  }
-
-  onTicketUpdated (data) {
-    this.props.ticketUpdated(data)
-  }
-
-  onTicketDeleted (id) {
-    this.props.ticketEvent({ type: 'deleted', data: id })
-  }
-
-  onTicketCheckChanged (e, id) {
-    if (e.target.checked) this.selectedTickets.push(id)
-    else this.selectedTickets = without(this.selectedTickets, id)
-
-    this.selectedTickets = uniq(this.selectedTickets)
-  }
-
-  onSetStatus (status) {
-    const { t } = this.props
-    const batch = this.selectedTickets.map(id => {
-      return { id, status: status.get('_id') }
-    })
-
-    axios
-      .put(`/api/v2/tickets/batch`, { batch })
-      .then(res => {
-        if (res.data.success) {
-          helpers.UI.showSnackbar({ text: t('tickets.statusSetTo', { status: status.get('name') }) })
-          this._clearChecked()
-        } else {
-          helpers.UI.showSnackbar(t('errors.general'), true)
-          Log.error(res.data.error)
-        }
-      })
-      .catch(error => {
-        Log.error(error)
-        helpers.UI.showSnackbar(t('errors.general'), true)
-      })
-  }
-
-  onDeleteClicked () {
-    each(this.selectedTickets, id => {
-      this.props.deleteTicket({ id })
-    })
-
-    this._clearChecked()
-  }
-
-  onSearchTermChanged (e) {
-    this.searchTerm = e.target.value
-    if (this.searchTerm.length > 3) {
-      SearchResults.toggleAnimation(true, true)
-      this.props.fetchSearchResults({ term: this.searchTerm })
-    } else {
-      SearchResults.toggleAnimation(true, false)
-    }
-  }
-
-  _onSearchFocus (e) {
-    if (this.searchTerm.length > 3) SearchResults.toggleAnimation(true, true)
-  }
-
-  onSearchKeypress (e) {
-    if (this.searchTerm.length > 3) this.props.fetchSearchResults({ term: this.searchTerm })
-
-    // e.persist()
-    // if (e.charCode === 13) {
-    //   const searchString = e.target.value
-    //   if (searchString.length < 1) this.props.unloadTickets().then(this.props.fetchTickets({ type: this.props.view }))
-    //   else this.props.unloadTickets().then(this.props.fetchTickets({ type: 'search', searchString }))
-    // }
-  }
-
-  _selectAll () {
-    this.selectedTickets = []
-    const checkboxes = this.ticketsTable.querySelectorAll('td > input[type="checkbox"]')
-    checkboxes.forEach(item => {
-      this.selectedTickets.push(item.dataset.ticket)
-      item.checked = true
-    })
-
-    this.selectedTickets = uniq(this.selectedTickets)
-  }
-
-  _clearChecked () {
-    this.selectedTickets = []
-    const checkboxes = this.ticketsTable.querySelectorAll('td > input[type="checkbox"]')
+  const _clearChecked = useCallback(() => {
+    selectedTicketsRef.current = []
+    const checkboxes = ticketsTableRef.current.querySelectorAll('td > input[type="checkbox"]')
     checkboxes.forEach(item => {
       item.checked = false
     })
 
-    this.selectAllCheckbox.checked = false
-  }
+    selectAllCheckboxRef.current.checked = false
+  }, [])
 
-  onSelectAll (e) {
-    if (e.target.checked) this._selectAll()
-    else this._clearChecked()
-  }
+  const _selectAll = useCallback(() => {
+    selectedTicketsRef.current = []
+    const checkboxes = ticketsTableRef.current.querySelectorAll('td > input[type="checkbox"]')
+    checkboxes.forEach(item => {
+      selectedTicketsRef.current.push(item.dataset.ticket)
+      item.checked = true
+    })
 
-  render () {
-    const loadingItems = []
-    for (let i = 0; i < 51; i++) {
-      const cells = []
-      for (let k = 0; k < 10; k++) {
-        cells.push(
-          <TableCell key={k} className={'vam'}>
-            <div className={'loadingTextAnimation'} />
-          </TableCell>
-        )
+    selectedTicketsRef.current = uniq(selectedTicketsRef.current)
+  }, [])
+
+  const onTicketCheckChanged = useCallback((e, id) => {
+    if (e.target.checked) selectedTicketsRef.current.push(id)
+    else selectedTicketsRef.current = without(selectedTicketsRef.current, id)
+
+    selectedTicketsRef.current = uniq(selectedTicketsRef.current)
+  }, [])
+
+  const onSetStatus = useCallback(
+    status => {
+      const batch = selectedTicketsRef.current.map(id => {
+        return { id, status: status.get('_id') }
+      })
+
+      axios
+        .put(`/api/v2/tickets/batch`, { batch })
+        .then(res => {
+          if (res.data.success) {
+            helpers.UI.showSnackbar({ text: t('tickets.statusSetTo', { status: status.get('name') }) })
+            _clearChecked()
+          } else {
+            helpers.UI.showSnackbar(t('errors.general'), true)
+            Log.error(res.data.error)
+          }
+        })
+        .catch(error => {
+          Log.error(error)
+          helpers.UI.showSnackbar(t('errors.general'), true)
+        })
+    },
+    [t, _clearChecked]
+  )
+
+  const onDeleteClicked = useCallback(() => {
+    each(selectedTicketsRef.current, id => {
+      propsDeleteTicket({ id })
+    })
+
+    _clearChecked()
+  }, [propsDeleteTicket, _clearChecked])
+
+  const onSearchTermChanged = useCallback(
+    e => {
+      const value = e.target.value
+      setSearchTerm(value)
+      if (value.length > 3) {
+        SearchResults.toggleAnimation(true, true)
+        propsFetchSearchResults({ term: value })
+      } else {
+        SearchResults.toggleAnimation(true, false)
       }
+    },
+    [propsFetchSearchResults]
+  )
 
-      loadingItems.push(<TableRow key={Math.random()}>{cells}</TableRow>)
+  const _onSearchFocus = useCallback(() => {
+    if (searchTerm.length > 3) SearchResults.toggleAnimation(true, true)
+  }, [searchTerm])
+
+  const onSelectAll = useCallback(
+    e => {
+      if (e.target.checked) _selectAll()
+      else _clearChecked()
+    },
+    [_selectAll, _clearChecked]
+  )
+
+  const loadingItems = []
+  for (let i = 0; i < 51; i++) {
+    const cells = []
+    for (let k = 0; k < 10; k++) {
+      cells.push(
+        <TableCell key={k} className={'vam'}>
+          <div className={'loadingTextAnimation'} />
+        </TableCell>
+      )
     }
 
-    const selectAllCheckbox = (
-      <div style={{ marginLeft: 17 }}>
-        <input
-          type='checkbox'
-          id={'select_all'}
-          style={{ display: 'none' }}
-          className='svgcheckinput'
-          onChange={e => this.onSelectAll(e)}
-          ref={r => (this.selectAllCheckbox = r)}
-        />
-        <label htmlFor={'select_all'} className='svgcheck'>
-          <svg width='16px' height='16px' viewBox='0 0 18 18'>
-            <path d='M1,9 L1,3.5 C1,2 2,1 3.5,1 L14.5,1 C16,1 17,2 17,3.5 L17,14.5 C17,16 16,17 14.5,17 L3.5,17 C2,17 1,16 1,14.5 L1,9 Z' />
-            <polyline points='1 9 7 14 15 4' />
-          </svg>
-        </label>
-      </div>
-    )
+    loadingItems.push(<TableRow key={Math.random()}>{cells}</TableRow>)
+  }
 
-    const { t } = this.props
+  const selectAllCheckbox = (
+    <div style={{ marginLeft: 17 }}>
+      <input
+        type='checkbox'
+        id={'select_all'}
+        style={{ display: 'none' }}
+        className='svgcheckinput'
+        onChange={e => onSelectAll(e)}
+        ref={selectAllCheckboxRef}
+      />
+      <label htmlFor={'select_all'} className='svgcheck'>
+        <svg width='16px' height='16px' viewBox='0 0 18 18'>
+          <path d='M1,9 L1,3.5 C1,2 2,1 3.5,1 L14.5,1 C16,1 17,2 17,3.5 L17,14.5 C17,16 16,17 14.5,17 L3.5,17 C2,17 1,16 1,14.5 L1,9 Z' />
+          <polyline points='1 9 7 14 15 4' />
+        </svg>
+      </label>
+    </div>
+  )
 
-    return (
-      <div>
-        <PageTitle
-          title={t('tickets.title')}
-          shadow={false}
-          rightComponent={
-            <div>
-              <div className={'uk-float-right'}>
-                <TitlePagination
-                  limit={50}
-                  total={this.props.totalCount}
-                  type={this.props.view}
-                  prevEnabled={this.props.prevEnabled}
-                  nextEnabled={this.props.nextEnabled}
-                  currentPage={this.props.page}
-                  prevPage={this.props.prevPage}
-                  nextPage={this.props.nextPage}
-                  filter={this.props.filter}
-                />
-                <PageTitleButton
-                  fontAwesomeIcon={'fa-refresh'}
-                  onButtonClick={e => {
-                    e.preventDefault()
-                    this.props
-                      .unloadTickets()
-                      .then(this.props.fetchTickets({ type: this.props.view, page: this.props.page }))
-                  }}
-                />
-                <PageTitleButton
-                  fontAwesomeIcon={'fa-filter'}
-                  onButtonClick={e => {
-                    e.preventDefault()
-                    this.props.showModal('FILTER_TICKET')
-                  }}
-                />
-                <DropdownTrigger pos={'bottom-right'} offset={5} extraClass={'uk-float-left'}>
-                  <PageTitleButton fontAwesomeIcon={'fa-tasks'} />
-                  <Dropdown small={true} width={120}>
-                    <DropdownItem text={t('common.create')} onClick={() => this.props.showModal('CREATE_TICKET')} />
-                    <DropdownSeparator />
-                    {this.props.ticketStatuses.map(s => (
-                      <DropdownItem
-                        key={s.get('_id')}
-                        text={t('tickets.set') + ' ' + s.get('name')}
-                        onClick={() => this.onSetStatus(s)}
-                      />
-                    ))}
-                    {helpers.canUser('tickets:delete', true) && <DropdownSeparator />}
-                    {helpers.canUser('tickets:delete', true) && (
-                      <DropdownItem text={t('common.delete')} extraClass={'text-danger'} onClick={() => this.onDeleteClicked()} />
-                    )}
-                  </Dropdown>
-                </DropdownTrigger>
-                <div className={'uk-float-right'}>
-                  <div
-                    id={'ticket-search-box'}
-                    className='search-box uk-float-left nb'
-                    style={{ marginTop: 8, paddingLeft: 0 }}
-                  >
-                    <input
-                      type='text'
-                      id='tickets_Search'
-                      placeholder={t('common.search')}
-                      className={'ticket-top-search'}
-                      value={this.searchTerm}
-                      onChange={e => this.onSearchTermChanged(e)}
-                      onFocus={e => this._onSearchFocus(e)}
+  return (
+    <div>
+      <PageTitle
+        title={t('tickets.title')}
+        shadow={false}
+        rightComponent={
+          <div>
+            <div className={'uk-float-right'}>
+              <TitlePagination
+                limit={50}
+                total={totalCount}
+                type={view}
+                prevEnabled={prevEnabled}
+                nextEnabled={nextEnabled}
+                currentPage={page}
+                prevPage={prevPage}
+                nextPage={nextPage}
+                filter={filter}
+              />
+              <PageTitleButton
+                fontAwesomeIcon={'fa-refresh'}
+                onButtonClick={e => {
+                  e.preventDefault()
+                  propsUnloadTickets()
+                    .then(propsFetchTickets({ type: view, page: page }))
+                }}
+              />
+              <PageTitleButton
+                fontAwesomeIcon={'fa-filter'}
+                onButtonClick={e => {
+                  e.preventDefault()
+                  propsShowModal('FILTER_TICKET')
+                }}
+              />
+              <DropdownTrigger pos={'bottom-right'} offset={5} extraClass={'uk-float-left'}>
+                <PageTitleButton fontAwesomeIcon={'fa-tasks'} />
+                <Dropdown small={true} width={120}>
+                  <DropdownItem text={t('common.create')} onClick={() => propsShowModal('CREATE_TICKET')} />
+                  <DropdownSeparator />
+                  {ticketStatuses.map(s => (
+                    <DropdownItem
+                      key={s.get('_id')}
+                      text={t('tickets.set') + ' ' + s.get('name')}
+                      onClick={() => onSetStatus(s)}
                     />
-                  </div>
+                  ))}
+                  {helpers.canUser('tickets:delete', true) && <DropdownSeparator />}
+                  {helpers.canUser('tickets:delete', true) && (
+                    <DropdownItem text={t('common.delete')} extraClass={'text-danger'} onClick={() => onDeleteClicked()} />
+                  )}
+                </Dropdown>
+              </DropdownTrigger>
+              <div className={'uk-float-right'}>
+                <div
+                  id={'ticket-search-box'}
+                  className='search-box uk-float-left nb'
+                  style={{ marginTop: 8, paddingLeft: 0 }}
+                >
+                  <input
+                    type='text'
+                    id='tickets_Search'
+                    placeholder={t('common.search')}
+                    className={'ticket-top-search'}
+                    value={searchTerm}
+                    onChange={e => onSearchTermChanged(e)}
+                    onFocus={e => _onSearchFocus(e)}
+                  />
                 </div>
               </div>
-              <SearchResults target={'#ticket-search-box'} ref={r => (this.searchContainer = r)} />
             </div>
-          }
-        />
-        <PageContent padding={0} paddingBottom={0} extraClass={'uk-position-relative'}>
-          {/*<SpinLoader active={this.props.loading} />*/}
-          <Table
-            tableRef={ref => (this.ticketsTable = ref)}
-            style={{ margin: 0 }}
-            extraClass={'pDataTable'}
-            stickyHeader={true}
-            striped={true}
-            headers={[
-              <TableHeader key={0} width={45} height={50} component={selectAllCheckbox} />,
-              <TableHeader key={1} width={60} text={t('common.status')} />,
-              <TableHeader key={2} width={65} text={'#'} />,
-              <TableHeader key={3} width={'23%'} text={t('common.subject')} />,
-              <TableHeader key={4} width={110} text={t('tickets.created')} />,
-              <TableHeader key={5} width={125} text={t('tickets.requester')} />,
-              <TableHeader key={6} width={175} text={t('tickets.customer')} />,
-              <TableHeader key={7} text={t('common.assignee')} />,
-              <TableHeader key={8} width={110} text={t('tickets.dueDate')} />,
-              <TableHeader key={9} text={t('tickets.updated')} />
-            ]}
-          >
-            {!this.props.loading && this.props.tickets.size < 1 && (
-              <TableRow clickable={false}>
-                <TableCell colSpan={10}>
-                  <h5 style={{ margin: 10 }}>{t('tickets.noTicketsFound')}</h5>
-                </TableCell>
-              </TableRow>
-            )}
-            {this.props.loading && loadingItems}
-            {!this.props.loading &&
-              this.props.tickets.map(ticket => {
-                const status = this.props.ticketStatuses.find(s => s.get('_id') === ticket.get('status').get('_id'))
+            <SearchResults target={'#ticket-search-box'} ref={searchContainerRef} />
+          </div>
+        }
+      />
+      <PageContent padding={0} paddingBottom={0} extraClass={'uk-position-relative'}>
+        {/*<SpinLoader active={loading} />*/}
+        <Table
+          tableRef={ref => (ticketsTableRef.current = ref)}
+          style={{ margin: 0 }}
+          extraClass={'pDataTable'}
+          stickyHeader={true}
+          striped={true}
+          headers={[
+            <TableHeader key={0} width={45} height={50} component={selectAllCheckbox} />,
+            <TableHeader key={1} width={60} text={t('common.status')} />,
+            <TableHeader key={2} width={65} text={'#'} />,
+            <TableHeader key={3} width={'23%'} text={t('common.subject')} />,
+            <TableHeader key={4} width={110} text={t('tickets.created')} />,
+            <TableHeader key={5} width={125} text={t('tickets.requester')} />,
+            <TableHeader key={6} width={175} text={t('tickets.customer')} />,
+            <TableHeader key={7} text={t('common.assignee')} />,
+            <TableHeader key={8} width={110} text={t('tickets.dueDate')} />,
+            <TableHeader key={9} text={t('tickets.updated')} />
+          ]}
+        >
+          {!loading && tickets.size < 1 && (
+            <TableRow clickable={false}>
+              <TableCell colSpan={10}>
+                <h5 style={{ margin: 10 }}>{t('tickets.noTicketsFound')}</h5>
+              </TableCell>
+            </TableRow>
+          )}
+          {loading && loadingItems}
+          {!loading &&
+            tickets.map(ticket => {
+              const status = ticketStatuses.find(s => s.get('_id') === ticket.get('status').get('_id'))
 
-                const assignee = () => {
-                  const a = ticket.get('assignee')
-                  return !a ? '--' : a.get('fullname')
-                }
+              const assignee = () => {
+                const a = ticket.get('assignee')
+                return !a ? '--' : a.get('fullname')
+              }
 
-                const updated = ticket.get('updated')
-                  ? helpers.formatDate(ticket.get('updated'), helpers.getShortDateFormat()) +
-                    ', ' +
-                    helpers.formatDate(ticket.get('updated'), helpers.getTimeFormat())
-                  : '--'
+              const updated = ticket.get('updated')
+                ? helpers.formatDate(ticket.get('updated'), helpers.getShortDateFormat()) +
+                  ', ' +
+                  helpers.formatDate(ticket.get('updated'), helpers.getTimeFormat())
+                : '--'
 
-                const dueDate = ticket.get('dueDate')
-                  ? helpers.formatDate(ticket.get('dueDate'), helpers.getShortDateFormat())
-                  : '--'
+              const dueDate = ticket.get('dueDate')
+                ? helpers.formatDate(ticket.get('dueDate'), helpers.getShortDateFormat())
+                : '--'
 
-                const isOverdue = () => {
-                  if (!this.props.common.viewdata.get('showOverdue') || [2, 3].indexOf(ticket.get('status')) !== -1)
-                    return false
-                  const overdueIn = ticket.getIn(['priority', 'overdueIn'])
-                  const now = moment()
-                  let updated = ticket.get('updated')
-                  if (updated) updated = moment(updated)
-                  else updated = moment(ticket.get('date'))
+              const isOverdue = () => {
+                if (!common.viewdata.get('showOverdue') || [2, 3].indexOf(ticket.get('status')) !== -1)
+                  return false
+                const overdueIn = ticket.getIn(['priority', 'overdueIn'])
+                const now = moment()
+                let updated = ticket.get('updated')
+                if (updated) updated = moment(updated)
+                else updated = moment(ticket.get('date'))
 
-                  const timeout = updated.clone().add(overdueIn, 'm')
-                  return now.isAfter(timeout)
-                }
+                const timeout = updated.clone().add(overdueIn, 'm')
+                return now.isAfter(timeout)
+              }
 
-                return (
-                  <TableRow
-                    key={ticket.get('_id')}
-                    className={`ticket-${status == null ? 'unknonwn' : status.get('name')} ${
-                      isOverdue() ? 'overdue' : ''
-                    }`}
-                    clickable={true}
-                    onClick={e => {
-                      const td = e.target.closest('td')
-                      const input = td.getElementsByTagName('input')
-                      if (input.length > 0) return false
-                      History.pushState(null, `Ticket-${ticket.get('uid')}`, `/tickets/${ticket.get('uid')}`)
-                    }}
+              return (
+                <TableRow
+                  key={ticket.get('_id')}
+                  className={`ticket-${status == null ? 'unknonwn' : status.get('name')} ${
+                    isOverdue() ? 'overdue' : ''
+                  }`}
+                  clickable={true}
+                  onClick={e => {
+                    const td = e.target.closest('td')
+                    const input = td.getElementsByTagName('input')
+                    if (input.length > 0) return false
+                    History.pushState(null, `Ticket-${ticket.get('uid')}`, `/tickets/${ticket.get('uid')}`)
+                  }}
+                >
+                  <TableCell
+                    className={'ticket-priority nbb vam'}
+                    style={{ borderColor: ticket.getIn(['priority', 'htmlColor']), padding: '18px 15px' }}
                   >
-                    <TableCell
-                      className={'ticket-priority nbb vam'}
-                      style={{ borderColor: ticket.getIn(['priority', 'htmlColor']), padding: '18px 15px' }}
+                    <input
+                      type='checkbox'
+                      id={`c_${ticket.get('_id')}`}
+                      data-ticket={ticket.get('_id')}
+                      style={{ display: 'none' }}
+                      onChange={e => onTicketCheckChanged(e, ticket.get('_id'))}
+                      className='svgcheckinput'
+                    />
+                    <label htmlFor={`c_${ticket.get('_id')}`} className='svgcheck'>
+                      <svg width='16px' height='16px' viewBox='0 0 18 18'>
+                        <path d='M1,9 L1,3.5 C1,2 2,1 3.5,1 L14.5,1 C16,1 17,2 17,3.5 L17,14.5 C17,16 16,17 14.5,17 L3.5,17 C2,17 1,16 1,14.5 L1,9 Z' />
+                        <polyline points='1 9 7 14 15 4' />
+                      </svg>
+                    </label>
+                  </TableCell>
+                  <TableCell className={`ticket-status vam nbb uk-text-center`}>
+                    <span
+                      className={'uk-display-inline-block'}
+                      style={{ backgroundColor: status == null ? '#000' : status.get('htmlColor') }}
                     >
-                      <input
-                        type='checkbox'
-                        id={`c_${ticket.get('_id')}`}
-                        data-ticket={ticket.get('_id')}
-                        style={{ display: 'none' }}
-                        onChange={e => this.onTicketCheckChanged(e, ticket.get('_id'))}
-                        className='svgcheckinput'
-                      />
-                      <label htmlFor={`c_${ticket.get('_id')}`} className='svgcheck'>
-                        <svg width='16px' height='16px' viewBox='0 0 18 18'>
-                          <path d='M1,9 L1,3.5 C1,2 2,1 3.5,1 L14.5,1 C16,1 17,2 17,3.5 L17,14.5 C17,16 16,17 14.5,17 L3.5,17 C2,17 1,16 1,14.5 L1,9 Z' />
-                          <polyline points='1 9 7 14 15 4' />
-                        </svg>
-                      </label>
-                    </TableCell>
-                    <TableCell className={`ticket-status vam nbb uk-text-center`}>
-                      <span
-                        className={'uk-display-inline-block'}
-                        style={{ backgroundColor: status == null ? '#000' : status.get('htmlColor') }}
-                      >
-                        {status == null ? 'U' : status.get('name')[0].toUpperCase()}
-                      </span>
-                    </TableCell>
-                    <TableCell className={'vam nbb'}>{ticket.get('uid')}</TableCell>
-                    <TableCell className={'vam nbb'}>{ticket.get('subject')}</TableCell>
-                    <TableCell className={'vam nbb'}>
-                      {helpers.formatDate(ticket.get('date'), helpers.getShortDateFormat())}
-                    </TableCell>
-                    <TableCell className={'vam nbb'}>{ticket.getIn(['owner', 'fullname'])}</TableCell>
-                    <TableCell className={'vam nbb'}>{ticket.getIn(['group', 'name'])}</TableCell>
-                    <TableCell className={'vam nbb'}>{assignee()}</TableCell>
-                    <TableCell className={'vam nbb'}>{dueDate}</TableCell>
-                    <TableCell className={'vam nbb'}>{updated}</TableCell>
-                  </TableRow>
-                )
-              })}
-          </Table>
-        </PageContent>
-      </div>
-    )
-  }
+                      {status == null ? 'U' : status.get('name')[0].toUpperCase()}
+                    </span>
+                  </TableCell>
+                  <TableCell className={'vam nbb'}>{ticket.get('uid')}</TableCell>
+                  <TableCell className={'vam nbb'}>{ticket.get('subject')}</TableCell>
+                  <TableCell className={'vam nbb'}>
+                    {helpers.formatDate(ticket.get('date'), helpers.getShortDateFormat())}
+                  </TableCell>
+                  <TableCell className={'vam nbb'}>{ticket.getIn(['owner', 'fullname'])}</TableCell>
+                  <TableCell className={'vam nbb'}>{ticket.getIn(['group', 'name'])}</TableCell>
+                  <TableCell className={'vam nbb'}>{assignee()}</TableCell>
+                  <TableCell className={'vam nbb'}>{dueDate}</TableCell>
+                  <TableCell className={'vam nbb'}>{updated}</TableCell>
+                </TableRow>
+              )
+            })}
+        </Table>
+      </PageContent>
+    </div>
+  )
 }
 
 TicketsContainer.propTypes = {
@@ -465,13 +484,6 @@ TicketsContainer.propTypes = {
   ticketStatuses: PropTypes.object.isRequired,
   fetchTicketStatus: PropTypes.func.isRequired,
   t: PropTypes.func.isRequired
-}
-
-TicketsContainer.defaultProps = {
-  view: 'active',
-  page: 0,
-  prevEnabled: true,
-  nextEnabled: true
 }
 
 const mapStateToProps = state => ({

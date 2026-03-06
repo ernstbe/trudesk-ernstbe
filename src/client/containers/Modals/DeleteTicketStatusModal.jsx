@@ -12,7 +12,7 @@
  *  Copyright (c) 2014-2023. All rights reserved.
  */
 
-import React from 'react'
+import React, { useState, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import { withTranslation } from 'react-i18next'
@@ -23,78 +23,67 @@ import SingleSelect from 'components/SingleSelect'
 
 import helpers from 'lib/helpers'
 
-class DeleteTicketStatusModal extends React.Component {
-  constructor (props) {
-    super(props)
-    this.state = {
-      selectedStatus: ''
-    }
-  }
+const DeleteTicketStatusModal = ({ status, settings, deleteStatus, fetchTicketStatus, t, ...rest }) => {
+  const [selectedStatus, setSelectedStatus] = useState('')
 
-  componentDidMount () {}
+  const getTicketStatuses = useCallback(() => {
+    return settings && settings.get('status') ? settings.get('status').toArray() : []
+  }, [settings])
 
-  getTicketStatuses () {
-    return this.props.settings && this.props.settings.get('status') ? this.props.settings.get('status').toArray() : []
-  }
+  const onSelectChanged = useCallback((e) => {
+    setSelectedStatus(e.target.value)
+  }, [])
 
-  onSelectChanged (e) {
-    this.setState({
-      selectedStatus: e.target.value
-    })
-  }
-
-  onFormSubmit (e) {
+  const onFormSubmit = useCallback((e) => {
     e.preventDefault()
-    if (!this.state.selectedStatus) {
+    if (!selectedStatus) {
       helpers.UI.showSnackbar('Unable to get new ticket status. Aborting...', true)
       return true
     }
 
-    this.props.deleteStatus({ id: this.props.status.get('_id'), newStatusId: this.state.selectedStatus })
-  }
+    deleteStatus({ id: status.get('_id'), newStatusId: selectedStatus })
+  }, [selectedStatus, status, deleteStatus])
 
-  render () {
-    const { status, t } = this.props
-    const mappedStatuses = this.getTicketStatuses()
-      .filter(obj => {
-        return status.get('name') !== obj.get('name')
-      })
-      .map(item => {
-        return { text: item.get('name'), value: item.get('_id') }
-      })
-    return (
-      <BaseModal {...this.props} options={{ bgclose: false }}>
-        <form className={'uk-form-stacked'} onSubmit={e => this.onFormSubmit(e)}>
-          <div className='uk-margin-medium-bottom uk-clearfix'>
-            <h2>{t('modals.deleteStatus.title')}</h2>
-            <span>{t('modals.deleteStatus.hint')}</span>
+  const mappedStatuses = getTicketStatuses()
+    .filter(obj => {
+      return status.get('name') !== obj.get('name')
+    })
+    .map(item => {
+      return { text: item.get('name'), value: item.get('_id') }
+    })
+
+  return (
+    <BaseModal {...rest} status={status} settings={settings} deleteStatus={deleteStatus} fetchTicketStatus={fetchTicketStatus} t={t} options={{ bgclose: false }}>
+      <form className={'uk-form-stacked'} onSubmit={e => onFormSubmit(e)}>
+        <div className='uk-margin-medium-bottom uk-clearfix'>
+          <h2>{t('modals.deleteStatus.title')}</h2>
+          <span>{t('modals.deleteStatus.hint')}</span>
+        </div>
+        <div className='uk-margin-medium-bottom uk-clearfix'>
+          <div className='uk-float-left' style={{ width: '100%' }}>
+            <label className={'uk-form-label nopadding nomargin'}>{t('common.status')}</label>
+            <SingleSelect
+              showTextbox={false}
+              items={mappedStatuses}
+              onSelectChange={e => onSelectChanged(e)}
+              value={selectedStatus}
+            />
           </div>
-          <div className='uk-margin-medium-bottom uk-clearfix'>
-            <div className='uk-float-left' style={{ width: '100%' }}>
-              <label className={'uk-form-label nopadding nomargin'}>{t('common.status')}</label>
-              <SingleSelect
-                showTextbox={false}
-                items={mappedStatuses}
-                onSelectChange={e => this.onSelectChanged(e)}
-                value={this.state.selectedStatus}
-              />
-            </div>
-          </div>
-          <div className='uk-margin-medium-bottom uk-clearfix'>
-            <span className='uk-text-danger'>
-              {t('modals.deleteStatus.warning')} <strong>{status.get('name')}</strong> {t('modals.deleteStatus.toSelected')}
-              <br />
-              <strong>{t('modals.deleteRole.permanent')}</strong>
-            </span>
-          </div>
-          <div className='uk-modal-footer uk-text-right'>
-            <Button text={t('common.cancel')} flat={true} waves={true} extraClass={'uk-modal-close'} />
-            <Button text={t('common.delete')} style={'danger'} flat={true} type={'submit'} />
-          </div>
-        </form>
-      </BaseModal>
-    )
-  }
+        </div>
+        <div className='uk-margin-medium-bottom uk-clearfix'>
+          <span className='uk-text-danger'>
+            {t('modals.deleteStatus.warning')} <strong>{status.get('name')}</strong> {t('modals.deleteStatus.toSelected')}
+            <br />
+            <strong>{t('modals.deleteRole.permanent')}</strong>
+          </span>
+        </div>
+        <div className='uk-modal-footer uk-text-right'>
+          <Button text={t('common.cancel')} flat={true} waves={true} extraClass={'uk-modal-close'} />
+          <Button text={t('common.delete')} style={'danger'} flat={true} type={'submit'} />
+        </div>
+      </form>
+    </BaseModal>
+  )
 }
 
 DeleteTicketStatusModal.propTypes = {
