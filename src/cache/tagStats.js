@@ -13,12 +13,11 @@
  */
 
 const _ = require('lodash')
-const async = require('async')
 const moment = require('moment')
 
 const ticketSchema = require('../models/ticket')
 
-const init = function (tickets, timespan, callback) {
+const init = async function (tickets, timespan, callback) {
   let tags = []
   let $tickets = []
   if (_.isUndefined(timespan) || _.isNaN(timespan) || timespan === 0) timespan = 365
@@ -34,74 +33,52 @@ const init = function (tickets, timespan, callback) {
     .getTime()
   today = today.toDate().getTime()
 
-  async.series(
-    [
-      function (done) {
-        if (tickets) {
-          ticketSchema.populate(tickets, { path: 'tags' }, function (err, _tickets) {
-            if (err) return done(err)
-
-            $tickets = _tickets
-            return done()
-          })
-        } else {
-          ticketSchema.getForCache(function (err, tickets) {
-            if (err) return done(err)
-            ticketSchema.populate(tickets, { path: 'tags' }, function (err, _tickets) {
-              if (err) return done(err)
-
-              $tickets = _tickets
-
-              return done()
-            })
-          })
-        }
-      },
-      function (done) {
-        let t = []
-
-        $tickets = _.filter($tickets, function (v) {
-          return v.date < today && v.date > tsDate
-        })
-
-        for (let i = 0; i < $tickets.length; i++) {
-          _.each(tickets[i].tags, function (tag) {
-            t.push(tag.name)
-          })
-        }
-
-        tags = _.reduce(
-          t,
-          function (counts, key) {
-            counts[key]++
-            return counts
-          },
-          _.fromPairs(
-            _.map(t, function (key) {
-              return [key, 0]
-            })
-          )
-        )
-
-        tags = _.fromPairs(
-          _.sortBy(_.toPairs(tags), function (a) {
-            return a[1]
-          }).reverse()
-        )
-
-        t = null
-
-        return done()
-      }
-    ],
-    function (err) {
-      if (err) return callback(err)
-
-      $tickets = null // clear it
-
-      return callback(null, tags)
+  try {
+    if (tickets) {
+      $tickets = await ticketSchema.populate(tickets, { path: 'tags' })
+    } else {
+      const fetchedTickets = await ticketSchema.getForCache()
+      $tickets = await ticketSchema.populate(fetchedTickets, { path: 'tags' })
     }
-  )
+
+    let t = []
+
+    $tickets = _.filter($tickets, function (v) {
+      return v.date < today && v.date > tsDate
+    })
+
+    for (let i = 0; i < $tickets.length; i++) {
+      _.each(tickets[i].tags, function (tag) {
+        t.push(tag.name)
+      })
+    }
+
+    tags = _.reduce(
+      t,
+      function (counts, key) {
+        counts[key]++
+        return counts
+      },
+      _.fromPairs(
+        _.map(t, function (key) {
+          return [key, 0]
+        })
+      )
+    )
+
+    tags = _.fromPairs(
+      _.sortBy(_.toPairs(tags), function (a) {
+        return a[1]
+      }).reverse()
+    )
+
+    t = null
+    $tickets = null // clear it
+
+    return callback(null, tags)
+  } catch (err) {
+    return callback(err)
+  }
 }
 
 module.exports = init

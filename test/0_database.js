@@ -1,8 +1,6 @@
 /* eslint-disable no-unused-expressions */
 /* globals server socketServer */
 var expect = require('chai').expect
-var winston = require('../src/logger')
-var async = require('async')
 var mongoose = require('mongoose')
 var path = require('path')
 var _ = require('lodash')
@@ -12,190 +10,135 @@ var CONNECTION_URI = 'mongodb://localhost:27017/polonel_trudesk31908899'
 
 // Global Setup for tests
 before(function (done) {
-  this.timeout(15000) // Make it a longer timeout since we have to start the web server
+  this.timeout(60000) // Longer timeout: in-memory MongoDB + defaults init + possible tool download
   delete require.cache[require.resolve('../src/database')]
   delete require.cache[require.resolve('mongoose')]
   mongoose = require('mongoose')
   database = require('../src/database')
 
   mongoose.connection.close()
-  database.init(function (err, d) {
-    expect(err).to.not.exist
-    expect(d).to.be.a('object')
-    expect(d.connection).to.exist
+  database.init(async function (err, d) {
+    try {
+      expect(err).to.not.exist
+      expect(d).to.be.a('object')
+      expect(d.connection).to.exist
 
-    db = d
+      db = d
 
-    async.series(
-      [
-        function (cb) {
-          mongoose.connection.db.dropDatabase(function (err) {
+      await mongoose.connection.db.dropDatabase()
+
+      var counter = require('../src/models/counters')
+      await counter.create({
+        _id: 'tickets',
+        next: 1000
+      })
+
+      var typeSchema = require('../src/models/tickettype')
+      await typeSchema.insertMany([{ name: 'Task' }, { name: 'Issue' }])
+
+      var statusSchema = require('../src/models/ticketStatus')
+      await statusSchema.insertMany([
+        { name: 'New', uid: 0, isLocked: true },
+        { name: 'Open', uid: 1, isLocked: true },
+        { name: 'Pending', uid: 2, isLocked: true },
+        { name: 'Closed', uid: 3, isLocked: true, isResolved: true }
+      ])
+
+      await require('../src/settings/defaults').init()
+
+      var roleSchema = require('../src/models/role')
+      var r = await roleSchema.getRoles()
+      expect(r).to.be.a('array')
+      global.roles = r
+
+      var userSchema = require('../src/models/user')
+      var adminRole = _.find(global.roles, { normalized: 'admin' })
+      expect(adminRole).to.exist
+      var adminUser = await userSchema.create({
+        username: 'trudesk',
+        password: '$2a$04$350Dkwcq9EpJLFhbeLB0buFcyFkI9q3edQEPpy/zqLjROMD9LPToW',
+        fullname: 'Trudesk',
+        email: 'trudesk@trudesk.io',
+        role: adminRole._id,
+        accessToken: 'da39a3ee5e6b4b0d3255bfef95601890afd80709'
+      })
+      expect(adminUser).to.be.a('object')
+
+      var supportRole = _.find(global.roles, { normalized: 'support' })
+      expect(supportRole).to.exist
+      global.supportRoleId = supportRole._id
+
+      var fakeUser = await userSchema.create({
+        username: 'fake.user',
+        password: '$2a$04$350Dkwcq9EpJLFhbeLB0buFcyFkI9q3edQEPpy/zqLjROMD9LPToW',
+        fullname: 'Fake user',
+        email: 'fake.user@trudesk.io',
+        role: supportRole._id,
+        accessToken: '456'
+      })
+      expect(fakeUser).to.be.a('object')
+
+      var userRole = _.find(global.roles, { normalized: 'user' })
+      expect(userRole).to.exist
+      global.userRoleId = userRole._id
+      var deletedUser = await userSchema.create({
+        username: 'deleted.user',
+        password: '$2a$04$350Dkwcq9EpJLFhbeLB0buFcyFkI9q3edQEPpy/zqLjROMD9LPToW',
+        fullname: 'Deleted User',
+        email: 'deleted.user@trudesk.io',
+        role: userRole._id,
+        accessToken: '123',
+        deleted: true
+      })
+      expect(deletedUser).to.be.a('object')
+
+      var groupSchema = require('../src/models/group')
+      var group = await groupSchema.create({
+        name: 'TEST'
+      })
+      expect(group).to.be.a('object')
+
+      var ws = require('../src/webserver')
+      ws.init(
+        db,
+        function (err) {
+          expect(err).to.not.exist
+          ws.listen(function (err) {
             expect(err).to.not.exist
-            cb()
+            global.server = ws.server
+
+            require('../src/socketserver')(ws)
+
+            done()
           })
         },
-        function (cb) {
-          var counter = require('../src/models/counters')
-          counter.create(
-            {
-              _id: 'tickets',
-              next: 1000
-            },
-            function (err) {
-              expect(err).to.not.exist
-
-              cb()
-            }
-          )
-        },
-        function (cb) {
-          var typeSchema = require('../src/models/tickettype')
-          typeSchema.insertMany([{ name: 'Task' }, { name: 'Issue' }], cb)
-        },
-        function (cb) {
-          var statusSchema = require('../src/models/ticketStatus')
-          statusSchema.insertMany(
-            [
-              { name: 'New', uid: 0, isLocked: true },
-              { name: 'Open', uid: 1, isLocked: true },
-              { name: 'Pending', uid: 2, isLocked: true },
-              { name: 'Closed', uid: 3, isLocked: true, isResolved: true }
-            ],
-            cb
-          )
-        },
-        function (cb) {
-          require('../src/settings/defaults').init(cb)
-        },
-        function (cb) {
-          var roleSchema = require('../src/models/role')
-          roleSchema.getRoles(function (err, r) {
-            expect(err).to.not.exist
-            expect(r).to.be.a('array')
-
-            global.roles = r
-
-            cb()
-          })
-        },
-        function (cb) {
-          var userSchema = require('../src/models/user')
-          var adminRole = _.find(global.roles, { normalized: 'admin' })
-          expect(adminRole).to.exist
-          userSchema.create(
-            {
-              username: 'trudesk',
-              password: '$2a$04$350Dkwcq9EpJLFhbeLB0buFcyFkI9q3edQEPpy/zqLjROMD9LPToW',
-              fullname: 'Trudesk',
-              email: 'trudesk@trudesk.io',
-              role: adminRole._id,
-              accessToken: 'da39a3ee5e6b4b0d3255bfef95601890afd80709'
-            },
-            function (err, user) {
-              expect(err).to.not.exist
-              expect(user).to.be.a('object')
-
-              cb()
-            }
-          )
-        },
-        function (cb) {
-          var userSchema = require('../src/models/user')
-          var supportRole = _.find(global.roles, { normalized: 'support' })
-          expect(supportRole).to.exist
-          global.supportRoleId = supportRole._id
-
-          userSchema.create(
-            {
-              username: 'fake.user',
-              password: '$2a$04$350Dkwcq9EpJLFhbeLB0buFcyFkI9q3edQEPpy/zqLjROMD9LPToW',
-              fullname: 'Fake user',
-              email: 'fake.user@trudesk.io',
-              role: supportRole._id,
-              accessToken: '456'
-            },
-            function (err, user) {
-              expect(err).to.not.exist
-              expect(user).to.be.a('object')
-
-              cb()
-            }
-          )
-        },
-        function (cb) {
-          var userSchema = require('../src/models/user')
-          var userRole = _.find(global.roles, { normalized: 'user' })
-          expect(userRole).to.exist
-          global.userRoleId = userRole._id
-          userSchema.create(
-            {
-              username: 'deleted.user',
-              password: '$2a$04$350Dkwcq9EpJLFhbeLB0buFcyFkI9q3edQEPpy/zqLjROMD9LPToW',
-              fullname: 'Deleted User',
-              email: 'deleted.user@trudesk.io',
-              role: userRole._id,
-              accessToken: '123',
-              deleted: true
-            },
-            function (err, user) {
-              expect(err).to.not.exist
-              expect(user).to.be.a('object')
-
-              cb()
-            }
-          )
-        },
-        function (cb) {
-          var groupSchema = require('../src/models/group')
-          groupSchema.create(
-            {
-              name: 'TEST'
-            },
-            function (err, group) {
-              expect(err).to.not.exist
-              expect(group).to.be.a('object')
-
-              cb()
-            }
-          )
-        },
-        function (cb) {
-          var ws = require('../src/webserver')
-          ws.init(
-            db,
-            function (err) {
-              expect(err).to.not.exist
-              ws.listen(function (err) {
-                expect(err).to.not.exist
-                global.server = ws.server
-
-                require('../src/socketserver')(ws)
-
-                cb()
-              })
-            },
-            3111
-          )
-        }
-      ],
-      function () {
-        done()
-      }
-    )
+        3111
+      )
+    } catch (e) {
+      done(e)
+    }
   }, CONNECTION_URI)
 })
 
 // Global Teardown for tests
-after(function (done) {
-  this.timeout(5000)
-  mongoose.connection.dropDatabase(function () {
-    mongoose.connection.close(function () {
-      socketServer.eventLoop.stop()
-      server.close()
-
-      done()
-    })
-  })
+after(async function () {
+  this.timeout(10000)
+  if (mongoose.connection.readyState === 1) {
+    await mongoose.connection.dropDatabase()
+    await mongoose.connection.close()
+  }
+  // Stop in-memory MongoDB if it was used
+  var dbModule = require('../src/database')
+  var memServer = dbModule.getMemoryServer && dbModule.getMemoryServer()
+  if (memServer) {
+    await memServer.stop()
+  }
+  if (typeof socketServer !== 'undefined' && socketServer && socketServer.eventLoop) {
+    socketServer.eventLoop.stop()
+  }
+  if (typeof server !== 'undefined' && server) {
+    server.close()
+  }
 })
 
 // Start DB Tests
@@ -209,31 +152,19 @@ describe('Database', function () {
   })
 
   it('should connect without error', function (done) {
-    async.series(
-      [
-        function (cb) {
-          database.init(function (err, db) {
-            expect(err).to.not.exist
-            expect(db).to.be.a('object')
-            expect(db.connection._readyState).to.equal(1)
+    database.init(function (err, db) {
+      expect(err).to.not.exist
+      expect(db).to.be.a('object')
+      expect(db.connection._readyState).to.equal(1)
 
-            cb()
-          }, CONNECTION_URI)
-        },
-        function (cb) {
-          // Test rerunning init and getting DB back without calling connect.
-          database.init(function (err, db) {
-            expect(err).to.not.exist
-            expect(db).to.be.a('object')
-            expect(db.connection._readyState).to.equal(1)
+      // Test rerunning init and getting DB back without calling connect.
+      database.init(function (err, db) {
+        expect(err).to.not.exist
+        expect(db).to.be.a('object')
+        expect(db.connection._readyState).to.equal(1)
 
-            cb()
-          }, CONNECTION_URI)
-        }
-      ],
-      function (err) {
         done()
-      }
-    )
+      }, CONNECTION_URI)
+    }, CONNECTION_URI)
   })
 })

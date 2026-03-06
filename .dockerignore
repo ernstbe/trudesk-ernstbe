@@ -1,0 +1,16 @@
+node_modules
+.git
+.gitignore
+.vs
+*.log
+*.md
+.yarn/cache
+.yarn/install-state.gz
+.pnp.*
+coverage
+.nyc_output
+.env
+.env.*
+docker-compose*.yml
+Dockerfile*
+!Dockerfile

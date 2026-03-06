@@ -15,6 +15,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
+import { withTranslation } from 'react-i18next'
 import { deleteTicketType } from 'actions/tickets'
 import BaseModal from './BaseModal'
 import Button from 'components/Button'
@@ -53,7 +54,7 @@ class DeleteTicketTypeModal extends React.Component {
   }
 
   render () {
-    const { type } = this.props
+    const { type, t } = this.props
     const mappedTypes = this.getTicketTypes()
       .filter(obj => {
         return type.get('name') !== obj.get('name')
@@ -65,15 +66,12 @@ class DeleteTicketTypeModal extends React.Component {
       <BaseModal {...this.props} options={{ bgclose: false }}>
         <form className={'uk-form-stacked'} onSubmit={e => this.onFormSubmit(e)}>
           <div className='uk-margin-medium-bottom uk-clearfix'>
-            <h2>Remove Ticket Type</h2>
-            <span>
-              Please select the ticket type you wish to reassign tickets to in order to delete this ticket type.
-            </span>
-            {/*<hr style={{ margin: '10px 0' }} />*/}
+            <h2>{t('modals.deleteType.title')}</h2>
+            <span>{t('modals.deleteType.hint')}</span>
           </div>
           <div className='uk-margin-medium-bottom uk-clearfix'>
             <div className='uk-float-left' style={{ width: '100%' }}>
-              <label className={'uk-form-label nopadding nomargin'}>Type</label>
+              <label className={'uk-form-label nopadding nomargin'}>{t('common.type')}</label>
               <SingleSelect
                 showTextbox={false}
                 items={mappedTypes}
@@ -84,15 +82,14 @@ class DeleteTicketTypeModal extends React.Component {
           </div>
           <div className='uk-margin-medium-bottom uk-clearfix'>
             <span className='uk-text-danger'>
-              WARNING: This will change all tickets with type <strong>{type.get('name')}</strong> to the selected ticket
-              type.
+              {t('modals.deleteType.warning')} <strong>{type.get('name')}</strong> {t('modals.deleteType.toSelected')}
               <br />
-              <strong>This is permanent!</strong>
+              <strong>{t('modals.deleteRole.permanent')}</strong>
             </span>
           </div>
           <div className='uk-modal-footer uk-text-right'>
-            <Button text={'Cancel'} flat={true} waves={true} extraClass={'uk-modal-close'} />
-            <Button text={'Delete'} style={'danger'} flat={true} type={'submit'} />
+            <Button text={t('common.cancel')} flat={true} waves={true} extraClass={'uk-modal-close'} />
+            <Button text={t('common.delete')} style={'danger'} flat={true} type={'submit'} />
           </div>
         </form>
       </BaseModal>
@@ -103,14 +100,15 @@ class DeleteTicketTypeModal extends React.Component {
 DeleteTicketTypeModal.propTypes = {
   type: PropTypes.object.isRequired,
   settings: PropTypes.object.isRequired,
-  deleteTicketType: PropTypes.func.isRequired
+  deleteTicketType: PropTypes.func.isRequired,
+  t: PropTypes.func.isRequired
 }
 
 const mapStateToProps = state => ({
   settings: state.settings.settings
 })
 
-export default connect(
+export default withTranslation()(connect(
   mapStateToProps,
   { deleteTicketType }
-)(DeleteTicketTypeModal)
+)(DeleteTicketTypeModal))

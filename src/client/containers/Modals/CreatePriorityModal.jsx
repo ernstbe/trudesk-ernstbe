@@ -15,6 +15,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
+import { withTranslation } from 'react-i18next'
 import { observer } from 'mobx-react'
 import { makeObservable, observable } from 'mobx'
 import { createPriority } from 'actions/tickets'
@@ -55,18 +56,19 @@ class CreatePriorityModal extends React.Component {
   }
 
   render () {
+    const { t } = this.props
     return (
       <BaseModal {...this.props} ref={i => (this.base = i)}>
         <form className={'uk-form-stacked'} onSubmit={e => this.onCreatePrioritySubmit(e)}>
           <div className='uk-margin-medium-bottom uk-clearfix'>
-            <h2>Create Priority</h2>
+            <h2>{t('modals.createPriority.title')}</h2>
           </div>
 
           <div>
             <div className='uk-clearfix'>
               <div className='z-box uk-grid uk-grid-collpase uk-clearfix'>
                 <div className='uk-width-1-3'>
-                  <label>Priority Name</label>
+                  <label>{t('modals.createPriority.priorityName')}</label>
                   <input
                     type='text'
                     className={'md-input'}
@@ -74,11 +76,11 @@ class CreatePriorityModal extends React.Component {
                     onChange={e => (this.name = e.target.value)}
                     data-validation='length'
                     data-validation-length='min3'
-                    data-validation-error-msg='Invalid name (3+ characters)'
+                    data-validation-error-msg={t('modals.createPriority.validName')}
                   />
                 </div>
                 <div className='uk-width-1-3'>
-                  <label>SLA Overdue (minutes)</label>
+                  <label>{t('modals.createPriority.slaOverdue')}</label>
                   <input
                     type='text'
                     className={'md-input'}
@@ -86,7 +88,7 @@ class CreatePriorityModal extends React.Component {
                     onChange={e => (this.overdueIn = e.target.value)}
                     data-validation='number'
                     data-validation-allowing='range[1;525600]'
-                    data-validation-error-msg='Invalid SLA Time (1-525600)'
+                    data-validation-error-msg={t('modals.createPriority.validSla')}
                   />
                 </div>
                 <div className='uk-width-1-3'>
@@ -99,8 +101,8 @@ class CreatePriorityModal extends React.Component {
                 </div>
               </div>
               <div className='uk-modal-footer uk-text-right'>
-                <Button text={'Cancel'} type={'button'} extraClass={'uk-modal-close'} flat={true} waves={true} />
-                <Button text={'Create'} type={'submit'} flat={true} waves={true} style={'success'} />
+                <Button text={t('common.cancel')} type={'button'} extraClass={'uk-modal-close'} flat={true} waves={true} />
+                <Button text={t('common.create')} type={'submit'} flat={true} waves={true} style={'success'} />
               </div>
             </div>
           </div>
@@ -112,7 +114,8 @@ class CreatePriorityModal extends React.Component {
 
 CreatePriorityModal.propTypes = {
   onPriorityCreated: PropTypes.func,
-  createPriority: PropTypes.func.isRequired
+  createPriority: PropTypes.func.isRequired,
+  t: PropTypes.func.isRequired
 }
 
-export default connect(null, { createPriority })(CreatePriorityModal)
+export default withTranslation()(connect(null, { createPriority })(CreatePriorityModal))

@@ -15,6 +15,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
+import { withTranslation } from 'react-i18next'
 import moment from 'moment-timezone'
 import { updateSetting } from 'actions/settings'
 
@@ -67,7 +68,7 @@ class GeneralSettings extends React.Component {
   }
 
   render () {
-    const { active } = this.props
+    const { active, t } = this.props
 
     const SiteTitle = (
       <InputWithSave
@@ -97,42 +98,42 @@ class GeneralSettings extends React.Component {
     return (
       <div className={active ? 'active' : 'hide'}>
         <SettingItem
-          title='Site Title'
+          title={t('settings.siteTitle')}
           subtitle={
             <div>
-              Title of site. Used as page title. <i>default: Trudesk</i>
+              {t('settings.siteTitleHint')} <i>{t('settings.siteTitleDefault')}</i>
             </div>
           }
           component={SiteTitle}
         />
         <SettingItem
-          title='Site Url'
+          title={t('settings.siteUrl')}
           subtitle={
             <div>
-              Publicly accessible URL of this site. <i>ex: {this.props.viewdata.get('hosturl')}</i>
+              {t('settings.siteUrlHint')} <i>ex: {this.props.viewdata.get('hosturl')}</i>
             </div>
           }
           component={SiteUrl}
         />
         <SettingItem
-          title='Server Timezone'
-          subtitle='Set the local server timezone for date display'
-          tooltip='User can override in user profile. Requires Server Restart'
+          title={t('settings.serverTimezone')}
+          subtitle={t('settings.serverTimezoneHint')}
+          tooltip={t('settings.serverTimezoneTooltip')}
           component={Timezone}
         />
         <SettingItem
-          title='Time & Date Format'
+          title={t('settings.timeDateFormat')}
           subtitle={
             <a href='https://momentjs.com/docs/#/displaying/format/' rel='noopener noreferrer' target='_blank'>
-              Moment.js Format Options
+              {t('settings.momentFormatOptions')}
             </a>
           }
         >
           <Zone>
             <ZoneBox>
               <SettingSubItem
-                title='Time Format'
-                subtitle='Set the format for time display'
+                title={t('settings.timeFormat')}
+                subtitle={t('settings.timeFormatHint')}
                 component={
                   <InputWithSave
                     stateName='timeFormat'
@@ -145,8 +146,8 @@ class GeneralSettings extends React.Component {
             </ZoneBox>
             <ZoneBox>
               <SettingSubItem
-                title='Short Date Format'
-                subtitle='Set the format for short dates'
+                title={t('settings.shortDateFormat')}
+                subtitle={t('settings.shortDateFormatHint')}
                 component={
                   <InputWithSave
                     stateName='shortDateFormat'
@@ -159,8 +160,8 @@ class GeneralSettings extends React.Component {
             </ZoneBox>
             <ZoneBox>
               <SettingSubItem
-                title='Long Date Format'
-                subtitle='Set the format for long dates'
+                title={t('settings.longDateFormat')}
+                subtitle={t('settings.longDateFormatHint')}
                 component={
                   <InputWithSave
                     stateName='longDateFormat'
@@ -182,7 +183,8 @@ GeneralSettings.propTypes = {
   active: PropTypes.bool,
   updateSetting: PropTypes.func.isRequired,
   viewdata: PropTypes.object.isRequired,
-  settings: PropTypes.object.isRequired
+  settings: PropTypes.object.isRequired,
+  t: PropTypes.func.isRequired
 }
 
 const mapStateToProps = state => ({
@@ -190,4 +192,4 @@ const mapStateToProps = state => ({
   settings: state.settings.settings
 })
 
-export default connect(mapStateToProps, { updateSetting })(GeneralSettings)
+export default withTranslation()(connect(mapStateToProps, { updateSetting })(GeneralSettings))

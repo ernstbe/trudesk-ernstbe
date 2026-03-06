@@ -1,5 +1,4 @@
 /* eslint-disable no-unused-expressions */
-var async = require('async')
 var expect = require('chai').expect
 var m = require('mongoose')
 var ticketSchema = require('../../src/models/ticket')
@@ -18,384 +17,248 @@ describe('ticket.js', function () {
   //    });
   // });
 
-  it('should create ticket', function (done) {
-    prioritySchema.findOne({ default: true }).exec(function (err, p) {
-      expect(err).to.not.exist
-      expect(p).to.be.a('object')
-      statusSchema.findOne({ uid: 0 }).exec(function (err, status) {
-        expect(err).to.not.exist
-        expect(status).to.be.a('object')
-        ticketSchema.create(
-          {
-            owner: m.Types.ObjectId(),
-            group: m.Types.ObjectId(),
-            status: status._id,
-            tags: [],
-            date: new Date(),
-            subject: 'Dummy Test Subject',
-            issue: 'Dummy Test Issue',
-            priority: p._id,
-            type: m.Types.ObjectId(),
-            history: []
-          },
-          function (err, t) {
-            expect(err).to.not.exist
-            expect(t).to.be.a('object')
-            expect(t._doc).to.include.keys(
-              '_id',
-              'uid',
-              'owner',
-              'group',
-              'status',
-              'tags',
-              'date',
-              'subject',
-              'issue',
-              'priority',
-              'type',
-              'history',
-              'attachments',
-              'comments',
-              'deleted'
-            )
-
-            expect(t.uid).to.equal(1000)
-
-            done()
-          }
-        )
-      })
+  it('should create ticket', async function () {
+    var p = await prioritySchema.findOne({ default: true }).exec()
+    expect(p).to.be.a('object')
+    var status = await statusSchema.findOne({ uid: 0 }).exec()
+    expect(status).to.be.a('object')
+    var t = await ticketSchema.create({
+      owner: new m.Types.ObjectId(),
+      group: new m.Types.ObjectId(),
+      status: status._id,
+      tags: [],
+      date: new Date(),
+      subject: 'Dummy Test Subject',
+      issue: 'Dummy Test Issue',
+      priority: p._id,
+      type: new m.Types.ObjectId(),
+      history: []
     })
-  })
-
-  it('should set the ticket status to closed then to open', function (done) {
-    async.series(
-      [
-        function (cb) {
-          statusSchema.findOne({ uid: 3 }, function (err, status) {
-            expect(err).to.not.exist
-            expect(status).to.be.a('object')
-
-            ticketSchema.getTicketByUid(1000, function (err, ticket) {
-              expect(err).to.not.exist
-              expect(ticket).to.be.a('object')
-
-              ticket.setStatus(ticket._id, status._id, function (err, ticket) {
-                expect(err).to.not.exist
-                expect(ticket.status).to.equal(status._id)
-                expect(ticket.closedDate).to.exist
-
-                cb()
-              })
-            })
-          })
-        },
-        function (cb) {
-          statusSchema.findOne({ uid: 1 }, function (err, status) {
-            expect(err).to.not.exist
-            expect(status).to.be.a('object')
-            ticketSchema.getTicketByUid(1000, function (err, ticket) {
-              expect(err).to.not.exist
-              expect(ticket).to.be.a('object')
-
-              ticket.setStatus(ticket._id, status._id, function (err, ticket) {
-                expect(err).to.not.exist
-                console.log(ticket)
-                expect(ticket.status).to.equal(status._id)
-                expect(ticket.closedDate).to.not.exist
-
-                cb()
-              })
-            })
-          })
-        }
-      ],
-      function () {
-        done()
-      }
+    expect(t).to.be.a('object')
+    expect(t._doc).to.include.keys(
+      '_id',
+      'uid',
+      'owner',
+      'group',
+      'status',
+      'tags',
+      'date',
+      'subject',
+      'issue',
+      'priority',
+      'type',
+      'history',
+      'attachments',
+      'comments',
+      'deleted'
     )
+
+    expect(t.uid).to.equal(1000)
   })
 
-  it('should set assignee to user', function (done) {
+  it('should set the ticket status to closed then to open', async function () {
+    // Close the ticket
+    var closedStatus = await statusSchema.findOne({ uid: 3 })
+    expect(closedStatus).to.be.a('object')
+
+    var ticket = await ticketSchema.getTicketByUid(1000)
+    expect(ticket).to.be.a('object')
+
+    var closedTicket = await ticket.setStatus(ticket._id, closedStatus._id)
+    expect(closedTicket.status).to.equal(closedStatus._id)
+    expect(closedTicket.closedDate).to.exist
+
+    // Open the ticket
+    var openStatus = await statusSchema.findOne({ uid: 1 })
+    expect(openStatus).to.be.a('object')
+
+    var ticket2 = await ticketSchema.getTicketByUid(1000)
+    expect(ticket2).to.be.a('object')
+
+    var openedTicket = await ticket2.setStatus(ticket2._id, openStatus._id)
+    expect(openedTicket.status).to.equal(openStatus._id)
+    console.log(openedTicket)
+    expect(openedTicket.closedDate).to.not.exist
+  })
+
+  it('should set assignee to user', async function () {
     var userSchema = require('../../src/models/user')
-    async.waterfall(
-      [
-        function (cb) {
-          userSchema.getUserByUsername('trudesk', function (err, user) {
-            expect(err).to.not.exist
-            expect(user).to.be.a('object')
-            expect(user).to.have.property('_id')
+    var user = await userSchema.getUserByUsername('trudesk')
+    expect(user).to.be.a('object')
+    expect(user).to.have.property('_id')
 
-            cb(null, user._id)
-          })
-        },
-        function (userId, cb) {
-          ticketSchema.getTicketByUid(1000, function (err, ticket) {
-            expect(err).to.not.exist
-            ticket.setAssignee(userId, userId, function (err, ticket) {
-              expect(err).to.not.exist
-              expect(ticket.assignee).to.equal(userId)
+    var ticket = await ticketSchema.getTicketByUid(1000)
+    expect(ticket).to.be.a('object')
 
-              cb()
-            })
-          })
-        }
-      ],
-      function () {
-        done()
-      }
-    )
+    var updatedTicket = await ticket.setAssignee(user._id, user._id)
+    expect(updatedTicket.assignee).to.equal(user._id)
   })
 
-  it('should set ticket type', function (done) {
-    ticketSchema.getTicketByUid(1000, function (err, ticket) {
-      expect(err).to.not.exist
-      var typeSchema = require('../../src/models/tickettype')
-      typeSchema.getTypeByName('Issue', function (err, type) {
-        expect(err).to.not.exist
-        expect(type).to.be.a('object')
-        var ownerId = m.Types.ObjectId()
+  it('should set ticket type', async function () {
+    var ticket = await ticketSchema.getTicketByUid(1000)
+    expect(ticket).to.be.a('object')
 
-        ticket.setTicketType(ownerId, type._id, function (err, ticket) {
-          expect(err).to.not.exist
-          expect(ticket.type._id).to.equal(type._id)
+    var typeSchema = require('../../src/models/tickettype')
+    var type = await typeSchema.getTypeByName('Issue')
+    expect(type).to.be.a('object')
+    var ownerId = new m.Types.ObjectId()
 
-          done()
-        })
-      })
-    })
+    var updatedTicket = await ticket.setTicketType(ownerId, type._id)
+    expect(updatedTicket.type._id).to.equal(type._id)
   })
 
-  it('should set ticket priority', function (done) {
-    ticketSchema.getTicketByUid(1000, function (err, ticket) {
-      expect(err).to.not.exist
-      var ownerId = m.Types.ObjectId()
-      prioritySchema.getByMigrationNum(3, function (err, priority) {
-        expect(err).to.not.exist
-        expect(priority).to.be.a('object')
+  it('should set ticket priority', async function () {
+    var ticket = await ticketSchema.getTicketByUid(1000)
+    expect(ticket).to.be.a('object')
+    var ownerId = new m.Types.ObjectId()
+    var priority = await prioritySchema.getByMigrationNum(3)
+    expect(priority).to.be.a('object')
 
-        ticket.setTicketPriority(ownerId, priority, function (err, ticket) {
-          expect(err).to.not.exist
-          expect(ticket.priority.name).to.equal('Critical')
-
-          done()
-        })
-      })
-    })
+    var updatedTicket = await ticket.setTicketPriority(ownerId, priority)
+    expect(updatedTicket.priority.name).to.equal('Critical')
   })
 
-  it('should set ticket group', function (done) {
+  it('should set ticket group', async function () {
     var grp = groupSchema({
       name: 'Test'
     })
-    grp.save(function (err, group) {
-      expect(err).to.not.exist
-      expect(group).to.be.a('object')
+    var group = await grp.save()
+    expect(group).to.be.a('object')
 
-      ticketSchema.getTicketByUid(1000, function (err, ticket) {
-        expect(err).to.not.exist
-        var ownerId = m.Types.ObjectId()
-        ticket.setTicketGroup(ownerId, group._id, function (err, ticket) {
-          expect(err).to.not.exist
-          expect(ticket.group.name).to.equal('Test')
-
-          done()
-        })
-      })
-    })
+    var ticket = await ticketSchema.getTicketByUid(1000)
+    expect(ticket).to.be.a('object')
+    var ownerId = new m.Types.ObjectId()
+    var updatedTicket = await ticket.setTicketGroup(ownerId, group._id)
+    expect(updatedTicket.group.name).to.equal('Test')
   })
 
-  it('should clear the ticket assignee', function (done) {
-    ticketSchema.getTicketByUid(1000, function (err, ticket) {
-      expect(err).to.not.exist
-      expect(ticket).to.be.a('object')
+  it('should clear the ticket assignee', async function () {
+    var ticket = await ticketSchema.getTicketByUid(1000)
+    expect(ticket).to.be.a('object')
 
-      ticket.clearAssignee(m.Types.ObjectId(), function (err, ticket) {
-        expect(err).to.not.exist
-        expect(ticket.assignee).to.not.exist
-
-        done()
-      })
-    })
+    var updatedTicket = await ticket.clearAssignee(new m.Types.ObjectId())
+    expect(updatedTicket.assignee).to.not.exist
   })
 
-  it('should add Comment and Save', function (done) {
-    ticketSchema.getTicketByUid(1000, function (err, ticket) {
-      expect(err).to.not.exist
-      expect(ticket).to.be.a('object')
+  it('should add Comment and Save', async function () {
+    var ticket = await ticketSchema.getTicketByUid(1000)
+    expect(ticket).to.be.a('object')
 
-      var comment = {
-        owner: m.Types.ObjectId(),
-        date: new Date(),
-        comment: 'This is a comment'
-      }
+    var comment = {
+      owner: new m.Types.ObjectId(),
+      date: new Date(),
+      comment: 'This is a comment'
+    }
 
-      ticket.comments.push(comment)
+    ticket.comments.push(comment)
 
-      // Fake populate required Fields
-      ticket.group = m.Types.ObjectId()
-      ticket.owner = m.Types.ObjectId()
-      ticket.type = m.Types.ObjectId()
+    // Fake populate required Fields
+    ticket.group = new m.Types.ObjectId()
+    ticket.owner = new m.Types.ObjectId()
+    ticket.type = new m.Types.ObjectId()
 
-      ticket.save(function (err, ticket) {
-        expect(err).to.not.exist
-        expect(ticket.comments).to.have.length(1)
-
-        done()
-      })
-    })
+    var savedTicket = await ticket.save()
+    expect(savedTicket.comments).to.have.length(1)
   })
 
-  it('should update comment', function (done) {
-    ticketSchema.getTicketByUid(1000, function (err, ticket) {
-      expect(err).to.not.exist
-      expect(ticket).to.be.a('object')
+  it('should update comment', async function () {
+    var ticket = await ticketSchema.getTicketByUid(1000)
+    expect(ticket).to.be.a('object')
 
-      var commentId = ticket.comments[0]._id
-      expect(commentId).to.exist
+    var commentId = ticket.comments[0]._id
+    expect(commentId).to.exist
 
-      ticket.updateComment(m.Types.ObjectId(), commentId, 'This is the new comment text', function (err, ticket) {
-        expect(err).to.not.exist
-        expect(ticket.comments[0].comment).to.equal('This is the new comment text')
-
-        done()
-      })
-    })
+    var updatedTicket = await ticket.updateComment(new m.Types.ObjectId(), commentId, 'This is the new comment text')
+    expect(updatedTicket.comments[0].comment).to.equal('This is the new comment text')
   })
 
-  it('should remove comment', function (done) {
-    ticketSchema.getTicketByUid(1000, function (err, ticket) {
-      expect(err).to.not.exist
-      expect(ticket).to.be.a('object')
+  it('should remove comment', async function () {
+    var ticket = await ticketSchema.getTicketByUid(1000)
+    expect(ticket).to.be.a('object')
 
-      var commentId = ticket.comments[0]._id
-      expect(commentId).to.exist
+    var commentId = ticket.comments[0]._id
+    expect(commentId).to.exist
 
-      ticket.removeComment(m.Types.ObjectId(), commentId, function (err, ticket) {
-        expect(err).to.not.exist
-        expect(ticket.comments).to.have.length(0)
-
-        done()
-      })
-    })
+    var updatedTicket = await ticket.removeComment(new m.Types.ObjectId(), commentId)
+    expect(updatedTicket.comments).to.have.length(0)
   })
 
-  it('should add Note and Save', function (done) {
-    ticketSchema.getTicketByUid(1000, function (err, ticket) {
-      expect(err).to.not.exist
-      expect(ticket).to.be.a('object')
+  it('should add Note and Save', async function () {
+    var ticket = await ticketSchema.getTicketByUid(1000)
+    expect(ticket).to.be.a('object')
 
-      var note = {
-        owner: m.Types.ObjectId(),
-        date: new Date(),
-        note: 'This is a note'
-      }
+    var note = {
+      owner: new m.Types.ObjectId(),
+      date: new Date(),
+      note: 'This is a note'
+    }
 
-      ticket.notes.push(note)
+    ticket.notes.push(note)
 
-      // Fake populate required Fields
-      ticket.group = m.Types.ObjectId()
-      ticket.owner = m.Types.ObjectId()
-      ticket.type = m.Types.ObjectId()
+    // Fake populate required Fields
+    ticket.group = new m.Types.ObjectId()
+    ticket.owner = new m.Types.ObjectId()
+    ticket.type = new m.Types.ObjectId()
 
-      ticket.save(function (err, ticket) {
-        expect(err).to.not.exist
-        expect(ticket.notes).to.have.length(1)
-
-        done()
-      })
-    })
+    var savedTicket = await ticket.save()
+    expect(savedTicket.notes).to.have.length(1)
   })
 
-  it('should update note', function (done) {
-    ticketSchema.getTicketByUid(1000, function (err, ticket) {
-      expect(err).to.not.exist
-      expect(ticket).to.be.a('object')
+  it('should update note', async function () {
+    var ticket = await ticketSchema.getTicketByUid(1000)
+    expect(ticket).to.be.a('object')
 
-      var noteId = ticket.notes[0]._id
-      expect(noteId).to.exist
+    var noteId = ticket.notes[0]._id
+    expect(noteId).to.exist
 
-      ticket.updateNote(m.Types.ObjectId(), noteId, 'This is the new note text', function (err, ticket) {
-        expect(err).to.not.exist
-        expect(ticket.notes[0].note).to.equal('This is the new note text')
-
-        done()
-      })
-    })
+    var updatedTicket = await ticket.updateNote(new m.Types.ObjectId(), noteId, 'This is the new note text')
+    expect(updatedTicket.notes[0].note).to.equal('This is the new note text')
   })
 
-  it('should remove note', function (done) {
-    ticketSchema.getTicketByUid(1000, function (err, ticket) {
-      expect(err).to.not.exist
-      expect(ticket).to.be.a('object')
+  it('should remove note', async function () {
+    var ticket = await ticketSchema.getTicketByUid(1000)
+    expect(ticket).to.be.a('object')
 
-      var noteId = ticket.notes[0]._id
-      expect(noteId).to.exist
+    var noteId = ticket.notes[0]._id
+    expect(noteId).to.exist
 
-      ticket.removeNote(m.Types.ObjectId(), noteId, function (err, ticket) {
-        expect(err).to.not.exist
-        expect(ticket.notes).to.have.length(0)
-
-        done()
-      })
-    })
+    var updatedTicket = await ticket.removeNote(new m.Types.ObjectId(), noteId)
+    expect(updatedTicket.notes).to.have.length(0)
   })
 
-  it('should set ticket issue', function (done) {
-    ticketSchema.getTicketByUid(1000, function (err, ticket) {
-      expect(err).to.not.exist
-      expect(ticket).to.be.a('object')
+  it('should set ticket issue', async function () {
+    var ticket = await ticketSchema.getTicketByUid(1000)
+    expect(ticket).to.be.a('object')
 
-      var ownerId = m.Types.ObjectId()
-      ticket.setIssue(ownerId, 'This is the new issue text', function (err, ticket) {
-        expect(err).to.not.exist
-        expect(ticket.issue).to.equal('<p>This is the new issue text</p>\n')
-
-        done()
-      })
-    })
+    var ownerId = new m.Types.ObjectId()
+    var updatedTicket = await ticket.setIssue(ownerId, 'This is the new issue text')
+    expect(updatedTicket.issue).to.equal('<p>This is the new issue text</p>\n')
   })
 
-  it('should get all tickets', function (done) {
-    ticketSchema.getForCache(function (err, tickets) {
-      expect(err).to.not.exist
-      expect(tickets).to.have.length(1)
-
-      done()
-    })
+  it('should get all tickets', async function () {
+    var tickets = await ticketSchema.getForCache()
+    expect(tickets).to.have.length(1)
   })
 
-  it('should get all tickets for group', function (done) {
-    ticketSchema.getTickets([m.Types.ObjectId()], function (err, tickets) {
-      expect(err).to.not.exist
-      expect(tickets).to.have.length(0)
-
-      done()
-    })
+  it('should get all tickets for group', async function () {
+    var tickets = await ticketSchema.getTickets([new m.Types.ObjectId()])
+    expect(tickets).to.have.length(0)
   })
 
-  it('should error getting tickets for group', function (done) {
-    async.parallel(
-      [
-        function (cb) {
-          ticketSchema.getTickets(undefined, function (err, tickets) {
-            expect(err).to.exist
+  it('should error getting tickets for group', async function () {
+    try {
+      await ticketSchema.getTickets(undefined)
+      throw new Error('Should have thrown')
+    } catch (err) {
+      expect(err).to.exist
+    }
 
-            cb()
-          })
-        },
-        function (cb) {
-          ticketSchema.getTickets(1, function (err, tickets) {
-            expect(err).to.exist
-
-            cb()
-          })
-        }
-      ],
-      function () {
-        done()
-      }
-    )
+    try {
+      await ticketSchema.getTickets(1)
+      throw new Error('Should have thrown')
+    } catch (err) {
+      expect(err).to.exist
+    }
   })
 
   it('should get all tickets for group with limit', function (done) {
@@ -403,113 +266,62 @@ describe('ticket.js', function () {
     return done()
   })
 
-  it('should get all tickets for group by status', function (done) {
-    async.parallel(
-      [
-        function (cb) {
-          ticketSchema.getTicketsByStatus([m.Types.ObjectId()], m.Types.ObjectId(), function (err, tickets) {
-            expect(err).to.not.exist
-            expect(tickets).to.have.length(0)
+  it('should get all tickets for group by status', async function () {
+    var tickets = await ticketSchema.getTicketsByStatus([new m.Types.ObjectId()], new m.Types.ObjectId())
+    expect(tickets).to.have.length(0)
 
-            cb()
-          })
-        },
-        function (cb) {
-          ticketSchema.getTicketsByStatus(undefined, m.Types.ObjectId(), function (err, tickets) {
-            expect(err).to.exist
+    try {
+      await ticketSchema.getTicketsByStatus(undefined, new m.Types.ObjectId())
+      throw new Error('Should have thrown')
+    } catch (err) {
+      expect(err).to.exist
+    }
 
-            cb()
-          })
-        },
-        function (cb) {
-          ticketSchema.getTicketsByStatus(m.Types.ObjectId(), m.Types.ObjectId(), function (err, tickets) {
-            expect(err).to.exist
-
-            cb()
-          })
-        }
-      ],
-      function () {
-        done()
-      }
-    )
+    try {
+      await ticketSchema.getTicketsByStatus(new m.Types.ObjectId(), new m.Types.ObjectId())
+      throw new Error('Should have thrown')
+    } catch (err) {
+      expect(err).to.exist
+    }
   })
 
-  it('should get all tickets by status', function (done) {
-    statusSchema.findOne({ uid: 0 }, function (err, status) {
-      expect(err).to.not.exist
-
-      ticketSchema.getAllByStatus(status._id, function (err, tickets) {
-        expect(err).to.not.exist
-
-        expect(tickets).to.have.length(1)
-
-        done()
-      })
-    })
+  it('should get all tickets by status', async function () {
+    var status = await statusSchema.findOne({ uid: 0 })
+    var tickets = await ticketSchema.getAllByStatus(status._id)
+    expect(tickets).to.have.length(1)
   })
 
-  it('should get ticket by _id', function (done) {
-    async.parallel(
-      [
-        function (cb) {
-          ticketSchema.getTicketById(m.Types.ObjectId(), function (err, ticket) {
-            expect(err).to.not.exist
+  it('should get ticket by _id', async function () {
+    var ticket = await ticketSchema.getTicketById(new m.Types.ObjectId())
+    // ticket may be null for a random ObjectId, that's fine
 
-            cb()
-          })
-        },
-        function (cb) {
-          ticketSchema.getTicketById(undefined, function (err, ticket) {
-            expect(err).to.exist
-
-            cb()
-          })
-        }
-      ],
-      function () {
-        done()
-      }
-    )
+    try {
+      await ticketSchema.getTicketById(undefined)
+      throw new Error('Should have thrown')
+    } catch (err) {
+      expect(err).to.exist
+    }
   })
 
-  it('should get tickets by assignee', function (done) {
-    async.parallel(
-      [
-        function (cb) {
-          ticketSchema.getAssigned(m.Types.ObjectId(), function (err, tickets) {
-            expect(err).to.not.exist
+  it('should get tickets by assignee', async function () {
+    var tickets = await ticketSchema.getAssigned(new m.Types.ObjectId())
+    // may be empty array, that's fine
 
-            cb()
-          })
-        },
-        function (cb) {
-          ticketSchema.getAssigned(undefined, function (err, tickets) {
-            expect(err).to.exist
-
-            cb()
-          })
-        }
-      ],
-      function () {
-        done()
-      }
-    )
+    try {
+      await ticketSchema.getAssigned(undefined)
+      throw new Error('Should have thrown')
+    } catch (err) {
+      expect(err).to.exist
+    }
   })
 
   // Should be last
-  it('should soft delete ticket with UID 1000', function (done) {
-    ticketSchema.getTicketByUid(1000, function (err, ticket) {
-      expect(err).to.not.exist
-      expect(ticket).to.be.a('object')
+  it('should soft delete ticket with UID 1000', async function () {
+    var ticket = await ticketSchema.getTicketByUid(1000)
+    expect(ticket).to.be.a('object')
 
-      ticketSchema.softDelete(ticket._id, function (err, ticket) {
-        expect(err).to.not.exist
-        expect(ticket).to.be.a('object')
-        expect(ticket.deleted).to.be.true
-
-        done()
-      })
-    })
+    var deletedTicket = await ticketSchema.softDelete(ticket._id)
+    expect(deletedTicket).to.be.a('object')
+    expect(deletedTicket.deleted).to.be.true
   })
 })

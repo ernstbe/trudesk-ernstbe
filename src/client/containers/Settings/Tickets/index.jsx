@@ -15,6 +15,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
+import { withTranslation } from 'react-i18next'
 import Log from '../../../logger'
 
 import $ from 'jquery'
@@ -238,7 +239,7 @@ class TicketsSettings extends React.Component {
   }
 
   render () {
-    const { active, viewdata } = this.props
+    const { active, viewdata, t } = this.props
     const mappedTypes = this.getTicketTypes().map(function (type) {
       return { text: type.get('name'), value: type.get('_id') }
     })
@@ -246,8 +247,8 @@ class TicketsSettings extends React.Component {
     return (
       <div className={active ? 'active' : 'hide'}>
         <SettingItem
-          title={'Default Ticket Type'}
-          subtitle={'Default ticket type for newly created tickets.'}
+          title={t('settings.defaultTicketType')}
+          subtitle={t('settings.defaultTicketTypeHint')}
           component={
             <SingleSelect
               items={mappedTypes}
@@ -261,17 +262,17 @@ class TicketsSettings extends React.Component {
           }
         />
         <SettingItem
-          title={'Allow Public Tickets'}
+          title={t('settings.allowPublicTickets')}
           subtitle={
             <div>
-              Allow the creation of tickets by users that are unregistered. (
+              {t('settings.allowPublicTicketsHint')} (
               <a href={viewdata.get('hosturl') + '/newissue'}>{viewdata.get('hosturl') + '/newissue'}</a>)
             </div>
           }
           component={
             <EnableSwitch
               stateName={'allowPublicTickets'}
-              label={'Enable'}
+              label={t('settings.enable')}
               checked={this.getSetting('allowPublicTickets')}
               onChange={e => {
                 this.onAllowPublicTicketsChange(e)
@@ -280,13 +281,13 @@ class TicketsSettings extends React.Component {
           }
         />
         <SettingItem
-          title={'Allow Agents to Submit Tickets on Behalf of User'}
-          subtitle={<div>Allow the creation of tickets by agents on behalf of users.</div>}
-          tooltip={'Setting takes affect after refresh.'}
+          title={t('settings.allowAgentUserTickets')}
+          subtitle={<div>{t('settings.allowAgentUserTicketsHint')}</div>}
+          tooltip={t('settings.allowAgentUserTicketsTooltip')}
           component={
             <EnableSwitch
               stateName={'allowAgentUserTickets'}
-              label={'Enable'}
+              label={t('settings.enable')}
               checked={this.getSetting('allowAgentUserTickets')}
               onChange={e => {
                 this.onAllowAgentUserTicketsChange(e)
@@ -295,13 +296,13 @@ class TicketsSettings extends React.Component {
           }
         />
         <SettingItem
-          title={'Show Overdue Tickets'}
-          subtitle={'Enable/Disable flashing of tickets based on SLA time of type priority.'}
-          tooltip={'If disabled, priority SLA times will not mark tickets overdue.'}
+          title={t('settings.showOverdueTickets')}
+          subtitle={t('settings.showOverdueTicketsHint')}
+          tooltip={t('settings.showOverdueTicketsTooltip')}
           component={
             <EnableSwitch
               stateName={'showOverdueTickets'}
-              label={'Enable'}
+              label={t('settings.enable')}
               checked={this.getSetting('showOverdueTickets')}
               onChange={e => {
                 this.onShowOverdueChange(e)
@@ -326,8 +327,8 @@ class TicketsSettings extends React.Component {
         {/*  }*/}
         {/*/>*/}
         <SettingItem
-          title={'Minimum Subject Length'}
-          subtitle={'Minimum character limit for ticket subject'}
+          title={t('settings.minSubjectLength')}
+          subtitle={t('settings.minSubjectLengthHint')}
           component={
             <NumberWithSave
               stateName={'minSubjectLength'}
@@ -338,8 +339,8 @@ class TicketsSettings extends React.Component {
           }
         />
         <SettingItem
-          title={'Minimum Issue Length'}
-          subtitle={'Minimum character limit for ticket issue'}
+          title={t('settings.minIssueLength')}
+          subtitle={t('settings.minIssueLengthHint')}
           component={
             <NumberWithSave
               stateName={'minIssueLength'}
@@ -350,11 +351,11 @@ class TicketsSettings extends React.Component {
           }
         />
         <SplitSettingsPanel
-          title={'Ticket Types'}
-          subtitle={'Create/Modify Ticket Types'}
+          title={t('settings.ticketTypes')}
+          subtitle={t('common.create') + '/' + t('common.edit') + ' ' + t('settings.ticketTypes')}
           rightComponent={
             <Button
-              text={'Create'}
+              text={t('common.create')}
               style={'success'}
               flat={true}
               extraClass={'md-btn-wave'}
@@ -368,11 +369,11 @@ class TicketsSettings extends React.Component {
           })}
         />
         <SettingItem
-          title={'Ticket Priorities'}
-          subtitle={'Ticket priorities set the level of SLAs for each ticket.'}
+          title={t('settings.ticketPriorities')}
+          subtitle={t('settings.ticketPrioritiesHint')}
           component={
             <Button
-              text={'Create'}
+              text={t('common.create')}
               style={'success'}
               flat={true}
               waves={true}
@@ -392,14 +393,14 @@ class TicketsSettings extends React.Component {
                     titleCss={{ color: p.get('htmlColor') }}
                     subtitle={
                       <div>
-                        SLA Overdue: <strong>{p.get('durationFormatted')}</strong>
+                        {t('settings.slaOverdue')}: <strong>{p.get('durationFormatted')}</strong>
                       </div>
                     }
                     component={
                       <ButtonGroup classNames={'uk-float-right'}>
-                        <Button text={'Edit'} small={true} onClick={e => TicketsSettings.toggleEditPriority(e)} />
+                        <Button text={t('common.edit')} small={true} onClick={e => TicketsSettings.toggleEditPriority(e)} />
                         <Button
-                          text={'Remove'}
+                          text={t('settings.remove')}
                           small={true}
                           style={'danger'}
                           disabled={disableRemove}
@@ -460,11 +461,11 @@ class TicketsSettings extends React.Component {
         {/*</SettingItem>*/}
 
         <SettingItem
-          title={'Ticket Tags'}
-          subtitle={'Create/Modify Ticket Tags'}
+          title={t('settings.ticketTags')}
+          subtitle={t('common.create') + '/' + t('common.edit') + ' ' + t('settings.ticketTags')}
           component={
             <Button
-              text={'Create'}
+              text={t('common.create')}
               style={'success'}
               flat={true}
               waves={true}
@@ -479,7 +480,7 @@ class TicketsSettings extends React.Component {
           <Grid extraClass={'uk-margin-medium-bottom'}>
             {this.props.tagsSettings.tags.size < 1 && (
               <div style={{ width: '100%', padding: '55px', textAlign: 'center' }}>
-                <h3 style={{ fontSize: '24px', fontWeight: '300' }}>No Tags Found</h3>
+                <h3 style={{ fontSize: '24px', fontWeight: '300' }}>{t('settings.noTagsFound')}</h3>
               </div>
             )}
             <SpinLoader active={this.props.tagsSettings.loading} extraClass={'panel-bg'} />
@@ -508,14 +509,14 @@ class TicketsSettings extends React.Component {
                               <GridItem width={'1-2'} extraClass={'uk-text-right'}>
                                 <ButtonGroup classNames={'mt-5'}>
                                   <Button
-                                    text={'edit'}
+                                    text={t('common.edit')}
                                     flat={true}
                                     waves={true}
                                     small={true}
                                     onClick={e => TicketsSettings.toggleEditTag(e)}
                                   />
                                   <Button
-                                    text={'remove'}
+                                    text={t('settings.remove')}
                                     flat={true}
                                     waves={true}
                                     style={'danger'}
@@ -538,7 +539,7 @@ class TicketsSettings extends React.Component {
                               <GridItem width={'1-3'} style={{ paddingTop: '10px' }}>
                                 <ButtonGroup classNames={'uk-float-right uk-text-right'}>
                                   <Button
-                                    text={'cancel'}
+                                    text={t('common.cancel')}
                                     flat={true}
                                     waves={true}
                                     small={true}
@@ -546,7 +547,7 @@ class TicketsSettings extends React.Component {
                                   />
                                   <Button
                                     type={'submit'}
-                                    text={'save'}
+                                    text={t('common.save')}
                                     flat={true}
                                     waves={true}
                                     small={true}
@@ -579,7 +580,8 @@ TicketsSettings.propTypes = {
   getTagsWithPage: PropTypes.func.isRequired,
   tagsUpdateCurrentPage: PropTypes.func.isRequired,
   showModal: PropTypes.func.isRequired,
-  deleteStatus: PropTypes.func.isRequired
+  deleteStatus: PropTypes.func.isRequired,
+  t: PropTypes.func.isRequired
 }
 
 const mapStateToProps = state => ({
@@ -588,10 +590,10 @@ const mapStateToProps = state => ({
   tagsSettings: state.tagsSettings
 })
 
-export default connect(mapStateToProps, {
+export default withTranslation()(connect(mapStateToProps, {
   updateSetting,
   getTagsWithPage,
   tagsUpdateCurrentPage,
   showModal,
   deleteStatus
-})(TicketsSettings)
+})(TicketsSettings))

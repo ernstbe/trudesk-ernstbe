@@ -110,109 +110,108 @@ describe('api/users.js', function () {
     )
   })
 
-  it('should update user', function (done) {
-    async.waterfall(
-      [
-        function (cb) {
-          var userSchema = require('../../src/models/user')
-          userSchema.getUserByUsername('fake.user', function (err, user) {
-            if (err) return cb(err)
-
-            return cb(null, user)
-          })
-        },
-        function (user, cb) {
-          var u = {
-            aTitle: 'The Title',
-            aRole: global.userRoleId
-          }
-
-          cb(null, u)
-        }
-      ],
-      function (err, u) {
-        if (err) return done(err)
-        request
-          .put('/api/v1/users/fake.user')
-          .set('accesstoken', tdapikey)
-          .set('Content-Type', 'application/json')
-          .send(u)
-          .set('Accept', 'application/json')
-          .expect(function (res) {
-            if (res.body.success !== true) throw new Error('Unable to update user')
-          })
-          .expect(200, done)
-      }
-    )
-  })
-
-  it('should add user to group', function (done) {
-    var groupSchema = require('../../src/models/group')
+  it('should update user', async function () {
     var userSchema = require('../../src/models/user')
+    var user = await userSchema.getUserByUsername('fake.user')
 
-    groupSchema.getGroupByName('TEST', function (err, group) {
-      expect(err).to.not.exist
+    var u = {
+      aTitle: 'The Title',
+      aRole: global.userRoleId
+    }
 
-      userSchema.getUserByUsername('trudesk', function (err, user) {
-        expect(err).to.not.exist
-        var u = {
-          aFullname: user.fullname,
-          aEmail: user.email,
-          aGrps: [group._id],
-          saveGroups: true
-        }
-
-        request
-          .put('/api/v1/users/trudesk')
-          .set('accesstoken', tdapikey)
-          .set('Content-Type', 'application/json')
-          .send(u)
-          .set('Accept', 'application/json')
-          .expect(200, function () {
-            groupSchema.getGroupByName('TEST', function (err, grp) {
-              expect(err).to.not.exist
-
-              expect(grp.isMember(user._id)).to.equal(true)
-
-              done()
-            })
-          })
-      })
+    await new Promise(function (resolve, reject) {
+      request
+        .put('/api/v1/users/fake.user')
+        .set('accesstoken', tdapikey)
+        .set('Content-Type', 'application/json')
+        .send(u)
+        .set('Accept', 'application/json')
+        .expect(function (res) {
+          if (res.body.success !== true) throw new Error('Unable to update user')
+        })
+        .expect(200, function (err) {
+          if (err) return reject(err)
+          resolve()
+        })
     })
   })
 
-  it('should remove user from group', function (done) {
+  it('should add user to group', async function () {
     var groupSchema = require('../../src/models/group')
     var userSchema = require('../../src/models/user')
 
-    groupSchema.getGroupByName('TEST', function (err, group) {
-      expect(err).to.not.exist
+    var group = await groupSchema.getGroupByName('TEST')
+    expect(group).to.not.be.null
 
-      userSchema.getUserByUsername('trudesk', function (err, user) {
-        expect(err).to.not.exist
-        var u = {
-          aId: user._id,
-          aFullname: user.fullname,
-          aEmail: user.email,
-          aGrps: [],
-          saveGroups: true
-        }
+    var user = await userSchema.getUserByUsername('trudesk')
+    expect(user).to.not.be.null
 
-        request
-          .put('/api/v1/users/trudesk')
-          .set('accesstoken', tdapikey)
-          .set('Content-Type', 'application/json')
-          .send(u)
-          .set('Accept', 'application/json')
-          .expect(200, { success: true }, function () {
-            groupSchema.getGroupByName('TEST', function (err, grp) {
-              expect(err).to.not.exist
-              expect(grp.isMember(user._id)).to.equal(false)
+    var u = {
+      aFullname: user.fullname,
+      aEmail: user.email,
+      aGrps: [group._id],
+      saveGroups: true
+    }
 
-              done()
-            })
-          })
-      })
+    await new Promise(function (resolve, reject) {
+      request
+        .put('/api/v1/users/trudesk')
+        .set('accesstoken', tdapikey)
+        .set('Content-Type', 'application/json')
+        .send(u)
+        .set('Accept', 'application/json')
+        .expect(200, async function (err) {
+          if (err) return reject(err)
+          try {
+            var grp = await groupSchema.getGroupByName('TEST')
+            expect(grp.isMember(user._id)).to.equal(true)
+            resolve()
+          } catch (e) {
+            reject(e)
+          }
+        })
+    })
+  })
+
+  it('should remove user from group', async function () {
+    var groupSchema = require('../../src/models/group')
+    var userSchema = require('../../src/models/user')
+
+    var group = await groupSchema.getGroupByName('TEST')
+    expect(group).to.not.be.null
+
+    var user = await userSchema.getUserByUsername('trudesk')
+    expect(user).to.not.be.null
+
+    var u = {
+      aId: user._id,
+      aFullname: user.fullname,
+      aEmail: user.email,
+      aGrps: [],
+      saveGroups: true
+    }
+
+    await new Promise(function (resolve, reject) {
+      request
+        .put('/api/v1/users/trudesk')
+        .set('accesstoken', tdapikey)
+        .set('Content-Type', 'application/json')
+        .send(u)
+        .set('Accept', 'application/json')
+        .expect(200)
+        .expect(function (res) {
+          if (res.body.success !== true) throw new Error('Expected success to be true')
+        })
+        .end(async function (err) {
+          if (err) return reject(err)
+          try {
+            var grp = await groupSchema.getGroupByName('TEST')
+            expect(grp.isMember(user._id)).to.equal(false)
+            resolve()
+          } catch (e) {
+            reject(e)
+          }
+        })
     })
   })
 

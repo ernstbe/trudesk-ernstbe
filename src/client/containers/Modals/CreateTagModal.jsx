@@ -15,6 +15,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
+import { withTranslation } from 'react-i18next'
 import BaseModal from './BaseModal'
 import Button from 'components/Button'
 
@@ -43,28 +44,29 @@ class CreateTagModal extends React.Component {
   }
 
   render () {
+    const { t } = this.props
     return (
       <BaseModal>
         <form className='uk-form-stacked' onSubmit={e => this.onSubmit(e)}>
           <div>
-            <h2 className={'nomargin mb-5'}>Create Tag</h2>
-            <p className='uk-text-muted'>Tags categorize tickets, making it easy to identify issues</p>
+            <h2 className={'nomargin mb-5'}>{t('modals.createTag.title')}</h2>
+            <p className='uk-text-muted'>{t('modals.createTag.hint')}</p>
 
-            <label>Tag Name</label>
+            <label>{t('modals.createTag.tagName')}</label>
             <input
               type='text'
               className={'md-input'}
               name={'name'}
               data-validation='length'
               data-validation-length='min2'
-              data-validation-error-msg='Please enter a valid tag name. Tag name must contain at least 2 characters.'
+              data-validation-error-msg={t('modals.createTag.validName')}
               value={this.state.name}
               onChange={e => this.onNameChange(e)}
             />
           </div>
           <div className='uk-modal-footer uk-text-right'>
-            <Button text={'Close'} extraClass={'uk-modal-close'} flat={true} waves={true} />
-            <Button text={'Create'} type={'submit'} flat={true} waves={true} style={'success'} />
+            <Button text={t('common.close')} extraClass={'uk-modal-close'} flat={true} waves={true} />
+            <Button text={t('common.create')} type={'submit'} flat={true} waves={true} style={'success'} />
           </div>
         </form>
       </BaseModal>
@@ -75,10 +77,11 @@ class CreateTagModal extends React.Component {
 CreateTagModal.propTypes = {
   createTag: PropTypes.func.isRequired,
   page: PropTypes.string,
-  currentPage: PropTypes.number
+  currentPage: PropTypes.number,
+  t: PropTypes.func.isRequired
 }
 
-export default connect(
+export default withTranslation()(connect(
   null,
   { createTag }
-)(CreateTagModal)
+)(CreateTagModal))

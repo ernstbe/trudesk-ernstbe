@@ -17,21 +17,15 @@ const winston = require('../logger')
 const roleSchema = require('../models/role')
 const roleOrder = require('../models/roleorder')
 
-const register = function (callback) {
-  // Register Roles
-  roleSchema.getRolesLean(function (err, roles) {
-    if (err) return callback(err)
+const register = async function (callback) {
+  const roles = await roleSchema.getRolesLean()
+  const ro = await roleOrder.getOrderLean()
 
-    roleOrder.getOrderLean(function (err, ro) {
-      if (err) return callback(err)
+  winston.debug('Registering Permissions...')
+  global.roleOrder = ro
+  global.roles = roles
 
-      winston.debug('Registering Permissions...')
-      global.roleOrder = ro
-      global.roles = roles
-
-      return callback()
-    })
-  })
+  if (typeof callback === 'function') return callback()
 }
 
 /***
@@ -151,12 +145,13 @@ function hasPermOverRole (ownRole, extRole) {
   return !_.isUndefined(i)
 }
 
-function isAdmin (roleId, callback) {
-  roleSchema.get(roleId, function (err, role) {
-    if (err) return callback(false)
-
+async function isAdmin (roleId, callback) {
+  try {
+    const role = await roleSchema.get(roleId)
     return callback(role.isAdmin)
-  })
+  } catch (err) {
+    return callback(false)
+  }
 }
 
 function isAdminSync (roleId) {

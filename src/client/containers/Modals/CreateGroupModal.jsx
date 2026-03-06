@@ -15,6 +15,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
+import { withTranslation } from 'react-i18next'
 import { makeObservable, observable } from 'mobx'
 import { observer } from 'mobx-react'
 
@@ -72,6 +73,7 @@ class CreateGroupModal extends React.Component {
   }
 
   render () {
+    const { t } = this.props
     const mappedAccounts = this.props.accounts
       .map(account => {
         return { text: account.get('fullname'), value: account.get('_id') }
@@ -80,11 +82,11 @@ class CreateGroupModal extends React.Component {
     return (
       <BaseModal>
         <div className={'mb-25'}>
-          <h2>Create Group</h2>
+          <h2>{t('modals.createGroup.title')}</h2>
         </div>
         <form className={'uk-form-stacked'} onSubmit={e => this.onFormSubmit(e)}>
           <div className={'uk-margin-medium-bottom'}>
-            <label>Group Name</label>
+            <label>{t('modals.createGroup.groupName')}</label>
             <input
               type='text'
               className={'md-input'}
@@ -92,16 +94,16 @@ class CreateGroupModal extends React.Component {
               onChange={e => this.onInputChange(e)}
               data-validation='length'
               data-validation-length={'min2'}
-              data-validation-error-msg={'Please enter a valid Group name. (Must contain 2 characters)'}
+              data-validation-error-msg={t('modals.createGroup.validName')}
             />
           </div>
           <div className={'uk-margin-medium-bottom'}>
-            <label style={{ marginBottom: 5 }}>Group Members</label>
+            <label style={{ marginBottom: 5 }}>{t('modals.createGroup.groupMembers')}</label>
             <MultiSelect items={mappedAccounts} onChange={() => {}} ref={r => (this.membersSelect = r)} />
           </div>
           <div className='uk-modal-footer uk-text-right'>
-            <Button text={'Close'} flat={true} waves={true} extraClass={'uk-modal-close'} />
-            <Button text={'Create Group'} flat={true} waves={true} style={'primary'} type={'submit'} />
+            <Button text={t('common.close')} flat={true} waves={true} extraClass={'uk-modal-close'} />
+            <Button text={t('modals.createGroup.createButton')} flat={true} waves={true} style={'primary'} type={'submit'} />
           </div>
         </form>
       </BaseModal>
@@ -113,11 +115,12 @@ CreateGroupModal.propTypes = {
   accounts: PropTypes.object.isRequired,
   fetchAccounts: PropTypes.func.isRequired,
   unloadAccounts: PropTypes.func.isRequired,
-  createGroup: PropTypes.func.isRequired
+  createGroup: PropTypes.func.isRequired,
+  t: PropTypes.func.isRequired
 }
 
 const mapStateToProps = state => ({
   accounts: state.accountsState.accounts
 })
 
-export default connect(mapStateToProps, { createGroup, fetchAccounts, unloadAccounts })(CreateGroupModal)
+export default withTranslation()(connect(mapStateToProps, { createGroup, fetchAccounts, unloadAccounts })(CreateGroupModal))

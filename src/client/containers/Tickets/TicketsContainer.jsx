@@ -16,6 +16,7 @@ import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import { observer } from 'mobx-react'
 import { makeObservable, observable } from 'mobx'
+import { withTranslation } from 'react-i18next'
 import { each, without, uniq } from 'lodash'
 
 import Log from '../../logger'
@@ -127,6 +128,7 @@ class TicketsContainer extends React.Component {
   }
 
   onSetStatus (status) {
+    const { t } = this.props
     const batch = this.selectedTickets.map(id => {
       return { id, status: status.get('_id') }
     })
@@ -135,16 +137,16 @@ class TicketsContainer extends React.Component {
       .put(`/api/v2/tickets/batch`, { batch })
       .then(res => {
         if (res.data.success) {
-          helpers.UI.showSnackbar({ text: `Ticket status set to ${status.get('name')}` })
+          helpers.UI.showSnackbar({ text: t('tickets.statusSetTo', { status: status.get('name') }) })
           this._clearChecked()
         } else {
-          helpers.UI.showSnackbar('An unknown error occurred.', true)
+          helpers.UI.showSnackbar(t('errors.general'), true)
           Log.error(res.data.error)
         }
       })
       .catch(error => {
         Log.error(error)
-        helpers.UI.showSnackbar('An Error occurred. Please check console.', true)
+        helpers.UI.showSnackbar(t('errors.general'), true)
       })
   }
 
@@ -241,10 +243,12 @@ class TicketsContainer extends React.Component {
       </div>
     )
 
+    const { t } = this.props
+
     return (
       <div>
         <PageTitle
-          title={'Tickets'}
+          title={t('tickets.title')}
           shadow={false}
           rightComponent={
             <div>
@@ -279,18 +283,18 @@ class TicketsContainer extends React.Component {
                 <DropdownTrigger pos={'bottom-right'} offset={5} extraClass={'uk-float-left'}>
                   <PageTitleButton fontAwesomeIcon={'fa-tasks'} />
                   <Dropdown small={true} width={120}>
-                    <DropdownItem text={'Create'} onClick={() => this.props.showModal('CREATE_TICKET')} />
+                    <DropdownItem text={t('common.create')} onClick={() => this.props.showModal('CREATE_TICKET')} />
                     <DropdownSeparator />
                     {this.props.ticketStatuses.map(s => (
                       <DropdownItem
                         key={s.get('_id')}
-                        text={'Set ' + s.get('name')}
+                        text={t('tickets.set') + ' ' + s.get('name')}
                         onClick={() => this.onSetStatus(s)}
                       />
                     ))}
                     {helpers.canUser('tickets:delete', true) && <DropdownSeparator />}
                     {helpers.canUser('tickets:delete', true) && (
-                      <DropdownItem text={'Delete'} extraClass={'text-danger'} onClick={() => this.onDeleteClicked()} />
+                      <DropdownItem text={t('common.delete')} extraClass={'text-danger'} onClick={() => this.onDeleteClicked()} />
                     )}
                   </Dropdown>
                 </DropdownTrigger>
@@ -303,7 +307,7 @@ class TicketsContainer extends React.Component {
                     <input
                       type='text'
                       id='tickets_Search'
-                      placeholder={'Search'}
+                      placeholder={t('common.search')}
                       className={'ticket-top-search'}
                       value={this.searchTerm}
                       onChange={e => this.onSearchTermChanged(e)}
@@ -326,21 +330,21 @@ class TicketsContainer extends React.Component {
             striped={true}
             headers={[
               <TableHeader key={0} width={45} height={50} component={selectAllCheckbox} />,
-              <TableHeader key={1} width={60} text={'Status'} />,
+              <TableHeader key={1} width={60} text={t('common.status')} />,
               <TableHeader key={2} width={65} text={'#'} />,
-              <TableHeader key={3} width={'23%'} text={'Subject'} />,
-              <TableHeader key={4} width={110} text={'Created'} />,
-              <TableHeader key={5} width={125} text={'Requester'} />,
-              <TableHeader key={6} width={175} text={'Customer'} />,
-              <TableHeader key={7} text={'Assignee'} />,
-              <TableHeader key={8} width={110} text={'Due Date'} />,
-              <TableHeader key={9} text={'Updated'} />
+              <TableHeader key={3} width={'23%'} text={t('common.subject')} />,
+              <TableHeader key={4} width={110} text={t('tickets.created')} />,
+              <TableHeader key={5} width={125} text={t('tickets.requester')} />,
+              <TableHeader key={6} width={175} text={t('tickets.customer')} />,
+              <TableHeader key={7} text={t('common.assignee')} />,
+              <TableHeader key={8} width={110} text={t('tickets.dueDate')} />,
+              <TableHeader key={9} text={t('tickets.updated')} />
             ]}
           >
             {!this.props.loading && this.props.tickets.size < 1 && (
               <TableRow clickable={false}>
                 <TableCell colSpan={10}>
-                  <h5 style={{ margin: 10 }}>No Tickets Found</h5>
+                  <h5 style={{ margin: 10 }}>{t('tickets.noTicketsFound')}</h5>
                 </TableCell>
               </TableRow>
             )}
@@ -459,7 +463,8 @@ TicketsContainer.propTypes = {
   common: PropTypes.object.isRequired,
   filter: PropTypes.object.isRequired,
   ticketStatuses: PropTypes.object.isRequired,
-  fetchTicketStatus: PropTypes.func.isRequired
+  fetchTicketStatus: PropTypes.func.isRequired,
+  t: PropTypes.func.isRequired
 }
 
 TicketsContainer.defaultProps = {
@@ -481,7 +486,7 @@ const mapStateToProps = state => ({
   fetchTicketStatus: PropTypes.func.isRequired
 })
 
-export default connect(mapStateToProps, {
+export default withTranslation()(connect(mapStateToProps, {
   fetchTickets,
   deleteTicket,
   ticketEvent,
@@ -490,4 +495,4 @@ export default connect(mapStateToProps, {
   fetchSearchResults,
   showModal,
   fetchTicketStatus
-})(TicketsContainer)
+})(TicketsContainer))

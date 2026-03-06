@@ -15,6 +15,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
+import { withTranslation } from 'react-i18next'
 import BaseModal from './BaseModal'
 import SingleSelect from 'components/SingleSelect'
 import Button from 'components/Button'
@@ -54,26 +55,26 @@ class DeletePriorityModal extends React.Component {
   }
 
   render () {
-    const { priority } = this.props
+    const { priority, t } = this.props
     const mappedPriorities = this.getPriorities()
       .filter(obj => {
         return priority.get('name') !== obj.get('name')
       })
       .map(p => {
-        return { text: p.get('name'), value: p.get('_id') }
+        return { text: t('priorities.' + p.get('name'), p.get('name')), value: p.get('_id') }
       })
     return (
       <BaseModal>
         <div>
           <form onSubmit={e => this.onSubmit(e)}>
             <div className='uk-margin-medium-bottom uk-clearfix'>
-              <h2>Remove Priority</h2>
-              <span>Please select the priority you wish to reassign tickets to in order to delete this priority</span>
+              <h2>{t('modals.deletePriority.title')}</h2>
+              <span>{t('modals.deletePriority.hint')}</span>
               <hr style={{ margin: '10px 0' }} />
             </div>
             <div className='uk-margin-medium-bottom uk-clearfix'>
               <div className='uk-float-left' style={{ width: '100%' }}>
-                <label className={'uk-form-label'}>Priority</label>
+                <label className={'uk-form-label'}>{t('common.priority')}</label>
                 <SingleSelect
                   items={mappedPriorities}
                   showTextbox={false}
@@ -85,13 +86,12 @@ class DeletePriorityModal extends React.Component {
             </div>
             <div className='uk-margin-medium-bottom uk-clearfix'>
               <span className='uk-text-danger'>
-                WARNING: This will change all tickets with a priority of: <strong>{priority.get('name')}</strong> to the
-                selected priority above.
+                {t('modals.deletePriority.warning')} <strong>{t('priorities.' + priority.get('name'), priority.get('name'))}</strong> {t('modals.deletePriority.toSelected')}
               </span>
             </div>
             <div className='uk-modal-footer uk-text-right'>
-              <Button type={'button'} flat={true} waves={true} text={'Cancel'} extraClass={'uk-modal-close'} />
-              <Button type={'submit'} flat={true} waves={true} text={'Delete'} style={'danger'} />
+              <Button type={'button'} flat={true} waves={true} text={t('common.cancel')} extraClass={'uk-modal-close'} />
+              <Button type={'submit'} flat={true} waves={true} text={t('common.delete')} style={'danger'} />
             </div>
           </form>
         </div>
@@ -103,14 +103,15 @@ class DeletePriorityModal extends React.Component {
 DeletePriorityModal.propTypes = {
   priority: PropTypes.object.isRequired,
   settings: PropTypes.object.isRequired,
-  deletePriority: PropTypes.func.isRequired
+  deletePriority: PropTypes.func.isRequired,
+  t: PropTypes.func.isRequired
 }
 
 const mapStateToProps = state => ({
   settings: state.settings.settings
 })
 
-export default connect(
+export default withTranslation()(connect(
   mapStateToProps,
   { deletePriority }
-)(DeletePriorityModal)
+)(DeletePriorityModal))

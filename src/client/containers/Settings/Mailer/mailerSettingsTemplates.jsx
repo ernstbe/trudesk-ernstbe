@@ -15,6 +15,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
+import { withTranslation } from 'react-i18next'
 import { updateSetting } from 'actions/settings'
 import { observer } from 'mobx-react'
 import { makeObservable, observable } from 'mobx'
@@ -30,9 +31,9 @@ import helpers from 'lib/helpers'
 import Zone from 'components/ZoneBox/zone'
 import ZoneBox from 'components/ZoneBox'
 
-const templateBody = ({ template, handleSaveSubject, handleOpenEditor }) => (
+const templateBody = ({ template, handleSaveSubject, handleOpenEditor, t }) => (
   <div>
-    <h3 className={'font-light mb-5'}>Template Description</h3>
+    <h3 className={'font-light mb-5'}>{t('settings.templateDescription')}</h3>
     <p className='mb-10' style={{ fontSize: '13px' }}>
       {template.description}
     </p>
@@ -41,11 +42,11 @@ const templateBody = ({ template, handleSaveSubject, handleOpenEditor }) => (
       <input name={'id'} type='hidden' value={template._id} />
       <div className='uk-input-group'>
         <div className='md-input-wrapper'>
-          <label>Mail Subject</label>
+          <label>{t('settings.mailSubject')}</label>
           <input name={'subject'} type='text' className={'md-input'} defaultValue={template.subject} />
         </div>
         <span className='uk-input-group-addon'>
-          <Button type={'submit'} text={'Save'} small={true} />
+          <Button type={'submit'} text={t('common.save')} small={true} />
         </span>
       </div>
     </form>
@@ -53,9 +54,9 @@ const templateBody = ({ template, handleSaveSubject, handleOpenEditor }) => (
     <Zone extraClass={'uk-margin-medium-top'}>
       <ZoneBox>
         <div className={'uk-float-left'}>
-          <h6 style={{ margin: 0, fontSize: '16px', lineHeight: '14px' }}>Edit Template (Disabled)</h6>
+          <h6 style={{ margin: 0, fontSize: '16px', lineHeight: '14px' }}>{t('settings.editTemplate')}</h6>
           <h5 className={'uk-text-muted'} style={{ margin: '2px 0 0 0', fontSize: '12px' }}>
-            Customize template - Currently disabled
+            {t('settings.editTemplateHint')}
           </h5>
         </div>
         <div className='uk-float-right uk-width-1-3 uk-clearfix'>
@@ -66,7 +67,7 @@ const templateBody = ({ template, handleSaveSubject, handleOpenEditor }) => (
               onClick={handleOpenEditor}
               disabled={true}
             >
-              Open Editor
+              {t('settings.openEditor')}
             </button>
           </div>
         </div>
@@ -78,7 +79,8 @@ const templateBody = ({ template, handleSaveSubject, handleOpenEditor }) => (
 templateBody.propTypes = {
   template: PropTypes.object.isRequired,
   handleSaveSubject: PropTypes.func.isRequired,
-  handleOpenEditor: PropTypes.func.isRequired
+  handleOpenEditor: PropTypes.func.isRequired,
+  t: PropTypes.func.isRequired
 }
 
 @observer
@@ -121,6 +123,7 @@ class MailerSettingsTemplates extends React.Component {
 
   onSaveSubject (e) {
     e.preventDefault()
+    const { t } = this.props
     const subject = e.target.subject
     if (!subject) return
     axios
@@ -128,7 +131,7 @@ class MailerSettingsTemplates extends React.Component {
         subject: subject.value
       })
       .then(res => {
-        if (res.data && res.data.success) helpers.UI.showSnackbar('Template subject saved successfully')
+        if (res.data && res.data.success) helpers.UI.showSnackbar(t('settings.templateSaved'))
       })
       .catch(error => {
         const errorText = error.response ? error.response.error : error
@@ -144,6 +147,7 @@ class MailerSettingsTemplates extends React.Component {
   }
 
   mapTemplateMenu () {
+    const { t } = this.props
     return this.templates.map((template, idx) => {
       const templateJS = template.toJS()
       return {
@@ -152,43 +156,44 @@ class MailerSettingsTemplates extends React.Component {
         bodyComponent: templateBody({
           template: templateJS,
           handleSaveSubject: e => this.onSaveSubject(e),
-          handleOpenEditor: e => MailerSettingsTemplates.onOpenEditor(e, templateJS.name)
+          handleOpenEditor: e => MailerSettingsTemplates.onOpenEditor(e, templateJS.name),
+          t
         })
       }
     })
   }
 
   render () {
+    const { t } = this.props
     const mappedValues = this.mapTemplateMenu()
     return (
       <div>
         <SettingItem
-          title={'Enable New Email Templates'}
+          title={t('settings.enableNewEmailTemplates')}
           subtitle={
             <div>
-              The new email notification system is currently in beta. Please See{' '}
-              <a href='https://forum.trudesk.io/t/beta-email-notification-templates'>Email Notification Templates</a>{' '}
-              for more information.
+              {t('settings.enableNewEmailTemplatesHint')}{' '}
+              <a href='https://forum.trudesk.io/t/beta-email-notification-templates'>Email Notification Templates</a>
             </div>
           }
           component={
             <EnableSwitch
               stateName={'emailBeta'}
-              label={'Enable'}
+              label={t('settings.enable')}
               checked={this.betaEnabled}
               onChange={e => this.onEmailBetaChange(e)}
             />
           }
         />
         <SplitSettingsPanel
-          title={'Notification Templates'}
+          title={t('settings.notificationTemplates')}
           subtitle={
             <div>
-              Customize email notification templates.
-              <strong> Note: Not all templates have been converted for the beta</strong>
+              {t('settings.notificationTemplatesHint')}
+              <strong> {t('settings.notificationTemplatesNote')}</strong>
             </div>
           }
-          rightComponent={<h4 className={'uk-display-block uk-text-danger mt-20 mr-20'}>BETA FEATURE</h4>}
+          rightComponent={<h4 className={'uk-display-block uk-text-danger mt-20 mr-20'}>{t('settings.betaFeature')}</h4>}
           menuItems={mappedValues}
         />
       </div>
@@ -198,11 +203,12 @@ class MailerSettingsTemplates extends React.Component {
 
 MailerSettingsTemplates.propTypes = {
   updateSetting: PropTypes.func.isRequired,
-  settings: PropTypes.object.isRequired
+  settings: PropTypes.object.isRequired,
+  t: PropTypes.func.isRequired
 }
 
 const mapStateToProps = state => ({
   settings: state.settings.settings
 })
 
-export default connect(mapStateToProps, { updateSetting })(MailerSettingsTemplates)
+export default withTranslation()(connect(mapStateToProps, { updateSetting })(MailerSettingsTemplates))

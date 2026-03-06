@@ -15,6 +15,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
+import { withTranslation } from 'react-i18next'
 import { observer } from 'mobx-react'
 import { makeObservable, observable } from 'mobx'
 import axios from 'axios'
@@ -61,18 +62,19 @@ class ViewAllNotificationsModal extends React.Component {
   }
 
   render () {
+    const { t } = this.props
     return (
       <BaseModal large={true}>
         <div className='uk-modal-header'>
-          <h2>Notifications</h2>
+          <h2>{t('modals.viewNotifications.title')}</h2>
         </div>
         <div className='uk-modal-content' style={{ height: '400px', overflow: 'auto' }}>
           <table className='notificationsTable'>
             <thead>
               <tr>
-                <th className={'type'}>Type</th>
-                <th className={'title'}>Title</th>
-                <th className={'date'}>Date</th>
+                <th className={'type'}>{t('modals.viewNotifications.type')}</th>
+                <th className={'title'}>{t('modals.viewNotifications.title_col')}</th>
+                <th className={'date'}>{t('modals.viewNotifications.date')}</th>
               </tr>
             </thead>
             <tbody>
@@ -106,7 +108,7 @@ class ViewAllNotificationsModal extends React.Component {
           </table>
         </div>
         <div className='uk-modal-footer uk-text-right'>
-          <Button text={'Close'} flat={true} waves={true} onClick={() => this.props.hideModal()} />
+          <Button text={t('common.close')} flat={true} waves={true} onClick={() => this.props.hideModal()} />
         </div>
       </BaseModal>
     )
@@ -115,11 +117,12 @@ class ViewAllNotificationsModal extends React.Component {
 
 ViewAllNotificationsModal.propTypes = {
   hideModal: PropTypes.func.isRequired,
-  socket: PropTypes.object.isRequired
+  socket: PropTypes.object.isRequired,
+  t: PropTypes.func.isRequired
 }
 
 const mapStateToProps = state => ({
   socket: state.shared.socket
 })
 
-export default connect(mapStateToProps, { hideModal })(ViewAllNotificationsModal)
+export default withTranslation()(connect(mapStateToProps, { hideModal })(ViewAllNotificationsModal))

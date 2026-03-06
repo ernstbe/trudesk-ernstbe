@@ -15,6 +15,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
+import { withTranslation } from 'react-i18next'
 
 import { updateSetting, updateMultipleSettings, updateColorScheme } from 'actions/settings'
 import Button from 'components/Button'
@@ -174,20 +175,20 @@ class AppearanceSettings extends React.Component {
   }
 
   render () {
-    const { active } = this.props
+    const { active, t } = this.props
 
     return (
       <div className={active ? 'active' : 'hide'}>
         <SettingItem
-          title='Site Logo'
+          title={t('settings.siteLogo')}
           subtitle={
             <div>
-              Upload site logo to display in top navigation. <i>Note: Resize to max width of 140px</i>
+              {t('settings.siteLogoHint')} <i>{t('settings.siteLogoNote')}</i>
             </div>
           }
           component={
             <UploadButtonWithX
-              buttonText={'Upload Logo'}
+              buttonText={t('settings.uploadLogo')}
               uploadAction={'/settings/general/uploadlogo'}
               extAllowed={'*.(jpg|jpeg|gif|png)'}
               showX={this.getSettingsValue('hasCustomLogo')}
@@ -202,15 +203,15 @@ class AppearanceSettings extends React.Component {
         />
 
         <SettingItem
-          title='Page Logo'
+          title={t('settings.pageLogo')}
           subtitle={
             <div>
-              Upload logo to display within page views. <i>Note: Used on login page (min-width: 400px)</i>
+              {t('settings.pageLogoHint')} <i>{t('settings.pageLogoNote')}</i>
             </div>
           }
           component={
             <UploadButtonWithX
-              buttonText={'Upload Logo'}
+              buttonText={t('settings.uploadLogo')}
               uploadAction={'/settings/general/uploadpagelogo'}
               extAllowed={'*.(jpg|jpeg|gif|png)'}
               showX={this.getSettingsValue('hasCustomPageLogo')}
@@ -222,11 +223,11 @@ class AppearanceSettings extends React.Component {
         />
 
         <SettingItem
-          title='Favicon'
-          subtitle={'Upload a custom favicon'}
+          title={t('settings.favicon')}
+          subtitle={t('settings.faviconHint')}
           component={
             <UploadButtonWithX
-              buttonText={'Upload Favicon'}
+              buttonText={t('settings.uploadFavicon')}
               uploadAction={'/settings/general/uploadfavicon'}
               extAllowed={'*.(jpg|jpeg|gif|png|ico)'}
               showX={this.getSettingsValue('hasCustomFavicon')}
@@ -240,11 +241,11 @@ class AppearanceSettings extends React.Component {
           }
         />
         <SettingItem
-          title='Color Scheme'
-          subtitle='Select the colors for your color scheme.'
+          title={t('settings.colorScheme')}
+          subtitle={t('settings.colorSchemeHint')}
           component={
             <Button
-              text={'Save'}
+              text={t('common.save')}
               flat={true}
               style={'success'}
               extraClass={'uk-float-right mt-10'}
@@ -257,8 +258,8 @@ class AppearanceSettings extends React.Component {
           <Zone>
             <ZoneBox>
               <SettingSubItem
-                title='Built-in Color Scheme'
-                subtitle='Select a predefined color scheme'
+                title={t('settings.builtInColorScheme')}
+                subtitle={t('settings.builtInColorSchemeHint')}
                 component={
                   <SingleSelect
                     width='60%'
@@ -283,8 +284,8 @@ class AppearanceSettings extends React.Component {
             </ZoneBox>
             <ZoneBox>
               <SettingSubItem
-                title='Header Background'
-                subtitle='Background color of the header'
+                title={t('settings.headerBackground')}
+                subtitle={t('settings.headerBackgroundHint')}
                 component={
                   <ColorSelector
                     ref={cs => {
@@ -298,8 +299,8 @@ class AppearanceSettings extends React.Component {
             </ZoneBox>
             <ZoneBox>
               <SettingSubItem
-                title='Header Primary'
-                subtitle='Text and icon color within the header'
+                title={t('settings.headerPrimary')}
+                subtitle={t('settings.headerPrimaryHint')}
                 component={
                   <ColorSelector
                     ref={cs => {
@@ -313,8 +314,8 @@ class AppearanceSettings extends React.Component {
             </ZoneBox>
             <ZoneBox>
               <SettingSubItem
-                title='Primary'
-                subtitle='Most text and icons'
+                title={t('settings.colorPrimary')}
+                subtitle={t('settings.colorPrimaryHint')}
                 component={
                   <ColorSelector
                     ref={cs => {
@@ -328,8 +329,8 @@ class AppearanceSettings extends React.Component {
             </ZoneBox>
             <ZoneBox>
               <SettingSubItem
-                title='Secondary'
-                subtitle='The main background color'
+                title={t('settings.colorSecondary')}
+                subtitle={t('settings.colorSecondaryHint')}
                 component={
                   <ColorSelector
                     ref={cs => {
@@ -343,8 +344,8 @@ class AppearanceSettings extends React.Component {
             </ZoneBox>
             <ZoneBox>
               <SettingSubItem
-                title='Tertiary'
-                subtitle='Accent color, used for links, some buttons, and notifications'
+                title={t('settings.colorTertiary')}
+                subtitle={t('settings.colorTertiaryHint')}
                 component={
                   <ColorSelector
                     ref={cs => {
@@ -358,8 +359,8 @@ class AppearanceSettings extends React.Component {
             </ZoneBox>
             <ZoneBox>
               <SettingSubItem
-                title='Quaternary'
-                subtitle='Sidebar background color'
+                title={t('settings.colorQuaternary')}
+                subtitle={t('settings.colorQuaternaryHint')}
                 component={
                   <ColorSelector
                     ref={cs => {
@@ -383,13 +384,14 @@ AppearanceSettings.propTypes = {
   settings: PropTypes.object.isRequired,
   updateSetting: PropTypes.func.isRequired,
   updateMultipleSettings: PropTypes.func.isRequired,
-  updateColorScheme: PropTypes.func.isRequired
+  updateColorScheme: PropTypes.func.isRequired,
+  t: PropTypes.func.isRequired
 }
 
 const mapStateToProps = state => ({
   settings: state.settings.settings
 })
 
-export default connect(mapStateToProps, { updateSetting, updateMultipleSettings, updateColorScheme })(
+export default withTranslation()(connect(mapStateToProps, { updateSetting, updateMultipleSettings, updateColorScheme })(
   AppearanceSettings
-)
+))

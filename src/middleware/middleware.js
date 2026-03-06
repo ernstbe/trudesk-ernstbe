@@ -64,10 +64,12 @@ middleware.redirectToLogin = function (req, res, next) {
   }
 
   if (req.user.deleted) {
-    req.logout()
-    req.session.l2auth = null
-    req.session.destroy()
-    return res.redirect('/')
+    req.logout(function () {
+      req.session.l2auth = null
+      req.session.destroy()
+      return res.redirect('/')
+    })
+    return
   }
 
   if (req.user.hasL2Auth) {
@@ -113,12 +115,29 @@ middleware.ensurel2Auth = function (req, res, next) {
 
 // Common
 middleware.loadCommonData = function (req, res, next) {
-  viewdata.getData(req, function (data) {
+  var called = false
+  function done (data) {
+    if (called) return
+    called = true
     data.csrfToken = req.csrfToken
     req.viewdata = data
-
     return next()
-  })
+  }
+
+  var result = viewdata.getData(req, done)
+
+  // If getData has been converted to async (returns a Promise), handle that too
+  if (result && typeof result.then === 'function') {
+    result.then(function (data) {
+      done(data)
+    }).catch(function (err) {
+      if (!called) {
+        called = true
+        winston.warn('Error loading common data: ' + err)
+        return next(err)
+      }
+    })
+  }
 }
 
 middleware.cache = function (seconds) {
@@ -170,7 +189,7 @@ middleware.checkOrigin = function (req, res, next) {
 }
 
 // API
-middleware.api = function (req, res, next) {
+middleware.api = async function (req, res, next) {
   var accessToken = req.headers.accesstoken
 
   var userSchema = require('../models/user')
@@ -182,14 +201,16 @@ middleware.api = function (req, res, next) {
     return next()
   }
 
-  userSchema.getUserByAccessToken(accessToken, function (err, user) {
-    if (err) return res.status(401).json({ error: err.message })
+  try {
+    var user = await userSchema.getUserByAccessToken(accessToken)
     if (!user) return res.status(401).json({ error: 'Invalid Access Token' })
 
     req.user = user
 
     return next()
-  })
+  } catch (err) {
+    return res.status(401).json({ error: err.message })
+  }
 }
 
 middleware.hasAuth = middleware.api

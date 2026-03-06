@@ -42,7 +42,7 @@ const commonV1 = {}
  * delete resUser.iOSDeviceToken;
  *
  */
-commonV1.login = function (req, res) {
+commonV1.login = async function (req, res) {
   var userModel = require('../../../models/user')
   var username = req.body.username
   var password = req.body.password
@@ -51,8 +51,8 @@ commonV1.login = function (req, res) {
     return res.sendStatus(403)
   }
 
-  userModel.getUserByUsername(username, function (err, user) {
-    if (err) return res.status(401).json({ success: false, error: err.message })
+  try {
+    var user = await userModel.getUserByUsername(username)
     if (!user) return res.status(401).json({ success: false, error: 'Invalid User' })
 
     if (!userModel.validate(password, user.password))
@@ -78,7 +78,9 @@ commonV1.login = function (req, res) {
       accessToken: resUser.accessToken,
       user: resUser
     })
-  })
+  } catch (err) {
+    return res.status(401).json({ success: false, error: err.message })
+  }
 }
 
 commonV1.getLoggedInUser = function (req, res) {

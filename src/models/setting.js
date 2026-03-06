@@ -21,49 +21,24 @@ const settingSchema = mongoose.Schema({
   value: { type: mongoose.Schema.Types.Mixed, required: true }
 })
 
-settingSchema.statics.getSettings = function (callback) {
+settingSchema.statics.getSettings = async function () {
   const q = this.model(COLLECTION)
     .find()
     .select('name value')
 
-  return q.exec(callback)
+  return q.exec()
 }
 
-settingSchema.statics.getSettingByName = async function (name, callback) {
-  return new Promise((resolve, reject) => {
-    ;(async () => {
-      const q = this.model(COLLECTION).findOne({ name })
+settingSchema.statics.getSettingByName = async function (name) {
+  const q = this.model(COLLECTION).findOne({ name })
 
-      try {
-        const result = await q.exec()
-        if (typeof callback === 'function') callback(null, result)
-
-        return resolve(result)
-      } catch (e) {
-        if (typeof callback === 'function') callback(e)
-
-        return reject(e)
-      }
-    })()
-  })
+  return q.exec()
 }
 
-settingSchema.statics.getSettingsByName = async function (names, callback) {
-  return new Promise((resolve, reject) => {
-    ;(async () => {
-      try {
-        const q = this.model(COLLECTION).find({ name: names })
-        const result = await q.exec()
-        if (typeof callback === 'function') callback(null, result)
+settingSchema.statics.getSettingsByName = async function (names) {
+  const q = this.model(COLLECTION).find({ name: names })
 
-        return resolve(result)
-      } catch (e) {
-        if (typeof callback === 'function') callback(e)
-
-        return reject(e)
-      }
-    })()
-  })
+  return q.exec()
 }
 
 settingSchema.statics.getSetting = settingSchema.statics.getSettingByName

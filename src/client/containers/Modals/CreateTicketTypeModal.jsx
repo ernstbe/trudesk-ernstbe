@@ -15,6 +15,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
+import { withTranslation } from 'react-i18next'
 import { createTicketType } from 'actions/tickets'
 import BaseModal from './BaseModal'
 import Button from 'components/Button'
@@ -51,13 +52,14 @@ class CreateTicketTypeModal extends React.Component {
   }
 
   render () {
+    const { t } = this.props
     return (
       <BaseModal {...this.props} ref={i => (this.base = i)}>
         <form className={'uk-form-stacked'} onSubmit={e => this.onCreateTicketTypeSubmit(e)}>
           <div>
-            <h2 className='nomargin mb-5'>Create Ticket Type</h2>
-            <p className='uk-text-small uk-text-muted'>Create a ticket type</p>
-            <label htmlFor='typeName'>Type name</label>
+            <h2 className='nomargin mb-5'>{t('modals.createTicketType.title')}</h2>
+            <p className='uk-text-small uk-text-muted'>{t('modals.createTicketType.title')}</p>
+            <label htmlFor='typeName'>{t('modals.createTicketType.typeName')}</label>
             <input
               value={this.state.typeName}
               onChange={e => this.onTypeNameChanged(e)}
@@ -66,12 +68,12 @@ class CreateTicketTypeModal extends React.Component {
               name={'typeName'}
               data-validation='length'
               data-validation-length='min3'
-              data-validation-error-msg='Please enter a valid type name. Type name must contain at least 3 characters'
+              data-validation-error-msg={t('modals.createTicketType.validName')}
             />
           </div>
           <div className='uk-modal-footer uk-text-right'>
-            <Button text={'Close'} flat={true} waves={true} extraClass={'uk-modal-close'} />
-            <Button text={'Create'} style={'success'} type={'submit'} />
+            <Button text={t('common.close')} flat={true} waves={true} extraClass={'uk-modal-close'} />
+            <Button text={t('common.create')} style={'success'} type={'submit'} />
           </div>
         </form>
       </BaseModal>
@@ -81,10 +83,11 @@ class CreateTicketTypeModal extends React.Component {
 
 CreateTicketTypeModal.propTypes = {
   onTypeCreated: PropTypes.func,
-  createTicketType: PropTypes.func.isRequired
+  createTicketType: PropTypes.func.isRequired,
+  t: PropTypes.func.isRequired
 }
 
-export default connect(
+export default withTranslation()(connect(
   null,
   { createTicketType }
-)(CreateTicketTypeModal)
+)(CreateTicketTypeModal))

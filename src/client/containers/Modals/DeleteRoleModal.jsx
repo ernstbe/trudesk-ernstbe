@@ -15,6 +15,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
+import { withTranslation } from 'react-i18next'
 import { observer } from 'mobx-react'
 import { makeObservable, observable } from 'mobx'
 
@@ -44,7 +45,7 @@ class DeleteRoleModal extends React.Component {
   }
 
   render () {
-    const { role } = this.props
+    const { role, t } = this.props
     const mappedRoles = this.props.shared.roles
       .filter(obj => {
         return obj.get('_id') !== role.get('_id')
@@ -57,13 +58,12 @@ class DeleteRoleModal extends React.Component {
       <BaseModal {...this.props} options={{ bgclose: false }}>
         <form className={'uk-form-stacked'} onSubmit={e => this.onFormSubmit(e)}>
           <div className='uk-margin-medium-bottom uk-clearfix'>
-            <h2>Remove Role</h2>
-            <span>Please select the role you wish to assign ALL users to</span>
-            {/*<hr style={{ margin: '10px 0' }} />*/}
+            <h2>{t('modals.deleteRole.title')}</h2>
+            <span>{t('modals.deleteRole.hint')}</span>
           </div>
           <div className='uk-margin-medium-bottom uk-clearfix'>
             <div className='uk-float-left' style={{ width: '100%' }}>
-              <label className={'uk-form-label nopadding nomargin'}>Type</label>
+              <label className={'uk-form-label nopadding nomargin'}>{t('common.type')}</label>
               <SingleSelect
                 showTextbox={false}
                 items={mappedRoles}
@@ -74,22 +74,20 @@ class DeleteRoleModal extends React.Component {
           </div>
           <div className='uk-margin-medium-bottom uk-clearfix'>
             <span className='uk-text-danger'>
-              WARNING: This will change all accounts with role <strong>{role.get('name')}</strong> to the selected role
-              above.
+              {t('modals.deleteRole.warning')} <strong>{role.get('name')}</strong> {t('modals.deleteRole.toSelectedRole')}
               {role.get('isAdmin') && (
                 <span className={'uk-text-danger'}>
-                  The role you are about to remove is an admin role. Please ensure there is another Admin role or you
-                  could be locked out!
+                  {t('modals.deleteRole.adminWarning')}
                 </span>
               )}
               <br />
               <br />
-              <strong style={{ fontSize: '18px' }}>This is permanent!</strong>
+              <strong style={{ fontSize: '18px' }}>{t('modals.deleteRole.permanent')}</strong>
             </span>
           </div>
           <div className='uk-modal-footer uk-text-right'>
-            <Button text={'Cancel'} flat={true} waves={true} extraClass={'uk-modal-close'} />
-            <Button text={'Delete'} style={'danger'} flat={true} type={'submit'} />
+            <Button text={t('common.cancel')} flat={true} waves={true} extraClass={'uk-modal-close'} />
+            <Button text={t('common.delete')} style={'danger'} flat={true} type={'submit'} />
           </div>
         </form>
       </BaseModal>
@@ -100,11 +98,12 @@ class DeleteRoleModal extends React.Component {
 DeleteRoleModal.propTypes = {
   role: PropTypes.object,
   deleteRole: PropTypes.func.isRequired,
-  shared: PropTypes.object.isRequired
+  shared: PropTypes.object.isRequired,
+  t: PropTypes.func.isRequired
 }
 
 const mapStateToProps = state => ({
   shared: state.shared
 })
 
-export default connect(mapStateToProps, { deleteRole })(DeleteRoleModal)
+export default withTranslation()(connect(mapStateToProps, { deleteRole })(DeleteRoleModal))

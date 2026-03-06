@@ -21,12 +21,12 @@ var countersSchema = mongoose.Schema({
   next: { type: Number, default: 0 },
 })
 
-countersSchema.statics.increment = function (counter, callback) {
-  return this.collection.findOneAndUpdate({ _id: counter }, { $inc: { next: 1 } }, {upsert: true },callback)
+countersSchema.statics.increment = async function (counter) {
+  return this.collection.findOneAndUpdate({ _id: counter }, { $inc: { next: 1 } }, { upsert: true })
 }
 
-countersSchema.statics.setCounter = function (counter, count, callback) {
-  return this.collection.findOneAndUpdate({ _id: counter }, { $set: { next: count } },{upsert: true }, callback)
+countersSchema.statics.setCounter = async function (counter, count) {
+  return this.collection.findOneAndUpdate({ _id: counter }, { $set: { next: count } }, { upsert: true })
 }
 
 module.exports = mongoose.model(COLLECTION, countersSchema)

@@ -17,6 +17,7 @@ import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import { observer } from 'mobx-react'
 import { makeObservable, observable } from 'mobx'
+import { withTranslation } from 'react-i18next'
 import { size } from 'lodash'
 
 import { fetchViewData, showModal, hideModal, showNotice, clearNotice } from 'actions/common'
@@ -139,7 +140,7 @@ class TopbarContainer extends React.Component {
   }
 
   render () {
-    const { loadingViewData, viewdata, sessionUser } = this.props
+    const { loadingViewData, viewdata, sessionUser, t } = this.props
     if (loadingViewData || !sessionUser) return <div />
     return (
       <div>
@@ -159,7 +160,7 @@ class TopbarContainer extends React.Component {
                     {sessionUser && helpers.canUser('tickets:create') && (
                       <li className='top-bar-icon nopadding'>
                         <button
-                          title={'Create Ticket'}
+                          title={t('topbar.createTicket')}
                           className={'anchor'}
                           onClick={() => this.props.showModal('CREATE_TICKET')}
                         >
@@ -176,7 +177,7 @@ class TopbarContainer extends React.Component {
                     <li className='top-bar-icon'>
                       <PDropdownTrigger target={this.conversationsDropdownPartial}>
                         <a
-                          title={'Conversations'}
+                          title={t('topbar.conversations')}
                           className='no-ajaxy uk-vertical-align'
                           onClick={e => TopbarContainer.onConversationsClicked(e)}
                         >
@@ -186,7 +187,7 @@ class TopbarContainer extends React.Component {
                     </li>
                     <li className='top-bar-icon'>
                       <PDropdownTrigger target={this.notificationsDropdownPartial}>
-                        <a title={'Notifications'} className={'no-ajaxy uk-vertical-align'}>
+                        <a title={t('topbar.notifications')} className={'no-ajaxy uk-vertical-align'}>
                           <i className='material-icons'>notifications</i>
                           <span
                             className={'alert uk-border-circle label ' + (this.notificationCount < 1 ? 'hide' : '')}
@@ -276,7 +277,8 @@ TopbarContainer.propTypes = {
   hideModal: PropTypes.func.isRequired,
   showNotice: PropTypes.func.isRequired,
   clearNotice: PropTypes.func.isRequired,
-  notice: PropTypes.object
+  notice: PropTypes.object,
+  t: PropTypes.func.isRequired
 }
 
 const mapStateToProps = state => ({
@@ -287,6 +289,6 @@ const mapStateToProps = state => ({
   viewdata: state.common.viewdata
 })
 
-export default connect(mapStateToProps, { fetchViewData, showModal, hideModal, showNotice, clearNotice })(
+export default withTranslation()(connect(mapStateToProps, { fetchViewData, showModal, hideModal, showNotice, clearNotice })(
   TopbarContainer
-)
+))

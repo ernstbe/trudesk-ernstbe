@@ -15,6 +15,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
+import { withTranslation } from 'react-i18next'
 import { observer } from 'mobx-react'
 import { makeObservable, observable } from 'mobx'
 import helpers from 'lib/helpers'
@@ -77,14 +78,15 @@ class EditNoticeModal extends React.Component {
   }
 
   render () {
+    const { t } = this.props
     return (
       <BaseModal {...this.props} options={{ bgclose: false }}>
         <div className={'mb-25'}>
-          <h2>Edit Notice</h2>
+          <h2>{t('modals.editNotice.title')}</h2>
         </div>
         <form className={'uk-form-stacked'} onSubmit={e => this.onFormSubmit(e)}>
           <div className={'uk-margin-medium-bottom'}>
-            <label>Name</label>
+            <label>{t('common.name')}</label>
             <input
               type='text'
               className={'md-input'}
@@ -92,22 +94,22 @@ class EditNoticeModal extends React.Component {
               onChange={e => this.onInputChange('name', e)}
               data-validation='length'
               data-validation-length={'min2'}
-              data-validation-error-msg={'Please enter a notice name. (Must contain 2 characters)'}
+              data-validation-error-msg={t('modals.createNotice.validName')}
             />
           </div>
           <div className={'uk-margin-medium-bottom'}>
-            <label>Message</label>
+            <label>{t('modals.createNotice.message')}</label>
             <textarea
               className={'md-input'}
               value={this.message}
               onChange={e => this.onInputChange('message', e)}
               data-validation='length'
               data-validation-length={'min10'}
-              data-validation-error-msg={'Please enter a notice message. (Must contain 10 characters)'}
+              data-validation-error-msg={t('modals.createNotice.validMessage')}
             />
           </div>
           <div>
-            <span style={{ display: 'inline-block', float: 'left', paddingTop: 5 }}>Background Color</span>
+            <span style={{ display: 'inline-block', float: 'left', paddingTop: 5 }}>{t('modals.createNotice.backgroundColor')}</span>
             <PopoverColorPicker
               color={this.color}
               onChange={c => {
@@ -115,7 +117,7 @@ class EditNoticeModal extends React.Component {
               }}
               style={{ float: 'left', marginLeft: 5, marginRight: 15 }}
             />
-            <span style={{ display: 'inline-block', float: 'left', paddingTop: 5 }}>Font Color</span>
+            <span style={{ display: 'inline-block', float: 'left', paddingTop: 5 }}>{t('modals.createNotice.fontColor')}</span>
             <PopoverColorPicker
               color={this.fontColor}
               onChange={c => {
@@ -126,8 +128,8 @@ class EditNoticeModal extends React.Component {
           </div>
 
           <div className='uk-modal-footer uk-text-right'>
-            <Button text={'Close'} flat={true} waves={true} extraClass={'uk-modal-close'} />
-            <Button text={'Save Notice'} flat={true} waves={true} style={'primary'} type={'submit'} />
+            <Button text={t('common.close')} flat={true} waves={true} extraClass={'uk-modal-close'} />
+            <Button text={t('modals.editNotice.saveButton')} flat={true} waves={true} style={'primary'} type={'submit'} />
           </div>
         </form>
       </BaseModal>
@@ -137,9 +139,10 @@ class EditNoticeModal extends React.Component {
 
 EditNoticeModal.propTypes = {
   notice: PropTypes.object.isRequired,
-  updateNotice: PropTypes.func.isRequired
+  updateNotice: PropTypes.func.isRequired,
+  t: PropTypes.func.isRequired
 }
 
 const mapStateToProps = state => ({})
 
-export default connect(mapStateToProps, { updateNotice })(EditNoticeModal)
+export default withTranslation()(connect(mapStateToProps, { updateNotice })(EditNoticeModal))

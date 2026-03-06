@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { useTranslation } from 'react-i18next'
 
 import { fetchGroups, unloadGroups } from 'actions/groups'
 import { fetchPriorities } from 'actions/tickets'
@@ -17,6 +18,7 @@ import moment from 'moment-timezone'
 import helpers from 'lib/helpers'
 
 const ReportTicketsByPriorities = () => {
+  const { t } = useTranslation()
   const groupsState = useSelector(state => state.groupsState)
   const ticketsState = useSelector(state => state.ticketsState)
   const dispatch = useDispatch()
@@ -67,10 +69,10 @@ const ReportTicketsByPriorities = () => {
 
   useEffect(() => {
     const p = ticketsState.priorities
-      .map(priority => ({ text: priority.get('name'), value: priority.get('_id') }))
+      .map(priority => ({ text: t('priorities.' + priority.get('name'), priority.get('name')), value: priority.get('_id') }))
       .toArray()
     setPriorities(p)
-  }, [ticketsState])
+  }, [ticketsState, t])
 
   const onFormSubmit = e => {
     e.preventDefault()

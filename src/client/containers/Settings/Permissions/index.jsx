@@ -15,6 +15,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
+import { withTranslation } from 'react-i18next'
 
 import { showModal, fetchRoles, updateRoleOrder } from 'actions/common'
 import { updateSetting } from 'actions/settings'
@@ -71,6 +72,7 @@ class PermissionsSettingsContainer extends React.Component {
   }
 
   render () {
+    const { t } = this.props
     const mappedRoles = this.props.roles
       .map(role => {
         return { text: role.get('name'), value: role.get('_id') }
@@ -80,8 +82,8 @@ class PermissionsSettingsContainer extends React.Component {
     return (
       <div className={this.props.active ? '' : 'hide'}>
         <SettingItem
-          title={'Default New User Role'}
-          subtitle={'Role assigned to users created during sign-up and public tickets'}
+          title={t('settings.defaultUserRole')}
+          subtitle={t('settings.defaultUserRoleHint')}
           component={
             <SingleSelect
               items={mappedRoles}
@@ -95,17 +97,17 @@ class PermissionsSettingsContainer extends React.Component {
           }
         />
         <SplitSettingsPanel
-          title={'Permissions'}
-          tooltip={'Permission order is top down. ex: Admins at top; Users at bottom.'}
+          title={t('settings.permissions')}
+          tooltip={t('settings.permissionsTooltip')}
           subtitle={
             <div>
-              Create/Modify Role Permissions{' '}
-              <span className={'uk-text-danger'}>Note: Changes take affect after page refresh</span>
+              {t('settings.permissionsHint')}{' '}
+              <span className={'uk-text-danger'}>{t('settings.permissionsNote')}</span>
             </div>
           }
           rightComponent={
             <Button
-              text={'Create'}
+              text={t('common.create')}
               style={'success'}
               flat={true}
               waves={true}
@@ -133,7 +135,8 @@ PermissionsSettingsContainer.propTypes = {
   fetchRoles: PropTypes.func.isRequired,
   updateRoleOrder: PropTypes.func.isRequired,
   showModal: PropTypes.func.isRequired,
-  updateSetting: PropTypes.func.isRequired
+  updateSetting: PropTypes.func.isRequired,
+  t: PropTypes.func.isRequired
 }
 
 const mapStateToProps = state => ({
@@ -142,6 +145,6 @@ const mapStateToProps = state => ({
   settings: state.settings.settings
 })
 
-export default connect(mapStateToProps, { fetchRoles, updateRoleOrder, showModal, updateSetting })(
+export default withTranslation()(connect(mapStateToProps, { fetchRoles, updateRoleOrder, showModal, updateSetting })(
   PermissionsSettingsContainer
-)
+))

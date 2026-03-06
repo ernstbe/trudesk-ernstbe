@@ -45,54 +45,39 @@ teamSchema.pre('save', function (next) {
   return next()
 })
 
-teamSchema.methods.addMember = async function (memberId, callback) {
-  return new Promise((resolve, reject) => {
-    ;(async () => {
-      if (_.isUndefined(memberId)) {
-        if (typeof callback === 'function') return callback({ message: 'Invalid MemberId - TeamSchema.AddMember()' })
-        return reject(new Error('Invalid MemberId - TeamSchema.AddMember()'))
-      }
+teamSchema.methods.addMember = async function (memberId) {
+  if (_.isUndefined(memberId)) {
+    throw new Error('Invalid MemberId - TeamSchema.AddMember()')
+  }
 
-      if (this.members === null) this.members = []
+  if (this.members === null) this.members = []
 
-      this.members.push(memberId)
-      this.members = _.uniq(this.members)
+  this.members.push(memberId)
+  this.members = _.uniq(this.members)
 
-      if (typeof callback === 'function') return callback(null, true)
-
-      return resolve(true)
-    })()
-  })
+  return true
 }
 
-teamSchema.methods.removeMember = function (memberId, callback) {
-  return new Promise((resolve, reject) => {
-    ;(async () => {
-      if (_.isUndefined(memberId)) {
-        if (typeof callback === 'function') return callback({ message: 'Invalid MemberId - TeamSchema.RemoveMember()' })
-        return reject(new Error('Invalid MemberId - TeamSchema.RemoveMember()'))
-      }
+teamSchema.methods.removeMember = async function (memberId) {
+  if (_.isUndefined(memberId)) {
+    throw new Error('Invalid MemberId - TeamSchema.RemoveMember()')
+  }
 
-      if (!isMember(this.members, memberId)) {
-        if(typeof callback === 'function') return callback(null, false)
-        return reject(false)
-      }
-      this.members.splice(_.indexOf(this.members, _.find(this.members, { _id: memberId })), 1)
-      this.members = _.uniq(this.members)
+  if (!isMember(this.members, memberId)) {
+    return false
+  }
+  this.members.splice(_.indexOf(this.members, _.find(this.members, { _id: memberId })), 1)
+  this.members = _.uniq(this.members)
 
-      if (typeof callback === 'function') return callback(null, true)
-
-      return resolve(true)
-    })()
-  })
+  return true
 }
 
 teamSchema.methods.isMember = function (memberId) {
   return isMember(this.members, memberId)
 }
 
-teamSchema.statics.getWithObject = function (obj, callback) {
-  if (!obj) return callback({ message: 'Invalid Team Object - TeamSchema.GetWithObject()' })
+teamSchema.statics.getWithObject = async function (obj) {
+  if (!obj) throw new Error('Invalid Team Object - TeamSchema.GetWithObject()')
 
   var q = this.model(COLLECTION)
     .find({})
@@ -100,83 +85,68 @@ teamSchema.statics.getWithObject = function (obj, callback) {
     .limit(obj.limit)
     .sort('name')
 
-  return q.exec(callback)
+  return q.exec()
 }
 
-teamSchema.statics.getTeamByName = function (name, callback) {
-  if (_.isUndefined(name) || name.length < 1) return callback('Invalid Team Name - TeamSchema.GetTeamByName()')
+teamSchema.statics.getTeamByName = async function (name) {
+  if (_.isUndefined(name) || name.length < 1) throw new Error('Invalid Team Name - TeamSchema.GetTeamByName()')
 
   var q = this.model(COLLECTION).findOne({ normalized: name })
 
-  return q.exec(callback)
+  return q.exec()
 }
 
-teamSchema.statics.getTeams = function (callback) {
+teamSchema.statics.getTeams = async function () {
   var q = this.model(COLLECTION)
     .find({})
     .sort('name')
 
-  return q.exec(callback)
+  return q.exec()
 }
 
-teamSchema.statics.getTeamsByIds = function (ids, callback) {
+teamSchema.statics.getTeamsByIds = async function (ids) {
   return this.model(COLLECTION)
     .find({ _id: { $in: ids } })
     .sort('name')
-    .exec(callback)
+    .exec()
 }
 
-teamSchema.statics.getTeamsNoPopulate = function (callback) {
+teamSchema.statics.getTeamsNoPopulate = async function () {
   var q = this.model(COLLECTION)
     .find({})
     .sort('name')
 
-  return q.exec(callback)
+  return q.exec()
 }
 
-teamSchema.statics.getTeamsOfUser = function (userId, callback) {
-  return new Promise((resolve, reject) => {
-    ;(async () => {
-      if (_.isUndefined(userId)) {
-        if (typeof callback === 'function') callback('Invalid UserId - TeamSchema.GetTeamsOfUser()')
-        return reject(new Error('Invalid UserId - TeamSchema.GetTeamsOfUser()'))
-      }
+teamSchema.statics.getTeamsOfUser = async function (userId) {
+  if (_.isUndefined(userId)) {
+    throw new Error('Invalid UserId - TeamSchema.GetTeamsOfUser()')
+  }
 
-      try {
-        const q = this.model(COLLECTION)
-          .find({ members: userId })
-          .sort('name')
+  const q = this.model(COLLECTION)
+    .find({ members: userId })
+    .sort('name')
 
-        if (typeof callback === 'function') return q.exec(callback)
-
-        const teams = await q.exec()
-
-        return resolve(teams)
-      } catch (error) {
-        if (typeof callback === 'function') return callback(error)
-
-        return reject(error)
-      }
-    })()
-  })
+  return q.exec()
 }
 
-teamSchema.statics.getTeamsOfUserNoPopulate = function (userId, callback) {
-  if (_.isUndefined(userId)) return callback('Invalid UserId - TeamSchema.GetTeamsOfUserNoPopulate()')
+teamSchema.statics.getTeamsOfUserNoPopulate = async function (userId) {
+  if (_.isUndefined(userId)) throw new Error('Invalid UserId - TeamSchema.GetTeamsOfUserNoPopulate()')
 
   var q = this.model(COLLECTION)
     .find({ members: userId })
     .sort('name')
 
-  return q.exec(callback)
+  return q.exec()
 }
 
-teamSchema.statics.getTeam = function (id, callback) {
-  if (_.isUndefined(id)) return callback('Invalid TeamId - TeamSchema.GetTeam()')
+teamSchema.statics.getTeam = async function (id) {
+  if (_.isUndefined(id)) throw new Error('Invalid TeamId - TeamSchema.GetTeam()')
 
   var q = this.model(COLLECTION).findOne({ _id: id })
 
-  return q.exec(callback)
+  return q.exec()
 }
 
 function isMember (arr, id) {

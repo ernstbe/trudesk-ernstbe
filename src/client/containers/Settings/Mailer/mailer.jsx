@@ -17,6 +17,7 @@ import PropTypes from 'prop-types'
 import axios from 'axios'
 import Log from '../../../logger'
 import { connect } from 'react-redux'
+import { withTranslation } from 'react-i18next'
 import { updateSetting, updateMultipleSettings } from 'actions/settings'
 import helpers from 'lib/helpers'
 
@@ -108,29 +109,31 @@ class MailerSettings_Mailer extends React.Component {
 
   testMailerSettings (e) {
     e.preventDefault()
-    helpers.UI.showSnackbar('Testing...')
+    const { t } = this.props
+    helpers.UI.showSnackbar(t('settings.testing'))
 
     axios
       .post('/api/v1/settings/testmailer', {})
       .then(() => {
-        helpers.UI.showSnackbar('Successfully Connected')
+        helpers.UI.showSnackbar(t('settings.successfullyConnected'))
       })
       .catch(err => {
         if (!err.response) return Log.error(err)
-        helpers.UI.showSnackbar('Connection Failed. Did you apply settings?', true)
+        helpers.UI.showSnackbar(t('settings.connectionFailed'), true)
         Log.error(err.response.data.error, err.response)
       })
   }
 
   render () {
+    const { t } = this.props
     return (
       <SettingItem
-        title={'Mailer'}
-        subtitle={'Preferences for trudesk to send email notifications to users.'}
+        title={t('settings.mailerTitle')}
+        subtitle={t('settings.mailerHint')}
         component={
           <EnableSwitch
             stateName={'mailerEnabled'}
-            label={'Enabled'}
+            label={t('settings.enabled')}
             onChange={e => this.onEnableMailerChanged(e)}
             checked={this.getSetting('mailerEnabled')}
           />
@@ -141,14 +144,14 @@ class MailerSettings_Mailer extends React.Component {
             <div className={'uk-right'}>
               <EnableSwitch
                 stateName={'mailerSSL'}
-                label={'Use SSLv3'}
+                label={t('settings.useSSL')}
                 style={{ position: 'absolute', top: '5px', right: '-5px', zIndex: '99', margin: '0' }}
                 checked={this.state.mailerSSL}
                 disabled={!this.getSetting('mailerEnabled')}
                 onChange={e => this.onMailerSSLChanged(e)}
               />
             </div>
-            <label>Mail Server</label>
+            <label>{t('settings.mailServer')}</label>
             <input
               type='text'
               className={'md-input md-input-width-medium'}
@@ -159,7 +162,7 @@ class MailerSettings_Mailer extends React.Component {
             />
           </div>
           <div className='uk-margin-medium-bottom'>
-            <label>Port</label>
+            <label>{t('settings.port')}</label>
             <input
               type='text'
               className={'md-input md-input-width-medium'}
@@ -170,7 +173,7 @@ class MailerSettings_Mailer extends React.Component {
             />
           </div>
           <div className='uk-margin-medium-bottom'>
-            <label>Auth Username</label>
+            <label>{t('settings.authUsername')}</label>
             <input
               type='text'
               className={'md-input md-input-width-medium'}
@@ -181,7 +184,7 @@ class MailerSettings_Mailer extends React.Component {
             />
           </div>
           <div className='uk-margin-medium-bottom'>
-            <label>Auth Password</label>
+            <label>{t('settings.authPassword')}</label>
             <input
               type='password'
               className={'md-input md-input-width-medium'}
@@ -192,7 +195,7 @@ class MailerSettings_Mailer extends React.Component {
             />
           </div>
           <div className='uk-margin-medium-bottom'>
-            <label>From Address</label>
+            <label>{t('settings.fromAddress')}</label>
             <input
               type='text'
               className={'md-input md-input-width-medium'}
@@ -204,7 +207,7 @@ class MailerSettings_Mailer extends React.Component {
           </div>
           <div className='uk-clearfix'>
             <Button
-              text={'Test Settings'}
+              text={t('settings.testSettings')}
               type={'button'}
               flat={true}
               waves={true}
@@ -214,7 +217,7 @@ class MailerSettings_Mailer extends React.Component {
               onClick={e => this.testMailerSettings(e)}
             />
             <Button
-              text={'Apply'}
+              text={t('settings.apply')}
               type={'submit'}
               style={'success'}
               extraClass={'uk-float-right'}
@@ -232,14 +235,15 @@ class MailerSettings_Mailer extends React.Component {
 MailerSettings_Mailer.propTypes = {
   settings: PropTypes.object.isRequired,
   updateSetting: PropTypes.func.isRequired,
-  updateMultipleSettings: PropTypes.func.isRequired
+  updateMultipleSettings: PropTypes.func.isRequired,
+  t: PropTypes.func.isRequired
 }
 
 const mapStateToProps = state => ({
   settings: state.settings.settings
 })
 
-export default connect(
+export default withTranslation()(connect(
   mapStateToProps,
   { updateSetting, updateMultipleSettings }
-)(MailerSettings_Mailer)
+)(MailerSettings_Mailer))

@@ -15,6 +15,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
+import { withTranslation } from 'react-i18next'
 
 import { fetchSettings } from 'actions/settings'
 
@@ -38,7 +39,6 @@ class SettingsContainer extends React.Component {
   constructor (props) {
     super(props)
     this.state = {
-      title: 'Settings',
       activeCategory: 'settings-general'
     }
   }
@@ -70,6 +70,7 @@ class SettingsContainer extends React.Component {
   }
 
   render () {
+    const { t } = this.props
     return (
       <div className='uk-grid uk-grid-collapse'>
         <div className='uk-width-1-6 uk-width-xLarge-1-10 message-list full-height' data-offset='68'>
@@ -78,48 +79,48 @@ class SettingsContainer extends React.Component {
             style={{ borderTop: 'none', borderBottom: 'none', height: '68px', paddingLeft: '20px' }}
           >
             <div style={{ position: 'relative' }}>
-              <p style={{ fontSize: '24px' }}>{this.state.title}</p>
+              <p style={{ fontSize: '24px' }}>{t('settings.title')}</p>
             </div>
           </div>
           <div className='page-content-left noborder full-height'>
             <Menu>
               <MenuItem
-                title='General'
+                title={t('settings.general')}
                 active={this.state.activeCategory === 'settings-general'}
                 onClick={e => {
                   this.onMenuItemClick(e, 'general')
                 }}
               />
               <MenuItem
-                title='Accounts'
+                title={t('accounts.title')}
                 active={this.state.activeCategory === 'settings-accounts'}
                 onClick={e => {
                   this.onMenuItemClick(e, 'accounts')
                 }}
               />
               <MenuItem
-                title='Appearance'
+                title={t('settings.appearance')}
                 active={this.state.activeCategory === 'settings-appearance'}
                 onClick={e => {
                   this.onMenuItemClick(e, 'appearance')
                 }}
               />
               <MenuItem
-                title='Permissions'
+                title={t('settings.permissions')}
                 active={this.state.activeCategory === 'settings-permissions'}
                 onClick={e => {
                   this.onMenuItemClick(e, 'permissions')
                 }}
               />
               <MenuItem
-                title='Tickets'
+                title={t('nav.tickets')}
                 active={this.state.activeCategory === 'settings-tickets'}
                 onClick={e => {
                   this.onMenuItemClick(e, 'tickets')
                 }}
               />
               <MenuItem
-                title='Mailer'
+                title={t('settings.mailer')}
                 active={this.state.activeCategory === 'settings-mailer'}
                 onClick={e => {
                   this.onMenuItemClick(e, 'mailer')
@@ -133,21 +134,21 @@ class SettingsContainer extends React.Component {
                 }}
               />
               <MenuItem
-                title='Backup/Restore'
+                title={t('settings.backup')}
                 active={this.state.activeCategory === 'settings-backup'}
                 onClick={e => {
                   this.onMenuItemClick(e, 'backup')
                 }}
               />
               <MenuItem
-                title='Server'
+                title={t('settings.server')}
                 active={this.state.activeCategory === 'settings-server'}
                 onClick={e => {
                   this.onMenuItemClick(e, 'server')
                 }}
               />
               <MenuItem
-                title='Legal'
+                title={t('settings.legal')}
                 active={this.state.activeCategory === 'settings-legal'}
                 onClick={e => {
                   this.onMenuItemClick(e, 'legal')
@@ -183,11 +184,12 @@ class SettingsContainer extends React.Component {
 
 SettingsContainer.propTypes = {
   fetchSettings: PropTypes.func.isRequired,
-  sidebar: PropTypes.object.isRequired
+  sidebar: PropTypes.object.isRequired,
+  t: PropTypes.func.isRequired
 }
 
 const mapStateToProps = state => ({
   sidebar: state.sidebar
 })
 
-export default connect(mapStateToProps, { fetchSettings })(SettingsContainer)
+export default withTranslation()(connect(mapStateToProps, { fetchSettings })(SettingsContainer))

@@ -32,13 +32,20 @@ function parseSetting (settings, name, defaultValue) {
   return s
 }
 
-util.setSetting = function (setting, value, callback) {
+util.setSetting = async function (setting, value, callback) {
   const s = {
     name: setting,
     value: value
   }
 
-  settingSchema.updateOne({ name: s.name }, s, { upsert: true }, callback)
+  try {
+    const result = await settingSchema.updateOne({ name: s.name }, s, { upsert: true })
+    if (typeof callback === 'function') return callback(null, result)
+    return result
+  } catch (err) {
+    if (typeof callback === 'function') return callback(err)
+    throw err
+  }
 }
 
 util.getSettings = async callback => {

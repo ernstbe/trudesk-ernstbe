@@ -21,22 +21,22 @@ var roleOrder = mongoose.Schema({
   order: [mongoose.Schema.Types.ObjectId]
 })
 
-roleOrder.statics.getOrder = function (callback) {
+roleOrder.statics.getOrder = async function () {
   return this.model(COLLECTION)
     .findOne({})
-    .exec(callback)
+    .exec()
 }
 
-roleOrder.statics.getOrderLean = function (callback) {
+roleOrder.statics.getOrderLean = async function () {
   return this.model(COLLECTION)
     .findOne({})
     .lean()
-    .exec(callback)
+    .exec()
 }
 
-roleOrder.methods.updateOrder = function (order, callback) {
+roleOrder.methods.updateOrder = async function (order) {
   this.order = order
-  this.save(callback)
+  return this.save()
 }
 
 roleOrder.methods.getHierarchy = function (checkRoleId) {
@@ -48,12 +48,12 @@ roleOrder.methods.getHierarchy = function (checkRoleId) {
   return _.drop(this.order, idx)
 }
 
-roleOrder.methods.removeFromOrder = function (_id, callback) {
+roleOrder.methods.removeFromOrder = async function (_id) {
   this.order = _.filter(this.order, function (o) {
     return o.toString() !== _id.toString()
   })
 
-  this.save(callback)
+  return this.save()
 }
 
 module.exports = mongoose.model(COLLECTION, roleOrder, COLLECTION)

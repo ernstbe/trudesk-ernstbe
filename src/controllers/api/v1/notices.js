@@ -49,17 +49,16 @@ var apiNotices = {}
      "error": "Invalid Post Data"
  }
  */
-apiNotices.create = function (req, res) {
-  var postData = req.body
-  var notice = new NoticeSchema(postData)
-  notice.save(function (err, notice) {
-    if (err) {
-      winston.debug(err)
-      return res.status(400).send({ success: false, error: 'Invalid Post Data' })
-    }
-
-    return res.json(notice)
-  })
+apiNotices.create = async function (req, res) {
+  try {
+    var postData = req.body
+    var notice = new NoticeSchema(postData)
+    var saved = await notice.save()
+    return res.json(saved)
+  } catch (err) {
+    winston.debug(err)
+    return res.status(400).send({ success: false, error: 'Invalid Post Data' })
+  }
 }
 
 /**
@@ -94,16 +93,15 @@ apiNotices.create = function (req, res) {
      "error": "Invalid Post Data"
  }
  */
-apiNotices.updateNotice = function (req, res) {
-  var id = req.params.id
-  NoticeSchema.getNotice(id, function (err, notice) {
-    if (err) return res.status(400).json({ success: false, error: err })
-    notice.update(req.body, function (err) {
-      if (err) return res.status(400).json({ success: false, error: err })
-
-      res.json({ success: true })
-    })
-  })
+apiNotices.updateNotice = async function (req, res) {
+  try {
+    var id = req.params.id
+    var notice = await NoticeSchema.getNotice(id)
+    await NoticeSchema.updateOne({ _id: notice._id }, req.body)
+    res.json({ success: true })
+  } catch (err) {
+    return res.status(400).json({ success: false, error: err })
+  }
 }
 
 /**
@@ -126,19 +124,17 @@ apiNotices.updateNotice = function (req, res) {
      "error": {Error Object}
  }
  */
-apiNotices.clearActive = function (req, res) {
-  NoticeSchema.getNotices(function (err, notices) {
-    if (err) return res.status(400).json({ success: false, error: err })
-
-    _.each(notices, function (notice) {
+apiNotices.clearActive = async function (req, res) {
+  try {
+    var notices = await NoticeSchema.getNotices()
+    for (var notice of notices) {
       notice.active = false
-      notice.save(function (err) {
-        if (err) return res.status(400).json({ success: false, error: err })
-      })
-    })
-
+      await notice.save()
+    }
     res.json({ success: true })
-  })
+  } catch (err) {
+    return res.status(400).json({ success: false, error: err })
+  }
 }
 
 /**
@@ -162,17 +158,15 @@ apiNotices.clearActive = function (req, res) {
      "error": {Error Object}
  }
  */
-apiNotices.deleteNotice = function (req, res) {
-  var id = req.params.id
-  NoticeSchema.getNotice(id, function (err, notice) {
-    if (err) return res.status(400).json({ success: false, error: err })
-
-    notice.remove(function (err) {
-      if (err) return res.status(400).json({ success: false, error: err })
-
-      res.json({ success: true })
-    })
-  })
+apiNotices.deleteNotice = async function (req, res) {
+  try {
+    var id = req.params.id
+    var notice = await NoticeSchema.getNotice(id)
+    await notice.deleteOne()
+    res.json({ success: true })
+  } catch (err) {
+    return res.status(400).json({ success: false, error: err })
+  }
 }
 
 module.exports = apiNotices

@@ -15,6 +15,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
+import { withTranslation } from 'react-i18next'
 import { fetchTicketStatus, deleteStatus } from 'actions/tickets'
 import BaseModal from './BaseModal'
 import Button from 'components/Button'
@@ -53,7 +54,7 @@ class DeleteTicketStatusModal extends React.Component {
   }
 
   render () {
-    const { status } = this.props
+    const { status, t } = this.props
     const mappedStatuses = this.getTicketStatuses()
       .filter(obj => {
         return status.get('name') !== obj.get('name')
@@ -65,14 +66,12 @@ class DeleteTicketStatusModal extends React.Component {
       <BaseModal {...this.props} options={{ bgclose: false }}>
         <form className={'uk-form-stacked'} onSubmit={e => this.onFormSubmit(e)}>
           <div className='uk-margin-medium-bottom uk-clearfix'>
-            <h2>Remove Ticket Status</h2>
-            <span>
-              Please select the ticket status you wish to reassign tickets to in order to delete this ticket status.
-            </span>
+            <h2>{t('modals.deleteStatus.title')}</h2>
+            <span>{t('modals.deleteStatus.hint')}</span>
           </div>
           <div className='uk-margin-medium-bottom uk-clearfix'>
             <div className='uk-float-left' style={{ width: '100%' }}>
-              <label className={'uk-form-label nopadding nomargin'}>Status</label>
+              <label className={'uk-form-label nopadding nomargin'}>{t('common.status')}</label>
               <SingleSelect
                 showTextbox={false}
                 items={mappedStatuses}
@@ -83,15 +82,14 @@ class DeleteTicketStatusModal extends React.Component {
           </div>
           <div className='uk-margin-medium-bottom uk-clearfix'>
             <span className='uk-text-danger'>
-              WARNING: This will change all tickets with status <strong>{status.get('name')}</strong> to the selected
-              ticket status.
+              {t('modals.deleteStatus.warning')} <strong>{status.get('name')}</strong> {t('modals.deleteStatus.toSelected')}
               <br />
-              <strong>This is permanent!</strong>
+              <strong>{t('modals.deleteRole.permanent')}</strong>
             </span>
           </div>
           <div className='uk-modal-footer uk-text-right'>
-            <Button text={'Cancel'} flat={true} waves={true} extraClass={'uk-modal-close'} />
-            <Button text={'Delete'} style={'danger'} flat={true} type={'submit'} />
+            <Button text={t('common.cancel')} flat={true} waves={true} extraClass={'uk-modal-close'} />
+            <Button text={t('common.delete')} style={'danger'} flat={true} type={'submit'} />
           </div>
         </form>
       </BaseModal>
@@ -103,7 +101,8 @@ DeleteTicketStatusModal.propTypes = {
   status: PropTypes.object.isRequired,
   settings: PropTypes.object.isRequired,
   deleteStatus: PropTypes.func.isRequired,
-  fetchTicketStatus: PropTypes.func.isRequired
+  fetchTicketStatus: PropTypes.func.isRequired,
+  t: PropTypes.func.isRequired
 }
 
 const mapStateToProps = state => ({
@@ -111,4 +110,4 @@ const mapStateToProps = state => ({
   ticketStatuses: state.ticketsState.ticketStatuses
 })
 
-export default connect(mapStateToProps, { fetchTicketStatus, deleteStatus })(DeleteTicketStatusModal)
+export default withTranslation()(connect(mapStateToProps, { fetchTicketStatus, deleteStatus })(DeleteTicketStatusModal))

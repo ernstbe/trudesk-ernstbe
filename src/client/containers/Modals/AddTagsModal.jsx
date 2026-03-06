@@ -14,6 +14,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
+import { withTranslation } from 'react-i18next'
 
 import { getTagsWithPage } from 'actions/tickets'
 import { showModal, hideModal } from 'actions/common'
@@ -84,6 +85,7 @@ class AddTagsModal extends React.Component {
   }
 
   render () {
+    const { t } = this.props
     const mappedTags =
       this.props.tagsSettings.tags &&
       this.props.tagsSettings.tags
@@ -98,7 +100,7 @@ class AddTagsModal extends React.Component {
     return (
       <BaseModal options={{ bgclose: false }}>
         <div className={'uk-clearfix'}>
-          <h5 style={{ fontWeight: 300 }}>Add Tags</h5>
+          <h5 style={{ fontWeight: 300 }}>{t('modals.addTags.title')}</h5>
           <div>
             <form className='nomargin' onSubmit={e => this.onSubmit(e)}>
               <div className='search-container'>
@@ -127,7 +129,7 @@ class AddTagsModal extends React.Component {
               <div className='left' style={{ marginTop: 15 }}>
                 <Button
                   type={'button'}
-                  text={'Clear'}
+                  text={t('tickets.clear')}
                   small={true}
                   flat={true}
                   style={'danger'}
@@ -137,7 +139,7 @@ class AddTagsModal extends React.Component {
               <div className='right' style={{ marginTop: 15 }}>
                 <Button
                   type={'button'}
-                  text={'Cancel'}
+                  text={t('common.cancel')}
                   style={'secondary'}
                   small={true}
                   flat={true}
@@ -145,7 +147,7 @@ class AddTagsModal extends React.Component {
                   extraClass={'uk-modal-close'}
                   ref={r => (this.closeButton = r)}
                 />
-                <Button type={'submit'} text={'Save Tags'} style={'success'} small={true} waves={true} />
+                <Button type={'submit'} text={t('modals.addTags.saveTags')} style={'success'} small={true} waves={true} />
               </div>
             </form>
           </div>
@@ -162,7 +164,8 @@ AddTagsModal.propTypes = {
   getTagsWithPage: PropTypes.func.isRequired,
   socket: PropTypes.object.isRequired,
   showModal: PropTypes.func.isRequired,
-  hideModal: PropTypes.func.isRequired
+  hideModal: PropTypes.func.isRequired,
+  t: PropTypes.func.isRequired
 }
 
 const mapStateToProps = state => ({
@@ -170,4 +173,4 @@ const mapStateToProps = state => ({
   socket: state.shared.socket
 })
 
-export default connect(mapStateToProps, { getTagsWithPage, showModal, hideModal })(AddTagsModal)
+export default withTranslation()(connect(mapStateToProps, { getTagsWithPage, showModal, hideModal })(AddTagsModal))

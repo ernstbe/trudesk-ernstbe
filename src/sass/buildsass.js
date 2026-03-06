@@ -14,7 +14,7 @@
 
 var _ = require('lodash')
 var path = require('path')
-var sass = require('node-sass')
+var sass = require('sass')
 var settingUtil = require('../settings/settingsUtil')
 
 var buildsass = {}
@@ -42,14 +42,25 @@ function sassImport (path) {
 }
 
 function dynamicSass (entry, vars, success, error) {
-  var dataString = sassVariables(vars) + sassImport(entry)
-  var sassOptions = _.assign({}, sassOptionsDefaults, {
-    data: dataString
-  })
+  try {
+    var dataString = sassVariables(vars) + sassImport(entry)
+    var sassOptions = _.assign({}, sassOptionsDefaults, {
+      data: dataString,
+      indentedSyntax: true
+    })
 
-  sass.render(sassOptions, function (err, result) {
-    return err ? error(err) : success(result.css.toString())
-  })
+    // Use synchronous API from dart-sass
+    var result = sass.compileString(dataString, {
+      style: sassOptions.outputStyle === 'compressed' ? 'compressed' : 'expanded',
+      loadPaths: sassOptions.includePaths,
+      syntax: 'indented',
+      quiet: true
+    })
+
+    return success(result.css.toString())
+  } catch (err) {
+    return error(err)
+  }
 }
 
 function save (result) {
@@ -71,25 +82,36 @@ buildsass.buildDefault = function (callback) {
 }
 
 buildsass.build = function (callback) {
+  var callbackCalled = false
+  var safeCallback = function (err) {
+    if (!callbackCalled) {
+      callbackCalled = true
+      return callback(err)
+    }
+  }
+
   settingUtil.getSettings(function (err, s) {
-    if (!err && s) {
+    if (!err && s && s.data && s.data.settings) {
       var settings = s.data.settings
 
       dynamicSass(
         'app.sass',
         {
-          header_background: settings.colorHeaderBG.value,
-          header_primary: settings.colorHeaderPrimary.value,
-          primary: settings.colorPrimary.value,
-          secondary: settings.colorSecondary.value,
-          tertiary: settings.colorTertiary.value,
-          quaternary: settings.colorQuaternary.value
+          header_background: settings.colorHeaderBG ? settings.colorHeaderBG.value : '#1E88E5',
+          header_primary: settings.colorHeaderPrimary ? settings.colorHeaderPrimary.value : '#FFFFFF',
+          primary: settings.colorPrimary ? settings.colorPrimary.value : '#1565C0',
+          secondary: settings.colorSecondary ? settings.colorSecondary.value : '#42A5F5',
+          tertiary: settings.colorTertiary ? settings.colorTertiary.value : '#E3F2FD',
+          quaternary: settings.colorQuaternary ? settings.colorQuaternary.value : '#BBDEFB'
         },
         function (result) {
           save(result)
-          return callback()
+          return safeCallback()
         },
-        callback
+        function (sassErr) {
+          console.error('Sass build error:', sassErr.message)
+          return safeCallback()
+        }
       )
     } else {
       // Build Defaults
@@ -98,9 +120,12 @@ buildsass.build = function (callback) {
         {},
         function (result) {
           save(result)
-          return callback()
+          return safeCallback()
         },
-        callback
+        function (sassErr) {
+          console.error('Sass build error (default):', sassErr.message)
+          return safeCallback()
+        }
       )
     }
   })

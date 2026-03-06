@@ -56,7 +56,7 @@ conversationSchema.methods.isGroup = function () {
   return this.participants.length > 2
 }
 
-conversationSchema.statics.getConversations = function (userId, callback) {
+conversationSchema.statics.getConversations = async function (userId) {
   if (!_.isArray(userId)) userId = [userId]
   return this.model(COLLECTION)
     .find({ participants: { $size: 2, $all: userId } })
@@ -65,60 +65,27 @@ conversationSchema.statics.getConversations = function (userId, callback) {
       path: 'participants',
       select: 'username fullname email title image lastOnline'
     })
-    .exec(callback)
+    .exec()
 }
 
-conversationSchema.statics.getConversation = function (convoId, callback) {
-  const self = this
-  return new Promise((resolve, reject) => {
-    ;(async () => {
-      try {
-        const query = self
-          .model(COLLECTION)
-          .findOne({ _id: convoId })
-          .populate('participants', '_id username fullname email title image lastOnline')
-
-        if (typeof callback === 'function') return query.exec(callback)
-
-        const results = await query.exec()
-
-        return resolve(results)
-      } catch (e) {
-        if (typeof callback === 'function') return callback(e)
-        return reject(e)
-      }
-    })()
-  })
+conversationSchema.statics.getConversation = async function (convoId) {
+  return this.model(COLLECTION)
+    .findOne({ _id: convoId })
+    .populate('participants', '_id username fullname email title image lastOnline')
+    .exec()
 }
 
-conversationSchema.statics.getConversationsWithLimit = function (userId, limit, callback) {
-  const self = this
-  return new Promise((resolve, reject) => {
-    ;(async () => {
-      try {
-        const l = limit || 1000000
-        const query = self
-          .model(COLLECTION)
-          .find({ participants: userId })
-          .sort('-updatedAt')
-          .limit(l)
-          .populate({
-            path: 'participants',
-            select: 'username fullname email title image lastOnline'
-          })
-
-        if (typeof callback === 'function') return query.exec(callback)
-
-        const results = await query.exec()
-
-        return resolve(results)
-      } catch (e) {
-        if (typeof callback === 'function') return callback(e)
-
-        return reject(e)
-      }
-    })()
-  })
+conversationSchema.statics.getConversationsWithLimit = async function (userId, limit) {
+  const l = limit || 1000000
+  return this.model(COLLECTION)
+    .find({ participants: userId })
+    .sort('-updatedAt')
+    .limit(l)
+    .populate({
+      path: 'participants',
+      select: 'username fullname email title image lastOnline'
+    })
+    .exec()
 }
 
 module.exports = mongoose.model(COLLECTION, conversationSchema)

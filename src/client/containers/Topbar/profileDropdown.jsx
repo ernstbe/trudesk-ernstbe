@@ -3,6 +3,7 @@ import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import { observer } from 'mobx-react'
 import { makeObservable, observable } from 'mobx'
+import { withTranslation } from 'react-i18next'
 
 import { setSessionUser, showModal } from 'actions/common'
 import { saveEditAccount } from 'actions/accounts'
@@ -52,6 +53,7 @@ class ProfileDropdownPartial extends React.Component {
   }
 
   render () {
+    const { t } = this.props
     return (
       <PDropdown
         ref={this.props.forwardedRef}
@@ -79,14 +81,14 @@ class ProfileDropdownPartial extends React.Component {
                   {this.props.sessionUser.fullname}
                 </span>
                 <span>{this.props.sessionUser.email}</span>
-                <a href='/profile'>Profile Settings</a>
+                <a href='/profile'>{t('topbar.profileSettings')}</a>
               </div>
             </div>
           </div>
           {/*<Spacer showBorder={true} borderSize={1} top={0} bottom={0} />*/}
           {/*<div className={'user-action-items'}>*/}
           {/*  <EnableSwitch*/}
-          {/*    label={'Keyboard Shortcuts'}*/}
+          {/*    label={t('topbar.keyboardShortcuts')}*/}
           {/*    sublabel={*/}
           {/*      <>*/}
           {/*        {this.keyboardShortcutsChecked && (*/}
@@ -110,14 +112,14 @@ class ProfileDropdownPartial extends React.Component {
           <div className={'profile-drop-actions'}>
             <div className={'action-logout'}>
               <i className='material-icons'>logout</i>
-              <a href='/logout'>Logout</a>
+              <a href='/logout'>{t('auth.logout')}</a>
             </div>
           </div>
         </div>
         <div className={'pdrop-footer'}>
           <div className='links'>
             <a href='https://forum.trudesk.io' target={'_blank'} rel={'noreferrer'}>
-              Community
+              {t('topbar.community')}
             </a>
             <span>&middot;</span>
             <a
@@ -129,7 +131,7 @@ class ProfileDropdownPartial extends React.Component {
                 this.props.showModal('PRIVACY_POLICY')
               }}
             >
-              Privacy Policy
+              {t('topbar.privacyPolicy')}
             </a>
           </div>
         </div>
@@ -143,13 +145,14 @@ ProfileDropdownPartial.propTypes = {
   setSessionUser: PropTypes.func.isRequired,
   showModal: PropTypes.func.isRequired,
   saveEditAccount: PropTypes.func.isRequired,
-  forwardedRef: PropTypes.any
+  forwardedRef: PropTypes.any,
+  t: PropTypes.func.isRequired
 }
 
 const mapStateToProps = state => ({
   sessionUser: state.shared.sessionUser
 })
 
-export default connect(mapStateToProps, { setSessionUser, showModal, saveEditAccount }, null, { forwardRef: true })(
+export default withTranslation()(connect(mapStateToProps, { setSessionUser, showModal, saveEditAccount }, null, { forwardRef: true })(
   ProfileDropdownPartial
-)
+))

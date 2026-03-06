@@ -20,6 +20,9 @@ import createSagaMiddleware from 'redux-saga'
 import { middleware as thunkMiddleware } from 'redux-saga-thunk'
 import IndexReducer from './reducers'
 import IndexSagas from './sagas'
+
+// i18n localization
+import './i18n'
 import { SingletonHooksContainer } from 'react-singleton-hook'
 import TopbarContainer from './containers/Topbar/TopbarContainer'
 import Sidebar from './components/Nav/Sidebar/index.jsx'

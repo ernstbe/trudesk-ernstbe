@@ -15,6 +15,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
+import { withTranslation } from 'react-i18next'
 import { updateSetting, updateMultipleSettings } from 'actions/settings'
 import Log from '../../../logger'
 
@@ -138,6 +139,7 @@ class Mailer_MailerCheck extends React.Component {
   }
 
   onEnableMailerCheckChanged (e) {
+    const { t } = this.props
     this.props
       .updateSetting({
         name: 'mailer:check:enable',
@@ -147,7 +149,7 @@ class Mailer_MailerCheck extends React.Component {
       })
       .then(() => {
         UIKit.modal.confirm(
-          'Setting will take affect after server restart. <br /><br />Would you like to restart the server now?',
+          t('settings.restartConfirm'),
           () => {
             axios.get('/api/v1/admin/restart').catch(error => {
               helpers.hideLoader()
@@ -157,7 +159,7 @@ class Mailer_MailerCheck extends React.Component {
             })
           },
           {
-            labels: { Ok: 'Yes', Cancel: 'No' },
+            labels: { Ok: t('common.yes'), Cancel: t('common.no') },
             confirmButtonClass: 'md-btn-primary'
           }
         )
@@ -196,10 +198,11 @@ class Mailer_MailerCheck extends React.Component {
   }
 
   onCheckNowClicked (e) {
+    const { t } = this.props
     axios
       .get(`/api/v2/mailer/check`)
       .then(function (res) {
-        if (res.data && res.data.success) helpers.UI.showSnackbar('Fetch mail task scheduled.')
+        if (res.data && res.data.success) helpers.UI.showSnackbar(t('settings.fetchMailScheduled'))
       })
       .catch(function (err) {
         Log.error(err)
@@ -208,21 +211,22 @@ class Mailer_MailerCheck extends React.Component {
   }
 
   render () {
+    const { t } = this.props
     const mappedTicketTypes = this.getTicketTypes().map(type => {
       return { text: type.get('name'), value: type.get('_id') }
     })
     return (
       <SettingItem
-        title={'Mailer Check'}
+        title={t('settings.mailerCheck')}
         subtitle={
           <div>
-            Poll an IMAP mailbox for messages to convert to tickets - <i>Settings are applied after server restart</i>
+            {t('settings.mailerCheckHint')} - <i>{t('settings.settingsAppliedAfterRestart')}</i>
           </div>
         }
         component={
           <EnableSwitch
             stateName={'mailerCheckEnabled'}
-            label={'Enabled'}
+            label={t('settings.enabled')}
             checked={this.getSetting('mailerCheckEnabled')}
             onChange={e => this.onEnableMailerCheckChanged(e)}
           />
@@ -231,7 +235,7 @@ class Mailer_MailerCheck extends React.Component {
         <div>
           <form onSubmit={e => this.onFormSubmit(e)}>
             <div className='uk-margin-medium-bottom'>
-              <label>Mail Server</label>
+              <label>{t('settings.mailServer')}</label>
               <input
                 type='text'
                 className={'md-input md-input-width-medium'}
@@ -242,7 +246,7 @@ class Mailer_MailerCheck extends React.Component {
               />
             </div>
             <div className='uk-margin-medium-bottom'>
-              <label>Port</label>
+              <label>{t('settings.port')}</label>
               <input
                 type='text'
                 className={'md-input md-input-width-medium'}
@@ -253,7 +257,7 @@ class Mailer_MailerCheck extends React.Component {
               />
             </div>
             <div className='uk-margin-medium-bottom'>
-              <label>Username</label>
+              <label>{t('common.username')}</label>
               <input
                 type='text'
                 className={'md-input md-input-width-medium'}
@@ -264,7 +268,7 @@ class Mailer_MailerCheck extends React.Component {
               />
             </div>
             <div className='uk-margin-medium-bottom'>
-              <label>Password</label>
+              <label>{t('common.password')}</label>
               <input
                 type='password'
                 className={'md-input md-input-width-medium'}
@@ -277,18 +281,18 @@ class Mailer_MailerCheck extends React.Component {
             <div className='uk-clearfix uk-margin-medium-bottom'>
               <div className='uk-float-left'>
                 <h6 style={{ padding: 0, margin: '5px 0 0 0', fontSize: '16px', lineHeight: '14px' }}>
-                  Allow Self Signed Certificate
+                  {t('settings.allowSelfSignedCert')}
                 </h6>
                 <h5
                   style={{ padding: '0 0 10px 0', margin: '2px 0 0 0', fontSize: '12px' }}
                   className={'uk-text-muted'}
                 >
-                  Allow less secure self signed certificates when checking mailbox.
+                  {t('settings.allowSelfSignedCertHint')}
                 </h5>
               </div>
               <div className='uk-float-right'>
                 <EnableSwitch
-                  label={'Enable'}
+                  label={t('settings.enable')}
                   stateName={'mailerCheckSelfSign'}
                   checked={this.state.mailerCheckSelfSign}
                   onChange={e => this.onCheckboxChanged(e, 'mailerCheckSelfSign')}
@@ -300,7 +304,7 @@ class Mailer_MailerCheck extends React.Component {
             <div className='uk-clearfix uk-margin-medium-bottom'>
               <div className='uk-float-left'>
                 <h6 style={{ padding: 0, margin: '5px 0 0 0', fontSize: '16px', lineHeight: '14px' }}>
-                  Polling Interval
+                  {t('settings.pollingInterval')}
                   <i
                     className={'material-icons'}
                     style={{
@@ -311,7 +315,7 @@ class Mailer_MailerCheck extends React.Component {
                       marginLeft: '5px'
                     }}
                     data-uk-tooltip="{cls:'long-text'}"
-                    title={'Caution: Polling too often can cause high CPU usage'}
+                    title={t('settings.pollingIntervalTooltip')}
                   >
                     error
                   </i>
@@ -320,7 +324,7 @@ class Mailer_MailerCheck extends React.Component {
                   style={{ padding: '0 0 10px 0', margin: '2px 0 0 0', fontSize: '12px' }}
                   className={'uk-text-muted'}
                 >
-                  How often to poll the server for new messages (Minutes)
+                  {t('settings.pollingIntervalHint')}
                 </h5>
               </div>
               <div className='uk-float-right' style={{ position: 'relative' }}>
@@ -340,18 +344,18 @@ class Mailer_MailerCheck extends React.Component {
             <div className='uk-clearfix uk-margin-medium-bottom'>
               <div className='uk-float-left'>
                 <h6 style={{ padding: 0, margin: '5px 0 0 0', fontSize: '16px', lineHeight: '14px' }}>
-                  Create Account
+                  {t('settings.createAccount')}
                 </h6>
                 <h5
                   style={{ padding: '0 0 10px 0', margin: '2px 0 0 0', fontSize: '12px' }}
                   className={'uk-text-muted'}
                 >
-                  Create a user account if account does not exist.
+                  {t('settings.createAccountHint')}
                 </h5>
               </div>
               <div className='uk-float-right'>
                 <EnableSwitch
-                  label={'Enable'}
+                  label={t('settings.enable')}
                   stateName={'mailerCheckCreateAccount'}
                   checked={this.state.mailerCheckCreateAccount}
                   onChange={e => this.onCheckboxChanged(e, 'mailerCheckCreateAccount')}
@@ -363,18 +367,18 @@ class Mailer_MailerCheck extends React.Component {
             <div className='uk-clearfix uk-margin-medium-bottom'>
               <div className='uk-float-left'>
                 <h6 style={{ padding: 0, margin: '5px 0 0 0', fontSize: '16px', lineHeight: '14px' }}>
-                  Delete Message
+                  {t('settings.deleteMessage')}
                 </h6>
                 <h5
                   style={{ padding: '0 0 10px 0', margin: '2px 0 0 0', fontSize: '12px' }}
                   className={'uk-text-muted'}
                 >
-                  Delete email message from INBOX once processed
+                  {t('settings.deleteMessageHint')}
                 </h5>
               </div>
               <div className='uk-float-right'>
                 <EnableSwitch
-                  label={'Enable'}
+                  label={t('settings.enable')}
                   stateName={'mailerCheckDeleteMessage'}
                   checked={this.state.mailerCheckDeleteMessage}
                   onChange={e => this.onCheckboxChanged(e, 'mailerCheckDeleteMessage')}
@@ -384,7 +388,7 @@ class Mailer_MailerCheck extends React.Component {
               <hr style={{ float: 'left', marginTop: '10px' }} />
             </div>
             <div className='uk-margin-medium-bottom uk-clearfix'>
-              <label>Default Ticket Type</label>
+              <label>{t('settings.defaultTicketType')}</label>
               <SingleSelect
                 showTextbox={false}
                 width={'100%'}
@@ -395,7 +399,7 @@ class Mailer_MailerCheck extends React.Component {
               />
             </div>
             <div className='uk-margin-medium-bottom uk-clearfix'>
-              <label>Default Ticket Priority</label>
+              <label>{t('settings.defaultTicketPriority')}</label>
               <SingleSelect
                 showTextbox={false}
                 width={'100%'}
@@ -407,7 +411,7 @@ class Mailer_MailerCheck extends React.Component {
             </div>
             <div className='uk-clearfix'>
               <Button
-                text={'Check Now'}
+                text={t('settings.checkNow')}
                 type={'button'}
                 extraClass={'uk-float-left'}
                 flat={true}
@@ -417,7 +421,7 @@ class Mailer_MailerCheck extends React.Component {
                 disabled={!this.getSetting('mailerCheckEnabled')}
               />
               <Button
-                text={'Apply'}
+                text={t('settings.apply')}
                 type={'submit'}
                 extraClass={'uk-float-right'}
                 flat={true}
@@ -436,11 +440,12 @@ class Mailer_MailerCheck extends React.Component {
 Mailer_MailerCheck.propTypes = {
   settings: PropTypes.object.isRequired,
   updateSetting: PropTypes.func.isRequired,
-  updateMultipleSettings: PropTypes.func.isRequired
+  updateMultipleSettings: PropTypes.func.isRequired,
+  t: PropTypes.func.isRequired
 }
 
 const mapStateToProps = state => ({
   settings: state.settings.settings
 })
 
-export default connect(mapStateToProps, { updateSetting, updateMultipleSettings })(Mailer_MailerCheck)
+export default withTranslation()(connect(mapStateToProps, { updateSetting, updateMultipleSettings })(Mailer_MailerCheck))

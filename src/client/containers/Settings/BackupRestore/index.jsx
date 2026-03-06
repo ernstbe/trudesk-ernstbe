@@ -15,6 +15,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
+import { withTranslation } from 'react-i18next'
 import {
   fetchMongoDBTools,
   fetchBackups,
@@ -223,20 +224,19 @@ class BackupRestoreSettingsContainer extends React.Component {
   }
 
   render () {
-    const { active } = this.props
+    const { active, t } = this.props
 
     return (
       <div className={active ? 'active' : 'hide'}>
         {!this.props.settings.hasMongoDBTools && (
           <SettingItem
-            title={'MongoDB Tools Not Found'}
-            subtitle={'Unable to locate MongoDB tools. Please make sure MongoDB tools are installed.'}
+            title={t('settings.mongoDbToolsNotFound')}
+            subtitle={t('settings.mongoDbToolsHint')}
           >
             <div>
-              <h4>Installing MongoDB Tools</h4>
+              <h4>{t('settings.installingMongoDbTools')}</h4>
               <p style={{ margin: '0 0 5px 0', fontSize: '13px' }}>
-                MongoDB Tools are required to perform backup and restore. See below for instructions on installing
-                MongoDB Tools.
+                {t('settings.mongoDbToolsRequired')}
               </p>
               <h5>
                 <strong>Ubuntu 18.04</strong>
@@ -263,8 +263,8 @@ class BackupRestoreSettingsContainer extends React.Component {
         {this.props.settings.hasMongoDBTools && (
           <div>
             <SettingItem
-              title={'Backup Now'}
-              subtitle={'Backup all site data. (Database, Attachments, Assets)'}
+              title={t('settings.backupNow')}
+              subtitle={t('settings.backupNowHint')}
               component={
                 <div className={'uk-float-right mt-10'}>
                   <div
@@ -278,12 +278,12 @@ class BackupRestoreSettingsContainer extends React.Component {
                       className='uk-progress-bar uk-float-right'
                       style={{ width: '115px', fontSize: '11px', textTransform: 'uppercase', lineHeight: '31px' }}
                     >
-                      Please Wait...
+                      {t('settings.pleaseWait')}
                     </div>
                   </div>
                   {!this.props.settings.backingup && (
                     <Button
-                      text={'Backup Now'}
+                      text={t('settings.backupNow')}
                       style={'success'}
                       small={true}
                       styleOverride={{ width: '115px' }}
@@ -294,8 +294,8 @@ class BackupRestoreSettingsContainer extends React.Component {
               }
             />
             <SettingItem
-              title={'Backups'}
-              subtitle={'Currently stored backups'}
+              title={t('settings.backups')}
+              subtitle={t('settings.backupsHint')}
               component={
                 <div className={'uk-float-right mt-10'} style={{ width: '85px' }}>
                   <div
@@ -313,7 +313,7 @@ class BackupRestoreSettingsContainer extends React.Component {
                       style={{ width: '85px' }}
                       ref={i => (this.backupUploadBtn = i)}
                     >
-                      Upload
+                      {t('settings.upload')}
                       <input ref={i => (this.backupUploadSelect = i)} type={'file'} name={'backupUploadSelect'} />
                     </button>
                   </form>
@@ -323,7 +323,7 @@ class BackupRestoreSettingsContainer extends React.Component {
               {this.props.settings.backups.size < 1 && (
                 <Zone>
                   <ZoneBox>
-                    <h2 className={'uk-text-muted uk-text-center'}>No Backups</h2>
+                    <h2 className={'uk-text-muted uk-text-center'}>{t('settings.noBackups')}</h2>
                   </ZoneBox>
                 </Zone>
               )}
@@ -331,8 +331,8 @@ class BackupRestoreSettingsContainer extends React.Component {
                 <table className='uk-table mt-0'>
                   <thead>
                     <tr>
-                      <th>Filename</th>
-                      <th>Size</th>
+                      <th>{t('settings.filename')}</th>
+                      <th>{t('settings.size')}</th>
                       <th />
                     </tr>
                   </thead>
@@ -351,16 +351,16 @@ class BackupRestoreSettingsContainer extends React.Component {
                                 className={'md-btn md-btn-small md-btn-wave no-ajaxy'}
                                 download={backup.get('filename')}
                               >
-                                download
+                                {t('settings.download')}
                               </a>
                               <Button
-                                text={'Restore'}
+                                text={t('settings.restore')}
                                 small={true}
                                 waves={true}
                                 onClick={e => this.oneRestoreClicked(e, backup)}
                               />
                               <Button
-                                text={'Delete'}
+                                text={t('common.delete')}
                                 small={true}
                                 style={'danger'}
                                 waves={true}
@@ -377,11 +377,11 @@ class BackupRestoreSettingsContainer extends React.Component {
             </SettingItem>
           </div>
         )}
-        <SettingItem title={'Deleted Tickets'} subtitle={'Tickets marked as deleted are shown below.'}>
+        <SettingItem title={t('settings.deletedTickets')} subtitle={t('settings.deletedTicketsHint')}>
           {this.props.settings.deletedTickets.size < 1 && (
             <Zone>
               <ZoneBox>
-                <h2 className='uk-text-muted uk-text-center'>No Deleted Tickets</h2>
+                <h2 className='uk-text-muted uk-text-center'>{t('settings.noDeletedTickets')}</h2>
               </ZoneBox>
             </Zone>
           )}
@@ -390,10 +390,10 @@ class BackupRestoreSettingsContainer extends React.Component {
               <table className='uk-table mt-0 mb-5'>
                 <thead>
                   <tr>
-                    <th>UID</th>
-                    <th>Subject</th>
-                    <th>Group</th>
-                    <th>Date</th>
+                    <th>{t('settings.uid')}</th>
+                    <th>{t('common.subject')}</th>
+                    <th>{t('common.group')}</th>
+                    <th>{t('common.date')}</th>
                     <th />
                   </tr>
                 </thead>
@@ -416,14 +416,14 @@ class BackupRestoreSettingsContainer extends React.Component {
                         <td className='uk-text-right valign-middle'>
                           <ButtonGroup>
                             <Button
-                              text={'Delete'}
+                              text={t('common.delete')}
                               style={'danger'}
                               small={true}
                               waves={true}
                               onClick={e => this.onDeleteTicketClicked(e, ticket)}
                             />
                             <Button
-                              text={'Restore'}
+                              text={t('settings.restore')}
                               small={true}
                               waves={true}
                               onClick={e => this.onRestoreTicketClicked(e, ticket)}
@@ -454,7 +454,8 @@ BackupRestoreSettingsContainer.propTypes = {
   backupNow: PropTypes.func.isRequired,
   restoreDeletedTicket: PropTypes.func.isRequired,
   permDeleteTicket: PropTypes.func.isRequired,
-  settings: PropTypes.object.isRequired
+  settings: PropTypes.object.isRequired,
+  t: PropTypes.func.isRequired
 }
 
 const mapStateToProps = state => ({
@@ -462,7 +463,7 @@ const mapStateToProps = state => ({
   settings: state.settings
 })
 
-export default connect(mapStateToProps, {
+export default withTranslation()(connect(mapStateToProps, {
   fetchBackups,
   fetchMongoDBTools,
   backupNow,
@@ -470,4 +471,4 @@ export default connect(mapStateToProps, {
   restoreDeletedTicket,
   permDeleteTicket,
   changeDeletedTicketsPage
-})(BackupRestoreSettingsContainer)
+})(BackupRestoreSettingsContainer))

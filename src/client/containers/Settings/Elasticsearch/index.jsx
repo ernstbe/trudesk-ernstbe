@@ -15,6 +15,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
+import { withTranslation } from 'react-i18next'
 import { observer } from 'mobx-react'
 import { makeObservable, observable } from 'mobx'
 import { updateSetting, updateMultipleSettings } from 'actions/settings'
@@ -182,19 +183,20 @@ class ElasticsearchSettingsContainer extends React.Component {
 
   rebuildIndex () {
     const self = this
+    const { t } = this.props
     UIKit.modal.confirm(
-      'Are you sure you want to rebuild the index?',
+      t('settings.confirmRebuildIndex'),
       function () {
-        self.esStatus = 'Rebuilding...'
-        self.inSyncText = 'Out of Sync'
+        self.esStatus = t('settings.rebuilding')
+        self.inSyncText = t('settings.outOfSync')
         self.inSyncClass = 'bg-warn'
         self.indexCount = 0
         axios
           .get('/api/v2/es/rebuild')
           .then(() => {
-            self.esStatus = 'Rebuilding...'
+            self.esStatus = t('settings.rebuilding')
             // $scope.esStatusClass = 'text-warning';
-            helpers.UI.showSnackbar('Rebuilding Index...', false)
+            helpers.UI.showSnackbar(t('settings.rebuildingIndex'), false)
             self.disableRebuild = true
             setTimeout(self.getStatus, 3000)
           })
@@ -204,51 +206,52 @@ class ElasticsearchSettingsContainer extends React.Component {
           })
       },
       {
-        labels: { Ok: 'Yes', Cancel: 'No' },
+        labels: { Ok: t('common.yes'), Cancel: t('common.no') },
         confirmButtonClass: 'md-btn-danger'
       }
     )
   }
 
   render () {
+    const { t } = this.props
     return (
       <div className={this.props.active ? '' : 'hide'}>
         <SettingItem
-          title={'Elasticsearch - Beta'}
-          subtitle={'Enable the Elasticsearch engine'}
+          title={t('settings.elasticsearchBeta')}
+          subtitle={t('settings.elasticsearchHint')}
           component={
             <EnableSwitch
               stateName={'elasticSearchEnabled'}
-              label={'Enable'}
+              label={t('settings.enable')}
               checked={this.getSetting('elasticSearchEnabled')}
               onChange={e => this.onEnableChanged(e)}
             />
           }
         />
         <SettingItem
-          title={'Connection Status'}
-          subtitle={'Current connection status to the Elasticsearch server.'}
+          title={t('settings.connectionStatus')}
+          subtitle={t('settings.connectionStatusHint')}
           component={<h4 className={`right mr-15 mt-15 ${this.esStatusClass}`}>{this.esStatus}</h4>}
         />
         <SettingItem
-          title={'Indexed Documents'}
-          subtitle={'Current count of indexed documents.'}
+          title={t('settings.indexedDocuments')}
+          subtitle={t('settings.indexedDocumentsHint')}
           component={<h4 className={'right mr-15 mt-15'}>{this.indexCount}</h4>}
         />
         <SettingItem
-          title={'Index Status'}
-          subtitle={'Current status of the index. if the status is not green, the index may need rebuilding.'}
+          title={t('settings.indexStatus')}
+          subtitle={t('settings.indexStatusHint')}
           extraClass={this.inSyncClass}
           component={<h4 className={'right mr-15 mt-15'}>{this.inSyncText}</h4>}
         />
         <SettingItem
-          title={'Elasticsearch Server Configuration'}
-          tooltip={'Changing server settings will require a rebuild of the index and server restart.'}
-          subtitle={'The connection settings to the Elasticsearch server.'}
+          title={t('settings.esServerConfig')}
+          tooltip={t('settings.esServerConfigTooltip')}
+          subtitle={t('settings.esServerConfigHint')}
         >
           <form onSubmit={e => this.onFormSubmit(e)}>
             <div className='uk-margin-medium-bottom'>
-              <label>Server</label>
+              <label>{t('settings.server')}</label>
               <input
                 type='text'
                 className={'md-input md-input-width-medium'}
@@ -258,7 +261,7 @@ class ElasticsearchSettingsContainer extends React.Component {
               />
             </div>
             <div className='uk-margin-medium-bottom'>
-              <label>Port</label>
+              <label>{t('settings.port')}</label>
               <input
                 type='text'
                 className={'md-input md-input-width-medium'}
@@ -269,7 +272,7 @@ class ElasticsearchSettingsContainer extends React.Component {
             </div>
             <div className='uk-clearfix'>
               <Button
-                text={'Apply'}
+                text={t('settings.apply')}
                 type={'submit'}
                 flat={true}
                 waves={true}
@@ -281,14 +284,12 @@ class ElasticsearchSettingsContainer extends React.Component {
           </form>
         </SettingItem>
         <SettingItem
-          title={'Rebuild Index'}
-          subtitle={'Wipe index and rebuild'}
-          tooltip={
-            'Rebuilding the index should only occur if the index is out of sync with the database, or has not been initialized. Rebuilding will take some time.'
-          }
+          title={t('settings.rebuildIndex')}
+          subtitle={t('settings.rebuildIndexHint')}
+          tooltip={t('settings.rebuildIndexTooltip')}
           component={
             <Button
-              text={'Rebuild'}
+              text={t('settings.rebuild')}
               flat={false}
               waves={true}
               style={'primary'}
@@ -307,11 +308,12 @@ ElasticsearchSettingsContainer.propTypes = {
   active: PropTypes.bool.isRequired,
   settings: PropTypes.object.isRequired,
   updateSetting: PropTypes.func.isRequired,
-  updateMultipleSettings: PropTypes.func.isRequired
+  updateMultipleSettings: PropTypes.func.isRequired,
+  t: PropTypes.func.isRequired
 }
 
 const mapStateToProps = state => ({
   settings: state.settings.settings
 })
 
-export default connect(mapStateToProps, { updateSetting, updateMultipleSettings })(ElasticsearchSettingsContainer)
+export default withTranslation()(connect(mapStateToProps, { updateSetting, updateMultipleSettings })(ElasticsearchSettingsContainer))

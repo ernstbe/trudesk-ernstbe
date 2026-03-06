@@ -50,99 +50,78 @@ groupSchema.pre('save', function (next) {
   next()
 })
 
-groupSchema.methods.addMember = async function (memberId, callback) {
+groupSchema.methods.addMember = async function (memberId) {
   const self = this
-  return new Promise((resolve, reject) => {
-    ;(async () => {
-      if (_.isUndefined(memberId)) {
-        if (typeof callback === 'function') return callback({ message: 'Invalid MemberId - $Group.AddMember()' })
+  if (_.isUndefined(memberId)) {
+    throw new Error('Invalid MemberId - $Group.AddMember()')
+  }
 
-        return reject(new Error('Invalid MemberId - $Group.AddMember()'))
-      }
+  if (self.members === null) self.members = []
+  if (isMember(self.members, memberId)) {
+    return false
+  }
 
-      if (self.members === null) self.members = []
-      if (isMember(self.members, memberId)) {
-        if (typeof callback === 'function') return callback(null, false)
+  self.members.push(memberId)
+  self.members = _.uniq(self.members)
 
-        return resolve(false)
-      }
-
-      self.members.push(memberId)
-      self.members = _.uniq(self.members)
-
-      if (typeof callback === 'function') return callback(null, true)
-
-      return resolve(true)
-    })()
-  })
+  return true
 }
 
-groupSchema.methods.removeMember = async function (memberId, callback) {
+groupSchema.methods.removeMember = async function (memberId) {
   const self = this
-  const hasCallback = typeof callback === 'function'
-  return new Promise((resolve, reject) => {
-    ;(async () => {
-      if (_.isUndefined(memberId)) {
-        if (hasCallback) return callback({ message: 'Invalid MemberId - $Group.RemoveMember()' })
+  if (_.isUndefined(memberId)) {
+    throw new Error('Invalid MemberId - $Group.RemoveMember()')
+  }
 
-        return reject(new Error('Invalid MemberId - $Group.RemoveMember()'))
-      }
+  if (!isMember(self.members, memberId)) {
+    return false
+  }
 
-      if (!isMember(self.members, memberId)) {
-        if (hasCallback) return callback(null, false)
+  self.members.splice(_.indexOf(self.members, _.find(self.members, { _id: memberId })), 1)
+  self.members = _.uniq(self.members)
 
-        return resolve(false)
-      }
-
-      self.members.splice(_.indexOf(self.members, _.find(self.members, { _id: memberId })), 1)
-      self.members = _.uniq(self.members)
-
-      if (hasCallback) return callback(null, true)
-
-      return resolve(true)
-    })()
-  })
+  return true
 }
 
 groupSchema.methods.isMember = function (memberId) {
   return isMember(this.members, memberId)
 }
 
-groupSchema.methods.addSendMailTo = function (memberId, callback) {
-  if (_.isUndefined(memberId)) return callback('Invalid MemberId - $Group.AddSendMailTo()')
+groupSchema.methods.addSendMailTo = async function (memberId) {
+  if (_.isUndefined(memberId)) throw new Error('Invalid MemberId - $Group.AddSendMailTo()')
 
   if (this.sendMailTo === null) this.sendMailTo = []
 
-  if (isMember(this.sendMailTo, memberId)) return callback(null, false)
+  if (isMember(this.sendMailTo, memberId)) return false
 
   this.sendMailTo.push(memberId)
   this.sendMailTo = _.uniq(this.sendMailTo)
 
-  return callback(null, true)
+  return true
 }
 
-groupSchema.methods.removeSendMailTo = function (memberId, callback) {
-  if (_.isUndefined(memberId)) return callback('Invalid MemberId - $Group.RemoveSendMailTo()')
+groupSchema.methods.removeSendMailTo = async function (memberId) {
+  if (_.isUndefined(memberId)) throw new Error('Invalid MemberId - $Group.RemoveSendMailTo()')
 
-  if (!isMember(this.sendMailTo, memberId)) return callback(null, false)
+  if (!isMember(this.sendMailTo, memberId)) return false
 
   this.sendMailTo.splice(_.indexOf(this.sendMailTo, _.find(this.sendMailTo, { _id: memberId })), 1)
 
-  return callback(null, true)
+  return true
 }
 
-groupSchema.statics.getGroupByName = function (name, callback) {
-  if (_.isUndefined(name) || name.length < 1) return callback('Invalid Group Name - GroupSchema.GetGroupByName()')
+groupSchema.statics.getGroupByName = async function (name) {
+  if (_.isUndefined(name) || name.length < 1) throw new Error('Invalid Group Name - GroupSchema.GetGroupByName()')
 
   var q = this.model(COLLECTION)
     .findOne({ name: name })
     .populate('members', '_id username fullname email role preferences image title deleted')
     .populate('sendMailTo', '_id username fullname email role preferences image title deleted')
 
-  return q.exec(callback)
+  return q.exec()
 }
 
-groupSchema.statics.getWithObject = function (obj, callback) {
+groupSchema.statics.getWithObject = async function (obj) {
   var limit = obj.limit ? Number(obj.limit) : 100
   var page = obj.page ? Number(obj.page) : 0
   var userId = obj.userId
@@ -155,7 +134,7 @@ groupSchema.statics.getWithObject = function (obj, callback) {
       .populate('members', '_id username fullname email role preferences image title deleted')
       .populate('sendMailTo', '_id username fullname email role preferences image title deleted')
       .sort('name')
-      .exec(callback)
+      .exec()
   }
 
   return this.model(COLLECTION)
@@ -165,129 +144,80 @@ groupSchema.statics.getWithObject = function (obj, callback) {
     .populate('members', '_id username fullname email role preferences image title deleted')
     .populate('sendMailTo', '_id username fullname email role preferences image title deleted')
     .sort('name')
-    .exec(callback)
+    .exec()
 }
 
-groupSchema.statics.getAllGroups = async function (callback) {
-  const self = this
-  return new Promise((resolve, reject) => {
-    ;(async () => {
-      const q = self
-        .model(COLLECTION)
-        .find({})
-        .populate('members', '_id username fullname email role preferences image title deleted')
-        .populate('sendMailTo', '_id username fullname email role preferences image title deleted')
-        .sort('name')
+groupSchema.statics.getAllGroups = async function () {
+  const q = this.model(COLLECTION)
+    .find({})
+    .populate('members', '_id username fullname email role preferences image title deleted')
+    .populate('sendMailTo', '_id username fullname email role preferences image title deleted')
+    .sort('name')
 
-      if (typeof callback === 'function') return q.exec(callback)
-
-      const groups = await q.exec()
-
-      return resolve(groups)
-    })()
-  })
+  return q.exec()
 }
 
-groupSchema.statics.getAllGroupsNoPopulate = function (callback) {
+groupSchema.statics.getAllGroupsNoPopulate = async function () {
   var q = this.model(COLLECTION)
     .find({})
     .sort('name')
 
-  return q.exec(callback)
+  return q.exec()
 }
 
-groupSchema.statics.getAllPublicGroups = function (callback) {
-  return new Promise((resolve, reject) => {
-    ;(async () => {
-      const q = this.model(COLLECTION)
-        .find({ public: true })
-        .sort('name')
+groupSchema.statics.getAllPublicGroups = async function () {
+  const q = this.model(COLLECTION)
+    .find({ public: true })
+    .sort('name')
 
-      if (typeof callback === 'function') return q.exec(callback)
-
-      try {
-        const groups = await q.exec()
-
-        return resolve(groups)
-      } catch (error) {
-        return reject(error)
-      }
-    })()
-  })
+  return q.exec()
 }
 
-groupSchema.statics.getGroups = async function (groupIds, callback) {
-  return new Promise((resolve, reject) => {
-    ;(async () => {
-      if (_.isUndefined(groupIds)) {
-        if (typeof callback === 'function') return callback('Invalid Array of Group IDs - GroupSchema.GetGroups()')
-        return reject(new Error('Invalid Array of Group IDs - GroupSchema.GetGroups()'))
-      }
+groupSchema.statics.getGroups = async function (groupIds) {
+  if (_.isUndefined(groupIds)) {
+    throw new Error('Invalid Array of Group IDs - GroupSchema.GetGroups()')
+  }
 
-      try {
-        const exec = this.model(COLLECTION)
-          .find({ _id: { $in: groupIds } })
-          .populate('members', '_id username fullname email role preferences image title deleted')
-          .sort('name')
-
-        if (typeof callback === 'function') {
-          return exec.exec(callback)
-        }
-
-        const groups = await exec.exec()
-
-        return resolve(groups)
-      } catch (e) {
-        if (typeof callback === 'function') return callback(e)
-        return reject(e)
-      }
-    })()
-  })
+  return this.model(COLLECTION)
+    .find({ _id: { $in: groupIds } })
+    .populate('members', '_id username fullname email role preferences image title deleted')
+    .sort('name')
+    .exec()
 }
 
-groupSchema.statics.getAllGroupsOfUser = async function (userId, callback) {
-  return new Promise((resolve, reject) => {
-    ;(async () => {
-      if (_.isUndefined(userId)) {
-        if (typeof callback === 'function')
-          return callback({ message: 'Invalid UserId - GroupSchema.GetAllGroupsOfUser()' })
-        return reject(new Error('Invalid UserId - GroupSchema.GetAllGroupsOfUser()'))
-      }
+groupSchema.statics.getAllGroupsOfUser = async function (userId) {
+  if (_.isUndefined(userId)) {
+    throw new Error('Invalid UserId - GroupSchema.GetAllGroupsOfUser()')
+  }
 
-      const q = this.model(COLLECTION)
-        .find({ members: userId })
-        .populate('members', '_id username fullname email role preferences image title deleted')
-        .populate('sendMailTo', '_id username fullname email role preferences image title deleted')
-        .sort('name')
+  const q = this.model(COLLECTION)
+    .find({ members: userId })
+    .populate('members', '_id username fullname email role preferences image title deleted')
+    .populate('sendMailTo', '_id username fullname email role preferences image title deleted')
+    .sort('name')
 
-      if (typeof callback === 'function') return q.exec(callback)
-
-      const groups = await q.exec()
-
-      return resolve(groups)
-    })()
-  })
+  return q.exec()
 }
 
-groupSchema.statics.getAllGroupsOfUserNoPopulate = function (userId, callback) {
-  if (_.isUndefined(userId)) return callback('Invalid UserId - GroupSchema.GetAllGroupsOfUserNoPopulate()')
+groupSchema.statics.getAllGroupsOfUserNoPopulate = async function (userId) {
+  if (_.isUndefined(userId)) throw new Error('Invalid UserId - GroupSchema.GetAllGroupsOfUserNoPopulate()')
 
   var q = this.model(COLLECTION)
     .find({ members: userId })
     .sort('name')
 
-  return q.exec(callback)
+  return q.exec()
 }
 
-groupSchema.statics.getGroupById = function (gId, callback) {
-  if (_.isUndefined(gId)) return callback('Invalid GroupId - GroupSchema.GetGroupById()')
+groupSchema.statics.getGroupById = async function (gId) {
+  if (_.isUndefined(gId)) throw new Error('Invalid GroupId - GroupSchema.GetGroupById()')
 
   var q = this.model(COLLECTION)
     .findOne({ _id: gId })
     .populate('members', '_id username fullname email role preferences image title')
     .populate('sendMailTo', '_id username fullname email role preferences image title')
 
-  return q.exec(callback)
+  return q.exec()
 }
 
 function isMember (arr, id) {

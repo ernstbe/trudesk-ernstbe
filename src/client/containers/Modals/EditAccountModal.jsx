@@ -17,6 +17,7 @@ import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import { observer } from 'mobx-react'
 import { makeObservable, observable } from 'mobx'
+import { withTranslation } from 'react-i18next'
 import axios from 'axios'
 import Log from '../../logger'
 
@@ -131,7 +132,7 @@ class EditAccountModal extends React.Component {
   }
 
   render () {
-    const { user, edit } = this.props
+    const { user, edit, t } = this.props
     const customer = !this.isAgentRole
     const profilePicture = user.image || 'defaultProfile.jpg'
     const parsedRoles = helpers.getRolesByHierarchy()
@@ -218,7 +219,7 @@ class EditAccountModal extends React.Component {
           <form className='uk-form-stacked' onSubmit={e => this.onSubmitSaveAccount(e)}>
             <div className='uk-margin-medium-bottom uk-clearfix'>
               <div className='uk-float-left' style={{ width: '50%', paddingRight: '20px' }}>
-                <label className={'uk-form-label'}>Name</label>
+                <label className={'uk-form-label'}>{t('modals.createAccount.name')}</label>
                 <input
                   type='text'
                   className={'md-input'}
@@ -228,7 +229,7 @@ class EditAccountModal extends React.Component {
                 />
               </div>
               <div className='uk-float-left uk-width-1-2'>
-                <label className={'uk-form-label'}>Title</label>
+                <label className={'uk-form-label'}>{t('modals.createAccount.title_field')}</label>
                 <input
                   type='text'
                   className={'md-input'}
@@ -242,7 +243,7 @@ class EditAccountModal extends React.Component {
               <div>
                 <div className='uk-margin-medium-bottom uk-clearfix'>
                   <div className='uk-float-left' style={{ width: '50%', paddingRight: '20px' }}>
-                    <label className={'uk-form-label'}>Password</label>
+                    <label className={'uk-form-label'}>{t('modals.createAccount.password')}</label>
                     <input
                       type='password'
                       className={'md-input'}
@@ -251,7 +252,7 @@ class EditAccountModal extends React.Component {
                     />
                   </div>
                   <div className='uk-float-left uk-width-1-2'>
-                    <label className={'uk-form-label'}>Confirm Password</label>
+                    <label className={'uk-form-label'}>{t('modals.createAccount.confirmPassword')}</label>
                     <input
                       type='password'
                       className={'md-input'}
@@ -263,7 +264,7 @@ class EditAccountModal extends React.Component {
               </div>
             )}
             <div className='uk-margin-medium-bottom'>
-              <label className='uk-form-label'>Email</label>
+              <label className='uk-form-label'>{t('modals.createAccount.email')}</label>
               <input
                 type='email'
                 className={'md-input'}
@@ -274,7 +275,7 @@ class EditAccountModal extends React.Component {
             </div>
             {edit && (
               <div className='uk-margin-medium-bottom'>
-                <label className={'uk-form-label'}>Role</label>
+                <label className={'uk-form-label'}>{t('modals.createAccount.role')}</label>
                 <SingleSelect
                   items={roles}
                   width={'100'}
@@ -287,7 +288,7 @@ class EditAccountModal extends React.Component {
             )}
             {this.props.groups && customer && (
               <div className='uk-margin-medium-bottom'>
-                <label className='uk-form-label'>Groups</label>
+                <label className='uk-form-label'>{t('modals.createAccount.groups')}</label>
                 <MultiSelect
                   items={groups}
                   initialSelected={user.groups.map(i => i._id)}
@@ -300,7 +301,7 @@ class EditAccountModal extends React.Component {
             {!customer && (
               <div>
                 <div className='uk-margin-medium-bottom'>
-                  <label className='uk-form-label'>Teams</label>
+                  <label className='uk-form-label'>{t('modals.createAccount.teams')}</label>
                   <MultiSelect
                     items={teams}
                     initialSelected={user.teams.map(i => i._id)}
@@ -311,7 +312,7 @@ class EditAccountModal extends React.Component {
                 </div>
 
                 <div className='uk-margin-medium-bottom'>
-                  <label className='uk-form-label'>Departments</label>
+                  <label className='uk-form-label'>{t('modals.editAccount.departments')}</label>
                   <MultiSelect
                     items={departments}
                     initialSelected={user.departments.map(i => i._id)}
@@ -322,9 +323,9 @@ class EditAccountModal extends React.Component {
               </div>
             )}
             <div className='uk-modal-footer uk-text-right'>
-              <Button text={'Close'} flat={true} waves={true} extraClass={'uk-modal-close'} />
+              <Button text={t('common.close')} flat={true} waves={true} extraClass={'uk-modal-close'} />
               <Button
-                text={'Save Account'}
+                text={t('modals.editAccount.saveAccount')}
                 flat={true}
                 waves={true}
                 style={'primary'}
@@ -353,7 +354,8 @@ EditAccountModal.propTypes = {
   fetchDepartments: PropTypes.func.isRequired,
   unloadDepartments: PropTypes.func.isRequired,
   fetchRoles: PropTypes.func.isRequired,
-  roles: PropTypes.object.isRequired
+  roles: PropTypes.object.isRequired,
+  t: PropTypes.func.isRequired
 }
 
 EditAccountModal.defaultProps = {
@@ -367,7 +369,7 @@ const mapStateToProps = state => ({
   roles: state.shared.roles
 })
 
-export default connect(mapStateToProps, {
+export default withTranslation()(connect(mapStateToProps, {
   saveEditAccount,
   fetchGroups,
   unloadGroups,
@@ -376,4 +378,4 @@ export default connect(mapStateToProps, {
   fetchDepartments,
   unloadDepartments,
   fetchRoles
-})(EditAccountModal)
+})(EditAccountModal))

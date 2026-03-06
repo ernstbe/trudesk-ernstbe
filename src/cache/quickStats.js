@@ -13,7 +13,6 @@
  */
 
 const _ = require('lodash')
-const async = require('async')
 const ticketSchema = require('../models/ticket')
 
 _.mixin({
@@ -31,74 +30,32 @@ _.mixin({
   }
 })
 
-const init = function (tickets, callback) {
+const init = async function (tickets, callback) {
   const obj = {}
   let $tickets = []
 
-  async.series(
-    [
-      function (done) {
-        if (tickets) {
-          ticketSchema.populate(tickets, { path: 'owner comments.owner assignee' }, function (err, _tickets) {
-            if (err) return done(err)
-
-            $tickets = _tickets
-
-            return done()
-          })
-        } else {
-          ticketSchema.getForCache(function (err, tickets) {
-            if (err) return done(err)
-
-            ticketSchema.populate(tickets, { path: 'owner comments.owner assignee' }, function (err, _tickets) {
-              if (err) return done(err)
-
-              $tickets = _tickets
-
-              return done()
-            })
-          })
-        }
-      },
-      function (done) {
-        buildMostRequester($tickets, function (result) {
-          obj.mostRequester = _.first(result)
-
-          return done()
-        })
-      },
-      function (done) {
-        buildMostComments($tickets, function (result) {
-          obj.mostCommenter = _.first(result)
-
-          return done()
-        })
-      },
-      function (done) {
-        buildMostAssignee($tickets, function (result) {
-          obj.mostAssignee = _.first(result)
-
-          return done()
-        })
-      },
-      function (done) {
-        buildMostActiveTicket($tickets, function (result) {
-          obj.mostActiveTicket = _.first(result)
-
-          return done()
-        })
-      }
-    ],
-    function (err) {
-      $tickets = null // clear it
-      if (err) return callback(err)
-
-      return callback(null, obj)
+  try {
+    if (tickets) {
+      $tickets = await ticketSchema.populate(tickets, { path: 'owner comments.owner assignee' })
+    } else {
+      const fetchedTickets = await ticketSchema.getForCache()
+      $tickets = await ticketSchema.populate(fetchedTickets, { path: 'owner comments.owner assignee' })
     }
-  )
+
+    obj.mostRequester = _.first(buildMostRequester($tickets))
+    obj.mostCommenter = _.first(buildMostComments($tickets))
+    obj.mostAssignee = _.first(buildMostAssignee($tickets))
+    obj.mostActiveTicket = _.first(buildMostActiveTicket($tickets))
+
+    $tickets = null // clear it
+
+    return callback(null, obj)
+  } catch (err) {
+    return callback(err)
+  }
 }
 
-function buildMostRequester (ticketArray, callback) {
+function buildMostRequester (ticketArray) {
   let requesters = _.map(ticketArray, function (m) {
     if (m.owner) {
       return m.owner.fullname
@@ -122,7 +79,7 @@ function buildMostRequester (ticketArray, callback) {
     return -o.value
   })
 
-  return callback(r)
+  return r
 }
 
 function flatten (arr) {
@@ -131,7 +88,7 @@ function flatten (arr) {
   }, [])
 }
 
-function buildMostComments (ticketArray, callback) {
+function buildMostComments (ticketArray) {
   let commenters = _.map(ticketArray, function (m) {
     return _.map(m.comments, function (i) {
       return i.owner.fullname
@@ -154,10 +111,10 @@ function buildMostComments (ticketArray, callback) {
     return -o.value
   })
 
-  return callback(c)
+  return c
 }
 
-function buildMostAssignee (ticketArray, callback) {
+function buildMostAssignee (ticketArray) {
   ticketArray = _.reject(ticketArray, function (v) {
     return _.isUndefined(v.assignee) || _.isNull(v.assignee)
   })
@@ -180,17 +137,17 @@ function buildMostAssignee (ticketArray, callback) {
     return -o.value
   })
 
-  return callback(a)
+  return a
 }
 
-function buildMostActiveTicket (ticketArray, callback) {
+function buildMostActiveTicket (ticketArray) {
   let tickets = _.map(ticketArray, function (m) {
     return { uid: m.uid, cSize: _.size(m.history) }
   })
 
   tickets = _.sortBy(tickets, 'cSize').reverse()
 
-  return callback(tickets)
+  return tickets
 }
 
 module.exports = init

@@ -15,6 +15,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
+import { withTranslation } from 'react-i18next'
 import { updateSetting, updateMultipleSettings } from 'actions/settings'
 
 import Button from 'components/Button'
@@ -95,16 +96,16 @@ class AccountsSettingsContainer extends React.Component {
   }
 
   render () {
-    const { active } = this.props
+    const { active, t } = this.props
     return (
       <div className={active ? 'active' : 'hide'}>
         <SettingItem
-          title='Allow User Registration'
-          subtitle='Allow users to create accounts on the login screen.'
+          title={t('settings.allowUserRegistration')}
+          subtitle={t('settings.allowUserRegistrationHint')}
           component={
             <EnableSwitch
               stateName='allowUserRegistration'
-              label='Enable'
+              label={t('settings.enable')}
               checked={this.allowUserRegistrationEnabled}
               onChange={e => {
                 this.updateSetting('allowUserRegistration', 'allowUserRegistration:enable', e.target.checked)
@@ -113,13 +114,13 @@ class AccountsSettingsContainer extends React.Component {
           }
         />
         <SettingItem
-          title={'Password Complexity'}
-          subtitle={'Require users passwords to meet minimum password complexity'}
-          tooltip={'Minimum 8 characters with uppercase and numeric.'}
+          title={t('settings.passwordComplexity')}
+          subtitle={t('settings.passwordComplexityHint')}
+          tooltip={t('settings.passwordComplexityTooltip')}
           component={
             <EnableSwitch
               stateName={'accountsPasswordComplexity'}
-              label={'Enable'}
+              label={t('settings.enable')}
               checked={this.passwordComplexityEnabled}
               onChange={e => {
                 this.updateSetting('accountsPasswordComplexity', 'accountsPasswordComplexity:enable', e.target.checked)
@@ -136,11 +137,12 @@ AccountsSettingsContainer.propTypes = {
   active: PropTypes.bool.isRequired,
   updateSetting: PropTypes.func.isRequired,
   updateMultipleSettings: PropTypes.func.isRequired,
-  settings: PropTypes.object.isRequired
+  settings: PropTypes.object.isRequired,
+  t: PropTypes.func.isRequired
 }
 
 const mapStateToProps = state => ({
   settings: state.settings.settings
 })
 
-export default connect(mapStateToProps, { updateSetting, updateMultipleSettings })(AccountsSettingsContainer)
+export default withTranslation()(connect(mapStateToProps, { updateSetting, updateMultipleSettings })(AccountsSettingsContainer))

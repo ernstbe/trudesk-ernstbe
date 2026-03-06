@@ -15,6 +15,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
+import { withTranslation } from 'react-i18next'
 import Button from 'components/Button'
 import EasyMDE from 'components/EasyMDE'
 import { updateSetting } from 'actions/settings'
@@ -52,10 +53,10 @@ class LegalSettingsContainer extends React.Component {
   }
 
   render () {
-    const { active } = this.props
+    const { active, t } = this.props
     return (
       <div className={!active ? 'hide' : ''}>
-        <SettingItem title={'Privacy Policy'} subtitle={'Paste in HTML/Text of your privacy policy.'}>
+        <SettingItem title={t('settings.privacyPolicy')} subtitle={t('settings.privacyPolicyHint')}>
           <div>
             <EasyMDE
               defaultValue={this.getSetting('privacyPolicy')}
@@ -64,7 +65,7 @@ class LegalSettingsContainer extends React.Component {
           </div>
           <div className='uk-clearfix'>
             <Button
-              text={'Save'}
+              text={t('common.save')}
               extraClass={'uk-float-right'}
               flat={true}
               style={'success'}
@@ -81,11 +82,12 @@ class LegalSettingsContainer extends React.Component {
 LegalSettingsContainer.propTypes = {
   active: PropTypes.bool,
   settings: PropTypes.object.isRequired,
-  updateSetting: PropTypes.func.isRequired
+  updateSetting: PropTypes.func.isRequired,
+  t: PropTypes.func.isRequired
 }
 
 const mapStateToProps = state => ({
   settings: state.settings.settings
 })
 
-export default connect(mapStateToProps, { updateSetting })(LegalSettingsContainer)
+export default withTranslation()(connect(mapStateToProps, { updateSetting })(LegalSettingsContainer))

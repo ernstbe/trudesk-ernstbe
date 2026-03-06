@@ -15,6 +15,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
+import { withTranslation } from 'react-i18next'
 import some from 'lodash/some'
 import $ from 'jquery'
 import velocity from 'velocity'
@@ -81,13 +82,13 @@ class AddPriorityToTypeModal extends React.Component {
   }
 
   render () {
-    const { type } = this.props
+    const { type, t } = this.props
     return (
       <BaseModal>
         <form className='uk-form-stacked'>
           <div className='uk-margin-medium-bottom uk-clearfix'>
-            <h2>Add Priorities</h2>
-            <span>Please select the priorities you wish to add to type: {type.get('name')}</span>
+            <h2>{t('modals.addPriority.title')}</h2>
+            <span>{t('modals.addPriority.hint', { typeName: type.get('name') })}</span>
           </div>
           <div className='priority-loop zone'>
             {this.getPriorities().map(priority => {
@@ -95,9 +96,9 @@ class AddPriorityToTypeModal extends React.Component {
                 return (
                   <div key={priority.get('_id')} className={'z-box uk-clearfix'}>
                     <div className='uk-float-left'>
-                      <h5 style={{ color: priority.get('htmlColor'), fontWeight: 'bold' }}>{priority.get('name')}</h5>
+                      <h5 style={{ color: priority.get('htmlColor'), fontWeight: 'bold' }}>{t('priorities.' + priority.get('name'), priority.get('name'))}</h5>
                       <p className={'uk-text-muted'}>
-                        SLA Overdue: <strong>{priority.get('durationFormatted')}</strong>
+                        {t('modals.addPriority.slaOverdue')}: <strong>{priority.get('durationFormatted')}</strong>
                       </p>
                     </div>
                     <div className='uk-float-right'>
@@ -111,9 +112,9 @@ class AddPriorityToTypeModal extends React.Component {
                 return (
                   <div key={priority.get('_id')} className={'z-box uk-clearfix'}>
                     <div className='uk-float-left'>
-                      <h5 style={{ color: priority.get('htmlColor'), fontWeight: 'bold' }}>{priority.get('name')}</h5>
+                      <h5 style={{ color: priority.get('htmlColor'), fontWeight: 'bold' }}>{t('priorities.' + priority.get('name'), priority.get('name'))}</h5>
                       <p className={'uk-text-muted'}>
-                        SLA Overdue: <strong>{priority.get('durationFormatted')}</strong>
+                        {t('modals.addPriority.slaOverdue')}: <strong>{priority.get('durationFormatted')}</strong>
                       </p>
                     </div>
                     <div className='uk-float-right'>
@@ -122,7 +123,7 @@ class AddPriorityToTypeModal extends React.Component {
                         className='uk-button uk-button-success mt-10 mr-10 no-ajaxy'
                         onClick={e => this.onAddClick(e, type, priority)}
                       >
-                        Add
+                        {t('common.add')}
                       </a>
                       <i
                         className='material-icons uk-text-success mt-10 mr-15'
@@ -137,7 +138,7 @@ class AddPriorityToTypeModal extends React.Component {
             })}
           </div>
           <div className='uk-modal-footer uk-text-right'>
-            <Button type={'button'} flat={true} waves={true} text={'Close'} extraClass={'uk-modal-close'} />
+            <Button type={'button'} flat={true} waves={true} text={t('common.close')} extraClass={'uk-modal-close'} />
           </div>
         </form>
       </BaseModal>
@@ -148,14 +149,15 @@ class AddPriorityToTypeModal extends React.Component {
 AddPriorityToTypeModal.propTypes = {
   settings: PropTypes.object.isRequired,
   type: PropTypes.object.isRequired,
-  fetchSettings: PropTypes.func.isRequired
+  fetchSettings: PropTypes.func.isRequired,
+  t: PropTypes.func.isRequired
 }
 
 const mapStateToProps = state => ({
   settings: state.settings.settings
 })
 
-export default connect(
+export default withTranslation()(connect(
   mapStateToProps,
   { fetchSettings }
-)(AddPriorityToTypeModal)
+)(AddPriorityToTypeModal))

@@ -30,10 +30,10 @@ templateSchema.pre('save', function (next) {
   return next()
 })
 
-templateSchema.statics.get = function (name, callback) {
+templateSchema.statics.get = async function (name) {
   return this.model(COLLECTION)
     .findOne({ name: name })
-    .exec(callback)
+    .exec()
 }
 
 module.exports = mongoose.model(COLLECTION, templateSchema)

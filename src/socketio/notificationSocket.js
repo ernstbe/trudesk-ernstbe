@@ -12,7 +12,6 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 var _ = require('lodash')
-var async = require('async')
 var winston = require('../logger')
 var utils = require('../helpers/utils')
 var socketEvents = require('./socketEventConsts')
@@ -30,53 +29,41 @@ function eventLoop () {
   updateNotifications()
 }
 
-function updateNotifications () {
+async function updateNotifications (socket) {
   const notificationSchema = require('../models/notification')
   // eslint-disable-next-line no-unused-vars
-  for (const [_, socket] of io.of('/').sockets) {
-    const notifications = {}
-    async.parallel(
-      [
-        function (done) {
-          notificationSchema.getForUserWithLimit(socket.request.user._id, function (err, items) {
-            if (err) return done(err)
+  for (const [_, s] of io.of('/').sockets) {
+    const targetSocket = socket || s
+    try {
+      const notifications = {}
+      const [items, count] = await Promise.all([
+        notificationSchema.getForUserWithLimit(targetSocket.request.user._id),
+        notificationSchema.getUnreadCount(targetSocket.request.user._id)
+      ])
+      notifications.items = items
+      notifications.count = count
 
-            notifications.items = items
-            return done()
-          })
-        },
-        function (done) {
-          notificationSchema.getUnreadCount(socket.request.user._id, function (err, count) {
-            if (err) return done(err)
+      utils.sendToSelf(targetSocket, socketEvents.NOTIFICATIONS_UPDATE, notifications)
+    } catch (err) {
+      winston.warn(err)
+    }
 
-            notifications.count = count
-
-            return done()
-          })
-        }
-      ],
-      function (err) {
-        if (err) {
-          winston.warn(err)
-          return true
-        }
-
-        utils.sendToSelf(socket, socketEvents.NOTIFICATIONS_UPDATE, notifications)
-      }
-    )
+    // If a specific socket was passed, only update that one
+    if (socket) break
   }
 }
 
-function updateAllNotifications (socket) {
-  var notifications = {}
+async function updateAllNotifications (socket) {
   var notificationSchema = require('../models/notification')
-  notificationSchema.findAllForUser(socket.request.user._id, function (err, items) {
-    if (err) return false
-
+  try {
+    var notifications = {}
+    const items = await notificationSchema.findAllForUser(socket.request.user._id)
     notifications.items = items
 
     utils.sendToSelf(socket, 'updateAllNotifications', notifications)
-  })
+  } catch (err) {
+    winston.warn(err)
+  }
 }
 
 events.updateNotifications = function (socket) {
@@ -92,25 +79,22 @@ events.updateAllNotifications = function (socket) {
 }
 
 events.markNotificationRead = function (socket) {
-  socket.on(socketEvents.NOTIFICATIONS_MARK_READ, function (_id) {
+  socket.on(socketEvents.NOTIFICATIONS_MARK_READ, async function (_id) {
     if (_.isUndefined(_id)) return true
     var notificationSchema = require('../models/notification')
-    notificationSchema.getNotification(_id, function (err, notification) {
-      if (err) return true
-
-      notification.markRead(function () {
-        notification.save(function (err) {
-          if (err) return true
-
-          updateNotifications(socket)
-        })
-      })
-    })
+    try {
+      const notification = await notificationSchema.getNotification(_id)
+      await notification.markRead()
+      await notification.save()
+      updateNotifications(socket)
+    } catch (err) {
+      winston.warn(err)
+    }
   })
 }
 
 events.clearNotifications = function (socket) {
-  socket.on(socketEvents.NOTIFICATIONS_CLEAR, function () {
+  socket.on(socketEvents.NOTIFICATIONS_CLEAR, async function () {
     var userId = socket.request.user._id
     if (_.isUndefined(userId)) return true
     var notifications = {}
@@ -118,11 +102,12 @@ events.clearNotifications = function (socket) {
     notifications.count = 0
 
     var notificationSchema = require('../models/notification')
-    notificationSchema.clearNotifications(userId, function (err) {
-      if (err) return true
-
+    try {
+      await notificationSchema.clearNotifications(userId)
       utils.sendToSelf(socket, socketEvents.UPDATE_NOTIFICATIONS, notifications)
-    })
+    } catch (err) {
+      winston.warn(err)
+    }
   })
 }
 

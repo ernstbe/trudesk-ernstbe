@@ -59,13 +59,14 @@ taskRunner.sendStats = function (callback) {
 
     async.parallel(
       [
-        function (done) {
-          ticketSchema.countDocuments({ deleted: false }, function (err, count) {
-            if (err) return done(err)
-
+        async function (done) {
+          try {
+            const count = await ticketSchema.countDocuments({ deleted: false })
             result.ticketCount = count
             return done()
-          })
+          } catch (err) {
+            return done(err)
+          }
         },
         function (done) {
           userSchema.getAgents({}, function (err, agents) {
@@ -77,23 +78,23 @@ taskRunner.sendStats = function (callback) {
             return done()
           })
         },
-        function (done) {
-          groupSchema.countDocuments({}, function (err, count) {
-            if (err) return done(err)
-
+        async function (done) {
+          try {
+            const count = await groupSchema.countDocuments({})
             result.customerGroupCount = count
-
             return done()
-          })
+          } catch (err) {
+            return done(err)
+          }
         },
-        function (done) {
-          conversationSchema.countDocuments({}, function (err, count) {
-            if (err) return done(err)
-
+        async function (done) {
+          try {
+            const count = await conversationSchema.countDocuments({})
             result.conversationCount = count
-
             return done()
-          })
+          } catch (err) {
+            return done(err)
+          }
         }
       ],
       function (err) {

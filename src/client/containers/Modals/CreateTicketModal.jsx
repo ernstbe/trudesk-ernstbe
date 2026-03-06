@@ -17,6 +17,7 @@ import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import { observer } from 'mobx-react'
 import { makeObservable, observable, when } from 'mobx'
+import { withTranslation } from 'react-i18next'
 import { head, orderBy } from 'lodash'
 import axios from 'axios'
 import Log from '../../logger'
@@ -117,7 +118,7 @@ class CreateTicketModal extends React.Component {
     if (this.issueText.length < minIssueLength) {
       $errorBorderWrap.css({ border: '1px solid #E74C3C' })
       const mdeError = $(
-        `<div class="mde-error uk-float-left uk-text-left">Please enter a valid issue. Issue must contain at least ${minIssueLength} characters</div>`
+        `<div class="mde-error uk-float-left uk-text-left">${this.props.t('modals.createTicket.validIssue', { min: minIssueLength })}</div>`
       )
       $mdeError = $issueTextbox.siblings('.editor-statusbar').find('.mde-error')
       if ($mdeError.length < 1) $issueTextbox.siblings('.editor-statusbar').prepend(mdeError)
@@ -156,7 +157,7 @@ class CreateTicketModal extends React.Component {
   }
 
   render () {
-    const { shared, viewdata } = this.props
+    const { shared, viewdata, t } = this.props
     const allowAgentUserTickets =
       viewdata.get('ticketSettings').get('allowAgentUserTickets') &&
       (shared.sessionUser.role.isAdmin || shared.sessionUser.role.isAgent)
@@ -183,23 +184,21 @@ class CreateTicketModal extends React.Component {
       <BaseModal {...this.props} options={{ bgclose: false }}>
         <form className={'uk-form-stacked'} onSubmit={e => this.onFormSubmit(e)}>
           <div className='uk-margin-medium-bottom'>
-            <label>Subject</label>
+            <label>{t('modals.createTicket.subject')}</label>
             <input
               type='text'
               name={'subject'}
               className={'md-input'}
               data-validation='length'
               data-validation-length={`min${viewdata.get('ticketSettings').get('minSubject')}`}
-              data-validation-error-msg={`Please enter a valid Subject. Subject must contain at least ${viewdata
-                .get('ticketSettings')
-                .get('minSubject')} characters.`}
+              data-validation-error-msg={t('modals.createTicket.validSubject', { min: viewdata.get('ticketSettings').get('minSubject') })}
             />
           </div>
           <div className='uk-margin-medium-bottom'>
             <Grid>
               {allowAgentUserTickets && (
                 <GridItem width={'1-3'}>
-                  <label className={'uk-form-label'}>Owner</label>
+                  <label className={'uk-form-label'}>{t('modals.createTicket.owner')}</label>
                   <SingleSelect
                     showTextbox={true}
                     items={mappedAccounts}
@@ -210,7 +209,7 @@ class CreateTicketModal extends React.Component {
                 </GridItem>
               )}
               <GridItem width={allowAgentUserTickets ? '2-3' : '1-1'}>
-                <label className={'uk-form-label'}>Group</label>
+                <label className={'uk-form-label'}>{t('modals.createTicket.group')}</label>
                 <SingleSelect
                   showTextbox={false}
                   items={mappedGroups}
@@ -225,7 +224,7 @@ class CreateTicketModal extends React.Component {
           <div className='uk-margin-medium-bottom'>
             <Grid>
               <GridItem width={'1-3'}>
-                <label className={'uk-form-label'}>Type</label>
+                <label className={'uk-form-label'}>{t('modals.createTicket.type')}</label>
                 <SingleSelect
                   showTextbox={false}
                   items={mappedTicketTypes}
@@ -238,7 +237,7 @@ class CreateTicketModal extends React.Component {
                 />
               </GridItem>
               <GridItem width={'2-3'}>
-                <label className={'uk-form-label'}>Tags</label>
+                <label className={'uk-form-label'}>{t('modals.createTicket.tags')}</label>
                 <SingleSelect
                   showTextbox={false}
                   items={mappedTicketTags}
@@ -250,7 +249,7 @@ class CreateTicketModal extends React.Component {
             </Grid>
           </div>
           <div className='uk-margin-medium-bottom'>
-            <label className={'uk-form-label'}>Priority</label>
+            <label className={'uk-form-label'}>{t('modals.createTicket.priority')}</label>
             <div
               ref={i => (this.priorityLoader = i)}
               style={{ height: '32px', width: '32px', position: 'relative' }}
@@ -281,7 +280,7 @@ class CreateTicketModal extends React.Component {
                       />
                       <label htmlFor={'p___' + priority._id} className={'mb-10 inline-label'}>
                         <span className='uk-badge' style={{ backgroundColor: priority.htmlColor }}>
-                          {priority.name}
+                          {t('priorities.' + priority.name, priority.name)}
                         </span>
                       </label>
                     </span>
@@ -291,7 +290,7 @@ class CreateTicketModal extends React.Component {
             </div>
           </div>
           <div className='uk-margin-medium-bottom'>
-            <span>Description</span>
+            <span>{t('modals.createTicket.description')}</span>
             <div className='error-border-wrap uk-clearfix'>
               <EasyMDE
                 ref={i => (this.issueMde = i)}
@@ -302,14 +301,12 @@ class CreateTicketModal extends React.Component {
               />
             </div>
             <span style={{ marginTop: '6px', display: 'inline-block', fontSize: '11px' }} className={'uk-text-muted'}>
-              Please try to be as specific as possible. Please include any details you think may be relevant, such as
-              {/* eslint-disable-next-line react/no-unescaped-entities */}
-              troubleshooting steps you've taken.
+              {t('modals.createTicket.descriptionHint')}
             </span>
           </div>
           <div className='uk-modal-footer uk-text-right'>
-            <Button text={'Cancel'} flat={true} waves={true} extraClass={'uk-modal-close'} />
-            <Button text={'Create'} style={'primary'} flat={true} type={'submit'} />
+            <Button text={t('common.cancel')} flat={true} waves={true} extraClass={'uk-modal-close'} />
+            <Button text={t('common.create')} style={'primary'} flat={true} type={'submit'} />
           </div>
         </form>
       </BaseModal>
@@ -330,7 +327,8 @@ CreateTicketModal.propTypes = {
   fetchTicketTypes: PropTypes.func.isRequired,
   getTagsWithPage: PropTypes.func.isRequired,
   fetchGroups: PropTypes.func.isRequired,
-  fetchAccountsCreateTicket: PropTypes.func.isRequired
+  fetchAccountsCreateTicket: PropTypes.func.isRequired,
+  t: PropTypes.func.isRequired
 }
 
 const mapStateToProps = state => ({
@@ -344,10 +342,10 @@ const mapStateToProps = state => ({
   accounts: state.accountsState.accountsCreateTicket
 })
 
-export default connect(mapStateToProps, {
+export default withTranslation()(connect(mapStateToProps, {
   createTicket,
   fetchTicketTypes,
   getTagsWithPage,
   fetchGroups,
   fetchAccountsCreateTicket
-})(CreateTicketModal)
+})(CreateTicketModal))

@@ -37,47 +37,40 @@ var statusSchema = mongoose.Schema(
   }
 )
 
-statusSchema.pre('save', function (next) {
+statusSchema.pre('save', async function () {
   this.name = utils.sanitizeFieldPlainText(this.name.trim())
 
   if (!_.isUndefined(this.uid) || this.uid) {
-    return next()
+    return
   }
 
   const c = require('./counters')
+  const res = await c.increment('status')
 
-  const self = this
-  c.increment('status', function (err, res) {
-    if (err) return next(err)
+  this.uid = res.next
 
-    self.uid = res.value.next
-
-    if (_.isUndefined(self.uid)) {
-      const error = new Error('Invalid UID.')
-      return next(error)
-    }
-
-    return next()
-  })
+  if (_.isUndefined(this.uid)) {
+    throw new Error('Invalid UID.')
+  }
 })
 
-statusSchema.statics.getStatus = function (callback) {
+statusSchema.statics.getStatus = async function () {
   return this.model(COLLECTION)
     .find({})
     .sort({ order: 1 })
-    .exec(callback)
+    .exec()
 }
 
-statusSchema.statics.getStatusById = function (_id, callback) {
+statusSchema.statics.getStatusById = async function (_id) {
   return this.model(COLLECTION)
     .findOne({ _id: _id })
-    .exec(callback)
+    .exec()
 }
 
-statusSchema.statics.getStatusByUID = function (uid, callback) {
+statusSchema.statics.getStatusByUID = async function (uid) {
   return this.model(COLLECTION)
     .findOne({ uid: uid })
-    .exec(callback)
+    .exec()
 }
 
 module.exports = mongoose.model(COLLECTION, statusSchema)

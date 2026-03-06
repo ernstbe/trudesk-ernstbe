@@ -1,1 +1,2 @@
 .gitignore merge=ours
+*.sh text eol=lf

@@ -17,6 +17,7 @@ import PropTypes from 'prop-types'
 import { observer } from 'mobx-react'
 import { makeObservable, observable } from 'mobx'
 import { connect } from 'react-redux'
+import { withTranslation } from 'react-i18next'
 
 import { createRole } from 'actions/settings'
 
@@ -43,29 +44,30 @@ class CreateRoleModal extends React.Component {
   }
 
   render () {
+    const { t } = this.props
     return (
       <BaseModal>
         <div className={'uk-form-stacked'}>
           <div>
-            <h2 className={'nomargin mb-5'}>Create Role</h2>
-            <p className='uk-text-muted'>Once created, the role will become editable in the permission editor</p>
+            <h2 className={'nomargin mb-5'}>{t('modals.createRole.title')}</h2>
+            <p className='uk-text-muted'>{t('modals.createRole.hint')}</p>
 
-            <label>Role Name</label>
+            <label>{t('modals.createRole.roleName')}</label>
             <input
               type='text'
               className={'md-input'}
               name={'name'}
               data-validation='length'
               data-validation-length='min3'
-              data-validation-error-msg='Please enter a valid role name. Role name must contain at least 3 characters.'
+              data-validation-error-msg={t('modals.createRole.validName')}
               value={this.name}
               onChange={e => this.onNameChange(e)}
             />
           </div>
           <div className='uk-modal-footer uk-text-right'>
-            <Button text={'Close'} extraClass={'uk-modal-close'} flat={true} waves={true} />
+            <Button text={t('common.close')} extraClass={'uk-modal-close'} flat={true} waves={true} />
             <Button
-              text={'Create'}
+              text={t('common.create')}
               type={'button'}
               flat={true}
               waves={true}
@@ -80,7 +82,8 @@ class CreateRoleModal extends React.Component {
 }
 
 CreateRoleModal.propTypes = {
-  createRole: PropTypes.func.isRequired
+  createRole: PropTypes.func.isRequired,
+  t: PropTypes.func.isRequired
 }
 
-export default connect(null, { createRole })(CreateRoleModal)
+export default withTranslation()(connect(null, { createRole })(CreateRoleModal))

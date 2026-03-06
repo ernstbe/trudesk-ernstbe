@@ -15,6 +15,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
+import { withTranslation } from 'react-i18next'
 import { updateSetting, updateMultipleSettings } from 'actions/settings'
 
 import Button from 'components/Button'
@@ -125,15 +126,15 @@ class ServerSettingsController extends React.Component {
   }
 
   render () {
-    const { active } = this.props
+    const { active, t } = this.props
     return (
       <div className={active ? 'active' : 'hide'}>
         <SettingItem
-          title={'Restart Server'}
-          subtitle={'Restart the Trudesk Instance. '}
+          title={t('settings.restartServer')}
+          subtitle={t('settings.restartServerHint')}
           component={
             <Button
-              text={'Restart'}
+              text={t('settings.restart')}
               flat={false}
               waves={true}
               style={'danger'}
@@ -144,12 +145,12 @@ class ServerSettingsController extends React.Component {
           }
         />
         <SettingItem
-          title={'Maintenance Mode'}
-          subtitle={'Only Administrators are allowed to login.'}
+          title={t('settings.maintenanceMode')}
+          subtitle={t('settings.maintenanceModeHint')}
           component={
             <EnableSwitch
               stateName={'maintenanceMode'}
-              label={'Enable'}
+              label={t('settings.enable')}
               checked={this.maintenanceModeEnabled}
               onChange={e => this.onMaintenanceModeChange(e)}
             />
@@ -164,11 +165,12 @@ ServerSettingsController.propTypes = {
   active: PropTypes.bool.isRequired,
   updateSetting: PropTypes.func.isRequired,
   updateMultipleSettings: PropTypes.func.isRequired,
-  settings: PropTypes.object.isRequired
+  settings: PropTypes.object.isRequired,
+  t: PropTypes.func.isRequired
 }
 
 const mapStateToProps = state => ({
   settings: state.settings.settings
 })
 
-export default connect(mapStateToProps, { updateSetting, updateMultipleSettings })(ServerSettingsController)
+export default withTranslation()(connect(mapStateToProps, { updateSetting, updateMultipleSettings })(ServerSettingsController))

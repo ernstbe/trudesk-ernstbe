@@ -58,53 +58,50 @@ roleSchema.pre('save', function (next) {
   return next()
 })
 
-roleSchema.methods.updateGrants = function (grants, callback) {
+roleSchema.methods.updateGrants = async function (grants) {
   this.grants = grants
-  this.save(callback)
+  return this.save()
 }
 
-roleSchema.methods.updateGrantsAndHierarchy = function (grants, hierarchy, callback) {
+roleSchema.methods.updateGrantsAndHierarchy = async function (grants, hierarchy) {
   this.grants = grants
   this.hierarchy = hierarchy
-  this.save(callback)
+  return this.save()
 }
 
-roleSchema.statics.getRoles = function (callback) {
+roleSchema.statics.getRoles = async function () {
   return this.model(COLLECTION)
     .find({})
-    .exec(callback)
+    .exec()
 }
 
-roleSchema.statics.getRolesLean = function (callback) {
+roleSchema.statics.getRolesLean = async function () {
   return this.model(COLLECTION)
     .find({})
     .lean({ virtuals: true })
-    .exec(callback)
+    .exec()
 }
 
-roleSchema.statics.getRole = function (id, callback) {
+roleSchema.statics.getRole = async function (id) {
   var q = this.model(COLLECTION).findOne({ _id: id })
 
-  return q.exec(callback)
+  return q.exec()
 }
 
-roleSchema.statics.getRoleByName = function (name, callback) {
+roleSchema.statics.getRoleByName = async function (name) {
   var q = this.model(COLLECTION).findOne({ normalized: new RegExp('^' + name.trim() + '$', 'i') })
 
-  return q.exec(callback)
+  return q.exec()
 }
 
-roleSchema.statics.getAgentRoles = function (callback) {
-  var q = this.model(COLLECTION).find({})
-  q.exec(function (err, roles) {
-    if (err) return callback(err)
+roleSchema.statics.getAgentRoles = async function () {
+  const roles = await this.model(COLLECTION).find({}).exec()
 
-    var rolesWithAgent = _.filter(roles, function (role) {
-      return _.indexOf(role.grants, 'agent:*') !== -1
-    })
-
-    return callback(null, rolesWithAgent)
+  var rolesWithAgent = _.filter(roles, function (role) {
+    return _.indexOf(role.grants, 'agent:*') !== -1
   })
+
+  return rolesWithAgent
 }
 
 // Alias

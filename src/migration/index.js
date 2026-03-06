@@ -71,45 +71,30 @@ function performBackup (dbVersion, callback) {
   })
 }
 
-function saveVersion (callback) {
-  SettingsSchema.getSettingByName('gen:version', function (err, setting) {
-    if (err) {
-      winston.warn(err)
-      if (_.isFunction(callback)) return callback(err)
-      return false
-    }
+async function saveVersion (callback) {
+  try {
+    var setting = await SettingsSchema.getSettingByName('gen:version')
 
     if (!setting) {
       var s = new SettingsSchema({
         name: 'gen:version',
         value: version
       })
-      s.save(function (err) {
-        if (err) {
-          if (_.isFunction(callback)) return callback(err)
-          return false
-        }
-
-        if (_.isFunction(callback)) return callback()
-      })
+      await s.save()
     } else {
       if (setting.value) setting.value = require('../../package').version
-      setting.save(function (err) {
-        if (err) {
-          if (_.isFunction(callback)) return callback(err)
-          return false
-        }
-
-        if (_.isFunction(callback)) return callback()
-        return true
-      })
+      await setting.save()
     }
-  })
+    if (_.isFunction(callback)) return callback()
+  } catch (err) {
+    winston.warn(err)
+    if (_.isFunction(callback)) return callback(err)
+  }
 }
 
-function getDatabaseVersion (callback) {
-  SettingsSchema.getSettingByName('gen:version', function (err, setting) {
-    if (err) return callback(err)
+async function getDatabaseVersion (callback) {
+  try {
+    var setting = await SettingsSchema.getSettingByName('gen:version')
 
     if (!setting) {
       if (semver.satisfies(version, '>=1.0.11')) {
@@ -118,7 +103,9 @@ function getDatabaseVersion (callback) {
     }
 
     return callback(null, setting.value)
-  })
+  } catch (err) {
+    return callback(err)
+  }
 }
 
 function migrateUserRoles (callback) {
@@ -342,9 +329,14 @@ function createTicketStatus (callback) {
             return next(err)
           })
       },
-      function (next) {
+      async function (next) {
         winston.info('Completed updating ticket status.')
-        counterSchema.setCounter('status', 4, next)
+        try {
+          await counterSchema.setCounter('status', 4)
+          next()
+        } catch (err) {
+          next(err)
+        }
       }
     ],
     callback

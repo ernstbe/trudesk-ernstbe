@@ -15,6 +15,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
+import { withTranslation } from 'react-i18next'
 import { observer } from 'mobx-react'
 import { makeObservable, observable } from 'mobx'
 import { createStatus } from 'actions/tickets'
@@ -58,18 +59,19 @@ class CreateStatusModal extends React.Component {
   }
 
   render () {
+    const { t } = this.props
     return (
       <BaseModal {...this.props} large={true}>
         <form className={'uk-form-stacked'} onSubmit={e => this.onCreateStatusSubmit(e)}>
           <div className='uk-margin-medium-bottom uk-clearfix'>
-            <h2>Create Status</h2>
+            <h2>{t('modals.createStatus.title')}</h2>
           </div>
 
           <div>
             <div className='uk-clearfix'>
               <div className='z-box uk-grid uk-grid-collpase uk-clearfix'>
                 <div className='uk-width-1-4'>
-                  <label>Status Name</label>
+                  <label>{t('modals.createStatus.statusName')}</label>
                   <input
                     type='text'
                     className={'md-input'}
@@ -77,7 +79,7 @@ class CreateStatusModal extends React.Component {
                     onChange={e => (this.name = e.target.value)}
                     data-validation='length'
                     data-validation-length='min3'
-                    data-validation-error-msg='Invalid name (3+ characters)'
+                    data-validation-error-msg={t('modals.createStatus.validName')}
                   />
                 </div>
 
@@ -93,7 +95,7 @@ class CreateStatusModal extends React.Component {
                   <div className={'uk-float-left'}>
                     <EnableSwitch
                       stateName={'slatimer'}
-                      label={'SLA'}
+                      label={t('modals.createStatus.sla')}
                       checked={this.slatimer}
                       onChange={e => (this.slatimer = e.target.checked)}
                     />
@@ -101,7 +103,7 @@ class CreateStatusModal extends React.Component {
                   <div className={'uk-float-left'}>
                     <EnableSwitch
                       stateName={'isResolved'}
-                      label={'isResolved'}
+                      label={t('modals.createStatus.isResolved')}
                       checked={this.isResolved}
                       onChange={e => (this.isResolved = e.target.checked)}
                     />
@@ -109,8 +111,8 @@ class CreateStatusModal extends React.Component {
                 </div>
               </div>
               <div className='uk-modal-footer uk-text-right'>
-                <Button text={'Cancel'} type={'button'} extraClass={'uk-modal-close'} flat={true} waves={true} />
-                <Button text={'Create'} type={'submit'} flat={true} waves={true} style={'success'} />
+                <Button text={t('common.cancel')} type={'button'} extraClass={'uk-modal-close'} flat={true} waves={true} />
+                <Button text={t('common.create')} type={'submit'} flat={true} waves={true} style={'success'} />
               </div>
             </div>
           </div>
@@ -121,7 +123,8 @@ class CreateStatusModal extends React.Component {
 }
 
 CreateStatusModal.propTypes = {
-  createStatus: PropTypes.func.isRequired
+  createStatus: PropTypes.func.isRequired,
+  t: PropTypes.func.isRequired
 }
 
-export default connect(null, { createStatus })(CreateStatusModal)
+export default withTranslation()(connect(null, { createStatus })(CreateStatusModal))

@@ -15,6 +15,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { each } from 'lodash'
 import { connect } from 'react-redux'
+import { withTranslation } from 'react-i18next'
 import { hideModal } from 'actions/common'
 import { fetchGroups, unloadGroups } from 'actions/groups'
 import { fetchAccounts, unloadAccounts } from 'actions/accounts'
@@ -91,6 +92,7 @@ class FilterTicketsModal extends React.Component {
   }
 
   render () {
+    const { t } = this.props
     const statuses = this.props.ticketStatuses.map(s => ({ text: s.get('name'), value: s.get('_id') })).toArray()
 
     const tags = this.props.ticketTags
@@ -119,16 +121,16 @@ class FilterTicketsModal extends React.Component {
 
     return (
       <BaseModal options={{ bgclose: false }}>
-        <h2 style={{ marginBottom: 20 }}>Ticket Filter</h2>
+        <h2 style={{ marginBottom: 20 }}>{t('modals.filterTickets.title')}</h2>
         <form className={'uk-form-stacked'} onSubmit={e => this.onSubmit(e)}>
           <div className='uk-margin-medium-bottom'>
-            <label>Subject</label>
+            <label>{t('common.subject')}</label>
             <input type='text' name={'subject'} className={'md-input'} />
           </div>
           <div className='uk-grid uk-grid-collapse uk-margin-small-bottom'>
             <div className='uk-width-1-2' style={{ padding: '0 15px 0 0' }}>
               <label htmlFor='filterDate_Start' className='uk-form-label nopadding nomargin'>
-                Date Start
+                {t('modals.filterTickets.startDate')}
               </label>
               <input
                 id='filterDate_Start'
@@ -140,7 +142,7 @@ class FilterTicketsModal extends React.Component {
             </div>
             <div className='uk-width-1-2' style={{ padding: '0 0 0 15px' }}>
               <label htmlFor='filterDate_End' className='uk-form-label nopadding nomargin'>
-                Date End
+                {t('modals.filterTickets.endDate')}
               </label>
               <input
                 id='filterDate_End'
@@ -154,7 +156,7 @@ class FilterTicketsModal extends React.Component {
           <div className='uk-grid uk-grid-collapse uk-margin-small-bottom'>
             <div className='uk-width-1-1'>
               <label htmlFor='filterStatus' className='uk-form-label' style={{ paddingBottom: 0, marginBottom: 0 }}>
-                Status
+                {t('common.status')}
               </label>
               <SingleSelect items={statuses} showTextbox={false} multiple={true} ref={r => (this.statusSelect = r)} />
             </div>
@@ -162,7 +164,7 @@ class FilterTicketsModal extends React.Component {
           <div className='uk-grid uk-grid-collapse uk-margin-small-bottom'>
             <div className='uk-width-1-1'>
               <label htmlFor='filterStatus' className='uk-form-label' style={{ paddingBottom: 0, marginBottom: 0 }}>
-                Ticket Tags
+                {t('settings.ticketTags')}
               </label>
               <SingleSelect items={tags} showTextbox={true} multiple={true} ref={r => (this.tagsSelect = r)} />
             </div>
@@ -170,7 +172,7 @@ class FilterTicketsModal extends React.Component {
           <div className='uk-grid uk-grid-collapse uk-margin-small-bottom'>
             <div className='uk-width-1-1'>
               <label htmlFor='filterStatus' className='uk-form-label' style={{ paddingBottom: 0, marginBottom: 0 }}>
-                Ticket Type
+                {t('common.type')}
               </label>
               <SingleSelect items={types} showTextbox={false} multiple={true} ref={r => (this.typesSelect = r)} />
             </div>
@@ -178,7 +180,7 @@ class FilterTicketsModal extends React.Component {
           <div className='uk-grid uk-grid-collapse uk-margin-small-bottom'>
             <div className='uk-width-1-1'>
               <label htmlFor='filterStatus' className='uk-form-label' style={{ paddingBottom: 0, marginBottom: 0 }}>
-                Assignee
+                {t('common.assignee')}
               </label>
               <SingleSelect
                 items={assignees}
@@ -191,14 +193,14 @@ class FilterTicketsModal extends React.Component {
           <div className='uk-grid uk-grid-collapse uk-margin-small-bottom'>
             <div className='uk-width-1-1'>
               <label htmlFor='filterStatus' className='uk-form-label' style={{ paddingBottom: 0, marginBottom: 0 }}>
-                Groups
+                {t('common.group')}
               </label>
               <SingleSelect items={groups} showTextbox={false} multiple={true} ref={r => (this.groupSelect = r)} />
             </div>
           </div>
           <div className='uk-modal-footer uk-text-right'>
-            <Button text={'Cancel'} flat={true} waves={true} extraClass={'uk-modal-close'} />
-            <Button text={'Apply Filter'} style={'primary'} flat={false} type={'submit'} />
+            <Button text={t('common.cancel')} flat={true} waves={true} extraClass={'uk-modal-close'} />
+            <Button text={t('modals.filterTickets.applyFilter')} style={'primary'} flat={false} type={'submit'} />
           </div>
         </form>
       </BaseModal>
@@ -220,7 +222,8 @@ FilterTicketsModal.propTypes = {
   fetchTicketTypes: PropTypes.func.isRequired,
   ticketTypes: PropTypes.object.isRequired,
   fetchTicketStatus: PropTypes.func.isRequired,
-  ticketStatuses: PropTypes.object.isRequired
+  ticketStatuses: PropTypes.object.isRequired,
+  t: PropTypes.func.isRequired
 }
 
 const mapStateToProps = state => ({
@@ -232,7 +235,7 @@ const mapStateToProps = state => ({
   ticketStatuses: state.ticketsState.ticketStatuses
 })
 
-export default connect(mapStateToProps, {
+export default withTranslation()(connect(mapStateToProps, {
   hideModal,
   fetchGroups,
   unloadGroups,
@@ -241,4 +244,4 @@ export default connect(mapStateToProps, {
   getTagsWithPage,
   fetchTicketTypes,
   fetchTicketStatus
-})(FilterTicketsModal)
+})(FilterTicketsModal))
