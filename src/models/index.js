@@ -13,6 +13,7 @@ const Department = require('./department')
 const Message = require('./chat/message')
 const Conversation = require('./chat/conversation')
 const RecurringTask = require('./recurringTask')
+const Asset = require('./asset')
 
 module.exports = {
   User,
@@ -29,5 +30,6 @@ module.exports = {
   Message,
   Conversation,
   Status,
-  RecurringTask
+  RecurringTask,
+  Asset
 }

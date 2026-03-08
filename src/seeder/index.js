@@ -77,6 +77,7 @@ seeder.init = async function (callback) {
     await seedTicketTypes()
     await seedTags()
     await seedProcurementStatuses()
+    await seedBeschlussStatuses()
   } catch (err) {
     winston.warn('Seeder: Error during seeding — ' + err.message)
   }
@@ -132,6 +133,25 @@ async function seedProcurementStatuses () {
 
   for (var i = 0; i < procurementStatuses.length; i++) {
     var s = procurementStatuses[i]
+    var existing = await StatusSchema.findOne({ name: s.name })
+    if (!existing) {
+      await StatusSchema.create(s)
+      winston.debug('Seeder: Created status "' + s.name + '"')
+    }
+  }
+}
+
+async function seedBeschlussStatuses () {
+  var StatusSchema = require('../models/ticketStatus')
+
+  var beschlussStatuses = [
+    { name: 'Beschlossen', htmlColor: '#9C27B0', order: 20, slatimer: true, isResolved: false },
+    { name: 'In Umsetzung', htmlColor: '#FF9800', order: 21, slatimer: true, isResolved: false },
+    { name: 'Umgesetzt', htmlColor: '#4CAF50', order: 22, slatimer: false, isResolved: true }
+  ]
+
+  for (var i = 0; i < beschlussStatuses.length; i++) {
+    var s = beschlussStatuses[i]
     var existing = await StatusSchema.findOne({ name: s.name })
     if (!existing) {
       await StatusSchema.create(s)

@@ -90,6 +90,18 @@ module.exports = function (middleware, router, controllers) {
   router.put('/api/v2/recurring-tasks/:id', apiv2Auth, isAdmin, apiv2.recurringTasks.update)
   router.delete('/api/v2/recurring-tasks/:id', apiv2Auth, isAdmin, apiv2.recurringTasks.delete)
 
+  // Assets
+  router.get('/api/v2/assets', apiv2Auth, isAgentOrAdmin, apiv2.assets.get)
+  router.get('/api/v2/assets/:id', apiv2Auth, isAgentOrAdmin, apiv2.assets.single)
+  router.post('/api/v2/assets', apiv2Auth, isAdmin, apiv2.assets.create)
+  router.put('/api/v2/assets/:id', apiv2Auth, isAdmin, apiv2.assets.update)
+  router.delete('/api/v2/assets/:id', apiv2Auth, isAdmin, apiv2.assets.delete)
+  router.post('/api/v2/assets/:id/link-ticket', apiv2Auth, isAgentOrAdmin, apiv2.assets.linkTicket)
+
+  // Reports
+  router.get('/api/v2/reports/handover', apiv2Auth, isAgentOrAdmin, apiv2.reports.handover)
+  router.get('/api/v2/reports/sitzung', apiv2Auth, isAgentOrAdmin, apiv2.reports.sitzung)
+
   // ElasticSearch
   router.get('/api/v2/es/search', middleware.api, apiv2.elasticsearch.search)
   router.get('/api/v2/es/rebuild', apiv2Auth, isAdmin, apiv2.elasticsearch.rebuild)
