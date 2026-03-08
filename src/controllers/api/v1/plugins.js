@@ -97,20 +97,8 @@ apiPlugins.removePlugin = async function (req, res) {
 }
 
 function restartServer () {
-  var pm2 = require('pm2')
-  pm2.connect(function (err) {
-    if (err) {
-      winston.error(err)
-    }
-
-    pm2.restart('trudesk', function (err) {
-      if (err) {
-        return winston.error(err)
-      }
-
-      pm2.disconnect()
-    })
-  })
+  winston.info('Restarting server process...')
+  process.exit(0)
 }
 
 module.exports = apiPlugins

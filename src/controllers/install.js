@@ -369,23 +369,9 @@ installController.install = async function (req, res) {
 }
 
 installController.restart = function (req, res) {
-  const pm2 = require('pm2')
-  pm2.connect(function (err) {
-    if (err) {
-      winston.error(err)
-      res.status(400).send(err)
-      return
-    }
-    pm2.restart('trudesk', function (err) {
-      if (err) {
-        res.status(400).send(err)
-        return winston.error(err)
-      }
-
-      pm2.disconnect()
-      res.send()
-    })
-  })
+  res.send()
+  winston.info('Restarting server process after install...')
+  process.exit(0)
 }
 
 module.exports = installController

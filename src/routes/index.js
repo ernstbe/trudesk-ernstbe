@@ -374,23 +374,9 @@ function mainRoutes (router, middleware, controllers) {
   router.post('/api/v1/admin/restart', middleware.csrfCheck, middleware.api, middleware.isAdmin, function (req, res) {
     if (process.env.DISABLE_RESTART) return res.json({ success: true })
 
-    const pm2 = require('pm2')
-    pm2.connect(function (err) {
-      if (err) {
-        winston.error(err)
-        res.status(400).send(err)
-        return
-      }
-      pm2.restart('trudesk', function (err) {
-        if (err) {
-          res.status(400).send(err)
-          return winston.error(err)
-        }
-
-        pm2.disconnect()
-        res.json({ success: true })
-      })
-    })
+    res.json({ success: true })
+    winston.info('Restarting server process...')
+    process.exit(0)
   })
 
   if (global.env === 'development') {
@@ -410,23 +396,9 @@ function mainRoutes (router, middleware, controllers) {
 
     router.get('/debug/restart', function (req, res) {
       if (process.env.DISABLE_RESTART) return res.send('RESTART DISABLED')
-      const pm2 = require('pm2')
-      pm2.connect(function (err) {
-        if (err) {
-          winston.error(err)
-          res.status(400).send(err)
-          return
-        }
-        pm2.restart('trudesk', function (err) {
-          if (err) {
-            res.status(400).send(err)
-            return winston.error(err)
-          }
-
-          pm2.disconnect()
-          res.send('OK')
-        })
-      })
+      res.send('OK')
+      winston.info('Restarting server process (debug)...')
+      process.exit(0)
     })
   }
 }
