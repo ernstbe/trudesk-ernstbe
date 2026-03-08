@@ -204,9 +204,9 @@ apiTickets.get = async function (req, res) {
       ticket.owner.role = ticket.owner.role._id
     })
 
-    return res.json(results)
+    return res.json({ success: true, tickets: results, count: results.length })
   } catch (err) {
-    return res.send('Error: ' + err.message)
+    return res.status(500).json({ success: false, error: err.message })
   }
 }
 

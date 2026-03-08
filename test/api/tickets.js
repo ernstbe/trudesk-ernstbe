@@ -62,7 +62,8 @@ describe('api/tickets.js', function () {
       .set('accesstoken', tdapikey)
       .expect(200)
       .expect(function (res) {
-        expect(res.body).to.be.a('array')
+        expect(res.body.success).to.be.true
+        expect(res.body.tickets).to.be.a('array')
       })
       .end(done)
   })
