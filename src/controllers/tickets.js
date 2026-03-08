@@ -52,7 +52,7 @@ ticketsController.pubNewIssue = async function (req, res) {
       const privacyPolicy = await settings.getSettingByName('legal:privacypolicy')
 
       const content = {}
-      content.title = 'New Issue'
+      content.title = 'Neuer Vorgang'
       content.layout = false
       content.data = {}
       if (privacyPolicy === null || _.isUndefined(privacyPolicy.value)) {
@@ -353,7 +353,7 @@ ticketsController.print = async function (req, res) {
   }
 
   const content = {}
-  content.title = 'Tickets - ' + req.params.uid
+  content.title = 'Vorgang - ' + req.params.uid
   content.nav = 'tickets'
 
   content.data = {}
@@ -455,7 +455,7 @@ ticketsController.single = async function (req, res) {
   }
 
   const content = {}
-  content.title = 'Tickets - ' + req.params.id
+  content.title = 'Vorgang - ' + req.params.id
   content.nav = 'tickets'
 
   content.data = {}

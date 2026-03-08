@@ -43,7 +43,7 @@ accountsController.signup = async function (req, res) {
       const privacyPolicy = await settings.getSettingByName('legal:privacypolicy')
 
       const content = {}
-      content.title = 'Create Account'
+      content.title = 'Konto erstellen'
       content.layout = false
       content.data = {}
 
@@ -69,7 +69,7 @@ accountsController.get = function (req, res) {
   }
 
   const content = {}
-  content.title = 'Accounts'
+  content.title = 'Benutzer'
   content.nav = 'accounts'
 
   content.data = {}
@@ -86,7 +86,7 @@ accountsController.getCustomers = function (req, res) {
   }
 
   const content = {}
-  content.title = 'Customers'
+  content.title = 'Helfer'
   content.nav = 'accounts'
   content.subnav = 'accounts-customers'
 
@@ -105,7 +105,7 @@ accountsController.getAgents = function (req, res) {
   }
 
   const content = {}
-  content.title = 'Agents'
+  content.title = 'Bearbeiter'
   content.nav = 'accounts'
   content.subnav = 'accounts-agents'
 
@@ -124,7 +124,7 @@ accountsController.getAdmins = function (req, res) {
   }
 
   const content = {}
-  content.title = 'Admins'
+  content.title = 'Administratoren'
   content.nav = 'accounts'
   content.subnav = 'accounts-admins'
 
@@ -143,7 +143,7 @@ accountsController.importPage = function (req, res) {
   }
 
   const content = {}
-  content.title = 'Accounts - Import'
+  content.title = 'Benutzer - Import'
   content.nav = 'accounts'
 
   content.data = {}
@@ -163,7 +163,7 @@ accountsController.profile = async function (req, res) {
   }
 
   const content = {}
-  content.title = 'Profile'
+  content.title = 'Profil'
   content.nav = 'profile'
 
   content.data = {}

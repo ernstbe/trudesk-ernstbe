@@ -67,7 +67,7 @@ function NoticeContainer ({
       .then(() => {
         socket.emit(NOTICE_CLEAR)
 
-        helpers.UI.showSnackbar('Notice has been deactivated', false)
+        helpers.UI.showSnackbar('Mitteilung wurde deaktiviert', false)
       })
       .catch(err => {
         Log.error(err)
@@ -81,16 +81,16 @@ function NoticeContainer ({
 
   const onDeleteNotice = useCallback((noticeId) => {
     UIKit.modal.confirm(
-      `<h2>Are you sure?</h2>
+      `<h2>Bist du sicher?</h2>
         <p style="font-size: 15px;">
-            <span class="uk-text-danger" style="font-size: 15px;">This is a permanent action.</span>
+            <span class="uk-text-danger" style="font-size: 15px;">Diese Aktion kann nicht rückgängig gemacht werden.</span>
         </p>
         `,
       () => {
         deleteNoticeAction({ _id: noticeId })
       },
       {
-        labels: { Ok: 'Yes', Cancel: 'No' },
+        labels: { Ok: 'Ja', Cancel: 'Nein' },
         confirmButtonClass: 'md-btn-danger'
       }
     )
@@ -140,14 +140,14 @@ function NoticeContainer ({
   return (
     <div>
       <PageTitle
-        title='Notices'
+        title='Mitteilungen'
         shadow={false}
         rightComponent={
           <div className='uk-grid uk-grid-collapse'>
             <div className='uk-width-1-1 mt-15 uk-text-right'>
               {helpers.canUser('notices:deactivate') && (
                 <Button
-                  text='Deactivate'
+                  text='Deaktivieren'
                   flat={false}
                   small
                   waves={false}
@@ -157,7 +157,7 @@ function NoticeContainer ({
               )}
               {helpers.canUser('notices:create') && (
                 <Button
-                  text='Create'
+                  text='Erstellen'
                   flat={false}
                   small
                   waves={false}
@@ -180,15 +180,15 @@ function NoticeContainer ({
           headers={[
             <TableHeader key={0} width={45} height={50} text='' />,
             <TableHeader key={1} width='20%' text='Name' />,
-            <TableHeader key={2} width='60%' text='Message' />,
-            <TableHeader key={3} width='10%' text='Date' />,
+            <TableHeader key={2} width='60%' text='Nachricht' />,
+            <TableHeader key={3} width='10%' text='Datum' />,
             <TableHeader key={4} width={150} text='' />
           ]}
         >
           {!loading && notices.size < 1 && (
             <TableRow clickable={false}>
               <TableCell colSpan={10}>
-                <h5 style={{ margin: 10 }}>No Notices Found</h5>
+                <h5 style={{ margin: 10 }}>Keine Mitteilungen gefunden</h5>
               </TableCell>
             </TableRow>
           )}

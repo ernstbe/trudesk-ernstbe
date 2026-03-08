@@ -22,7 +22,7 @@ settingsController.content = {}
 
 function initViewContent (view, req) {
   const content = {}
-  content.title = 'Settings'
+  content.title = 'Einstellungen'
   content.nav = 'settings'
   content.subnav = 'settings-' + view
 

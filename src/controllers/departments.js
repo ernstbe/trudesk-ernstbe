@@ -23,7 +23,7 @@ departmentController.get = function (req, res) {
   }
 
   const content = {}
-  content.title = 'Departments'
+  content.title = 'Sachgebiete'
   content.nav = 'departments'
 
   content.data = {}

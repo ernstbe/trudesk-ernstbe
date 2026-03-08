@@ -30,7 +30,7 @@ groupsController.get = function (req, res) {
   }
 
   const content = {}
-  content.title = 'Groups'
+  content.title = 'Gruppen'
   content.nav = 'groups'
 
   content.data = {}
@@ -62,7 +62,7 @@ groupsController.getCreate = function (req, res) {
   }
 
   const content = {}
-  content.title = 'Groups'
+  content.title = 'Gruppen'
   content.nav = 'groups'
 
   content.data = {}
@@ -88,7 +88,7 @@ groupsController.edit = function (req, res) {
   }
 
   const content = {}
-  content.title = 'Groups'
+  content.title = 'Gruppen'
   content.nav = 'groups'
 
   content.data = {}
