@@ -23,7 +23,6 @@ import SettingItem from 'components/Settings/SettingItem'
 
 import InputWithSave from 'components/Settings/InputWithSave'
 import SingleSelect from 'components/SingleSelect'
-import EnableSwitch from 'components/Settings/EnableSwitch'
 import SettingSubItem from 'components/Settings/SettingSubItem'
 import Zone from 'components/ZoneBox/zone'
 import ZoneBox from 'components/ZoneBox'
@@ -88,7 +87,7 @@ const GeneralSettings = ({ active, updateSetting, viewdata, settings, t }) => {
       onSelectChange={e => {
         onTimezoneChange(e)
       }}
-      showTextbox={true}
+      showTextbox
     />
   )
 
@@ -136,7 +135,7 @@ const GeneralSettings = ({ active, updateSetting, viewdata, settings, t }) => {
                   stateName='timeFormat'
                   settingName='gen:timeFormat'
                   initialValue={getSettingsValue('timeFormat')}
-                  width={'60%'}
+                  width='60%'
                 />
               }
             />
@@ -150,7 +149,7 @@ const GeneralSettings = ({ active, updateSetting, viewdata, settings, t }) => {
                   stateName='shortDateFormat'
                   settingName='gen:shortDateFormat'
                   initialValue={getSettingsValue('shortDateFormat')}
-                  width={'60%'}
+                  width='60%'
                 />
               }
             />
@@ -164,7 +163,7 @@ const GeneralSettings = ({ active, updateSetting, viewdata, settings, t }) => {
                   stateName='longDateFormat'
                   settingName='gen:longDateFormat'
                   initialValue={getSettingsValue('longDateFormat')}
-                  width={'60%'}
+                  width='60%'
                 />
               }
             />

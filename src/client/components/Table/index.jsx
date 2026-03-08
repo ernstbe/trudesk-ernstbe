@@ -15,8 +15,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 
-import helpers from 'lib/helpers'
-
 const Table = ({ headers, striped = true, stickyHeader = true, children, extraClass, useBody = true, style, tableRef }) => {
   const tableClass =
     'uk-table' +
@@ -30,7 +28,7 @@ const Table = ({ headers, striped = true, stickyHeader = true, children, extraCl
           <tr>{headers}</tr>
         </thead>
       )}
-      {useBody && <tbody className={'scrollable full-height c91-fix'}>{children}</tbody>}
+      {useBody && <tbody className='scrollable full-height c91-fix'>{children}</tbody>}
       {!useBody && children}
     </table>
   )

@@ -42,7 +42,7 @@ function getTypePriorities (ticketTypes, typeId) {
     .toArray()
 }
 
-const Mailer_MailerCheck = ({ settings, updateSetting, updateMultipleSettings, t }) => {
+const MailerMailerCheck = ({ settings, updateSetting, updateMultipleSettings, t }) => {
   const [mailerCheckHost, setMailerCheckHost] = useState('')
   const [mailerCheckPort, setMailerCheckPort] = useState('')
   const [mailerCheckUsername, setMailerCheckUsername] = useState('')
@@ -67,34 +67,35 @@ const Mailer_MailerCheck = ({ settings, updateSetting, updateMultipleSettings, t
     if (settings) {
       if (!mailerCheckHost) setMailerCheckHost(settings.getIn(['settings', 'mailerCheckHost', 'value']) || '')
       if (!mailerCheckPort) setMailerCheckPort(settings.getIn(['settings', 'mailerCheckPort', 'value']) || '')
-      if (!mailerCheckUsername)
-        setMailerCheckUsername(settings.getIn(['settings', 'mailerCheckUsername', 'value']) || '')
-      if (!mailerCheckPassword)
-        setMailerCheckPassword(settings.getIn(['settings', 'mailerCheckPassword', 'value']) || '')
-      if (mailerCheckSelfSign === '')
-        setMailerCheckSelfSign(settings.getIn(['settings', 'mailerCheckSelfSign', 'value']) || '')
-      if (mailerCheckPolling === '')
+      if (!mailerCheckUsername) { setMailerCheckUsername(settings.getIn(['settings', 'mailerCheckUsername', 'value']) || '') }
+      if (!mailerCheckPassword) { setMailerCheckPassword(settings.getIn(['settings', 'mailerCheckPassword', 'value']) || '') }
+      if (mailerCheckSelfSign === '') { setMailerCheckSelfSign(settings.getIn(['settings', 'mailerCheckSelfSign', 'value']) || '') }
+      if (mailerCheckPolling === '') {
         setMailerCheckPolling(
           parseInt(settings.getIn(['settings', 'mailerCheckPolling', 'value'])) / 60000 || ''
         )
-      if (mailerCheckCreateAccount === '')
+      }
+      if (mailerCheckCreateAccount === '') {
         setMailerCheckCreateAccount(
           settings.getIn(['settings', 'mailerCheckCreateAccount', 'value']) || ''
         )
-      if (mailerCheckDeleteMessage === '')
+      }
+      if (mailerCheckDeleteMessage === '') {
         setMailerCheckDeleteMessage(
           settings.getIn(['settings', 'mailerCheckDeleteMessage', 'value']) || ''
         )
+      }
       let ticketType = mailerCheckTicketType
       if (!mailerCheckTicketType) {
         ticketType = settings.getIn(['settings', 'mailerCheckTicketType', 'value']) || ''
         setMailerCheckTicketType(ticketType)
       }
       if (ticketType) setTypePriorities(getTypePriorities(settings.get('ticketTypes'), ticketType))
-      if (!mailerCheckTicketPriority)
+      if (!mailerCheckTicketPriority) {
         setMailerCheckTicketPriority(
           settings.getIn(['settings', 'mailerCheckTicketPriority', 'value']) || ''
         )
+      }
     }
   }, [settings])
 
@@ -207,7 +208,7 @@ const Mailer_MailerCheck = ({ settings, updateSetting, updateMultipleSettings, t
   const onCheckNowClicked = useCallback(
     e => {
       axios
-        .get(`/api/v2/mailer/check`)
+        .get('/api/v2/mailer/check')
         .then(function (res) {
           if (res.data && res.data.success) helpers.UI.showSnackbar(t('settings.fetchMailScheduled'))
         })
@@ -233,7 +234,7 @@ const Mailer_MailerCheck = ({ settings, updateSetting, updateMultipleSettings, t
       }
       component={
         <EnableSwitch
-          stateName={'mailerCheckEnabled'}
+          stateName='mailerCheckEnabled'
           label={t('settings.enabled')}
           checked={getSetting('mailerCheckEnabled')}
           onChange={e => onEnableMailerCheckChanged(e)}
@@ -246,8 +247,8 @@ const Mailer_MailerCheck = ({ settings, updateSetting, updateMultipleSettings, t
             <label>{t('settings.mailServer')}</label>
             <input
               type='text'
-              className={'md-input md-input-width-medium'}
-              name={'mailerCheckHost'}
+              className='md-input md-input-width-medium'
+              name='mailerCheckHost'
               value={mailerCheckHost}
               onChange={e => onInputValueChanged(e, 'mailerCheckHost')}
               disabled={!getSetting('mailerCheckEnabled')}
@@ -257,8 +258,8 @@ const Mailer_MailerCheck = ({ settings, updateSetting, updateMultipleSettings, t
             <label>{t('settings.port')}</label>
             <input
               type='text'
-              className={'md-input md-input-width-medium'}
-              name={'mailerCheckPort'}
+              className='md-input md-input-width-medium'
+              name='mailerCheckPort'
               value={mailerCheckPort}
               onChange={e => onInputValueChanged(e, 'mailerCheckPort')}
               disabled={!getSetting('mailerCheckEnabled')}
@@ -268,8 +269,8 @@ const Mailer_MailerCheck = ({ settings, updateSetting, updateMultipleSettings, t
             <label>{t('common.username')}</label>
             <input
               type='text'
-              className={'md-input md-input-width-medium'}
-              name={'mailerCheckUsername'}
+              className='md-input md-input-width-medium'
+              name='mailerCheckUsername'
               value={mailerCheckUsername}
               onChange={e => onInputValueChanged(e, 'mailerCheckUsername')}
               disabled={!getSetting('mailerCheckEnabled')}
@@ -279,8 +280,8 @@ const Mailer_MailerCheck = ({ settings, updateSetting, updateMultipleSettings, t
             <label>{t('common.password')}</label>
             <input
               type='password'
-              className={'md-input md-input-width-medium'}
-              name={'mailerCheckPassword'}
+              className='md-input md-input-width-medium'
+              name='mailerCheckPassword'
               value={mailerCheckPassword}
               onChange={e => onInputValueChanged(e, 'mailerCheckPassword')}
               disabled={!getSetting('mailerCheckEnabled')}
@@ -293,7 +294,7 @@ const Mailer_MailerCheck = ({ settings, updateSetting, updateMultipleSettings, t
               </h6>
               <h5
                 style={{ padding: '0 0 10px 0', margin: '2px 0 0 0', fontSize: '12px' }}
-                className={'uk-text-muted'}
+                className='uk-text-muted'
               >
                 {t('settings.allowSelfSignedCertHint')}
               </h5>
@@ -301,7 +302,7 @@ const Mailer_MailerCheck = ({ settings, updateSetting, updateMultipleSettings, t
             <div className='uk-float-right'>
               <EnableSwitch
                 label={t('settings.enable')}
-                stateName={'mailerCheckSelfSign'}
+                stateName='mailerCheckSelfSign'
                 checked={mailerCheckSelfSign}
                 onChange={e => onCheckboxChanged(e, 'mailerCheckSelfSign')}
                 disabled={!getSetting('mailerCheckEnabled')}
@@ -314,7 +315,7 @@ const Mailer_MailerCheck = ({ settings, updateSetting, updateMultipleSettings, t
               <h6 style={{ padding: 0, margin: '5px 0 0 0', fontSize: '16px', lineHeight: '14px' }}>
                 {t('settings.pollingInterval')}
                 <i
-                  className={'material-icons'}
+                  className='material-icons'
                   style={{
                     color: '#888',
                     fontSize: '16px',
@@ -330,7 +331,7 @@ const Mailer_MailerCheck = ({ settings, updateSetting, updateMultipleSettings, t
               </h6>
               <h5
                 style={{ padding: '0 0 10px 0', margin: '2px 0 0 0', fontSize: '12px' }}
-                className={'uk-text-muted'}
+                className='uk-text-muted'
               >
                 {t('settings.pollingIntervalHint')}
               </h5>
@@ -338,9 +339,9 @@ const Mailer_MailerCheck = ({ settings, updateSetting, updateMultipleSettings, t
             <div className='uk-float-right' style={{ position: 'relative' }}>
               <div className='uk-float-left' style={{ width: '90px', paddingRight: '10px' }}>
                 <input
-                  type={'number'}
-                  className={'md-input md-input-width-small'}
-                  name={'mailerCheckPolling'}
+                  type='number'
+                  className='md-input md-input-width-small'
+                  name='mailerCheckPolling'
                   disabled={!getSetting('mailerCheckEnabled')}
                   value={mailerCheckPolling}
                   onChange={e => onPollingChanged(e)}
@@ -356,7 +357,7 @@ const Mailer_MailerCheck = ({ settings, updateSetting, updateMultipleSettings, t
               </h6>
               <h5
                 style={{ padding: '0 0 10px 0', margin: '2px 0 0 0', fontSize: '12px' }}
-                className={'uk-text-muted'}
+                className='uk-text-muted'
               >
                 {t('settings.createAccountHint')}
               </h5>
@@ -364,7 +365,7 @@ const Mailer_MailerCheck = ({ settings, updateSetting, updateMultipleSettings, t
             <div className='uk-float-right'>
               <EnableSwitch
                 label={t('settings.enable')}
-                stateName={'mailerCheckCreateAccount'}
+                stateName='mailerCheckCreateAccount'
                 checked={mailerCheckCreateAccount}
                 onChange={e => onCheckboxChanged(e, 'mailerCheckCreateAccount')}
                 disabled={!getSetting('mailerCheckEnabled')}
@@ -379,7 +380,7 @@ const Mailer_MailerCheck = ({ settings, updateSetting, updateMultipleSettings, t
               </h6>
               <h5
                 style={{ padding: '0 0 10px 0', margin: '2px 0 0 0', fontSize: '12px' }}
-                className={'uk-text-muted'}
+                className='uk-text-muted'
               >
                 {t('settings.deleteMessageHint')}
               </h5>
@@ -387,7 +388,7 @@ const Mailer_MailerCheck = ({ settings, updateSetting, updateMultipleSettings, t
             <div className='uk-float-right'>
               <EnableSwitch
                 label={t('settings.enable')}
-                stateName={'mailerCheckDeleteMessage'}
+                stateName='mailerCheckDeleteMessage'
                 checked={mailerCheckDeleteMessage}
                 onChange={e => onCheckboxChanged(e, 'mailerCheckDeleteMessage')}
                 disabled={!getSetting('mailerCheckEnabled')}
@@ -399,7 +400,7 @@ const Mailer_MailerCheck = ({ settings, updateSetting, updateMultipleSettings, t
             <label>{t('settings.defaultTicketType')}</label>
             <SingleSelect
               showTextbox={false}
-              width={'100%'}
+              width='100%'
               items={mappedTicketTypes}
               defaultValue={mailerCheckTicketType}
               disabled={!getSetting('mailerCheckEnabled')}
@@ -410,7 +411,7 @@ const Mailer_MailerCheck = ({ settings, updateSetting, updateMultipleSettings, t
             <label>{t('settings.defaultTicketPriority')}</label>
             <SingleSelect
               showTextbox={false}
-              width={'100%'}
+              width='100%'
               items={typePriorities}
               defaultValue={mailerCheckTicketPriority}
               disabled={!getSetting('mailerCheckEnabled')}
@@ -420,21 +421,21 @@ const Mailer_MailerCheck = ({ settings, updateSetting, updateMultipleSettings, t
           <div className='uk-clearfix'>
             <Button
               text={t('settings.checkNow')}
-              type={'button'}
-              extraClass={'uk-float-left'}
-              flat={true}
-              waves={true}
-              style={'primary'}
+              type='button'
+              extraClass='uk-float-left'
+              flat
+              waves
+              style='primary'
               onClick={e => onCheckNowClicked(e)}
               disabled={!getSetting('mailerCheckEnabled')}
             />
             <Button
               text={t('settings.apply')}
-              type={'submit'}
-              extraClass={'uk-float-right'}
-              flat={true}
-              waves={true}
-              style={'success'}
+              type='submit'
+              extraClass='uk-float-right'
+              flat
+              waves
+              style='success'
               disabled={!getSetting('mailerCheckEnabled')}
             />
           </div>
@@ -444,7 +445,7 @@ const Mailer_MailerCheck = ({ settings, updateSetting, updateMultipleSettings, t
   )
 }
 
-Mailer_MailerCheck.propTypes = {
+MailerMailerCheck.propTypes = {
   settings: PropTypes.object.isRequired,
   updateSetting: PropTypes.func.isRequired,
   updateMultipleSettings: PropTypes.func.isRequired,
@@ -455,4 +456,4 @@ const mapStateToProps = state => ({
   settings: state.settings.settings
 })
 
-export default withTranslation()(connect(mapStateToProps, { updateSetting, updateMultipleSettings })(Mailer_MailerCheck))
+export default withTranslation()(connect(mapStateToProps, { updateSetting, updateMultipleSettings })(MailerMailerCheck))

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect } from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import { withTranslation } from 'react-i18next'
@@ -7,7 +7,6 @@ import { setSessionUser, showModal } from 'actions/common'
 import { saveEditAccount } from 'actions/accounts'
 
 import Avatar from 'components/Avatar/Avatar'
-import EnableSwitch from 'components/Settings/EnableSwitch'
 import PDropdown from 'components/PDropdown'
 import Spacer from 'components/Spacer'
 
@@ -21,39 +20,24 @@ function ProfileDropdownPartial ({
   forwardedRef,
   t
 }) {
-  const [keyboardShortcutsChecked, setKeyboardShortcutsChecked] = useState(true)
+  const [, setKeyboardShortcutsChecked] = useState(true)
 
   useEffect(() => {
     helpers.ajaxify('#profile-drop')
 
     if (sessionUser) setKeyboardShortcutsChecked(sessionUser.preferences.keyboardShortcuts)
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
+  }, [])
   useEffect(() => {
     if (sessionUser) {
       setKeyboardShortcutsChecked(sessionUser.preferences.keyboardShortcuts)
     }
   }, [sessionUser])
 
-  const onKeyboardShortcutsChanged = useCallback((e) => {
-    const checked = e.target.checked
-    saveEditAccountAction({
-      hideSnackbar: true,
-      username: sessionUser.username,
-      preferences: {
-        keyboardShortcuts: checked
-      }
-    })
-      .then(() => {
-        setSessionUserAction()
-      })
-  }, [sessionUser, saveEditAccountAction, setSessionUserAction])
-
   return (
     <PDropdown
       ref={forwardedRef}
-      id={'profile-drop'}
-      className={'profile-drop'}
+      id='profile-drop'
+      className='profile-drop'
       showTitlebar={false}
       minHeight={185} // 255 with keyboard shortcuts
       minWidth={350}
@@ -62,17 +46,17 @@ function ProfileDropdownPartial ({
       showArrow={false}
       isListItems={false}
     >
-      <div className={'pdrop-content'}>
-        <div className={'user-section padding-15 uk-clearfix'}>
-          <div className={'user-info'}>
+      <div className='pdrop-content'>
+        <div className='user-section padding-15 uk-clearfix'>
+          <div className='user-info'>
             <Avatar
               image={sessionUser.image || 'defaultProfile.jpg'}
               showOnlineBubble={false}
               style={{ marginLeft: 5, marginRight: 15 }}
               size={60}
             />
-            <div className={'user-info-items'}>
-              <span className={'uk-text-bold'} style={{ fontSize: '16px', lineHeight: '22px' }}>
+            <div className='user-info-items'>
+              <span className='uk-text-bold' style={{ fontSize: '16px', lineHeight: '22px' }}>
                 {sessionUser.fullname}
               </span>
               <span>{sessionUser.email}</span>
@@ -80,46 +64,46 @@ function ProfileDropdownPartial ({
             </div>
           </div>
         </div>
-        {/*<Spacer showBorder={true} borderSize={1} top={0} bottom={0} />*/}
-        {/*<div className={'user-action-items'}>*/}
-        {/*  <EnableSwitch*/}
-        {/*    label={t('topbar.keyboardShortcuts')}*/}
-        {/*    sublabel={*/}
-        {/*      <>*/}
-        {/*        {keyboardShortcutsChecked && (*/}
-        {/*          <div className={'sub-label'}>*/}
-        {/*            Press <code>?</code> to view{' '}*/}
-        {/*            <a href='#' className={'no-ajaxy'}>*/}
-        {/*              Shortcuts*/}
-        {/*            </a>*/}
-        {/*          </div>*/}
-        {/*        )}*/}
-        {/*      </>*/}
-        {/*    }*/}
-        {/*    stateName={'keyboard-shortcuts-enable-switch'}*/}
-        {/*    checked={keyboardShortcutsChecked}*/}
-        {/*    onChange={e => onKeyboardShortcutsChanged(e)}*/}
-        {/*  />*/}
-        {/*</div>*/}
-        <Spacer showBorder={true} borderSize={1} top={0} bottom={0} />
-        {/*<div className={'profile-drop-dark-section'}></div>*/}
-        {/*<Spacer showBorder={true} borderSize={1} top={0} bottom={0} />*/}
-        <div className={'profile-drop-actions'}>
-          <div className={'action-logout'}>
+        {/* <Spacer showBorder={true} borderSize={1} top={0} bottom={0} /> */}
+        {/* <div className={'user-action-items'}> */}
+        {/*  <EnableSwitch */}
+        {/*    label={t('topbar.keyboardShortcuts')} */}
+        {/*    sublabel={ */}
+        {/*      <> */}
+        {/*        {keyboardShortcutsChecked && ( */}
+        {/*          <div className={'sub-label'}> */}
+        {/*            Press <code>?</code> to view{' '} */}
+        {/*            <a href='#' className={'no-ajaxy'}> */}
+        {/*              Shortcuts */}
+        {/*            </a> */}
+        {/*          </div> */}
+        {/*        )} */}
+        {/*      </> */}
+        {/*    } */}
+        {/*    stateName={'keyboard-shortcuts-enable-switch'} */}
+        {/*    checked={keyboardShortcutsChecked} */}
+        {/*    onChange={e => onKeyboardShortcutsChanged(e)} */}
+        {/*  /> */}
+        {/* </div> */}
+        <Spacer showBorder borderSize={1} top={0} bottom={0} />
+        {/* <div className={'profile-drop-dark-section'}></div> */}
+        {/* <Spacer showBorder={true} borderSize={1} top={0} bottom={0} /> */}
+        <div className='profile-drop-actions'>
+          <div className='action-logout'>
             <i className='material-icons'>logout</i>
             <a href='/logout'>{t('auth.logout')}</a>
           </div>
         </div>
       </div>
-      <div className={'pdrop-footer'}>
+      <div className='pdrop-footer'>
         <div className='links'>
-          <a href='https://forum.trudesk.io' target={'_blank'} rel={'noreferrer'}>
+          <a href='https://forum.trudesk.io' target='_blank' rel='noreferrer'>
             {t('topbar.community')}
           </a>
           <span>&middot;</span>
           <a
             href='#'
-            className={'no-ajaxy'}
+            className='no-ajaxy'
             onClick={e => {
               e.preventDefault()
               helpers.hideAllpDropDowns()

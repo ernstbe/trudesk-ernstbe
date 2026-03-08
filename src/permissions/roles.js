@@ -12,8 +12,6 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-/* eslint-disable node/exports-style,node/exports-style */
-
 /*
  Permissions for Trudesk. Define Roles / Groups.
  --- group:action action action
@@ -37,7 +35,7 @@
 
  plugins:manage                 = user can add/remove Plugins
  */
-var roles = {
+const roles = {
   admin: {
     id: 'admin',
     name: 'Administrator',

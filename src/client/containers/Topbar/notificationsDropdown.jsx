@@ -58,18 +58,18 @@ function NotificationsDropdownPartial ({ socket, shortDateFormat, timezone, onVi
   return (
     <PDropdown
       ref={forwardedRef}
-      id={'notifications'}
-      title={'Notifications'}
+      id='notifications'
+      title='Notifications'
       topOffset={-4}
       leftOffset={4}
       rightComponent={
-        <a className={'hoverUnderline no-ajaxy'} onClick={e => clearNotificationsClicked(e)}>
+        <a className='hoverUnderline no-ajaxy' onClick={e => clearNotificationsClicked(e)}>
           Clear Notifications
         </a>
       }
       footerComponent={
         <div className={'uk-text-center' + (notifications.length < 1 ? ' hide' : '')}>
-          <a className={'no-ajaxy hoverUnderline'} onClick={onViewAllNotificationsClick}>
+          <a className='no-ajaxy hoverUnderline' onClick={onViewAllNotificationsClick}>
             View All Notifications
           </a>
         </div>
@@ -88,19 +88,19 @@ function NotificationsDropdownPartial ({ socket, shortDateFormat, timezone, onVi
           <li key={notification._id}>
             <a className='item no-ajaxy' onClick={e => markNotificationRead(e, notification)}>
               <div className='uk-clearfix'>
-                {notification.unread && <div className={'messageUnread'} />}
+                {notification.unread && <div className='messageUnread' />}
                 {notification.type === 0 && (
-                  <div className={'messageIcon left'}>
+                  <div className='messageIcon left'>
                     <i className='fa fa-check green' />
                   </div>
                 )}
                 {notification.type === 1 && (
-                  <div className={'messageIcon left'}>
+                  <div className='messageIcon left'>
                     <i className='fa fa-comment-o green' style={{ marginTop: '-5px' }} />
                   </div>
                 )}
                 {notification.type === 2 && (
-                  <div className={'messageIcon left'}>
+                  <div className='messageIcon left'>
                     <i className='fa fa-exclamation red' />
                   </div>
                 )}
@@ -111,7 +111,7 @@ function NotificationsDropdownPartial ({ socket, shortDateFormat, timezone, onVi
                   <span>{notification.message}</span>
                 </div>
                 <div className='messageDate'>
-                  <time dateTime={formattedTimestamp} className={'timestamp'}>
+                  <time dateTime={formattedTimestamp} className='timestamp'>
                     {formattedDate}
                   </time>
                 </div>

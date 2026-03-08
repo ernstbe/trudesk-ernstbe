@@ -44,6 +44,6 @@ events.emitRestoreComplete = function (socket) {
 }
 
 module.exports = {
-  events: events,
-  register: register
+  events,
+  register
 }

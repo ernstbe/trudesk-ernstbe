@@ -14,8 +14,6 @@
 
 const _ = require('lodash')
 const permissions = require('../permissions')
-const Department = require('../models/department')
-
 const departmentController = {}
 
 departmentController.get = function (req, res) {

@@ -12,34 +12,34 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-var winston = require('winston')
+const winston = require('winston')
 
-var path = require('path')
+const path = require('path')
 
-var fs = require('fs')
+const fs = require('fs')
 
-var axios = require('axios')
+const axios = require('axios')
 
-var rimraf = require('rimraf')
+const rimraf = require('rimraf')
 
-var mkdirp = require('mkdirp')
+const mkdirp = require('mkdirp')
 
-var tar = require('tar')
+const tar = require('tar')
 
-var { pipeline } = require('stream/promises')
+const { pipeline } = require('stream/promises')
 
-var apiPlugins = {}
+const apiPlugins = {}
 
-var pluginPath = path.join(__dirname, '../../../../plugins')
+const pluginPath = path.join(__dirname, '../../../../plugins')
 
-var pluginServerUrl = 'http://plugins.trudesk.io'
+const pluginServerUrl = 'http://plugins.trudesk.io'
 
 apiPlugins.installPlugin = async function (req, res) {
-  var packageid = req.params.packageid
+  const packageid = req.params.packageid
 
   try {
-    var response = await axios.get(pluginServerUrl + '/api/plugin/package/' + packageid)
-    var plugin = response.data.plugin
+    const response = await axios.get(pluginServerUrl + '/api/plugin/package/' + packageid)
+    const plugin = response.data.plugin
 
     if (!plugin || !plugin.url) {
       return res.status(400).json({
@@ -48,14 +48,14 @@ apiPlugins.installPlugin = async function (req, res) {
       })
     }
 
-    var downloadResponse = await axios.get(pluginServerUrl + '/plugin/download/' + plugin.url, {
+    const downloadResponse = await axios.get(pluginServerUrl + '/plugin/download/' + plugin.url, {
       responseType: 'stream'
     })
 
-    var fws = fs.createWriteStream(path.join(pluginPath, plugin.url))
+    const fws = fs.createWriteStream(path.join(pluginPath, plugin.url))
     await pipeline(downloadResponse.data, fws)
 
-    var pluginExtractFolder = path.join(pluginPath, plugin.name.toLowerCase())
+    const pluginExtractFolder = path.join(pluginPath, plugin.name.toLowerCase())
     await rimraf(pluginExtractFolder)
     mkdirp.sync(pluginExtractFolder)
 
@@ -68,7 +68,7 @@ apiPlugins.installPlugin = async function (req, res) {
 
     axios.get(pluginServerUrl + '/api/plugin/package/' + plugin._id + '/increasedownloads').catch(function () {})
 
-    res.json({ success: true, plugin: plugin })
+    res.json({ success: true, plugin })
     restartServer()
   } catch (err) {
     return res.status(400).json({ success: false, error: err.message })
@@ -76,11 +76,11 @@ apiPlugins.installPlugin = async function (req, res) {
 }
 
 apiPlugins.removePlugin = async function (req, res) {
-  var packageid = req.params.packageid
+  const packageid = req.params.packageid
 
   try {
-    var response = await axios.get(pluginServerUrl + '/api/plugin/package/' + packageid)
-    var plugin = response.data.plugin
+    const response = await axios.get(pluginServerUrl + '/api/plugin/package/' + packageid)
+    const plugin = response.data.plugin
 
     if (plugin === null) {
       return res.json({ success: false, error: 'Invalid Plugin' })

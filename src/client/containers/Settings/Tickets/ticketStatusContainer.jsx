@@ -49,46 +49,46 @@ const TicketStatusContainer = ({ statuses, showModal }) => {
   return (
     <div>
       <SplitSettingsPanel
-        title={'Ticket Status'}
-        subtitle={'Ticket status sets the state of a ticket. (Active, Pending, Resolved, etc.)'}
+        title='Ticket Status'
+        subtitle='Ticket status sets the state of a ticket. (Active, Pending, Resolved, etc.)'
         rightComponent={
           <Button
-            text={'Create'}
-            style={'success'}
-            flat={true}
-            waves={true}
+            text='Create'
+            style='success'
+            flat
+            waves
             onClick={e => onCreateStatusClicked(e)}
           />
         }
         menuItems={
           statuses
             ? statuses.map(status => {
-                return {
-                  key: status.get('_id'),
-                  title: status.get('name'),
-                  content: (
-                    <div>
-                      <h3 style={{ display: 'inline-block' }}>{status.get('name')}</h3>
-                      <span
-                        style={{
-                          display: 'inline-block',
-                          marginLeft: 5,
-                          width: 10,
-                          height: 10,
-                          background: status.get('htmlColor'),
-                          borderRadius: 3
-                        }}
-                      />
-                    </div>
-                  ),
-                  bodyComponent: <TicketStatusBody status={status} />
-                }
-              })
+              return {
+                key: status.get('_id'),
+                title: status.get('name'),
+                content: (
+                  <div>
+                    <h3 style={{ display: 'inline-block' }}>{status.get('name')}</h3>
+                    <span
+                      style={{
+                        display: 'inline-block',
+                        marginLeft: 5,
+                        width: 10,
+                        height: 10,
+                        background: status.get('htmlColor'),
+                        borderRadius: 3
+                      }}
+                    />
+                  </div>
+                ),
+                bodyComponent: <TicketStatusBody status={status} />
+              }
+            })
             : []
         }
-        menuDraggable={true}
+        menuDraggable
         menuOnDrag={e => onStatusOrderChanged(e)}
-      ></SplitSettingsPanel>
+      />
     </div>
   )
 }

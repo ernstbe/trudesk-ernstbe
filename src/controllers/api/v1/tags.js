@@ -12,8 +12,8 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-var _ = require('lodash')
-var apiTags = {}
+const _ = require('lodash')
+const apiTags = {}
 
 /**
  * @api {post} /api/v1/tags/create Creates a tag
@@ -38,15 +38,15 @@ var apiTags = {}
  */
 apiTags.createTag = async function (req, res) {
   try {
-    var data = req.body
+    const data = req.body
     if (_.isUndefined(data.tag)) return res.status(400).json({ error: 'Invalid Post Data' })
 
-    var TagSchema = require('../../../models/tag')
-    var Tag = new TagSchema({
+    const TagSchema = require('../../../models/tag')
+    const Tag = new TagSchema({
       name: data.tag
     })
 
-    var T = await Tag.save()
+    const T = await Tag.save()
     return res.json({ success: true, tag: T })
   } catch (err) {
     return res.status(400).json({ error: err.message })
@@ -55,14 +55,14 @@ apiTags.createTag = async function (req, res) {
 
 apiTags.getTagsWithLimit = async function (req, res) {
   try {
-    var qs = req.query
-    var limit = qs.limit ? qs.limit : 25
-    var page = qs.page ? qs.page : 0
+    const qs = req.query
+    const limit = qs.limit ? qs.limit : 25
+    const page = qs.page ? qs.page : 0
 
-    var tagSchema = require('../../../models/tag')
-    var result = { success: true }
+    const tagSchema = require('../../../models/tag')
+    const result = { success: true }
 
-    var [tags, count] = await Promise.all([
+    const [tags, count] = await Promise.all([
       tagSchema.getTagsWithLimit(parseInt(limit), parseInt(page)),
       tagSchema.countDocuments({})
     ])
@@ -92,19 +92,19 @@ apiTags.getTagsWithLimit = async function (req, res) {
  *
  */
 apiTags.updateTag = async function (req, res) {
-  var id = req.params.id
-  var data = req.body
+  const id = req.params.id
+  const data = req.body
   if (_.isUndefined(id) || _.isNull(id) || _.isNull(data) || _.isUndefined(data)) {
     return res.status(400).json({ success: false, error: 'Invalid Put Data' })
   }
 
   try {
-    var tagSchema = require('../../../models/tag')
-    var tag = await tagSchema.getTag(id)
+    const tagSchema = require('../../../models/tag')
+    const tag = await tagSchema.getTag(id)
 
     tag.name = data.name
 
-    var t = await tag.save()
+    const t = await tag.save()
     return res.json({ success: true, tag: t })
   } catch (err) {
     return res.status(400).json({ success: false, error: err.message })
@@ -126,20 +126,20 @@ apiTags.updateTag = async function (req, res) {
  *
  */
 apiTags.deleteTag = async function (req, res) {
-  var id = req.params.id
+  const id = req.params.id
   if (_.isUndefined(id) || _.isNull(id)) return res.status(400).json({ success: false, error: 'Invalid Tag Id' })
 
   try {
-    var ticketModel = require('../../../models/ticket')
-    var tickets = await ticketModel.getAllTicketsByTag(id)
-    for (var ticket of tickets) {
+    const ticketModel = require('../../../models/ticket')
+    const tickets = await ticketModel.getAllTicketsByTag(id)
+    for (const ticket of tickets) {
       ticket.tags = _.reject(ticket.tags, function (o) {
         return o._id.toString() === id.toString()
       })
       await ticket.save()
     }
 
-    var tagSchema = require('../../../models/tag')
+    const tagSchema = require('../../../models/tag')
     await tagSchema.findByIdAndDelete(id)
 
     return res.json({ success: true })

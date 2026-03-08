@@ -185,7 +185,7 @@ const ElasticsearchSettingsContainer = ({ active, settings, updateSetting, updat
         subtitle={t('settings.elasticsearchHint')}
         component={
           <EnableSwitch
-            stateName={'elasticSearchEnabled'}
+            stateName='elasticSearchEnabled'
             label={t('settings.enable')}
             checked={getSetting('elasticSearchEnabled')}
             onChange={e => onEnableChanged(e)}
@@ -200,13 +200,13 @@ const ElasticsearchSettingsContainer = ({ active, settings, updateSetting, updat
       <SettingItem
         title={t('settings.indexedDocuments')}
         subtitle={t('settings.indexedDocumentsHint')}
-        component={<h4 className={'right mr-15 mt-15'}>{indexCount}</h4>}
+        component={<h4 className='right mr-15 mt-15'>{indexCount}</h4>}
       />
       <SettingItem
         title={t('settings.indexStatus')}
         subtitle={t('settings.indexStatusHint')}
         extraClass={inSyncClass}
-        component={<h4 className={'right mr-15 mt-15'}>{inSyncText}</h4>}
+        component={<h4 className='right mr-15 mt-15'>{inSyncText}</h4>}
       />
       <SettingItem
         title={t('settings.esServerConfig')}
@@ -218,7 +218,7 @@ const ElasticsearchSettingsContainer = ({ active, settings, updateSetting, updat
             <label>{t('settings.server')}</label>
             <input
               type='text'
-              className={'md-input md-input-width-medium'}
+              className='md-input md-input-width-medium'
               value={host}
               disabled={!getSetting('elasticSearchEnabled')}
               onChange={e => onInputChanged(e, 'host')}
@@ -228,7 +228,7 @@ const ElasticsearchSettingsContainer = ({ active, settings, updateSetting, updat
             <label>{t('settings.port')}</label>
             <input
               type='text'
-              className={'md-input md-input-width-medium'}
+              className='md-input md-input-width-medium'
               value={port}
               disabled={!getSetting('elasticSearchEnabled')}
               onChange={e => onInputChanged(e, 'port')}
@@ -237,12 +237,12 @@ const ElasticsearchSettingsContainer = ({ active, settings, updateSetting, updat
           <div className='uk-clearfix'>
             <Button
               text={t('settings.apply')}
-              type={'submit'}
-              flat={true}
-              waves={true}
+              type='submit'
+              flat
+              waves
               disabled={!getSetting('elasticSearchEnabled')}
-              style={'success'}
-              extraClass={'uk-float-right'}
+              style='success'
+              extraClass='uk-float-right'
             />
           </div>
         </form>
@@ -255,9 +255,9 @@ const ElasticsearchSettingsContainer = ({ active, settings, updateSetting, updat
           <Button
             text={t('settings.rebuild')}
             flat={false}
-            waves={true}
-            style={'primary'}
-            extraClass={'right mt-8 mr-5'}
+            waves
+            style='primary'
+            extraClass='right mt-8 mr-5'
             disabled={disableRebuild}
             onClick={rebuildIndex}
           />

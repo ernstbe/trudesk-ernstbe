@@ -47,7 +47,7 @@ define('modules/ui', [
   socketUi.onProfileImageUpdate = function () {
     socket.removeAllListeners('trudesk:profileImageUpdate')
     socket.on('trudesk:profileImageUpdate', function (data) {
-      var profileImage = $('#profileImage[data-userid="' + data.userid + '"]')
+      const profileImage = $('#profileImage[data-userid="' + data.userid + '"]')
       if (profileImage.length > 0) {
         profileImage.attr('src', '/uploads/users/' + data.img + '?r=' + new Date().getTime())
       }

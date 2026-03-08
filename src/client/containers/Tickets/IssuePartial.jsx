@@ -76,7 +76,7 @@ function IssuePartial (props) {
       formData.append('attachment', attachmentFile)
       const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content')
       axios
-        .post(`/tickets/uploadattachment`, formData, {
+        .post('/tickets/uploadattachment', formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
             'CSRF-TOKEN': token
@@ -137,7 +137,7 @@ function IssuePartial (props) {
                 {status.get('isResolved') === false && (
                   <a
                     role='button'
-                    className={'remove-attachment'}
+                    className='remove-attachment'
                     onClick={e => removeAttachment(e, attachment._id)}
                   >
                     <i className='fa fa-remove' />
@@ -153,22 +153,25 @@ function IssuePartial (props) {
       {/* Permissions on Fragment for edit */}
       {status.get('isResolved') === false &&
         helpers.hasPermOverRole(owner.role, null, 'tickets:update', true) && (
-          <Fragment>
+          <>
             <div
-              className={'edit-issue'}
+              className='edit-issue'
               onClick={() => {
-                if (editorWindow)
+                if (editorWindow) {
                   editorWindow.openEditorWindow({
-                    subject: subject,
+                    subject,
                     text: issue,
                     onPrimaryClick: data => {
-                      if (socket) socket.emit(TICKETS_ISSUE_SET, {
-                        _id: ticketId,
-                        value: data.text,
-                        subject: data.subjectText
-                      })
+                      if (socket) {
+                        socket.emit(TICKETS_ISSUE_SET, {
+                          _id: ticketId,
+                          value: data.text,
+                          subject: data.subjectText
+                        })
+                      }
                     }
                   })
+                }
               }}
             >
               <i className='material-icons'>&#xE254;</i>
@@ -185,8 +188,8 @@ function IssuePartial (props) {
                 onChange={e => onAttachmentInputChange(e)}
               />
             </form>
-          </Fragment>
-        )}
+          </>
+      )}
     </div>
   )
 }

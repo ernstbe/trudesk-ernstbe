@@ -82,7 +82,7 @@ function OnlineUserListPartial ({ sessionUser, timezone, users, socket }) {
   }, [])
 
   return (
-    <OffCanvas title={'Online Users'} id={'online-user-list'}>
+    <OffCanvas title='Online Users' id='online-user-list'>
       <div style={{ padding: '0 5px' }}>
         <div className='active-now'>
           <h5>Active Now</h5>
@@ -94,7 +94,7 @@ function OnlineUserListPartial ({ sessionUser, timezone, users, socket }) {
                 const isAgentOrAdmin = value.user.role.isAdmin || value.user.role.isAgent
                 return (
                   <li key={key}>
-                    <a className={'no-ajaxy'} onClick={e => onUserClicked(e, value.user._id)}>
+                    <a className='no-ajaxy' onClick={e => onUserClicked(e, value.user._id)}>
                       <div className='user-list-user'>
                         <div className='image'>
                           <img src={`/uploads/users/${image}`} alt='Profile Pic' />
@@ -118,7 +118,7 @@ function OnlineUserListPartial ({ sessionUser, timezone, users, socket }) {
             className='online-list-search-box search-box'
             style={{ borderTop: '1px solid rgba(0,0,0,0.1)', borderRight: 'none' }}
           >
-            <input type='text' placeholder={'Search'} />
+            <input type='text' placeholder='Search' />
           </div>
           <ul className='user-list'>
             {users.map(user => {

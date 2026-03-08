@@ -171,38 +171,38 @@ const PermissionBody = ({ role, updatePermissions, showModal }) => {
     <div>
       <form onSubmit={e => onSubmit(e)}>
         <SettingItem
-          title={'Admin'}
-          tooltip={'Role is considered an admin. Enabling management of the trudesk instance.'}
-          subtitle={'Is this role defined as an admin role?'}
+          title='Admin'
+          tooltip='Role is considered an admin. Enabling management of the trudesk instance.'
+          subtitle='Is this role defined as an admin role?'
           component={
             <EnableSwitch
               stateName={'isAdmin_' + role.get('_id')}
-              label={'Enable'}
+              label='Enable'
               checked={isAdmin}
               onChange={e => onEnableSwitchChanged(e, 'isAdmin')}
             />
           }
         />
         <SettingItem
-          title={'Support Agent'}
-          subtitle={'Is this role defined as an agent role?'}
-          tooltip={'Role is considered an agent role. Enabling agent views and displaying in agent lists.'}
+          title='Support Agent'
+          subtitle='Is this role defined as an agent role?'
+          tooltip='Role is considered an agent role. Enabling agent views and displaying in agent lists.'
           component={
             <EnableSwitch
               stateName={'isAgent_' + role.get('_id')}
-              label={'Enable'}
+              label='Enable'
               checked={isAgent}
               onChange={e => onEnableSwitchChanged(e, 'isAgent')}
             />
           }
         />
         <SettingItem
-          title={'Enable Hierarchy'}
-          subtitle={'Allow this role to manage resources owned by roles defined under it.'}
+          title='Enable Hierarchy'
+          subtitle='Allow this role to manage resources owned by roles defined under it.'
           component={
             <EnableSwitch
               stateName={'hasHierarchy_' + role.get('_id')}
-              label={'Enable'}
+              label='Enable'
               checked={hasHierarchy}
               onChange={e => onEnableSwitchChanged(e, 'hasHierarchy')}
             />
@@ -210,64 +210,64 @@ const PermissionBody = ({ role, updatePermissions, showModal }) => {
         />
         <PermissionGroupPartial
           ref={ticketPermGroupRef}
-          title={'Tickets'}
+          title='Tickets'
           role={role}
           grants={ticketGrants}
           roleSpecials={mapTicketSpecials()}
-          subtitle={'Ticket Permissions'}
+          subtitle='Ticket Permissions'
         />
         <PermissionGroupPartial
           ref={commentPermGroupRef}
-          title={'Comments'}
+          title='Comments'
           role={role}
           grants={commentGrants}
-          subtitle={'Ticket Comments Permissions'}
+          subtitle='Ticket Comments Permissions'
         />
         <PermissionGroupPartial
           ref={accountPermGroupRef}
-          title={'Accounts'}
+          title='Accounts'
           role={role}
           roleSpecials={mapAccountSpecials()}
           grants={accountGrants}
-          subtitle={'Account Permissions'}
+          subtitle='Account Permissions'
         />
         <PermissionGroupPartial
           ref={groupPermGroupRef}
-          title={'Groups'}
+          title='Groups'
           role={role}
           grants={groupGrants}
-          subtitle={'Group Permissions'}
+          subtitle='Group Permissions'
         />
         <PermissionGroupPartial
           ref={teamPermGroupRef}
-          title={'Teams'}
+          title='Teams'
           role={role}
           grants={teamGrants}
-          subtitle={'Team Permissions'}
+          subtitle='Team Permissions'
         />
         <PermissionGroupPartial
           ref={departmentPermGroupRef}
-          title={'Departments'}
+          title='Departments'
           role={role}
           grants={departmentGrants}
-          subtitle={'Department Permissions'}
+          subtitle='Department Permissions'
         />
         <PermissionGroupPartial
           ref={reportPermGroupRef}
-          title={'Reports'}
+          title='Reports'
           role={role}
           grants={reportGrants}
-          subtitle={'Report Permissions'}
+          subtitle='Report Permissions'
         />
         <PermissionGroupPartial
           ref={noticePermGroupRef}
-          title={'Notices'}
+          title='Notices'
           role={role}
           grants={noticeGrants}
           roleSpecials={mapNoticeSpecials()}
-          subtitle={'Notice Permissions'}
+          subtitle='Notice Permissions'
         />
-        <div className={'uk-margin-large-bottom'}>
+        <div className='uk-margin-large-bottom'>
           <h2 className='text-light'>Danger Zone</h2>
           <div className='danger-zone'>
             <div className='dz-box uk-clearfix'>
@@ -277,9 +277,9 @@ const PermissionBody = ({ role, updatePermissions, showModal }) => {
               </div>
               <div className='uk-float-right' style={{ paddingTop: '10px' }}>
                 <Button
-                  text={'Delete'}
-                  small={true}
-                  style={'danger'}
+                  text='Delete'
+                  small
+                  style='danger'
                   onClick={e => showDeletePermissionRole(e)}
                 />
               </div>
@@ -290,7 +290,7 @@ const PermissionBody = ({ role, updatePermissions, showModal }) => {
         <div>
           <div className='box uk-clearfix'>
             <div className='uk-float-right' style={{ paddingTop: '10px' }}>
-              <Button type={'submit'} style={'success'} waves={true} text={'Save Permissions'} />
+              <Button type='submit' style='success' waves text='Save Permissions' />
             </div>
           </div>
         </div>

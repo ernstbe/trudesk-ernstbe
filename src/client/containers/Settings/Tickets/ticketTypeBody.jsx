@@ -103,8 +103,8 @@ const TicketTypeBody = ({ type, fetchSettings, showModal }) => {
 
   return (
     <div>
-      <div className={'ticket-type-general-wrapper'}>
-        <h2 className={'text-light'}>General</h2>
+      <div className='ticket-type-general-wrapper'>
+        <h2 className='text-light'>General</h2>
         <hr style={{ margin: '5px 0 25px 0' }} />
         <form
           onSubmit={e => {
@@ -113,9 +113,9 @@ const TicketTypeBody = ({ type, fetchSettings, showModal }) => {
         >
           <div className='uk-input-group'>
             <label htmlFor='ticket-type-name'>Type Name</label>
-            <input name={'name'} type='text' className={'md-input'} defaultValue={type.get('name')} />
+            <input name='name' type='text' className='md-input' defaultValue={type.get('name')} />
             <div className='uk-input-group-addon'>
-              <button type='submit' className={'md-btn md-btn-small'}>
+              <button type='submit' className='md-btn md-btn-small'>
                 Rename
               </button>
             </div>
@@ -129,17 +129,17 @@ const TicketTypeBody = ({ type, fetchSettings, showModal }) => {
             className='material-icons'
             style={{ color: '#888', fontSize: '16px', cursor: 'pointer', lineHeight: '18px', marginLeft: '5px' }}
             data-uk-tooltip="{cls:'long-text'}"
-            title={'Priorities linked to this type. <br /> Editing a priority will update all types linked.'}
+            title='Priorities linked to this type. <br /> Editing a priority will update all types linked.'
           >
             help
           </i>
         </h2>
         <div className='uk-float-right'>
           <Button
-            text={'Add'}
-            style={'success'}
-            flat={true}
-            waves={true}
+            text='Add'
+            style='success'
+            flat
+            waves
             onClick={e => onAddPriorityClick(e, type)}
           />
         </div>
@@ -150,9 +150,9 @@ const TicketTypeBody = ({ type, fetchSettings, showModal }) => {
               <div
                 key={item.get('_id')}
                 ref={i => (prioritiesRef.current[item.get('_id')] = i)}
-                className={'z-box uk-clearfix'}
+                className='z-box uk-clearfix'
               >
-                <div className={'view-priority uk-clearfix'}>
+                <div className='view-priority uk-clearfix'>
                   <SettingSubItem
                     title={item.get('name')}
                     titleCss={{ color: item.get('htmlColor') }}
@@ -162,16 +162,16 @@ const TicketTypeBody = ({ type, fetchSettings, showModal }) => {
                       </div>
                     }
                     component={
-                      <ButtonGroup classNames={'uk-float-right'}>
+                      <ButtonGroup classNames='uk-float-right'>
                         <Button
-                          text={'Edit'}
-                          small={true}
+                          text='Edit'
+                          small
                           onClick={e => toggleEditPriority(e, item.get('_id'))}
                         />
                         <Button
-                          text={'Remove'}
-                          small={true}
-                          style={'danger'}
+                          text='Remove'
+                          small
+                          style='danger'
                           onClick={e => onRemoveTicketTypePriorityClicked(e, item.get('_id'))}
                         />
                       </ButtonGroup>
@@ -184,7 +184,7 @@ const TicketTypeBody = ({ type, fetchSettings, showModal }) => {
           })}
         </div>
       </div>
-      <div className={'uk-margin-large-top'}>
+      <div className='uk-margin-large-top'>
         <h2 className='text-light'>Danger Zone</h2>
         <div className='danger-zone'>
           <div className='dz-box uk-clearfix'>
@@ -194,9 +194,9 @@ const TicketTypeBody = ({ type, fetchSettings, showModal }) => {
             </div>
             <div className='uk-float-right' style={{ paddingTop: '10px' }}>
               <Button
-                text={'Delete'}
-                small={true}
-                style={'danger'}
+                text='Delete'
+                small
+                style='danger'
                 onClick={e => showDeleteTicketTypeModal(e, type)}
               />
             </div>

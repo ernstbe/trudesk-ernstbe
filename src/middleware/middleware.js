@@ -14,14 +14,14 @@
 
 'use strict'
 
-var _ = require('lodash')
-var db = require('../database')
-var mongoose = require('mongoose')
-var winston = require('../logger')
+const _ = require('lodash')
+const db = require('../database')
+const mongoose = require('mongoose')
+const winston = require('../logger')
 const csrf = require('../dependencies/csrf-td')
 const viewdata = require('../helpers/viewdata')
 
-var middleware = {}
+const middleware = {}
 
 middleware.db = function (req, res, next) {
   if (mongoose.connection.readyState !== 1) {
@@ -115,7 +115,7 @@ middleware.ensurel2Auth = function (req, res, next) {
 
 // Common
 middleware.loadCommonData = function (req, res, next) {
-  var called = false
+  let called = false
   function done (data) {
     if (called) return
     called = true
@@ -124,7 +124,7 @@ middleware.loadCommonData = function (req, res, next) {
     return next()
   }
 
-  var result = viewdata.getData(req, done)
+  const result = viewdata.getData(req, done)
 
   // If getData has been converted to async (returns a Promise), handle that too
   if (result && typeof result.then === 'function') {
@@ -149,13 +149,13 @@ middleware.cache = function (seconds) {
 }
 
 middleware.checkCaptcha = function (req, res, next) {
-  var postData = req.body
+  const postData = req.body
   if (postData === undefined) {
     return res.status(400).json({ success: false, error: 'Invalid Captcha' })
   }
 
-  var captcha = postData.captcha
-  var captchaValue = req.session.captcha
+  const captcha = postData.captcha
+  const captchaValue = req.session.captcha
 
   if (captchaValue === undefined) {
     return res.status(400).json({ success: false, error: 'Invalid Captcha' })
@@ -169,8 +169,8 @@ middleware.checkCaptcha = function (req, res, next) {
 }
 
 middleware.checkOrigin = function (req, res, next) {
-  var origin = req.headers.origin
-  var host = req.headers.host
+  let origin = req.headers.origin
+  const host = req.headers.host
 
   // Firefox Hack - Firefox Bug 1341689 & 1424076
   // Trudesk Bug #26
@@ -190,19 +190,19 @@ middleware.checkOrigin = function (req, res, next) {
 
 // API
 middleware.api = async function (req, res, next) {
-  var accessToken = req.headers.accesstoken
+  const accessToken = req.headers.accesstoken
 
-  var userSchema = require('../models/user')
+  const userSchema = require('../models/user')
 
   if (_.isUndefined(accessToken) || _.isNull(accessToken)) {
-    var user = req.user
+    const user = req.user
     if (_.isUndefined(user) || _.isNull(user)) return res.status(401).json({ error: 'Invalid Access Token' })
 
     return next()
   }
 
   try {
-    var user = await userSchema.getUserByAccessToken(accessToken)
+    const user = await userSchema.getUserByAccessToken(accessToken)
     if (!user) return res.status(401).json({ error: 'Invalid Access Token' })
 
     req.user = user
@@ -219,7 +219,7 @@ middleware.apiv2 = function (req, res, next) {
   // ByPass auth for now if user is set through session
   if (req.user) return next()
 
-  var passport = require('passport')
+  const passport = require('passport')
   passport.authenticate('jwt', { session: true }, function (err, user) {
     if (err || !user) return res.status(401).json({ success: false, error: 'Invalid Authentication Token' })
     if (user) {
@@ -243,8 +243,8 @@ middleware.canUser = function (action) {
 }
 
 middleware.isAdmin = function (req, res, next) {
-  var roles = global.roles
-  var role = _.find(roles, { _id: req.user.role._id })
+  const roles = global.roles
+  const role = _.find(roles, { _id: req.user.role._id })
   role.isAdmin = role.grants.indexOf('admin:*') !== -1
 
   if (role.isAdmin) return next()
@@ -253,7 +253,7 @@ middleware.isAdmin = function (req, res, next) {
 }
 
 middleware.isAgentOrAdmin = function (req, res, next) {
-  var role = _.find(global.roles, { _id: req.user.role._id })
+  const role = _.find(global.roles, { _id: req.user.role._id })
   role.isAdmin = role.grants.indexOf('admin:*') !== -1
   role.isAgent = role.grants.indexOf('agent:*') !== -1
 
@@ -263,7 +263,7 @@ middleware.isAgentOrAdmin = function (req, res, next) {
 }
 
 middleware.isAgent = function (req, res, next) {
-  var role = _.find(global.roles, { _id: req.user.role._id })
+  const role = _.find(global.roles, { _id: req.user.role._id })
   role.isAgent = role.grants.indexOf('agent:*') !== -1
 
   if (role.isAgent) return next()

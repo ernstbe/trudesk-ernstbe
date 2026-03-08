@@ -40,13 +40,13 @@ const LinkWarningModal = ({ hideModal, href, t }) => {
         </p>
       </div>
       <div className='uk-modal-footer uk-text-right'>
-        <Button text={t('common.cancel')} extraClass={'uk-modal-close'} flat={true} waves={true} />
+        <Button text={t('common.cancel')} extraClass='uk-modal-close' flat waves />
         <Button
           text={t('modals.linkWarning.proceed')}
-          type={'submit'}
-          flat={true}
-          waves={true}
-          style={'danger'}
+          type='submit'
+          flat
+          waves
+          style='danger'
           onClick={e => proceedToLink(e, href)}
         />
       </div>

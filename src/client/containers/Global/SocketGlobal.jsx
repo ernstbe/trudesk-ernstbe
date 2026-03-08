@@ -10,10 +10,6 @@ function SocketGlobal ({ socket, socketInitialized, initSocket: initSocketAction
   const socketRef = useRef(socket)
   socketRef.current = socket
 
-  const refreshSocketState = useCallback((socketData) => {
-    updateSocketAction({ socket: socketData })
-  }, [updateSocketAction])
-
   const onReconnect = useCallback(() => {
     helpers.UI.hideDisconnectedOverlay()
   }, [])
@@ -24,8 +20,7 @@ function SocketGlobal ({ socket, socketInitialized, initSocket: initSocketAction
 
   useEffect(() => {
     initSocketAction()
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
+  }, [])
   useEffect(() => {
     if (!socketInitialized || !socketRef.current || typeof socketRef.current.on !== 'function') return
 
@@ -43,8 +38,7 @@ function SocketGlobal ({ socket, socketInitialized, initSocket: initSocketAction
       s.io.off('reconnect', onReconnect)
       s.off('disconnect', onDisconnect)
     }
-  }, [socketInitialized]) // eslint-disable-line react-hooks/exhaustive-deps
-
+  }, [socketInitialized])
   return (
     <>
       <UserIdleTimer />

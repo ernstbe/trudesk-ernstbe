@@ -128,7 +128,7 @@ events.onImportCSV = socket => {
 
 events.onImportJSON = function (socket) {
   socket.on('$trudesk:accounts:import:json', async function (data) {
-    var authUser = socket.request.user
+    const authUser = socket.request.user
     if (!permissions.canThis(authUser.role, 'accounts:import')) {
       // Send Error Socket Emit
       winston.warn('[$trudesk:accounts:import:json] - Error: Invalid permissions.')
@@ -138,17 +138,17 @@ events.onImportJSON = function (socket) {
       return
     }
 
-    var addedUsers = data.addedUsers
-    var updatedUsers = data.updatedUsers
+    const addedUsers = data.addedUsers
+    const updatedUsers = data.updatedUsers
 
-    var completedCount = 0
+    let completedCount = 0
 
     // Process added users sequentially (was async.eachSeries)
     for (const cu of addedUsers) {
-      var addData = {
+      const addData = {
         type: 'json',
         totalCount: addedUsers.length + updatedUsers.length,
-        completedCount: completedCount,
+        completedCount,
         item: {
           username: cu.username,
           state: 1
@@ -157,7 +157,7 @@ events.onImportJSON = function (socket) {
 
       utils.sendToSelf(socket, '$trudesk:accounts:import:onStatusChange', addData)
 
-      var user = new UserSchema({
+      const user = new UserSchema({
         username: cu.username,
         fullname: cu.fullname,
         email: cu.email,
@@ -191,10 +191,10 @@ events.onImportJSON = function (socket) {
 
     // Process updated users sequentially
     for (const uu of updatedUsers) {
-      var updateData = {
+      const updateData = {
         type: 'json',
         totalCount: addedUsers.length + updatedUsers.length,
-        completedCount: completedCount,
+        completedCount,
         item: {
           username: uu.username,
           state: 1 // Starting
@@ -245,7 +245,7 @@ events.onImportLDAP = function (socket) {
 
     // Step 1: Get default user role setting
     try {
-      var settingSchema = require('../models/setting')
+      const settingSchema = require('../models/setting')
       const setting = await settingSchema.getSetting('role:user:default')
       if (!setting) {
         utils.sendToSelf(socket, '$trudesk:accounts:import:error', {
@@ -264,10 +264,10 @@ events.onImportLDAP = function (socket) {
 
     // Step 2: Process added users sequentially (was async.eachSeries)
     for (const lu of addedUsers) {
-      var addData = {
+      const addData = {
         type: 'ldap',
         totalCount: addedUsers.length + updatedUsers.length,
-        completedCount: completedCount,
+        completedCount,
         item: {
           username: lu.sAMAccountName,
           state: 1 // Starting
@@ -276,7 +276,7 @@ events.onImportLDAP = function (socket) {
 
       utils.sendToSelf(socket, '$trudesk:accounts:import:onStatusChange', addData)
 
-      var user = new UserSchema({
+      const user = new UserSchema({
         username: lu.sAMAccountName,
         fullname: lu.displayName,
         email: lu.mail,
@@ -302,10 +302,10 @@ events.onImportLDAP = function (socket) {
 
     // Step 3: Process updated users sequentially
     for (const uu of updatedUsers) {
-      var updateData = {
+      const updateData = {
         type: 'ldap',
         totalCount: addedUsers.length + updatedUsers.length,
-        completedCount: completedCount,
+        completedCount,
         item: {
           username: uu.username,
           state: 1 // Starting
@@ -335,7 +335,7 @@ events.onImportLDAP = function (socket) {
 }
 
 module.exports = {
-  events: events,
-  eventLoop: eventLoop,
-  register: register
+  events,
+  eventLoop,
+  register
 }

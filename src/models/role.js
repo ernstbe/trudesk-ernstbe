@@ -12,14 +12,14 @@
 
  **/
 
-var mongoose = require('mongoose')
-var mongooseLeanVirtuals = require('mongoose-lean-virtuals')
-var _ = require('lodash')
-var utils = require('../helpers/utils')
+const mongoose = require('mongoose')
+const mongooseLeanVirtuals = require('mongoose-lean-virtuals')
+const _ = require('lodash')
+const utils = require('../helpers/utils')
 
-var COLLECTION = 'roles'
+const COLLECTION = 'roles'
 
-var roleSchema = mongoose.Schema(
+const roleSchema = mongoose.Schema(
   {
     name: { type: String, required: true, unique: true },
     normalized: String,
@@ -35,7 +35,7 @@ var roleSchema = mongoose.Schema(
 
 roleSchema.virtual('isAdmin').get(function () {
   if (_.isUndefined(global.roles)) return false
-  var role = _.find(global.roles, { normalized: this.normalized })
+  const role = _.find(global.roles, { normalized: this.normalized })
   if (!role) return false
 
   return _.indexOf(role.grants, 'admin:*') !== -1
@@ -43,7 +43,7 @@ roleSchema.virtual('isAdmin').get(function () {
 
 roleSchema.virtual('isAgent').get(function () {
   if (_.isUndefined(global.roles)) return false
-  var role = _.find(global.roles, { normalized: this.normalized })
+  const role = _.find(global.roles, { normalized: this.normalized })
   if (!role) return false
 
   return _.indexOf(role.grants, 'agent:*') !== -1
@@ -83,13 +83,13 @@ roleSchema.statics.getRolesLean = async function () {
 }
 
 roleSchema.statics.getRole = async function (id) {
-  var q = this.model(COLLECTION).findOne({ _id: id })
+  const q = this.model(COLLECTION).findOne({ _id: id })
 
   return q.exec()
 }
 
 roleSchema.statics.getRoleByName = async function (name) {
-  var q = this.model(COLLECTION).findOne({ normalized: new RegExp('^' + name.trim() + '$', 'i') })
+  const q = this.model(COLLECTION).findOne({ normalized: new RegExp('^' + name.trim() + '$', 'i') })
 
   return q.exec()
 }
@@ -97,7 +97,7 @@ roleSchema.statics.getRoleByName = async function (name) {
 roleSchema.statics.getAgentRoles = async function () {
   const roles = await this.model(COLLECTION).find({}).exec()
 
-  var rolesWithAgent = _.filter(roles, function (role) {
+  const rolesWithAgent = _.filter(roles, function (role) {
     return _.indexOf(role.grants, 'agent:*') !== -1
   })
 

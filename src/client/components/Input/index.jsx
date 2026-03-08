@@ -9,7 +9,7 @@ const Input = ({
   defaultValue,
   onChange
 }) => {
-  const [value, setValue] = useState('')
+  const [, setValue] = useState('')
 
   useEffect(() => {
     helpers.UI.inputs()
@@ -24,7 +24,7 @@ const Input = ({
   return (
     <div>
       <input
-        className={'md-input'}
+        className='md-input'
         name={name}
         type={type}
         defaultValue={defaultValue}

@@ -93,30 +93,30 @@ async function rolesDefault () {
   }
 
   // Step 4: Create role order if not exists
-  var roleOrderSchema = require('../models/roleorder')
+  const roleOrderSchema = require('../models/roleorder')
   const roleOrder = await roleOrderSchema.getOrder()
   if (!roleOrder) {
     const roles = await roleSchema.getRoles()
-    var order = []
+    const order = []
     order.push(_.find(roles, { name: 'Admin' })._id)
     order.push(_.find(roles, { name: 'Support' })._id)
     order.push(_.find(roles, { name: 'User' })._id)
 
     await roleOrderSchema.create({
-      order: order
+      order
     })
   }
 }
 
 async function defaultUserRole () {
-  var roleOrderSchema = require('../models/roleorder')
+  const roleOrderSchema = require('../models/roleorder')
   const roleOrder = await roleOrderSchema.getOrderLean()
   if (!roleOrder) return
 
   const roleDefault = await SettingsSchema.getSetting('role:user:default')
   if (roleDefault) return
 
-  var lastId = _.last(roleOrder.order)
+  const lastId = _.last(roleOrder.order)
   await SettingsSchema.create({
     name: 'role:user:default',
     value: lastId
@@ -131,16 +131,16 @@ async function createDirectories () {
 }
 
 function downloadWin32MongoDBTools (callback) {
-  var http = require('http')
-  var os = require('os')
-  var semver = require('semver')
-  var dbVersion = require('../database').db.version || '5.0.6'
-  var fileVersion = semver.major(dbVersion) + '.' + semver.minor(dbVersion)
+  const http = require('http')
+  const os = require('os')
+  const semver = require('semver')
+  const dbVersion = require('../database').db.version || '5.0.6'
+  const fileVersion = semver.major(dbVersion) + '.' + semver.minor(dbVersion)
 
   if (os.platform() === 'win32') {
     winston.debug('MongoDB version ' + fileVersion + ' detected.')
-    var filename = 'mongodb-tools.' + fileVersion + '-win32x64.zip'
-    var savePath = path.join(__dirname, '../backup/bin/win32/')
+    const filename = 'mongodb-tools.' + fileVersion + '-win32x64.zip'
+    const savePath = path.join(__dirname, '../backup/bin/win32/')
     fs.ensureDirSync(savePath)
     if (
       !fs.existsSync(path.join(savePath, 'mongodump.exe')) ||
@@ -148,15 +148,15 @@ function downloadWin32MongoDBTools (callback) {
     ) {
       winston.debug('Windows platform detected. Downloading MongoDB Tools [' + filename + ']')
       fs.emptyDirSync(savePath)
-      var unzipper = require('unzipper')
-      var file = fs.createWriteStream(path.join(savePath, filename))
-      var callbackFired = false
-      var safeCallback = function (err) {
+      const unzipper = require('unzipper')
+      const file = fs.createWriteStream(path.join(savePath, filename))
+      let callbackFired = false
+      const safeCallback = function (err) {
         if (callbackFired) return
         callbackFired = true
         callback(err)
       }
-      var req = http
+      const req = http
         .get('http://storage.trudesk.io/tools/' + filename, function (response) {
           if (response.statusCode !== 200) {
             req.destroy()
@@ -201,7 +201,7 @@ async function timezoneDefault () {
   const setting = await SettingsSchema.getSettingByName('gen:timezone')
 
   if (!setting) {
-    var defaultTimezone = new SettingsSchema({
+    const defaultTimezone = new SettingsSchema({
       name: 'gen:timezone',
       value: 'America/New_York'
     })
@@ -217,11 +217,12 @@ async function timezoneDefault () {
   }
 }
 
-async function showTourSettingDefault () {
+// eslint-disable-next-line no-unused-vars
+async function _showTourSettingDefault () {
   const setting = await SettingsSchema.getSettingByName('showTour:enable')
 
   if (!setting) {
-    var defaultShowTour = new SettingsSchema({
+    const defaultShowTour = new SettingsSchema({
       name: 'showTour:enable',
       value: 0
     })
@@ -234,15 +235,15 @@ async function ticketTypeSettingDefault () {
   const setting = await SettingsSchema.getSettingByName('ticket:type:default')
 
   if (!setting) {
-    var ticketTypeSchema = require('../models/tickettype')
+    const ticketTypeSchema = require('../models/tickettype')
     const types = await ticketTypeSchema.getTypes()
 
-    var type = _.first(types)
+    const type = _.first(types)
     if (!type) throw new Error('No Types Defined!')
     if (!_.isObject(type) || _.isUndefined(type._id)) throw new Error('Invalid Type. Skipping.')
 
     // Save default ticket type
-    var defaultTicketType = new SettingsSchema({
+    const defaultTicketType = new SettingsSchema({
       name: 'ticket:type:default',
       value: type._id
     })
@@ -281,22 +282,22 @@ async function ticketStatusSettingDefault () {
 }
 
 async function ticketPriorityDefaults () {
-  var priorities = []
+  const priorities = []
 
-  var normal = new PrioritySchema({
+  const normal = new PrioritySchema({
     name: 'Normal',
     migrationNum: 1,
     default: true
   })
 
-  var urgent = new PrioritySchema({
+  const urgent = new PrioritySchema({
     name: 'Urgent',
     migrationNum: 2,
     htmlColor: '#8e24aa',
     default: true
   })
 
-  var critical = new PrioritySchema({
+  const critical = new PrioritySchema({
     name: 'Critical',
     migrationNum: 3,
     htmlColor: '#e65100',
@@ -316,7 +317,7 @@ async function ticketPriorityDefaults () {
 }
 
 async function normalizeTags () {
-  var tagSchema = require('../models/tag')
+  const tagSchema = require('../models/tag')
   const tags = await tagSchema.find({})
   await Promise.all(tags.map(async function (tag) {
     await tag.save()
@@ -324,7 +325,7 @@ async function normalizeTags () {
 }
 
 async function checkPriorities () {
-  var ticketSchema = require('../models/ticket')
+  const ticketSchema = require('../models/ticket')
 
   const [countP1, countP2, countP3] = await Promise.all([
     ticketSchema.collection.countDocuments({ priority: 1 }),
@@ -332,9 +333,9 @@ async function checkPriorities () {
     ticketSchema.collection.countDocuments({ priority: 3 })
   ])
 
-  var migrateP1 = countP1 > 0
-  var migrateP2 = countP2 > 0
-  var migrateP3 = countP3 > 0
+  const migrateP1 = countP1 > 0
+  const migrateP2 = countP2 > 0
+  const migrateP3 = countP3 > 0
 
   const migrations = []
 
@@ -390,11 +391,11 @@ async function addedDefaultPrioritiesToTicketTypes () {
   let priorities = await PrioritySchema.find({ default: true })
   priorities = _.sortBy(priorities, 'migrationNum')
 
-  var ticketTypeSchema = require('../models/tickettype')
+  const ticketTypeSchema = require('../models/tickettype')
   const types = await ticketTypeSchema.getTypes()
 
   await Promise.all(types.map(async function (type) {
-    var prioritiesToAdd = []
+    let prioritiesToAdd = []
     if (!type.priorities || type.priorities.length < 1) {
       type.priorities = []
       prioritiesToAdd = _.map(priorities, '_id')
@@ -410,9 +411,9 @@ async function addedDefaultPrioritiesToTicketTypes () {
 }
 
 async function mailTemplates () {
-  var newTicket = require('./json/mailer-new-ticket')
-  var passwordReset = require('./json/mailer-password-reset')
-  var templateSchema = require('../models/template')
+  const newTicket = require('./json/mailer-new-ticket')
+  const passwordReset = require('./json/mailer-password-reset')
+  const templateSchema = require('../models/template')
 
   const [existingNewTicket, existingPasswordReset] = await Promise.all([
     templateSchema.findOne({ name: newTicket.name }),
@@ -442,7 +443,7 @@ async function elasticSearchConfToDB () {
   nconf.set('elasticsearch', {})
 
   await new Promise(function (resolve, reject) {
-    var resolved = false
+    let resolved = false
     nconf.save(function (err) {
       if (resolved) return
       resolved = true

@@ -170,7 +170,7 @@ const PDropDown = forwardRef(({
       {!isListItems && <div>{children}</div>}
       {footerComponent && (
         <div
-          className={'bottom-actions actions uk-float-left'}
+          className='bottom-actions actions uk-float-left'
           style={{ borderBottom: 'none', borderTop: '1px solid rgba(0,0,0,0.2)' }}
         >
           {footerComponent}

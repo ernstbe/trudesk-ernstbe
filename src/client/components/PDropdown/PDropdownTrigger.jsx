@@ -26,7 +26,7 @@ const PDropdownTrigger = ({ target, children }) => {
   }, [target])
 
   return (
-    <div ref={containerRef} className={'uk-clearfix'} onClick={onTargetClick}>
+    <div ref={containerRef} className='uk-clearfix' onClick={onTargetClick}>
       {children}
     </div>
   )

@@ -31,7 +31,7 @@ function buildGraphData (arr, days, callback) {
     .minute(59)
     .second(59)
   const timespanArray = []
-  for (let i = days; i--; ) {
+  for (let i = days; i--;) {
     timespanArray.push(i)
   }
 

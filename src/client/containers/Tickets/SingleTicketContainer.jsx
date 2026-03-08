@@ -189,7 +189,7 @@ function SingleTicketContainer (props) {
 
       propsUnloadGroups()
     }
-  }, [socket]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [socket])
 
   useEffect(() => {
     helpers.resizeFullHeight()
@@ -284,14 +284,14 @@ function SingleTicketContainer (props) {
 
   const mappedGroups = groupsState
     ? groupsState.groups.map(group => {
-        return { text: group.get('name'), value: group.get('_id') }
-      })
+      return { text: group.get('name'), value: group.get('_id') }
+    })
     : []
 
   const mappedTypes = ticketTypes
     ? ticketTypes.map(type => {
-        return { text: type.get('name'), value: type.get('_id'), raw: type.toJS() }
-      })
+      return { text: type.get('name'), value: type.get('_id'), raw: type.toJS() }
+    })
     : []
 
   // Perms
@@ -310,11 +310,11 @@ function SingleTicketContainer (props) {
   }
 
   return (
-    <div className={'uk-clearfix uk-position-relative'} style={{ width: '100%', height: '100vh' }}>
-      {!ticket && <SpinLoader active={true} />}
+    <div className='uk-clearfix uk-position-relative' style={{ width: '100%', height: '100vh' }}>
+      {!ticket && <SpinLoader active />}
       {ticket && (
-        <Fragment>
-          <div className={'page-content'}>
+        <>
+          <div className='page-content'>
             <div
               className='uk-float-left page-title page-title-small noshadow nopadding relative'
               style={{ width: 360, maxWidth: 360, minWidth: 360 }}
@@ -326,7 +326,7 @@ function SingleTicketContainer (props) {
                   status={ticket.status._id}
                   socket={socket}
                   onStatusChange={status => {
-                    setTicket(prev => ({ ...prev, status: status }))
+                    setTicket(prev => ({ ...prev, status }))
                   }}
                   hasPerm={hasTicketStatusUpdate()}
                 />
@@ -365,7 +365,7 @@ function SingleTicketContainer (props) {
                       <div className='ticket-assignee-details'>
                         {!ticket.assignee && <h3>{t('tickets.noUserAssigned')}</h3>}
                         {ticket.assignee && (
-                          <Fragment>
+                          <>
                             <h3>{ticket.assignee.fullname}</h3>
                             <a
                               className='comment-email-link uk-text-truncate uk-display-inline-block'
@@ -373,8 +373,8 @@ function SingleTicketContainer (props) {
                             >
                               {ticket.assignee.email}
                             </a>
-                            <span className={'uk-display-block'}>{ticket.assignee.title}</span>
-                          </Fragment>
+                            <span className='uk-display-block'>{ticket.assignee.title}</span>
+                          </>
                         )}
                       </div>
                     </div>
@@ -408,18 +408,22 @@ function SingleTicketContainer (props) {
                                 const hasPriority = priority !== -1
 
                                 if (!hasPriority) {
-                                  if (socket) socket.emit(TICKETS_PRIORITY_SET, {
-                                    _id: ticket._id,
-                                    value: type.get('priorities').find(() => true)
-                                  })
+                                  if (socket) {
+                                    socket.emit(TICKETS_PRIORITY_SET, {
+                                      _id: ticket._id,
+                                      value: type.get('priorities').find(() => true)
+                                    })
+                                  }
 
                                   showPriorityConfirm()
                                 }
 
-                                if (socket) socket.emit(TICKETS_TYPE_SET, {
-                                  _id: ticket._id,
-                                  value: e.target.value
-                                })
+                                if (socket) {
+                                  socket.emit(TICKETS_TYPE_SET, {
+                                    _id: ticket._id,
+                                    value: e.target.value
+                                  })
+                                }
                               }}
                             >
                               {mappedTypes &&
@@ -443,10 +447,12 @@ function SingleTicketContainer (props) {
                               id='tPriority'
                               value={ticket.priority._id}
                               onChange={e => {
-                                if (socket) socket.emit(TICKETS_PRIORITY_SET, {
-                                  _id: ticket._id,
-                                  value: e.target.value
-                                })
+                                if (socket) {
+                                  socket.emit(TICKETS_PRIORITY_SET, {
+                                    _id: ticket._id,
+                                    value: e.target.value
+                                  })
+                                }
                               }}
                             >
                               {ticket.type &&
@@ -458,7 +464,7 @@ function SingleTicketContainer (props) {
                                 ))}
                             </select>
                           )}
-                          {!hasTicketUpdate && <div className={'input-box'}>{t('priorities.' + ticket.priority.name, ticket.priority.name)}</div>}
+                          {!hasTicketUpdate && <div className='input-box'>{t('priorities.' + ticket.priority.name, ticket.priority.name)}</div>}
                         </div>
                       </div>
                       {/*  Group */}
@@ -468,10 +474,12 @@ function SingleTicketContainer (props) {
                           <select
                             value={ticket.group._id}
                             onChange={e => {
-                              if (socket) socket.emit(TICKETS_GROUP_SET, {
-                                _id: ticket._id,
-                                value: e.target.value
-                              })
+                              if (socket) {
+                                socket.emit(TICKETS_GROUP_SET, {
+                                  _id: ticket._id,
+                                  value: e.target.value
+                                })
+                              }
                             }}
                           >
                             {mappedGroups &&
@@ -482,30 +490,32 @@ function SingleTicketContainer (props) {
                               ))}
                           </select>
                         )}
-                        {!hasTicketUpdate && <div className={'input-box'}>{ticket.group.name}</div>}
+                        {!hasTicketUpdate && <div className='input-box'>{ticket.group.name}</div>}
                       </div>
                       {/*  Due Date */}
                       <div className='uk-width-1-1 p-0'>
                         <span>{t('tickets.dueDate')}</span> {hasTicketUpdate && <span>-&nbsp;</span>}
                         {hasTicketUpdate && (
-                          <div className={'uk-display-inline'}>
+                          <div className='uk-display-inline'>
                             <a
-                              role={'button'}
+                              role='button'
                               onClick={e => {
                                 e.preventDefault()
-                                if (socket) socket.emit(TICKETS_DUEDATE_SET, {
-                                  _id: ticket._id,
-                                  value: undefined
-                                })
+                                if (socket) {
+                                  socket.emit(TICKETS_DUEDATE_SET, {
+                                    _id: ticket._id,
+                                    value: undefined
+                                  })
+                                }
                               }}
                             >
                               {t('tickets.clear')}
                             </a>
                             <DatePicker
-                              name={'ticket_due_date'}
+                              name='ticket_due_date'
                               format={helpers.getShortDateFormat()}
                               value={ticket.dueDate}
-                              small={true}
+                              small
                               onChange={e => {
                                 const dueDate = moment(e.target.value, helpers.getShortDateFormat())
                                   .utc()
@@ -528,11 +538,11 @@ function SingleTicketContainer (props) {
                         <span>
                           {t('modals.createTicket.tags')}
                           {hasTicketUpdate && (
-                            <Fragment>
+                            <>
                               <span> - </span>
-                              <div id='editTags' className={'uk-display-inline'}>
+                              <div id='editTags' className='uk-display-inline'>
                                 <a
-                                  role={'button'}
+                                  role='button'
                                   style={{ fontSize: 11 }}
                                   className='no-ajaxy'
                                   onClick={() => {
@@ -545,7 +555,7 @@ function SingleTicketContainer (props) {
                                   {t('tickets.editTags')}
                                 </a>
                               </div>
-                            </Fragment>
+                            </>
                           )}
                         </span>
                         <div className='tag-list uk-clearfix'>
@@ -620,7 +630,7 @@ function SingleTicketContainer (props) {
                 style={{ marginRight: 10, position: 'relative', top: 18 }}
               >
                 <input
-                  id={'subscribeSwitch'}
+                  id='subscribeSwitch'
                   type='checkbox'
                   name='subscribeSwitch'
                   className='onoffswitch-checkbox'
@@ -672,28 +682,28 @@ function SingleTicketContainer (props) {
                       <TruTabSelector
                         selectorId={0}
                         label={t('tickets.all')}
-                        active={true}
-                        showBadge={true}
+                        active
+                        showBadge
                         badgeText={commentsAndNotes.length}
                       />
                       <TruTabSelector
                         selectorId={1}
                         label={t('common.comments')}
-                        showBadge={true}
+                        showBadge
                         badgeText={ticket ? ticket.comments && ticket.comments.length : 0}
                       />
                       {helpers.canUser('tickets:notes', true) && (
                         <TruTabSelector
                           selectorId={2}
                           label={t('common.notes')}
-                          showBadge={true}
+                          showBadge
                           badgeText={ticket ? ticket.notes && ticket.notes.length : 0}
                         />
                       )}
                     </TruTabSelectors>
 
                     {/* Tab Sections */}
-                    <TruTabSection sectionId={0} active={true}>
+                    <TruTabSection sectionId={0} active>
                       <div className='all-comments'>
                         {commentsAndNotes.map(item => (
                           <CommentNotePartial
@@ -710,21 +720,25 @@ function SingleTicketContainer (props) {
                                 showSubject: false,
                                 text: !item.isNote ? item.comment : item.note,
                                 onPrimaryClick: data => {
-                                  if (socket) socket.emit(TICKETS_COMMENT_NOTE_SET, {
-                                    _id: ticket._id,
-                                    item: item._id,
-                                    isNote: item.isNote,
-                                    value: data.text
-                                  })
+                                  if (socket) {
+                                    socket.emit(TICKETS_COMMENT_NOTE_SET, {
+                                      _id: ticket._id,
+                                      item: item._id,
+                                      isNote: item.isNote,
+                                      value: data.text
+                                    })
+                                  }
                                 }
                               })
                             }}
                             onRemoveClick={() => {
-                              if (socket) socket.emit(TICKETS_COMMENT_NOTE_REMOVE, {
-                                _id: ticket._id,
-                                value: item._id,
-                                isNote: item.isNote
-                              })
+                              if (socket) {
+                                socket.emit(TICKETS_COMMENT_NOTE_REMOVE, {
+                                  _id: ticket._id,
+                                  value: item._id,
+                                  isNote: item.isNote
+                                })
+                              }
                             }}
                           />
                         ))}
@@ -747,21 +761,25 @@ function SingleTicketContainer (props) {
                                   showSubject: false,
                                   text: comment.comment,
                                   onPrimaryClick: data => {
-                                    if (socket) socket.emit(TICKETS_COMMENT_NOTE_SET, {
-                                      _id: ticket._id,
-                                      item: comment._id,
-                                      isNote: comment.isNote,
-                                      value: data.text
-                                    })
+                                    if (socket) {
+                                      socket.emit(TICKETS_COMMENT_NOTE_SET, {
+                                        _id: ticket._id,
+                                        item: comment._id,
+                                        isNote: comment.isNote,
+                                        value: data.text
+                                      })
+                                    }
                                   }
                                 })
                               }}
                               onRemoveClick={() => {
-                                if (socket) socket.emit(TICKETS_COMMENT_NOTE_REMOVE, {
-                                  _id: ticket._id,
-                                  value: comment._id,
-                                  isNote: comment.isNote
-                                })
+                                if (socket) {
+                                  socket.emit(TICKETS_COMMENT_NOTE_REMOVE, {
+                                    _id: ticket._id,
+                                    value: comment._id,
+                                    isNote: comment.isNote
+                                  })
+                                }
                               }}
                             />
                           ))}
@@ -776,7 +794,7 @@ function SingleTicketContainer (props) {
                               ticketStatus={statusObj}
                               ticketSubject={ticket.subject}
                               comment={note}
-                              isNote={true}
+                              isNote
                               dateFormat={`${common.get('longDateFormat')}, ${common.get(
                                 'timeFormat'
                               )}`}
@@ -785,21 +803,25 @@ function SingleTicketContainer (props) {
                                   showSubject: false,
                                   text: note.note,
                                   onPrimaryClick: data => {
-                                    if (socket) socket.emit(TICKETS_COMMENT_NOTE_SET, {
-                                      _id: ticket._id,
-                                      item: note._id,
-                                      isNote: note.isNote,
-                                      value: data.text
-                                    })
+                                    if (socket) {
+                                      socket.emit(TICKETS_COMMENT_NOTE_SET, {
+                                        _id: ticket._id,
+                                        item: note._id,
+                                        isNote: note.isNote,
+                                        value: data.text
+                                      })
+                                    }
                                   }
                                 })
                               }}
                               onRemoveClick={() => {
-                                if (socket) socket.emit(TICKETS_COMMENT_NOTE_REMOVE, {
-                                  _id: ticket._id,
-                                  value: note._id,
-                                  isNote: note.isNote
-                                })
+                                if (socket) {
+                                  socket.emit(TICKETS_COMMENT_NOTE_REMOVE, {
+                                    _id: ticket._id,
+                                    value: note._id,
+                                    isNote: note.isNote
+                                  })
+                                }
                               }}
                             />
                           ))}
@@ -816,7 +838,7 @@ function SingleTicketContainer (props) {
                       <TruTabWrapper style={{ paddingLeft: 85 }}>
                         <TruTabSelectors showTrack={false}>
                           {helpers.canUser('comments:create', true) && (
-                            <TruTabSelector selectorId={0} label={t('common.comment')} active={true} />
+                            <TruTabSelector selectorId={0} label={t('common.comment')} active />
                           )}
                           {helpers.canUser('tickets:notes', true) && (
                             <TruTabSelector
@@ -833,8 +855,8 @@ function SingleTicketContainer (props) {
                         >
                           <form onSubmit={e => onCommentNoteSubmit(e, 'comment')}>
                             <EasyMDE
-                              allowImageUpload={true}
-                              inlineImageUploadUrl={'/tickets/uploadmdeimage'}
+                              allowImageUpload
+                              inlineImageUploadUrl='/tickets/uploadmdeimage'
                               inlineImageUploadHeaders={{ ticketid: ticket._id }}
                               ref={commentMDERef}
                             />
@@ -858,8 +880,8 @@ function SingleTicketContainer (props) {
                         >
                           <form onSubmit={e => onCommentNoteSubmit(e, 'note')}>
                             <EasyMDE
-                              allowImageUpload={true}
-                              inlineImageUploadUrl={'/tickets/uploadmdeimage'}
+                              allowImageUpload
+                              inlineImageUploadUrl='/tickets/uploadmdeimage'
                               inlineImageUploadHeaders={{ ticketid: ticket._id }}
                               ref={noteMDERef}
                             />
@@ -878,12 +900,12 @@ function SingleTicketContainer (props) {
                         </TruTabSection>
                       </TruTabWrapper>
                     </div>
-                  )}
+                )}
               </div>
             </div>
           </div>
           <OffCanvasEditor primaryLabel={t('tickets.saveEdit')} ref={editorWindowRef} />
-        </Fragment>
+        </>
       )}
     </div>
   )

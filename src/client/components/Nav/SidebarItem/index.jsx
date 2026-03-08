@@ -20,10 +20,6 @@ import Helpers from 'modules/helpers'
 // import './style.sass';
 
 class NavButton extends Component {
-  constructor (props) {
-    super(props)
-  }
-
   componentDidUpdate () {
     Helpers.UI.bindAccordion()
     Helpers.UI.tetherUpdate()

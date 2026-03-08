@@ -1,10 +1,10 @@
 /* eslint-disable no-unused-expressions */
-var async = require('async')
-var expect = require('chai').expect
-var request = require('supertest')
+const async = require('async')
+const expect = require('chai').expect
+let request = require('supertest')
 
 describe('api/users.js', function () {
-  var tdapikey = 'da39a3ee5e6b4b0d3255bfef95601890afd80709'
+  const tdapikey = 'da39a3ee5e6b4b0d3255bfef95601890afd80709'
   request = request('http://localhost:3111')
 
   it('should return users', function (done) {
@@ -30,7 +30,7 @@ describe('api/users.js', function () {
   })
 
   it('should create new user', function (done) {
-    var user = {
+    const user = {
       aUsername: 'new.user.1',
       aPass: 'SecureP@ssW0rd',
       aPassConfirm: 'SecureP@ssW0rd',
@@ -111,10 +111,11 @@ describe('api/users.js', function () {
   })
 
   it('should update user', async function () {
-    var userSchema = require('../../src/models/user')
-    var user = await userSchema.getUserByUsername('fake.user')
+    const userSchema = require('../../src/models/user')
+    // eslint-disable-next-line no-unused-vars
+    const _user = await userSchema.getUserByUsername('fake.user')
 
-    var u = {
+    const u = {
       aTitle: 'The Title',
       aRole: global.userRoleId
     }
@@ -137,16 +138,16 @@ describe('api/users.js', function () {
   })
 
   it('should add user to group', async function () {
-    var groupSchema = require('../../src/models/group')
-    var userSchema = require('../../src/models/user')
+    const groupSchema = require('../../src/models/group')
+    const userSchema = require('../../src/models/user')
 
-    var group = await groupSchema.getGroupByName('TEST')
+    const group = await groupSchema.getGroupByName('TEST')
     expect(group).to.not.be.null
 
-    var user = await userSchema.getUserByUsername('trudesk')
+    const user = await userSchema.getUserByUsername('trudesk')
     expect(user).to.not.be.null
 
-    var u = {
+    const u = {
       aFullname: user.fullname,
       aEmail: user.email,
       aGrps: [group._id],
@@ -163,7 +164,7 @@ describe('api/users.js', function () {
         .expect(200, async function (err) {
           if (err) return reject(err)
           try {
-            var grp = await groupSchema.getGroupByName('TEST')
+            const grp = await groupSchema.getGroupByName('TEST')
             expect(grp.isMember(user._id)).to.equal(true)
             resolve()
           } catch (e) {
@@ -174,16 +175,16 @@ describe('api/users.js', function () {
   })
 
   it('should remove user from group', async function () {
-    var groupSchema = require('../../src/models/group')
-    var userSchema = require('../../src/models/user')
+    const groupSchema = require('../../src/models/group')
+    const userSchema = require('../../src/models/user')
 
-    var group = await groupSchema.getGroupByName('TEST')
+    const group = await groupSchema.getGroupByName('TEST')
     expect(group).to.not.be.null
 
-    var user = await userSchema.getUserByUsername('trudesk')
+    const user = await userSchema.getUserByUsername('trudesk')
     expect(user).to.not.be.null
 
-    var u = {
+    const u = {
       aId: user._id,
       aFullname: user.fullname,
       aEmail: user.email,
@@ -205,7 +206,7 @@ describe('api/users.js', function () {
         .end(async function (err) {
           if (err) return reject(err)
           try {
-            var grp = await groupSchema.getGroupByName('TEST')
+            const grp = await groupSchema.getGroupByName('TEST')
             expect(grp.isMember(user._id)).to.equal(false)
             resolve()
           } catch (e) {
@@ -216,7 +217,7 @@ describe('api/users.js', function () {
   })
 
   it('should update user preference', function (done) {
-    var data = {
+    const data = {
       preference: 'autoRefreshTicketGrid',
       value: false
     }
@@ -228,8 +229,7 @@ describe('api/users.js', function () {
       .send(data)
       .set('Accept', 'application/json')
       .expect(function (res) {
-        if (res.body.success !== true || res.body.user.preferences.autoRefreshTicketGrid !== false)
-          throw new Error('Unable to update user')
+        if (res.body.success !== true || res.body.user.preferences.autoRefreshTicketGrid !== false) { throw new Error('Unable to update user') }
       })
       .expect(200, done)
   })

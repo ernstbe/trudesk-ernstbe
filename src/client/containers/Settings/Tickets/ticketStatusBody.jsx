@@ -73,7 +73,7 @@ const TicketStatusBody = ({ status, fetchSettings, showModal }) => {
   return (
     <div>
       <form>
-        <div className={'ticket-status-general-wrapper'}>
+        <div className='ticket-status-general-wrapper'>
           <h2 className='text-light'>General</h2>
           <hr style={{ margin: '5px 0 25px 0' }} />
           <div style={{ marginBottom: 15 }}>
@@ -84,7 +84,7 @@ const TicketStatusBody = ({ status, fetchSettings, showModal }) => {
             <label style={{ display: 'inline-block', cursor: 'pointer' }}>Status Color</label>
             <ColorSelector
               showLabel={false}
-              hideRevert={true}
+              hideRevert
               defaultColor={htmlColor}
               onChange={e => setHtmlColor(e.target.value)}
             />
@@ -93,35 +93,35 @@ const TicketStatusBody = ({ status, fetchSettings, showModal }) => {
         <h2 className='text-light mt-25'>Properties</h2>
         <hr style={{ margin: '5px 0 25px 0' }} />
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
-          <h4 className={'uk-width-1-2'} style={{ flexGrow: 1 }}>
+          <h4 className='uk-width-1-2' style={{ flexGrow: 1 }}>
             SLA Timer
           </h4>
           <EnableSwitch
             stateName={`slatimer_${status.get('_id')}`}
-            label={'Yes'}
+            label='Yes'
             checked={slatimer}
             onChange={e => setSlatimer(e.target.checked)}
           />
         </div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
-          <h4 className={'uk-width-1-2'} style={{ flexGrow: 1 }}>
+          <h4 className='uk-width-1-2' style={{ flexGrow: 1 }}>
             Is Resolved
           </h4>
           <EnableSwitch
             stateName={`isResolved_${status.get('_id')}`}
-            label={'Yes'}
+            label='Yes'
             checked={isResolved}
             onChange={e => setIsResolved(e.target.checked)}
           />
         </div>
-        <div className={'uk-margin-large-top'} style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <Button text={'Save Status'} style={'success'} onClick={e => onSaveClicked(e)} />
+        <div className='uk-margin-large-top' style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <Button text='Save Status' style='success' onClick={e => onSaveClicked(e)} />
         </div>
       </form>
       {!status.get('isLocked') && (
         <>
-          <div className={'uk-margin-large-top'} style={{ display: 'block', height: 15 }} />
-          <div className={'uk-margin-large-top'}>
+          <div className='uk-margin-large-top' style={{ display: 'block', height: 15 }} />
+          <div className='uk-margin-large-top'>
             <h2 className='text-light'>Danger Zone</h2>
             <div className='danger-zone'>
               <div className='dz-box uk-clearfix'>
@@ -131,9 +131,9 @@ const TicketStatusBody = ({ status, fetchSettings, showModal }) => {
                 </div>
                 <div className='uk-float-right' style={{ paddingTop: '10px' }}>
                   <Button
-                    text={'Delete'}
-                    small={true}
-                    style={'danger'}
+                    text='Delete'
+                    small
+                    style='danger'
                     onClick={e => showDeleteTicketStatusModal(e, status)}
                   />
                 </div>

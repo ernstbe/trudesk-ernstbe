@@ -12,15 +12,15 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-var _ = require('lodash')
-var ldap = require('ldapjs')
+const _ = require('lodash')
+const ldap = require('ldapjs')
 
-var ldapClient = {}
+const ldapClient = {}
 ldapClient.client = null
 
 ldapClient.bind = function (url, userDN, password, callback) {
   ldapClient.client = ldap.createClient({
-    url: url
+    url
   })
 
   ldapClient.client.bind(userDN, password, callback)
@@ -35,9 +35,9 @@ ldapClient.bind = function (url, userDN, password, callback) {
 }
 
 ldapClient.search = function (base, filter, callback) {
-  if (ldapClient.client === null) return callback('Client is not initialized.')
+  if (ldapClient.client === null) return callback(new Error('Client is not initialized.'))
 
-  var entries = []
+  const entries = []
 
   ldapClient.client.on('error', function (err) {
     if (_.isFunction(callback)) {
@@ -50,7 +50,7 @@ ldapClient.search = function (base, filter, callback) {
   ldapClient.client.search(
     base,
     {
-      filter: filter,
+      filter,
       scope: 'sub',
       attributes: ['dn', 'displayName', 'cn', 'samAccountName', 'title', 'mail']
     },
@@ -69,14 +69,14 @@ ldapClient.search = function (base, filter, callback) {
       })
 
       res.on('end', function (result) {
-        return callback(null, { entries: entries, result: result })
+        return callback(null, { entries, result })
       })
     }
   )
 }
 
 ldapClient.unbind = function (callback) {
-  if (ldapClient.client === null) return callback('Client is not initialized')
+  if (ldapClient.client === null) return callback(new Error('Client is not initialized'))
 
   return ldapClient.client.unbind(callback)
 }

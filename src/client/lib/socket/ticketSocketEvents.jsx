@@ -14,8 +14,7 @@ const TicketSocketEvents = () => {
     socket.removeAllListeners(TICKETS_CREATED)
     socket.on(TICKETS_CREATED, () => {
       if (viewdata) {
-        if (viewdata.get('ticketSettings') && viewdata.get('ticketSettings').get('playNewTicketSound'))
-          helpers.UI.playSound('TICKET_CREATED')
+        if (viewdata.get('ticketSettings') && viewdata.get('ticketSettings').get('playNewTicketSound')) { helpers.UI.playSound('TICKET_CREATED') }
       } else {
         helpers.UI.playSound('TICKET_CREATED')
       }
@@ -24,7 +23,7 @@ const TicketSocketEvents = () => {
     return function cleanup () {
       socket.removeAllListeners(TICKETS_CREATED)
     }
-  }, [socketInitialized, viewdata]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [socketInitialized, viewdata])
 
   return <div />
 }

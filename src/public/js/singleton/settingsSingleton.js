@@ -34,7 +34,6 @@ SettingsService.refresh = callback => {
     })
 }
 
-if (_.isUndefined(window.trudeskSettingsService) || window.trudeskSettingsService === null)
-  window.trudeskSettingsService = SettingsService
+if (_.isUndefined(window.trudeskSettingsService) || window.trudeskSettingsService === null) { window.trudeskSettingsService = SettingsService }
 
 module.exports = SettingsService

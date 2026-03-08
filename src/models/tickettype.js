@@ -12,11 +12,11 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-var _ = require('lodash')
-var mongoose = require('mongoose')
-var utils = require('../helpers/utils')
+const _ = require('lodash')
+const mongoose = require('mongoose')
+const utils = require('../helpers/utils')
 
-var COLLECTION = 'tickettypes'
+const COLLECTION = 'tickettypes'
 
 // Needed for Population
 require('./ticketpriority')
@@ -30,12 +30,12 @@ require('./ticketpriority')
  * @property {object} _id ```Required``` ```unique``` MongoDB Object ID
  * @property {String} name ```Required``` ```unique``` Name of Ticket Type
  */
-var ticketTypeSchema = mongoose.Schema({
+const ticketTypeSchema = mongoose.Schema({
   name: { type: String, required: true, unique: true },
   priorities: [{ type: mongoose.Schema.Types.ObjectId, ref: 'priorities' }]
 })
 
-var autoPopulatePriorities = function (next) {
+const autoPopulatePriorities = function (next) {
   this.populate('priorities')
   return next()
 }
@@ -87,13 +87,13 @@ ticketTypeSchema.statics.getType = async function (id) {
  * @param {QueryCallback} callback MongoDB Query Callback
  */
 ticketTypeSchema.statics.getTypeByName = async function (name) {
-  return this.model(COLLECTION).findOne({ name: name }).exec()
+  return this.model(COLLECTION).findOne({ name }).exec()
 }
 
 ticketTypeSchema.methods.addPriority = function (priorityId) {
   if (!priorityId) throw new Error('Invalid Priority Id')
 
-  var self = this
+  const self = this
 
   if (!_.isArray(self.priorities)) {
     self.priorities = []
@@ -107,7 +107,7 @@ ticketTypeSchema.methods.addPriority = function (priorityId) {
 ticketTypeSchema.methods.removePriority = function (priorityId) {
   if (!priorityId) throw new Error('Invalid Priority Id')
 
-  var self = this
+  const self = this
 
   self.priorities = _.reject(self.priorities, function (p) {
     return p._id.toString() === priorityId.toString()

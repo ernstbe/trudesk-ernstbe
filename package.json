@@ -85,6 +85,7 @@
     "nconf-yaml": "1.0.2",
     "netmask": "2.0.2",
     "node-cache": "5.1.2",
+    "node-cron": "^4.2.1",
     "nodemailer": "8.0.1",
     "object-hash": "3.0.0",
     "passport": "0.6.0",
@@ -93,9 +94,8 @@
     "passport-local": "1.0.0",
     "passport-totp": "0.0.2",
     "passport.socketio": "3.7.0",
-    "pdfkit": "0.13.0",
+    "pdfkit": "^0.17.2",
     "piexifjs": "1.0.6",
-
     "prop-types": "15.8.1",
     "rate-limiter-flexible": "2.3.7",
     "react": "18.3.1",
@@ -190,6 +190,7 @@
     "prettier-standard": "16.4.1",
     "sass-loader": "16.0.7",
     "semantic-release": "19.0.3",
+    "snazzy": "^9.0.0",
     "standard": "17.1.2",
     "style-loader": "4.0.0",
     "superagent": "8.0.0",
@@ -269,7 +270,8 @@
       "/public/",
       "/mobile/",
       "/src/public/js/plugins/",
-      "/src/public/js/vendor/"
+      "/src/public/js/vendor/",
+      "/src/client/components/OffCanvasEditor/"
     ],
     "globals": [
       "define",
@@ -278,7 +280,13 @@
       "ROLES",
       "io",
       "d3",
-      "History"
+      "History",
+      "localStorage",
+      "location"
+    ],
+    "env": [
+      "mocha",
+      "browser"
     ]
   },
   "prettier": {

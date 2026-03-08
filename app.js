@@ -13,7 +13,6 @@
  *  Copyright (c) 2014-2022 Trudesk, Inc. All rights reserved.
  */
 
-const async = require('async')
 const path = require('path')
 const fs = require('fs')
 const winston = require('./src/logger')

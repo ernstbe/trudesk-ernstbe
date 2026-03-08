@@ -49,16 +49,16 @@ const TitlePagination = ({ limit = 50, total, prevEnabled, nextEnabled, currentP
   const startEnd = calcStartEnd(currentPage, limit)
 
   return (
-    <div className={'pagination uk-float-left uk-clearfix'} ref={parentRef}>
-      <span className={'pagination-info'}>
+    <div className='pagination uk-float-left uk-clearfix' ref={parentRef}>
+      <span className='pagination-info'>
         {formatNumber(startEnd.start)} - {formatNumber(startEnd.end)} of{' '}
         {formatNumber(total)}
       </span>
-      <ul className={'button-group'}>
+      <ul className='button-group'>
         <li className='pagination'>
           <a
             href={prevEnabled ? link(prevPage) : '#'}
-            title={'Previous Page'}
+            title='Previous Page'
             className={'btn md-btn-wave-light' + (!prevEnabled ? ' no-ajaxy' : '')}
           >
             <i className='fa fa-large fa-chevron-left' />
@@ -67,7 +67,7 @@ const TitlePagination = ({ limit = 50, total, prevEnabled, nextEnabled, currentP
         <li className='pagination'>
           <a
             href={nextEnabled ? link(nextPage) : '#'}
-            title={'Next Page'}
+            title='Next Page'
             className={'btn md-btn-wave-light' + (!nextEnabled ? ' no-ajaxy' : '')}
           >
             <i className='fa fa-large fa-chevron-right' />

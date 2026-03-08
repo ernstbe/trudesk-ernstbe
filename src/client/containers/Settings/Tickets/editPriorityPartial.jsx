@@ -77,24 +77,24 @@ const EditPriorityPartial = ({ priority, fetchSettings }) => {
         <div className='uk-grid uk-grid-collapse uk-clearfix'>
           <div className='uk-width-1-4'>
             <label>Priority Name</label>
-            <input name={'name'} type='text' className={'md-input'} defaultValue={priority.get('name')} />
+            <input name='name' type='text' className='md-input' defaultValue={priority.get('name')} />
           </div>
           <div className='uk-width-1-4 uk-padding-small-sides'>
             <label>SLA Overdue (minutes)</label>
-            <input name={'overdueIn'} type='text' className={'md-input'} defaultValue={priority.get('overdueIn')} />
+            <input name='overdueIn' type='text' className='md-input' defaultValue={priority.get('overdueIn')} />
           </div>
           <div className='uk-width-1-4 uk-padding-small-sides'>
             <ColorSelector
-              inputName={'htmlColor'}
+              inputName='htmlColor'
               defaultColor={priority.get('htmlColor')}
-              hideRevert={true}
-              validationEnabled={true}
+              hideRevert
+              validationEnabled
             />
           </div>
           <div className='uk-width-1-4'>
             <div className='md-btn-group uk-float-right uk-text-right mt-5'>
-              <Button small={true} text={'Cancel'} onClick={() => toggleEditPriority()} />
-              <Button text={'Save'} small={true} style={'success'} type={'submit'} />
+              <Button small text='Cancel' onClick={() => toggleEditPriority()} />
+              <Button text='Save' small style='success' type='submit' />
             </div>
           </div>
         </div>

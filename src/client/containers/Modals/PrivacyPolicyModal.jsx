@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react'
-import PropTypes from 'prop-types'
 import ReactMarkdown from 'react-markdown'
 import gfm from 'remark-gfm'
 import rehypeRaw from 'rehype-raw'
@@ -24,8 +23,8 @@ const PrivacyPolicyModal = () => {
   }, [])
 
   return (
-    <BaseModal large={true} options={{}}>
-      <div className={'uk-overflow-container'}>
+    <BaseModal large options={{}}>
+      <div className='uk-overflow-container'>
         <ReactMarkdown remarkPlugins={[gfm]} rehypePlugins={[rehypeRaw]}>
           {privacyPolicy.toString().replace(/\\n/gi, '\n')}
         </ReactMarkdown>

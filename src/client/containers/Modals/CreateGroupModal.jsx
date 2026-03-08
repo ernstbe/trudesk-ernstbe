@@ -59,7 +59,7 @@ function CreateGroupModal (props) {
     if (!$form.isValid(null, null, false)) return false
 
     const postData = {
-      name: name,
+      name,
       members: membersSelectRef.current.getSelected() || []
     }
 
@@ -73,29 +73,29 @@ function CreateGroupModal (props) {
     .toArray()
   return (
     <BaseModal>
-      <div className={'mb-25'}>
+      <div className='mb-25'>
         <h2>{t('modals.createGroup.title')}</h2>
       </div>
-      <form className={'uk-form-stacked'} onSubmit={e => onFormSubmit(e)}>
-        <div className={'uk-margin-medium-bottom'}>
+      <form className='uk-form-stacked' onSubmit={e => onFormSubmit(e)}>
+        <div className='uk-margin-medium-bottom'>
           <label>{t('modals.createGroup.groupName')}</label>
           <input
             type='text'
-            className={'md-input'}
+            className='md-input'
             value={name}
             onChange={e => onInputChange(e)}
             data-validation='length'
-            data-validation-length={'min2'}
+            data-validation-length='min2'
             data-validation-error-msg={t('modals.createGroup.validName')}
           />
         </div>
-        <div className={'uk-margin-medium-bottom'}>
+        <div className='uk-margin-medium-bottom'>
           <label style={{ marginBottom: 5 }}>{t('modals.createGroup.groupMembers')}</label>
           <MultiSelect items={mappedAccounts} onChange={() => {}} ref={r => (membersSelectRef.current = r)} />
         </div>
         <div className='uk-modal-footer uk-text-right'>
-          <Button text={t('common.close')} flat={true} waves={true} extraClass={'uk-modal-close'} />
-          <Button text={t('modals.createGroup.createButton')} flat={true} waves={true} style={'primary'} type={'submit'} />
+          <Button text={t('common.close')} flat waves extraClass='uk-modal-close' />
+          <Button text={t('modals.createGroup.createButton')} flat waves style='primary' type='submit' />
         </div>
       </form>
     </BaseModal>

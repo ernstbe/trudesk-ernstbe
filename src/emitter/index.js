@@ -47,8 +47,8 @@ eventEmitter.any = function (events, callback) {
     })
   }
 
-  for (var ev in events) {
-    if (events.hasOwnProperty(ev)) {
+  for (const ev in events) {
+    if (Object.prototype.hasOwnProperty.call(events, ev)) {
       onEvent(ev)
     }
   }

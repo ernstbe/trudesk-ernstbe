@@ -56,14 +56,14 @@ const DeleteTicketTypeModal = ({ type, settings, deleteTicketType, t, ...rest })
 
   return (
     <BaseModal {...rest} type={type} settings={settings} deleteTicketType={deleteTicketType} t={t} options={{ bgclose: false }}>
-      <form className={'uk-form-stacked'} onSubmit={e => onFormSubmit(e)}>
+      <form className='uk-form-stacked' onSubmit={e => onFormSubmit(e)}>
         <div className='uk-margin-medium-bottom uk-clearfix'>
           <h2>{t('modals.deleteType.title')}</h2>
           <span>{t('modals.deleteType.hint')}</span>
         </div>
         <div className='uk-margin-medium-bottom uk-clearfix'>
           <div className='uk-float-left' style={{ width: '100%' }}>
-            <label className={'uk-form-label nopadding nomargin'}>{t('common.type')}</label>
+            <label className='uk-form-label nopadding nomargin'>{t('common.type')}</label>
             <SingleSelect
               showTextbox={false}
               items={mappedTypes}
@@ -80,8 +80,8 @@ const DeleteTicketTypeModal = ({ type, settings, deleteTicketType, t, ...rest })
           </span>
         </div>
         <div className='uk-modal-footer uk-text-right'>
-          <Button text={t('common.cancel')} flat={true} waves={true} extraClass={'uk-modal-close'} />
-          <Button text={t('common.delete')} style={'danger'} flat={true} type={'submit'} />
+          <Button text={t('common.cancel')} flat waves extraClass='uk-modal-close' />
+          <Button text={t('common.delete')} style='danger' flat type='submit' />
         </div>
       </form>
     </BaseModal>

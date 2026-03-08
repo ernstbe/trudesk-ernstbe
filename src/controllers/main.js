@@ -111,9 +111,9 @@ mainController.dashboard = function (req, res) {
 
 mainController.loginPost = async function (req, res, next) {
   let ipAddress = req.ip
-  if (process.env.USE_XFORWARDIP == 'true') ipAddress = req.headers['x-forwarded-for']
+  if (process.env.USE_XFORWARDIP === 'true') ipAddress = req.headers['x-forwarded-for']
 
-  if (process.env.USE_USERRATELIMIT == 'true') ipAddress = ipAddress + req.body['username']
+  if (process.env.USE_USERRATELIMIT === 'true') ipAddress = ipAddress + req.body.username
 
   const [resEmailAndIP] = await Promise.all([limiterSlowBruteByIP.get(ipAddress)])
 
@@ -257,7 +257,7 @@ mainController.forgotL2Auth = async function (req, res) {
     const mailOptions = {
       to: savedUser.email,
       subject: require('../i18n').t('accountRecovery', { siteTitle: 'Trudesk' }),
-      html: html,
+      html,
       generateTextFromHTML: true
     }
 
@@ -362,8 +362,8 @@ mainController.forgotPass = async function (req, res) {
     const html = await email.render('password-reset', renderData)
     const mailOptions = {
       to: savedUser.email,
-      subject: subject,
-      html: html,
+      subject,
+      html,
       generateTextFromHTML: true
     }
 
@@ -425,7 +425,7 @@ mainController.resetl2auth = async function (req, res) {
       const mailOptions = {
         to: updated.email,
         subject: require('../i18n').t('twoFactorRemoved', { siteTitle: 'Trudesk' }),
-        html: html,
+        html,
         generateTextFromHTML: true
       }
 
@@ -500,7 +500,7 @@ mainController.resetPass = async function (req, res) {
       const mailOptions = {
         to: updated.email,
         subject: require('../i18n').t('newPassword', { siteTitle: 'Trudesk' }),
-        html: html,
+        html,
         generateTextFromHTML: true
       }
 

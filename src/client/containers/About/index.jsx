@@ -98,11 +98,11 @@ function AboutContainer ({ showModal: showModalAction, hideModal: hideModalActio
             <h6>Trudesk version {viewdata.get('version')}</h6>
             <p style={{ fontSize: '12px' }}>
               Copyright &copy;2014-2022 Trudesk, Inc. (Chris Brame) <br /> <br />
-              <a href='https://docs.trudesk.io/v1.2/' className='no-ajaxy' rel={'noreferrer'} target='_blank'>
+              <a href='https://docs.trudesk.io/v1.2/' className='no-ajaxy' rel='noreferrer' target='_blank'>
                 General Documentation
               </a>
               <br />
-              <a href='https://docs.trudesk.io/v1/api' className='no-ajaxy' rel={'noreferrer'} target='_blank'>
+              <a href='https://docs.trudesk.io/v1/api' className='no-ajaxy' rel='noreferrer' target='_blank'>
                 API Documentation
               </a>
               <br />
@@ -119,7 +119,7 @@ function AboutContainer ({ showModal: showModalAction, hideModal: hideModalActio
               <br />
               Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may not use this file
               except in compliance with the License. You may obtain a copy of the License at{' '}
-              <a href='http://www.apache.org/licenses/LICENSE-2.0' rel={'noreferrer'} target='_blank'>
+              <a href='http://www.apache.org/licenses/LICENSE-2.0' rel='noreferrer' target='_blank'>
                 http://www.apache.org/licenses/LICENSE-2.0
               </a>
               .
@@ -134,7 +134,7 @@ function AboutContainer ({ showModal: showModalAction, hideModal: hideModalActio
               <a
                 href='https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=USPWFP6P6RTKC'
                 target='_blank'
-                rel={'noreferrer'}
+                rel='noreferrer'
               >
                 Donate
               </a>
@@ -154,85 +154,85 @@ function AboutContainer ({ showModal: showModalAction, hideModal: hideModalActio
             >
               <li>
                 Chosen -{' '}
-                <a href='https://harvesthq.github.io/chosen/' target='_blank' rel={'noreferrer'}>
+                <a href='https://harvesthq.github.io/chosen/' target='_blank' rel='noreferrer'>
                   https://harvesthq.github.io/chosen/
                 </a>
               </li>
               <li>
                 D3 -{' '}
-                <a href='https://d3js.org/' target='_blank' rel={'noreferrer'}>
+                <a href='https://d3js.org/' target='_blank' rel='noreferrer'>
                   https://d3js.org/
                 </a>
               </li>
               <li>
                 Datatables -{' '}
-                <a href='https://www.datatables.net/' target='_blank' rel={'noreferrer'}>
+                <a href='https://www.datatables.net/' target='_blank' rel='noreferrer'>
                   https://www.datatables.net/
                 </a>
               </li>
               <li>
                 Easy Pie Chart -{' '}
-                <a href='https://rendro.github.io/easy-pie-chart/' target='_blank' rel={'noreferrer'}>
+                <a href='https://rendro.github.io/easy-pie-chart/' target='_blank' rel='noreferrer'>
                   https://rendro.github.io/easy-pie-chart/
                 </a>
               </li>
               <li>
                 jQuery -{' '}
-                <a href='https://jquery.com/' target='_blank' rel={'noreferrer'}>
+                <a href='https://jquery.com/' target='_blank' rel='noreferrer'>
                   https://jquery.com/
                 </a>
               </li>
               <li>
                 Js-cookie -{' '}
-                <a href='https://github.com/js-cookie/js-cookie' target='_blank' rel={'noreferrer'}>
+                <a href='https://github.com/js-cookie/js-cookie' target='_blank' rel='noreferrer'>
                   https://github.com/js-cookie/js-cookie
                 </a>
               </li>
               <li>
                 Lodash -{' '}
-                <a href='http://lodash.com/' target='_blank' rel={'noreferrer'}>
+                <a href='http://lodash.com/' target='_blank' rel='noreferrer'>
                   http://lodash.com/
                 </a>
               </li>
               <li>
                 MetricsGraphics.js -{' '}
-                <a href='http://metricsgraphicsjs.org/' target='_blank' rel={'noreferrer'}>
+                <a href='http://metricsgraphicsjs.org/' target='_blank' rel='noreferrer'>
                   http://metricsgraphicsjs.org/
                 </a>
               </li>
               <li>
                 PACE -{' '}
-                <a href='https://codebyzach.github.io/pace/' target='_blank' rel={'noreferrer'}>
+                <a href='https://codebyzach.github.io/pace/' target='_blank' rel='noreferrer'>
                   https://codebyzach.github.io/pace/
                 </a>
               </li>
               <li>
                 Selectize.js -{' '}
-                <a href='http://selectize.github.io/selectize.js/' target='_blank' rel={'noreferrer'}>
+                <a href='http://selectize.github.io/selectize.js/' target='_blank' rel='noreferrer'>
                   http://selectize.github.io/selectize.js/
                 </a>
               </li>
               <li>
                 Snackbar -{' '}
-                <a href='http://www.polonel.com/snackbar' target='_blank' rel={'noreferrer'}>
+                <a href='http://www.polonel.com/snackbar' target='_blank' rel='noreferrer'>
                   http://www.polonel.com/snackbar
                 </a>
               </li>
               <li>
                 Turndown -{' '}
-                <a href='https://github.com/domchristie/to-markdown' target='_blank' rel={'noreferrer'}>
+                <a href='https://github.com/domchristie/to-markdown' target='_blank' rel='noreferrer'>
                   https://github.com/domchristie/to-markdown
                 </a>
               </li>
               <li>
                 UIKit (customized) -{' '}
-                <a href='http://getuikit.com' target='_blank' rel={'noreferrer'}>
+                <a href='http://getuikit.com' target='_blank' rel='noreferrer'>
                   http://getuikit.com
                 </a>
               </li>
               <li>
                 Webpack -{' '}
-                <a href='https://webpack.github.io/' target='_blank' rel={'noreferrer'}>
+                <a href='https://webpack.github.io/' target='_blank' rel='noreferrer'>
                   https://webpack.github.io/
                 </a>
               </li>

@@ -90,7 +90,7 @@ ticketsController.getByStatus = function (req, res, next) {
   processor.pagetype = 'active'
   processor.object = {
     limit: 50,
-    page: page,
+    page,
     status: []
   }
 
@@ -145,7 +145,7 @@ ticketsController.getActive = function (req, res, next) {
   processor.pagetype = 'active'
   processor.object = {
     limit: 50,
-    page: page,
+    page,
     status: { isResolved: false }
   }
 
@@ -174,7 +174,7 @@ ticketsController.getAssigned = function (req, res, next) {
   processor.pagetype = 'assigned'
   processor.object = {
     limit: 50,
-    page: page,
+    page,
     status: { isResolved: false },
     assignedSelf: true,
     user: req.user._id
@@ -205,7 +205,7 @@ ticketsController.getUnassigned = function (req, res, next) {
   processor.pagetype = 'unassigned'
   processor.object = {
     limit: 50,
-    page: page,
+    page,
     status: [0, 1, 2],
     unassigned: true,
     user: req.user._id
@@ -249,19 +249,19 @@ ticketsController.filter = function (req, res, next) {
   if (!_.isUndefined(assignee) && !_.isArray(assignee)) assignee = [assignee]
 
   const filter = {
-    uid: uid,
+    uid,
     subject: xss(subject),
-    issue: issue,
+    issue,
     date: {
       start: dateStart,
       end: dateEnd
     },
-    status: status,
-    priority: priority,
-    groups: groups,
-    tags: tags,
-    types: types,
-    assignee: assignee,
+    status,
+    priority,
+    groups,
+    tags,
+    types,
+    assignee,
     raw: rawNoPage
   }
 
@@ -273,10 +273,10 @@ ticketsController.filter = function (req, res, next) {
   processor.filter = filter
   processor.object = {
     limit: 50,
-    page: page,
+    page,
     status: filter.status,
     user: req.user._id,
-    filter: filter
+    filter
   }
 
   req.processor = processor
@@ -708,7 +708,8 @@ ticketsController.uploadAttachment = function (req, res) {
       '.ai',
       '.psd'
     ]
-    const badExts = ['.html', '.htm', '.js', '.svg']
+    // eslint-disable-next-line no-unused-vars
+    const _badExts = ['.html', '.htm', '.js', '.svg']
 
     if (!allowedExts.includes(ext)) {
       error = {

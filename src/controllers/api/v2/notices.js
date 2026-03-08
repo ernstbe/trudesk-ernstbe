@@ -39,17 +39,16 @@ apiNotices.create = async (req, res) => {
 apiNotices.get = async function (req, res) {
   try {
     const notices = await Notice.find({})
-    return apiUtils.sendApiSuccess(res, { notices: notices })
+    return apiUtils.sendApiSuccess(res, { notices })
   } catch (err) {
     return apiUtils.sendApiError(res, 500, err.message)
   }
 }
 
 apiNotices.update = async function (req, res) {
-  var id = req.params.id
-  var payload = req.body
-  if (!id || !payload || !payload.name || !payload.message || !payload.color || !payload.fontColor)
-    return apiUtils.sendApiError_InvalidPostData(res)
+  const id = req.params.id
+  const payload = req.body
+  if (!id || !payload || !payload.name || !payload.message || !payload.color || !payload.fontColor) { return apiUtils.sendApiError_InvalidPostData(res) }
 
   try {
     const updatedNotice = await Notice.findOneAndUpdate({ _id: id }, payload, { new: true })
@@ -60,7 +59,7 @@ apiNotices.update = async function (req, res) {
 }
 
 apiNotices.activate = async function (req, res) {
-  var id = req.params.id
+  const id = req.params.id
   if (!id) return apiUtils.sendApiError_InvalidPostData(res)
 
   try {
@@ -82,7 +81,7 @@ apiNotices.clear = async function (req, res) {
 }
 
 apiNotices.delete = async function (req, res) {
-  var id = req.params.id
+  const id = req.params.id
   if (!id) return apiUtils.sendApiError_InvalidPostData(res)
 
   try {

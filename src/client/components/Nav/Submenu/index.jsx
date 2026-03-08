@@ -20,7 +20,7 @@ import $ from 'jquery'
 
 import Helpers from 'modules/helpers'
 
-//Sass
+// Sass
 // import './style.sass';
 
 class Submenu extends Component {
@@ -38,9 +38,9 @@ class Submenu extends Component {
 
   buildFloatingMenu (navId) {
     if (this.props.children) {
-      let $sideBarToRight = $('.sidebar-to-right')
+      const $sideBarToRight = $('.sidebar-to-right')
       $sideBarToRight.find('#side-nav-sub-' + navId).remove()
-      let ul = $('<ul id="side-nav-sub-' + this.props.id + '" class="side-nav-sub side-nav-floating"></ul>')
+      const ul = $('<ul id="side-nav-sub-' + this.props.id + '" class="side-nav-sub side-nav-floating"></ul>')
       let li = null
       if (!IsArray(this.props.children)) {
         if (this.props.children.type.name === 'NavSeperator') return
@@ -79,7 +79,7 @@ class Submenu extends Component {
 
       Helpers.UI.setupSidebarTether()
 
-      //Ajaxify new floating menu links
+      // Ajaxify new floating menu links
       $('body').ajaxify()
     }
   }

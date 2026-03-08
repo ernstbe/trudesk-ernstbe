@@ -12,10 +12,10 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-var mongoose = require('mongoose')
-var utils = require('../helpers/utils')
+const mongoose = require('mongoose')
+const utils = require('../helpers/utils')
 
-var COLLECTION = 'tags'
+const COLLECTION = 'tags'
 
 /**
  * Tag Schema
@@ -26,7 +26,7 @@ var COLLECTION = 'tags'
  * @property {object} _id ```Required``` ```unique``` MongoDB Object ID
  * @property {String} name ```Required``` ```unique``` Name of Tag
  */
-var tagSchema = mongoose.Schema({
+const tagSchema = mongoose.Schema({
   name: { type: String, required: true, unique: true },
   normalized: String
 })
@@ -39,7 +39,7 @@ tagSchema.pre('save', function (next) {
 })
 
 tagSchema.statics.getTag = async function (id) {
-  var q = this.model(COLLECTION).findOne({ _id: id })
+  const q = this.model(COLLECTION).findOne({ _id: id })
 
   return q.exec()
 }
@@ -54,7 +54,7 @@ tagSchema.statics.getTag = async function (id) {
  * @param {QueryCallback} callback MongoDB Query Callback
  */
 tagSchema.statics.getTags = async function () {
-  var q = this.model(COLLECTION)
+  const q = this.model(COLLECTION)
     .find({})
     .sort('normalized')
 
@@ -62,7 +62,7 @@ tagSchema.statics.getTags = async function () {
 }
 
 tagSchema.statics.getTagsWithLimit = async function (limit, page) {
-  var q = this.model(COLLECTION)
+  const q = this.model(COLLECTION)
     .find({})
     .sort('normalized')
 
@@ -74,7 +74,7 @@ tagSchema.statics.getTagsWithLimit = async function (limit, page) {
 }
 
 tagSchema.statics.getTagByName = async function (tagName) {
-  var q = this.model(COLLECTION)
+  const q = this.model(COLLECTION)
     .find({ name: tagName })
     .limit(1)
 
@@ -82,13 +82,13 @@ tagSchema.statics.getTagByName = async function (tagName) {
 }
 
 tagSchema.statics.tagExist = async function (tagName) {
-  var q = this.model(COLLECTION).countDocuments({ name: tagName })
+  const q = this.model(COLLECTION).countDocuments({ name: tagName })
 
   return q.exec()
 }
 
 tagSchema.statics.getTagCount = async function () {
-  var q = this.model(COLLECTION)
+  const q = this.model(COLLECTION)
     .countDocuments({})
     .lean()
 

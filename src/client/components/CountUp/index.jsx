@@ -1,6 +1,5 @@
 import React, { useRef, useEffect } from 'react'
 import PropTypes from 'prop-types'
-import useTrudeskReady from 'lib2/useTrudeskReady'
 
 import CountUpJS from 'countup'
 

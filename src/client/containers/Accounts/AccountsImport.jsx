@@ -13,7 +13,6 @@
  */
 
 import React, { useRef, useCallback } from 'react'
-import PropTypes from 'prop-types'
 import PageTitle from 'components/PageTitle'
 import PageContent from 'components/PageContent'
 import StepWizard from 'components/StepWizard'
@@ -67,7 +66,7 @@ function AccountsImportContainer () {
 
   return (
     <>
-      <PageTitle title={'Accounts Import'} />
+      <PageTitle title='Accounts Import' />
       <PageContent>
         <div className='uk-grid uk-grid-medium uk-margin-medium-bottom js-wizard-select-wrapper'>
           <div className='uk-width-1-1 uk-margin-small-bottom'>
@@ -144,8 +143,8 @@ function AccountsImportContainer () {
         </div>
 
         <StepWizard
-          title={'CSV Account Import Wizard'}
-          subtitle={'This wizard will walk you through importing accounts from a json file.'}
+          title='CSV Account Import Wizard'
+          subtitle='This wizard will walk you through importing accounts from a json file.'
           ref={csvWizardRef}
           onCancelClicked={resetWizards}
         />
@@ -279,20 +278,20 @@ function AccountsImportContainer () {
                           className='md-input'
                           name='ldap-server'
                           required
-                          defaultValue={''}
+                          defaultValue=''
                         />
                       </div>
                       <div className='uk-margin-large-bottom uk-width-1-3'>
                         <label htmlFor='ldap-bind-dn'>Bind DN (CN=Administrator,DC=domain,DC=com)</label>
-                        <input type='text' className='md-input' name='ldap-bind-dn' required defaultValue={''} />
+                        <input type='text' className='md-input' name='ldap-bind-dn' required defaultValue='' />
                       </div>
                       <div className='uk-margin-large-bottom uk-width-1-3'>
                         <label htmlFor='ldap-password'>Password</label>
-                        <input type='password' className='md-input' name='ldap-password' required defaultValue={''} />
+                        <input type='password' className='md-input' name='ldap-password' required defaultValue='' />
                       </div>
                       <div className='uk-margin-large-bottom uk-width-1-2'>
                         <label htmlFor='ldap-search-base'>Search Base</label>
-                        <input type='text' className='md-input' name='ldap-search-base' required defaultValue={''} />
+                        <input type='text' className='md-input' name='ldap-search-base' required defaultValue='' />
                       </div>
                       <div className='uk-margin-large-bottom uk-width-1-2'>
                         <label htmlFor='ldap-filter'>Search Filter (Defaults to Users)</label>

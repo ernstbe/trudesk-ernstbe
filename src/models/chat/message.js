@@ -81,8 +81,7 @@ messageSchema.statics.getConversationWithObject = async function (object) {
     const userMetaIdx = _.findIndex(object.userMeta, item => {
       return item.userId.toString() === object.requestingUser._id.toString()
     })
-    if (userMetaIdx !== -1 && object.userMeta[userMetaIdx].deletedAt)
-      deletedAt = new Date(object.userMeta[userMetaIdx].deletedAt)
+    if (userMetaIdx !== -1 && object.userMeta[userMetaIdx].deletedAt) { deletedAt = new Date(object.userMeta[userMetaIdx].deletedAt) }
   }
 
   const query = this.model(COLLECTION)

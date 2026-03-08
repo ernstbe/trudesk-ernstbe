@@ -40,17 +40,17 @@ function AssigneeDropdownPartial ({ ticketId, onClearClick, onAssigneeClick, soc
   return (
     <PDropDown
       ref={forwardedRef}
-      title={'Select Assignee'}
-      id={'assigneeDropdown'}
-      className={'opt-ignore-notice'}
-      override={true}
-      leftArrow={true}
+      title='Select Assignee'
+      id='assigneeDropdown'
+      className='opt-ignore-notice'
+      override
+      leftArrow
       topOffset={75}
       leftOffset={35}
       minHeight={215}
       rightComponent={
         <a
-          className={'hoverUnderline no-ajaxy'}
+          className='hoverUnderline no-ajaxy'
           onClick={() => {
             helpers.hideAllpDropDowns()
             if (onClearClick) onClearClick()
@@ -68,7 +68,7 @@ function AssigneeDropdownPartial ({ ticketId, onClearClick, onAssigneeClick, soc
             onClick={() => {
               if (onAssigneeClick) onAssigneeClick({ agent })
               helpers.hideAllpDropDowns()
-              if (socket) socket.emit(TICKETS_ASSIGNEE_SET, { _id: agent._id, ticketId: ticketId })
+              if (socket) socket.emit(TICKETS_ASSIGNEE_SET, { _id: agent._id, ticketId })
             }}
           >
             <a className='messageNotification no-ajaxy' role='button'>

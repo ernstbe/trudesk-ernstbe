@@ -64,8 +64,8 @@ function CommentNotePartial ({
         {isNote && <span className='uk-badge uk-badge-small nomargin-left-right text-white'>NOTE</span>}
 
         <div className='comment-body' style={{ marginTop: 10 }} ref={bodyRef}>
-          {isNote && <Fragment>{parse(comment.note)}</Fragment>}
-          {!isNote && <Fragment>{parse(comment.comment)}</Fragment>}
+          {isNote && <>{parse(comment.note)}</>}
+          {!isNote && <>{parse(comment.comment)}</>}
         </div>
       </div>
       {ticketStatus.get('isResolved') === false && (

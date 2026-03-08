@@ -17,8 +17,6 @@ const _ = require('lodash')
 const winston = require('../logger')
 const pkg = require('../../package')
 const Chance = require('chance')
-const Status = require('../models/ticketStatus')
-const counterSchema = require('../models/counters')
 
 const installController = {}
 installController.content = {}
@@ -59,8 +57,7 @@ installController.mongotest = function (req, res) {
   let CONNECTION_URI =
     'mongodb://' + data.username + ':' + dbPassword + '@' + data.host + ':' + data.port + '/' + data.database
 
-  if (data.port === '---')
-    CONNECTION_URI = 'mongodb+srv://' + data.username + ':' + dbPassword + '@' + data.host + '/' + data.database
+  if (data.port === '---') { CONNECTION_URI = 'mongodb+srv://' + data.username + ':' + dbPassword + '@' + data.host + '/' + data.database }
 
   const child = require('child_process').fork(path.join(__dirname, '../../src/install/mongotest'), {
     env: { FORK: 1, NODE_ENV: global.env, MONGOTESTURI: CONNECTION_URI }
@@ -96,11 +93,11 @@ installController.existingdb = function (req, res) {
   const YAML = require('yaml')
   const conf = {
     mongo: {
-      host: host,
-      port: port,
-      username: username,
-      password: password,
-      database: database
+      host,
+      port,
+      username,
+      password,
+      database
     },
     tokens: {
       secret: chance.hash() + chance.md5(),
@@ -121,7 +118,8 @@ installController.existingdb = function (req, res) {
 installController.install = async function (req, res) {
   const db = require('../database')
   const roleSchema = require('../models/role')
-  const roleOrderSchema = require('../models/roleorder')
+  // eslint-disable-next-line no-unused-vars
+  const _roleOrderSchema = require('../models/roleorder')
   const UserSchema = require('../models/user')
   const GroupSchema = require('../models/group')
   const Counters = require('../models/counters')
@@ -253,7 +251,8 @@ installController.install = async function (req, res) {
 
     // Step 10: Create roles
     const defaults = require('../settings/defaults')
-    const [adminRole, supportRole, userRole] = await Promise.all([
+    // eslint-disable-next-line no-unused-vars
+    const [adminRole, _supportRole, _userRole] = await Promise.all([
       roleSchema.create({
         name: 'Admin',
         description: 'Default role for admins',
@@ -337,11 +336,11 @@ installController.install = async function (req, res) {
 
       const conf = {
         mongo: {
-          host: host,
-          port: port,
-          username: username,
-          password: password,
-          database: database,
+          host,
+          port,
+          username,
+          password,
+          database,
           shard: port === '---'
         },
         tokens: {
@@ -354,7 +353,7 @@ installController.install = async function (req, res) {
         fs.writeFile(configFile, YAML.stringify(conf), function (err) {
           if (err) {
             winston.error('FS Error: ' + err.message)
-            return reject('FS Error: ' + err.message)
+            return reject(new Error('FS Error: ' + err.message))
           }
           return resolve()
         })

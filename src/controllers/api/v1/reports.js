@@ -12,16 +12,14 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-var _ = require('lodash')
-var async = require('async')
-var ticketSchema = require('../../../models/ticket')
-var groupSchema = require('../../../models/group')
-var csv = require('csv')
-var moment = require('moment')
+const _ = require('lodash')
+const async = require('async')
+const ticketSchema = require('../../../models/ticket')
+const groupSchema = require('../../../models/group')
+const csv = require('csv')
+const moment = require('moment')
 
-var settingsSchema = require('../../../models/setting')
-
-var apiReports = {
+const apiReports = {
   generate: {}
 }
 
@@ -57,8 +55,7 @@ var apiReports = {
  */
 apiReports.generate.ticketsByGroup = function (req, res) {
   const postData = req.body
-  if (!postData || !postData.startDate || !postData.endDate)
-    return res.status(400).json({ success: false, error: 'Invalid Post Data' })
+  if (!postData || !postData.startDate || !postData.endDate) { return res.status(400).json({ success: false, error: 'Invalid Post Data' }) }
 
   ticketSchema.getTicketsWithObject(
     postData.groups,
@@ -85,11 +82,10 @@ apiReports.generate.ticketsByGroup = function (req, res) {
 }
 
 apiReports.generate.ticketsByTeam = function (req, res) {
-  var postData = req.body
-  if (!postData || !postData.startDate || !postData.endDate)
-    return res.status(400).json({ success: false, error: 'Invalid Post Data' })
+  const postData = req.body
+  if (!postData || !postData.startDate || !postData.endDate) { return res.status(400).json({ success: false, error: 'Invalid Post Data' }) }
 
-  var departmentSchema = require('../../../models/department')
+  const departmentSchema = require('../../../models/department')
   departmentSchema.getDepartmentsByTeam(postData.teams, function (err, departments) {
     if (err) return res.status(500).json({ success: false, error: err.message })
 
@@ -108,7 +104,7 @@ apiReports.generate.ticketsByTeam = function (req, res) {
       function (err, tickets) {
         if (err) return res.status(500).json({ success: false, error: err.message })
 
-        var input = processReportData(tickets)
+        const input = processReportData(tickets)
 
         tickets = null
 
@@ -652,7 +648,7 @@ function processReportData (tickets) {
 }
 
 function processResponse (res, input) {
-  var headers = {
+  const headers = {
     uid: 'uid',
     type: 'type',
     priority: 'priority',

@@ -1,5 +1,4 @@
 const i18next = require('i18next')
-const path = require('path')
 
 const enEmail = require('./locales/en/email.json')
 const deEmail = require('./locales/de/email.json')

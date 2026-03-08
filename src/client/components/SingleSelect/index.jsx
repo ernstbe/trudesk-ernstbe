@@ -97,7 +97,7 @@ const SingleSelect = ({
   const value = multiple && !isArray(valueRef.current) ? [valueRef.current] : valueRef.current
 
   return (
-    <div className={'uk-clearfix'}>
+    <div className='uk-clearfix'>
       <div className='uk-width-1-1 uk-float-right' style={{ paddingRight: '10px', width: displayWidth }}>
         <select
           className='selectize'

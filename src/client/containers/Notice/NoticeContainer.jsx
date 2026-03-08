@@ -32,7 +32,7 @@ function NoticeContainer ({
 }) {
   useEffect(() => {
     fetchNoticesAction()
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     helpers.resizeAll()
@@ -102,7 +102,7 @@ function NoticeContainer ({
       ', ' +
       helpers.formatDate(notice.get('date'), helpers.getTimeFormat())
     return (
-      <TableRow key={notice.get('_id')} className={'vam nbb'} clickable={false}>
+      <TableRow key={notice.get('_id')} className='vam nbb' clickable={false}>
         <TableCell style={{ padding: '18px 15px' }}>
           <span style={{ display: 'block', width: 15, height: 15, backgroundColor: notice.get('color') }} />
         </TableCell>
@@ -112,24 +112,24 @@ function NoticeContainer ({
         <TableCell>
           <ButtonGroup>
             <Button
-              icon={'spatial_audio_off'}
-              style={'success'}
-              small={true}
-              waves={true}
+              icon='spatial_audio_off'
+              style='success'
+              small
+              waves
               onClick={() => onActivateNotice(notice.get('_id'))}
             />
             <Button
-              icon={'edit'}
-              extraClass={'hover-primary'}
-              small={true}
-              waves={true}
+              icon='edit'
+              extraClass='hover-primary'
+              small
+              waves
               onClick={() => onEditNotice(notice.toJS())}
             />
             <Button
-              icon={'delete'}
-              extraClass={'hover-danger'}
-              small={true}
-              waves={true}
+              icon='delete'
+              extraClass='hover-danger'
+              small
+              waves
               onClick={() => onDeleteNotice(notice.get('_id'))}
             />
           </ButtonGroup>
@@ -140,28 +140,28 @@ function NoticeContainer ({
   return (
     <div>
       <PageTitle
-        title={'Notices'}
+        title='Notices'
         shadow={false}
         rightComponent={
-          <div className={'uk-grid uk-grid-collapse'}>
-            <div className={'uk-width-1-1 mt-15 uk-text-right'}>
+          <div className='uk-grid uk-grid-collapse'>
+            <div className='uk-width-1-1 mt-15 uk-text-right'>
               {helpers.canUser('notices:deactivate') && (
                 <Button
-                  text={'Deactivate'}
+                  text='Deactivate'
                   flat={false}
-                  small={true}
+                  small
                   waves={false}
-                  extraClass={'hover-accent'}
+                  extraClass='hover-accent'
                   onClick={() => onDeactivateNotice()}
                 />
               )}
               {helpers.canUser('notices:create') && (
                 <Button
-                  text={'Create'}
+                  text='Create'
                   flat={false}
-                  small={true}
+                  small
                   waves={false}
-                  extraClass={'hover-success'}
+                  extraClass='hover-success'
                   onClick={() => {
                     showModalAction('CREATE_NOTICE')
                   }}
@@ -171,18 +171,18 @@ function NoticeContainer ({
           </div>
         }
       />
-      <PageContent padding={0} paddingBottom={0} extraClass={'uk-position-relative'}>
+      <PageContent padding={0} paddingBottom={0} extraClass='uk-position-relative'>
         <Table
           style={{ margin: 0 }}
-          extraClass={'pDataTable'}
-          stickyHeader={true}
-          striped={true}
+          extraClass='pDataTable'
+          stickyHeader
+          striped
           headers={[
-            <TableHeader key={0} width={45} height={50} text={''} />,
-            <TableHeader key={1} width={'20%'} text={'Name'} />,
-            <TableHeader key={2} width={'60%'} text={'Message'} />,
-            <TableHeader key={3} width={'10%'} text={'Date'} />,
-            <TableHeader key={4} width={150} text={''} />
+            <TableHeader key={0} width={45} height={50} text='' />,
+            <TableHeader key={1} width='20%' text='Name' />,
+            <TableHeader key={2} width='60%' text='Message' />,
+            <TableHeader key={3} width='10%' text='Date' />,
+            <TableHeader key={4} width={150} text='' />
           ]}
         >
           {!loading && notices.size < 1 && (

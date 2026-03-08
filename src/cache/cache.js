@@ -27,7 +27,7 @@ cache.init = function () {
   setInterval(spawnCache, 55 * 60 * 1000)
 }
 
-cache.forceRefresh = function() {
+cache.forceRefresh = function () {
   spawnCache()
 }
 

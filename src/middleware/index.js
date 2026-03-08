@@ -116,10 +116,10 @@ module.exports = function (app, db, callback) {
 
         // Maintenance Mode
         app.use(function (req, res, next) {
-          var settings = require('../settings/settingsUtil')
+          const settings = require('../settings/settingsUtil')
           settings.getSettings(function (err, setting) {
             if (err) return winston.warn(err)
-            var maintenanceMode = setting.data.settings.maintenanceMode
+            const maintenanceMode = setting.data.settings.maintenanceMode
 
             if (req.user) {
               if (maintenanceMode.value === true && !req.user.role.isAdmin) {
@@ -172,11 +172,9 @@ module.exports = function (app, db, callback) {
     ],
     function (err, s) {
       if (err) {
-
         winston.error(err)
         throw new Error(err)
       }
-
 
       callback(middleware, s)
     }

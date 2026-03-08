@@ -58,7 +58,7 @@ const SplitSettingsPanel = ({ title, subtitle, rightComponent, menuItems, toolti
               </i>
             )}
           </h6>
-          <h5 style={{ padding: '0 0 10px 15px', margin: '2px 0 0 0', fontSize: '12px' }} className={'uk-text-muted'}>
+          <h5 style={{ padding: '0 0 10px 15px', margin: '2px 0 0 0', fontSize: '12px' }} className='uk-text-muted'>
             {subtitle}
           </h5>
         </div>
@@ -72,7 +72,7 @@ const SplitSettingsPanel = ({ title, subtitle, rightComponent, menuItems, toolti
               className='split-panel-categories uk-width-1-4 uk-width-large-1-5 scrollable br'
               style={{ minHeight: '300px', overflow: 'hidden auto' }}
             >
-              <Menu hideBorders={true} draggable={menuDraggable} onMenuDrag={menuOnDrag}>
+              <Menu hideBorders draggable={menuDraggable} onMenuDrag={menuOnDrag}>
                 {menuItems.map(item => {
                   return (
                     <MenuItem
@@ -106,7 +106,7 @@ const SplitSettingsPanel = ({ title, subtitle, rightComponent, menuItems, toolti
             </div>
           </div>
         </div>
-        {footer && <div className={'panel-footer'}>{footer}</div>}
+        {footer && <div className='panel-footer'>{footer}</div>}
       </div>
     </div>
   )

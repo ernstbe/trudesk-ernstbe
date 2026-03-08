@@ -62,7 +62,7 @@ const FilterTicketsModal = ({
       unloadGroups()
       unloadAccounts()
     }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     helpers.UI.reRenderInputs()
@@ -138,10 +138,10 @@ const FilterTicketsModal = ({
   return (
     <BaseModal options={{ bgclose: false }}>
       <h2 style={{ marginBottom: 20 }}>{t('modals.filterTickets.title')}</h2>
-      <form className={'uk-form-stacked'} onSubmit={e => onSubmit(e)}>
+      <form className='uk-form-stacked' onSubmit={e => onSubmit(e)}>
         <div className='uk-margin-medium-bottom'>
           <label>{t('common.subject')}</label>
-          <input type='text' name={'subject'} className={'md-input'} />
+          <input type='text' name='subject' className='md-input' />
         </div>
         <div className='uk-grid uk-grid-collapse uk-margin-small-bottom'>
           <div className='uk-width-1-2' style={{ padding: '0 15px 0 0' }}>
@@ -174,7 +174,7 @@ const FilterTicketsModal = ({
             <label htmlFor='filterStatus' className='uk-form-label' style={{ paddingBottom: 0, marginBottom: 0 }}>
               {t('common.status')}
             </label>
-            <SingleSelect items={statusItems} showTextbox={false} multiple={true} ref={statusSelectRef} />
+            <SingleSelect items={statusItems} showTextbox={false} multiple ref={statusSelectRef} />
           </div>
         </div>
         <div className='uk-grid uk-grid-collapse uk-margin-small-bottom'>
@@ -182,7 +182,7 @@ const FilterTicketsModal = ({
             <label htmlFor='filterStatus' className='uk-form-label' style={{ paddingBottom: 0, marginBottom: 0 }}>
               {t('settings.ticketTags')}
             </label>
-            <SingleSelect items={tagItems} showTextbox={true} multiple={true} ref={tagsSelectRef} />
+            <SingleSelect items={tagItems} showTextbox multiple ref={tagsSelectRef} />
           </div>
         </div>
         <div className='uk-grid uk-grid-collapse uk-margin-small-bottom'>
@@ -190,7 +190,7 @@ const FilterTicketsModal = ({
             <label htmlFor='filterStatus' className='uk-form-label' style={{ paddingBottom: 0, marginBottom: 0 }}>
               {t('common.type')}
             </label>
-            <SingleSelect items={typeItems} showTextbox={false} multiple={true} ref={typesSelectRef} />
+            <SingleSelect items={typeItems} showTextbox={false} multiple ref={typesSelectRef} />
           </div>
         </div>
         <div className='uk-grid uk-grid-collapse uk-margin-small-bottom'>
@@ -201,7 +201,7 @@ const FilterTicketsModal = ({
             <SingleSelect
               items={assigneeItems}
               showTextbox={false}
-              multiple={true}
+              multiple
               ref={assigneeSelectRef}
             />
           </div>
@@ -211,12 +211,12 @@ const FilterTicketsModal = ({
             <label htmlFor='filterStatus' className='uk-form-label' style={{ paddingBottom: 0, marginBottom: 0 }}>
               {t('common.group')}
             </label>
-            <SingleSelect items={groupItems} showTextbox={false} multiple={true} ref={groupSelectRef} />
+            <SingleSelect items={groupItems} showTextbox={false} multiple ref={groupSelectRef} />
           </div>
         </div>
         <div className='uk-modal-footer uk-text-right'>
-          <Button text={t('common.cancel')} flat={true} waves={true} extraClass={'uk-modal-close'} />
-          <Button text={t('modals.filterTickets.applyFilter')} style={'primary'} flat={false} type={'submit'} />
+          <Button text={t('common.cancel')} flat waves extraClass='uk-modal-close' />
+          <Button text={t('modals.filterTickets.applyFilter')} style='primary' flat={false} type='submit' />
         </div>
       </form>
     </BaseModal>

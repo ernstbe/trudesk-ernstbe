@@ -174,6 +174,7 @@ settingsController.logs = function (req, res) {
 
   const AnsiUp = require('ansi_up')
 
+  // eslint-disable-next-line new-cap
   const ansiUp = new AnsiUp.default()
 
   const file = path.join(__dirname, '../../logs/output.log')

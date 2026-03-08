@@ -27,9 +27,6 @@ import Grid from 'components/Grid'
 import GridItem from 'components/Grid/GridItem'
 import PageContent from 'components/PageContent'
 import DropdownItem from 'components/Dropdown/DropdownItem'
-import DropdownTrigger from 'components/Dropdown/DropdownTrigger'
-import DropdownHeader from 'components/Dropdown/DropdownHeader'
-import Dropdown from 'components/Dropdown'
 import ButtonGroup from 'components/ButtonGroup'
 import Button from 'components/Button'
 import InfiniteScroll from 'react-infinite-scroller'
@@ -51,6 +48,7 @@ function AccountsContainer ({
 }) {
   const [initialLoad, setInitialLoad] = useState(true)
   const [hasMore, setHasMore] = useState(true)
+  // eslint-disable-next-line no-unused-vars
   const [pageStart, setPageStart] = useState(-1)
 
   useEffect(() => {
@@ -95,49 +93,27 @@ function AccountsContainer ({
     })
   }, [fetchAccountsAction, view])
 
-  const onSearchKeyUp = useCallback((e) => {
-    const keyCode = e.keyCode || e.which
-    const search = e.target.value
-    if (keyCode === 13) {
-      if (search.length > 2) {
-        unloadAccountsAction().then(() => {
-          setHasMore(false)
-          fetchAccountsAction({ limit: -1, search: search }).then(({ response }) => {
-            setPageStart(-1)
-            setHasMore(response.count >= 25)
-          })
-        })
-      } else if (search.length === 0) {
-        unloadAccountsAction().then(() => {
-          setPageStart(-1)
-          getUsersWithPage(0)
-        })
-      }
-    }
-  }, [unloadAccountsAction, fetchAccountsAction, getUsersWithPage])
-
   const items =
     accountsState.accounts &&
     accountsState.accounts.map(user => {
       const userImage = user.get('image') || 'defaultProfile.jpg'
-      let actionMenu = [<DropdownItem key={0} text={t('common.edit')} onClick={e => onEditAccountClicked(e, user)} />]
-      if (user.get('deleted'))
-        actionMenu.push(<DropdownItem key={2} text={t('accounts.enableAccount')} onClick={e => onEnableAccountClicked(e, user)} />)
-      else
+      const actionMenu = [<DropdownItem key={0} text={t('common.edit')} onClick={e => onEditAccountClicked(e, user)} />]
+      if (user.get('deleted')) { actionMenu.push(<DropdownItem key={2} text={t('accounts.enableAccount')} onClick={e => onEnableAccountClicked(e, user)} />) } else {
         actionMenu.push(
           <DropdownItem
             key={1}
             text={t('common.delete')}
-            extraClass={'uk-text-danger'}
+            extraClass='uk-text-danger'
             onClick={e => onDeleteAccountClicked(e, user)}
           />
         )
+      }
       const isAdmin = user.getIn(['role', 'isAdmin']) || false
       const isAgent = user.getIn(['role', 'isAgent']) || false
       const customer = !isAdmin && !isAgent
       const isDeleted = user.get('deleted') || false
       return (
-        <GridItem key={user.get('_id')} width={'1-5'} xLargeWidth={'1-6'} extraClass={'mb-25'}>
+        <GridItem key={user.get('_id')} width='1-5' xLargeWidth='1-6' extraClass='mb-25'>
           <TruCard
             loaderActive={user.get('loading')}
             menu={actionMenu}
@@ -154,9 +130,9 @@ function AccountsContainer ({
                     userId={user.get('_id')}
                     image={userImage}
                     style={{ marginTop: 10 }}
-                    showBorder={true}
-                    borderColor={'#ffffff'}
-                    showLargerBubble={true}
+                    showBorder
+                    borderColor='#ffffff'
+                    showLargerBubble
                   />
                 </div>
                 <h3 className='tru-card-head-text uk-text-center'>
@@ -227,47 +203,47 @@ function AccountsContainer ({
       <PageTitle
         title={title}
         rightComponent={
-          <div className={'uk-grid uk-grid-collapse'}>
-            {/*<div className={'uk-width-3-4 pr-10'}>*/}
-            {/*  <div className='md-input-wrapper' style={{ marginTop: '10px' }}>*/}
-            {/*    <label className={'uk-form-label'}>Find Account</label>*/}
-            {/*    <input type='text' className={'md-input uk-margin-remove'} onKeyUp={e => onSearchKeyUp(e)} />*/}
-            {/*    <div className='md-input-bar' />*/}
-            {/*  </div>*/}
-            {/*</div>*/}
-            <div className={'uk-width-1-4 mt-15 pr-20 uk-clearfix'}>
-              <ButtonGroup classNames={'uk-clearfix uk-float-right'}>
+          <div className='uk-grid uk-grid-collapse'>
+            {/* <div className={'uk-width-3-4 pr-10'}> */}
+            {/*  <div className='md-input-wrapper' style={{ marginTop: '10px' }}> */}
+            {/*    <label className={'uk-form-label'}>Find Account</label> */}
+            {/*    <input type='text' className={'md-input uk-margin-remove'} onKeyUp={e => onSearchKeyUp(e)} /> */}
+            {/*    <div className='md-input-bar' /> */}
+            {/*  </div> */}
+            {/* </div> */}
+            <div className='uk-width-1-4 mt-15 pr-20 uk-clearfix'>
+              <ButtonGroup classNames='uk-clearfix uk-float-right'>
                 <Button
                   text={t('common.create')}
                   hasDropdown={false}
                   flat={false}
-                  small={true}
+                  small
                   waves={false}
-                  extraClass={'hover-accent'}
+                  extraClass='hover-accent'
                   onClick={() => showModalAction('CREATE_ACCOUNT')}
                 />
-                {/*{helpers.canUser('accounts:import', true) && (*/}
-                {/*  <DropdownTrigger mode={'click'} pos={'bottom-right'} offset={5} extraClass={'uk-float-right'}>*/}
-                {/*    <Button*/}
-                {/*      text={''}*/}
-                {/*      hasDropdown={true}*/}
-                {/*      small={true}*/}
-                {/*      waves={false}*/}
-                {/*      styleOverride={{ padding: '0 5px 0 0' }}*/}
-                {/*      extraClass={'pr-5 no-border-radius nbl bg-accent md-color-white hover-accent'}*/}
-                {/*    />*/}
-                {/*    <Dropdown small={true}>*/}
-                {/*      <DropdownHeader text={'Account Actions'} />*/}
-                {/*      <DropdownItem text={'Import'} href={'/accounts/import'} />*/}
-                {/*    </Dropdown>*/}
-                {/*  </DropdownTrigger>*/}
-                {/*)}*/}
+                {/* {helpers.canUser('accounts:import', true) && ( */}
+                {/*  <DropdownTrigger mode={'click'} pos={'bottom-right'} offset={5} extraClass={'uk-float-right'}> */}
+                {/*    <Button */}
+                {/*      text={''} */}
+                {/*      hasDropdown={true} */}
+                {/*      small={true} */}
+                {/*      waves={false} */}
+                {/*      styleOverride={{ padding: '0 5px 0 0' }} */}
+                {/*      extraClass={'pr-5 no-border-radius nbl bg-accent md-color-white hover-accent'} */}
+                {/*    /> */}
+                {/*    <Dropdown small={true}> */}
+                {/*      <DropdownHeader text={'Account Actions'} /> */}
+                {/*      <DropdownItem text={'Import'} href={'/accounts/import'} /> */}
+                {/*    </Dropdown> */}
+                {/*  </DropdownTrigger> */}
+                {/* )} */}
               </ButtonGroup>
             </div>
           </div>
         }
       />
-      <PageContent id={'accounts-page-content'}>
+      <PageContent id='accounts-page-content'>
         <InfiniteScroll
           pageStart={pageStart}
           loadMore={getUsersWithPage}
@@ -275,14 +251,14 @@ function AccountsContainer ({
           initialLoad={initialLoad}
           threshold={25}
           loader={
-            <div className={'uk-width-1-1 uk-text-center'} key={0}>
-              <i className={'uk-icon-refresh uk-icon-spin'} />
+            <div className='uk-width-1-1 uk-text-center' key={0}>
+              <i className='uk-icon-refresh uk-icon-spin' />
             </div>
           }
           useWindow={false}
           getScrollParent={() => document.getElementById('accounts-page-content')}
         >
-          <Grid gutterSize={'medium'}>{items}</Grid>
+          <Grid gutterSize='medium'>{items}</Grid>
         </InfiniteScroll>
       </PageContent>
     </div>

@@ -28,7 +28,6 @@ function ChatWindow ({
   const messagesRef = useRef(null)
 
   const [conversation, setConversation] = useState(null)
-  const [messagesPage, setMessagesPage] = useState(0)
 
   const onChatTextBoxGrow = useCallback((self, oldHeight, newHeight) => {
     if (oldHeight === newHeight || !messagesRef.current) return
@@ -78,8 +77,7 @@ function ChatWindow ({
       socket.off(MESSAGES_UI_USER_TYPING, onUserTyping)
       socket.off(MESSAGES_SAVE_CHAT_WINDOW_COMPLETE, onSaveChatWindowComplete)
     }
-  }, [socket]) // eslint-disable-line react-hooks/exhaustive-deps
-
+  }, [socket])
   useEffect(() => {
     helpers.setupScrollers()
     if (messagesRef.current) {
@@ -117,11 +115,13 @@ function ChatWindow ({
     }
 
     // Save chat window
-    if (socket) socket.emit(MESSAGES_SAVE_CHAT_WINDOW, {
-      userId: sessionUser._id,
-      convoId: conversationId,
-      remove: true
-    })
+    if (socket) {
+      socket.emit(MESSAGES_SAVE_CHAT_WINDOW, {
+        userId: sessionUser._id,
+        convoId: conversationId,
+        remove: true
+      })
+    }
   }, [socket, sessionUser, conversationId])
 
   if (!sessionUser || !conversation) return null
@@ -137,7 +137,7 @@ function ChatWindow ({
             </a>
           </div>
           <h4 className='chat-box-title-text-wrapper' onClick={e => onTitleClicked(e)}>
-            <a href='#' className={'no-ajaxy'}>
+            <a href='#' className='no-ajaxy'>
               {conversation.partner.fullname}
             </a>
           </h4>
@@ -146,7 +146,7 @@ function ChatWindow ({
           {conversation.messages.map(message => {
             if (message.owner._id.toString() === sessionUser._id.toString()) {
               return (
-                <div key={message._id} className={'chat-message chat-message-user uk-clearfix'}>
+                <div key={message._id} className='chat-message chat-message-user uk-clearfix'>
                   <div className='chat-text-wrapper'>
                     <div className='chat-text chat-text-user'>
                       <div className='chat-text-inner'>
@@ -160,7 +160,7 @@ function ChatWindow ({
               // From Partner
               const imageUrl = message.owner.image || 'defaultProfile.jpg'
               return (
-                <div key={message._id} className={'chat-message uk-clearfix'}>
+                <div key={message._id} className='chat-message uk-clearfix'>
                   <div className='chat-user-profile'>
                     <img src={`/uploads/users/${imageUrl}`} alt={message.owner.fullname} />
                   </div>
@@ -177,7 +177,7 @@ function ChatWindow ({
           })}
         </div>
         <div className='chat-box-text'>
-          <textarea ref={messageBoxRef} rows='1' className='textAreaAutogrow autogrow-short'></textarea>
+          <textarea ref={messageBoxRef} rows='1' className='textAreaAutogrow autogrow-short' />
         </div>
       </div>
     </div>

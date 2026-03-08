@@ -151,7 +151,7 @@ define('modules/ajaxify', ['jquery', 'lodash', 'modules/helpers', 'history'], fu
       // Ajax Request the Traditional Page
 
       $.ajax({
-        url: url,
+        url,
         success: function (data) {
           // Prepare
           const $data = $(documentHtml(data))
@@ -177,8 +177,8 @@ define('modules/ajaxify', ['jquery', 'lodash', 'modules/helpers', 'history'], fu
             $oldContent.find('*').off('click click.chosen mouseup mousemove mousedown change')
 
             // Manually Unload React components from renders (React 18 root API)
-            var reactRoots = window.react.roots || {}
-            var containerIds = [
+            const reactRoots = window.react.roots || {}
+            const containerIds = [
               'dashboard-container',
               'tickets-container',
               'single-ticket-container',
@@ -238,8 +238,7 @@ define('modules/ajaxify', ['jquery', 'lodash', 'modules/helpers', 'history'], fu
             })
 
             // Complete the change
-            if ($body.ScrollTo || false)
-              $body.ScrollTo(scrollOptions) /* http://balupton.com/projects/jquery-scrollto */
+            if ($body.ScrollTo || false) { $body.ScrollTo(scrollOptions) } /* http://balupton.com/projects/jquery-scrollto */
             $body.removeClass('loading')
             $window.trigger(completedEventName)
 

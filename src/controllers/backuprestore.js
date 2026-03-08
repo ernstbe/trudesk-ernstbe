@@ -58,7 +58,7 @@ backupRestore.getBackups = function (req, res) {
       function (err) {
         if (err) return res.status(400).json({ success: false, error: err })
         fileWithStats = _.sortBy(fileWithStats, function (o) {
-          return new moment(o.time)
+          return moment(o.time)
         }).reverse()
         return res.json({ success: true, files: fileWithStats })
       }
@@ -260,8 +260,7 @@ backupRestore.uploadBackup = function (req, res) {
       return res.status(400).json({ success: false, error: 'Invalid Form Data' })
     }
 
-    if (!fs.existsSync(object.filePath))
-      return res.status(400).json({ success: false, error: 'File failed to save to disk' })
+    if (!fs.existsSync(object.filePath)) { return res.status(400).json({ success: false, error: 'File failed to save to disk' }) }
 
     return res.json({ success: true })
   })

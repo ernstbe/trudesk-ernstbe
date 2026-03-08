@@ -12,66 +12,65 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-var _ = require('lodash')
-var userSchema = require('../../../models/user')
-var permissions = require('../../../permissions')
+const _ = require('lodash')
+const userSchema = require('../../../models/user')
+const permissions = require('../../../permissions')
 const socketEventConsts = require('../../../socketio/socketEventConsts')
 
-var rolesV1 = {}
+const rolesV1 = {}
 
 rolesV1.get = async function (req, res) {
   try {
-    var roleSchema = require('../../../models/role')
-    var roleOrderSchema = require('../../../models/roleorder')
+    const roleSchema = require('../../../models/role')
+    const roleOrderSchema = require('../../../models/roleorder')
 
-    var [roles, roleOrder] = await Promise.all([
+    const [roles, roleOrder] = await Promise.all([
       roleSchema.find({}),
       roleOrderSchema.getOrder()
     ])
 
-    return res.json({ success: true, roles: roles, roleOrder: roleOrder })
+    return res.json({ success: true, roles, roleOrder })
   } catch (err) {
     return res.status(400).json({ success: false, error: err })
   }
 }
 
 rolesV1.create = async function (req, res) {
-  var name = req.body.name
+  const name = req.body.name
   if (!name) return res.status(400).json({ success: false, error: 'Invalid Post Data' })
 
   try {
-    var roleSchema = require('../../../models/role')
-    var roleOrder = require('../../../models/roleorder')
+    const roleSchema = require('../../../models/role')
+    const roleOrder = require('../../../models/roleorder')
 
-    var role = await roleSchema.create({ name: name })
+    const role = await roleSchema.create({ name })
     if (!role) throw new Error('Invalid Role')
 
-    var ro = await roleOrder.getOrder()
+    const ro = await roleOrder.getOrder()
     ro.order.push(role._id)
-    var savedRo = await ro.save()
+    const savedRo = await ro.save()
 
     global.roleOrder = savedRo
     global.roles.push(role)
 
-    return res.json({ success: true, role: role, roleOrder: savedRo })
+    return res.json({ success: true, role, roleOrder: savedRo })
   } catch (err) {
     return res.status(400).json({ success: false, error: err })
   }
 }
 
 rolesV1.update = async function (req, res) {
-  var _id = req.params.id
-  var data = req.body
-  if (_.isUndefined(_id) || _.isUndefined(data))
-    return res.status(400).json({ success: false, error: 'Invalid Post Data' })
+  const _id = req.params.id
+  const data = req.body
+  if (_.isUndefined(_id) || _.isUndefined(data)) { return res.status(400).json({ success: false, error: 'Invalid Post Data' }) }
 
   try {
-    var emitter = require('../../../emitter')
-    var hierarchy = data.hierarchy ? data.hierarchy : false
-    var cleaned = _.omit(data, ['_id', 'hierarchy'])
-    var k = permissions.buildGrants(cleaned)
-    var roleSchema = require('../../../models/role')
-    var role = await roleSchema.get(data._id)
+    const emitter = require('../../../emitter')
+    const hierarchy = data.hierarchy ? data.hierarchy : false
+    const cleaned = _.omit(data, ['_id', 'hierarchy'])
+    const k = permissions.buildGrants(cleaned)
+    const roleSchema = require('../../../models/role')
+    const role = await roleSchema.get(data._id)
     await role.updateGrantsAndHierarchy(k, hierarchy)
 
     emitter.emit(socketEventConsts.ROLES_FLUSH)
@@ -83,18 +82,18 @@ rolesV1.update = async function (req, res) {
 }
 
 rolesV1.delete = async function (req, res) {
-  var _id = req.params.id
-  var newRoleId = req.body.newRoleId
+  const _id = req.params.id
+  const newRoleId = req.body.newRoleId
   if (!_id || !newRoleId) return res.status(400).json({ success: false, error: 'Invalid Post Data' })
 
   try {
-    var roleSchema = require('../../../models/role')
-    var roleOrderSchema = require('../../../models/roleorder')
+    const roleSchema = require('../../../models/role')
+    const roleOrderSchema = require('../../../models/roleorder')
 
     await userSchema.updateMany({ role: _id }, { $set: { role: newRoleId } })
-    await roleSchema.deleteOne({ _id: _id })
+    await roleSchema.deleteOne({ _id })
 
-    var ro = await roleOrderSchema.getOrder()
+    const ro = await roleOrderSchema.getOrder()
     await ro.removeFromOrder(_id)
 
     await permissions.register()

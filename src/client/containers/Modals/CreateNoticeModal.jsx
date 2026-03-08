@@ -40,10 +40,10 @@ function CreateNoticeModal (props) {
     if (!$form.isValid(null, null, false)) return false
 
     const payload = {
-      name: name,
-      message: message,
-      color: color,
-      fontColor: fontColor
+      name,
+      message,
+      color,
+      fontColor
     }
 
     props.createNotice(payload).then(() => {
@@ -53,30 +53,30 @@ function CreateNoticeModal (props) {
 
   return (
     <BaseModal {...props} options={{ bgclose: false }}>
-      <div className={'mb-25'}>
+      <div className='mb-25'>
         <h2>{t('modals.createNotice.title')}</h2>
       </div>
-      <form className={'uk-form-stacked'} onSubmit={e => onFormSubmit(e)}>
-        <div className={'uk-margin-medium-bottom'}>
+      <form className='uk-form-stacked' onSubmit={e => onFormSubmit(e)}>
+        <div className='uk-margin-medium-bottom'>
           <label>{t('common.name')}</label>
           <input
             type='text'
-            className={'md-input'}
+            className='md-input'
             value={name}
             onChange={e => onInputChange('name', e)}
             data-validation='length'
-            data-validation-length={'min2'}
+            data-validation-length='min2'
             data-validation-error-msg={t('modals.createNotice.validName')}
           />
         </div>
-        <div className={'uk-margin-medium-bottom'}>
+        <div className='uk-margin-medium-bottom'>
           <label>{t('modals.createNotice.message')}</label>
           <textarea
-            className={'md-input'}
+            className='md-input'
             value={message}
             onChange={e => onInputChange('message', e)}
             data-validation='length'
-            data-validation-length={'min10'}
+            data-validation-length='min10'
             data-validation-error-msg={t('modals.createNotice.validMessage')}
           />
         </div>
@@ -100,8 +100,8 @@ function CreateNoticeModal (props) {
         </div>
 
         <div className='uk-modal-footer uk-text-right'>
-          <Button text={t('common.close')} flat={true} waves={true} extraClass={'uk-modal-close'} />
-          <Button text={t('modals.createNotice.createButton')} flat={true} waves={true} style={'primary'} type={'submit'} />
+          <Button text={t('common.close')} flat waves extraClass='uk-modal-close' />
+          <Button text={t('modals.createNotice.createButton')} flat waves style='primary' type='submit' />
         </div>
       </form>
     </BaseModal>

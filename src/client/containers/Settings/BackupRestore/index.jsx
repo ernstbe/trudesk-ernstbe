@@ -137,8 +137,7 @@ const BackupRestoreSettingsContainer = ({
         ? Math.ceil(settings.deletedTicketsCount / 15)
         : 1
       deletedTicketsPaginationRef.current.render()
-      if (deletedTicketsPaginationRef.current.currentPage > deletedTicketsPaginationRef.current.pages - 1)
-        deletedTicketsPaginationRef.current.selectPage(deletedTicketsPaginationRef.current.pages - 1)
+      if (deletedTicketsPaginationRef.current.currentPage > deletedTicketsPaginationRef.current.pages - 1) { deletedTicketsPaginationRef.current.selectPage(deletedTicketsPaginationRef.current.pages - 1) }
     }
   }, [settings.deletedTicketsCount])
 
@@ -291,7 +290,7 @@ const BackupRestoreSettingsContainer = ({
             title={t('settings.backupNow')}
             subtitle={t('settings.backupNowHint')}
             component={
-              <div className={'uk-float-right mt-10'}>
+              <div className='uk-float-right mt-10'>
                 <div
                   className={
                     'uk-progress uk-progress-success uk-progress-striped uk-active' +
@@ -309,8 +308,8 @@ const BackupRestoreSettingsContainer = ({
                 {!settings.backingup && (
                   <Button
                     text={t('settings.backupNow')}
-                    style={'success'}
-                    small={true}
+                    style='success'
+                    small
                     styleOverride={{ width: '115px' }}
                     onClick={e => onBackupNowClicked(e)}
                   />
@@ -322,9 +321,9 @@ const BackupRestoreSettingsContainer = ({
             title={t('settings.backups')}
             subtitle={t('settings.backupsHint')}
             component={
-              <div className={'uk-float-right mt-10'} style={{ width: '85px' }}>
+              <div className='uk-float-right mt-10' style={{ width: '85px' }}>
                 <div
-                  className={'uk-progress hide'}
+                  className='uk-progress hide'
                   style={{ height: '31px' }}
                   ref={backupUploadProgressbarRef}
                 >
@@ -334,12 +333,12 @@ const BackupRestoreSettingsContainer = ({
                 </div>
                 <form className='uk-form-stacked'>
                   <button
-                    className={'md-btn md-btn-small md-btn-primary uk-form-file no-ajaxy'}
+                    className='md-btn md-btn-small md-btn-primary uk-form-file no-ajaxy'
                     style={{ width: '85px' }}
                     ref={backupUploadBtnRef}
                   >
                     {t('settings.upload')}
-                    <input ref={backupUploadSelectRef} type={'file'} name={'backupUploadSelect'} />
+                    <input ref={backupUploadSelectRef} type='file' name='backupUploadSelect' />
                   </button>
                 </form>
               </div>
@@ -348,7 +347,7 @@ const BackupRestoreSettingsContainer = ({
             {settings.backups.size < 1 && (
               <Zone>
                 <ZoneBox>
-                  <h2 className={'uk-text-muted uk-text-center'}>{t('settings.noBackups')}</h2>
+                  <h2 className='uk-text-muted uk-text-center'>{t('settings.noBackups')}</h2>
                 </ZoneBox>
               </Zone>
             )}
@@ -365,7 +364,7 @@ const BackupRestoreSettingsContainer = ({
                   {settings.backups.map(backup => {
                     return (
                       <tr key={backup.get('filename')}>
-                        <td className={'valign-middle'} style={{ width: '60%', height: '60px' }}>
+                        <td className='valign-middle' style={{ width: '60%', height: '60px' }}>
                           {backup.get('filename')}
                         </td>
                         <td className='valign-middle'>{backup.get('sizeFormat')}</td>
@@ -373,22 +372,22 @@ const BackupRestoreSettingsContainer = ({
                           <ButtonGroup>
                             <a
                               href={`/backups/${backup.get('filename')}`}
-                              className={'md-btn md-btn-small md-btn-wave no-ajaxy'}
+                              className='md-btn md-btn-small md-btn-wave no-ajaxy'
                               download={backup.get('filename')}
                             >
                               {t('settings.download')}
                             </a>
                             <Button
                               text={t('settings.restore')}
-                              small={true}
-                              waves={true}
+                              small
+                              waves
                               onClick={e => oneRestoreClicked(e, backup)}
                             />
                             <Button
                               text={t('common.delete')}
-                              small={true}
-                              style={'danger'}
-                              waves={true}
+                              small
+                              style='danger'
+                              waves
                               onClick={e => onDeleteBackupClicked(e, backup)}
                             />
                           </ButtonGroup>
@@ -442,15 +441,15 @@ const BackupRestoreSettingsContainer = ({
                         <ButtonGroup>
                           <Button
                             text={t('common.delete')}
-                            style={'danger'}
-                            small={true}
-                            waves={true}
+                            style='danger'
+                            small
+                            waves
                             onClick={e => onDeleteTicketClicked(e, ticket)}
                           />
                           <Button
                             text={t('settings.restore')}
-                            small={true}
-                            waves={true}
+                            small
+                            waves
                             onClick={e => onRestoreTicketClicked(e, ticket)}
                           />
                         </ButtonGroup>

@@ -12,14 +12,12 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-const async = require('async')
 const _ = require('lodash')
 const winston = require('../logger')
 const userSchema = require('../models/user')
 const permissions = require('../permissions')
 const emitter = require('../emitter')
 const xss = require('xss')
-const path = require('path')
 
 const accountsController = {}
 
@@ -346,8 +344,8 @@ accountsController.uploadCSV = function (req, res) {
         return res.json({
           success: true,
           contents: object.csv,
-          addedUsers: addedUsers,
-          updatedUsers: updatedUsers
+          addedUsers,
+          updatedUsers
         })
       } catch (err) {
         winston.warn(err.message)
@@ -406,8 +404,8 @@ accountsController.uploadJSON = function (req, res) {
           return res.json({
             success: true,
             contents: object.json,
-            addedUsers: addedUsers,
-            updatedUsers: updatedUsers
+            addedUsers,
+            updatedUsers
           })
         } catch (err) {
           return res.status(400).json({ success: false, error: err })
@@ -422,7 +420,7 @@ accountsController.uploadJSON = function (req, res) {
 
   busboy.on('finish', function () {
     if (error) {
-      return res.status(error.status).json({ success: false, error: error })
+      return res.status(error.status).json({ success: false, error })
     }
   })
 

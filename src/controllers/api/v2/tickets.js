@@ -18,6 +18,7 @@ const apiUtils = require('../apiUtils')
 const Models = require('../../../models')
 const permissions = require('../../../permissions')
 const ticketStatusSchema = require('../../../models/ticketStatus')
+const { getDeadlineStatus } = require('../../../helpers/deadlineHelper')
 
 const ticketsV2 = {}
 
@@ -190,6 +191,44 @@ ticketsV2.batchUpdate = async function (req, res) {
   }
 }
 
+ticketsV2.updateMetadata = async function (req, res) {
+  const uid = req.params.uid
+  const metadata = req.body.metadata
+  if (!uid || !metadata || !_.isObject(metadata)) return apiUtils.sendApiError(res, 400, 'Invalid Parameters')
+
+  const allowedFields = ['estimatedCost', 'actualCost', 'vendor', 'orderNumber', 'approvedBy', 'approvalDate']
+
+  try {
+    const ticket = await Models.Ticket.getTicketByUid(uid)
+    if (!ticket) return apiUtils.sendApiError(res, 404, 'Ticket not found')
+
+    if (!ticket.metadata) ticket.metadata = {}
+
+    for (let i = 0; i < allowedFields.length; i++) {
+      const field = allowedFields[i]
+      if (!_.isUndefined(metadata[field])) {
+        ticket.metadata[field] = metadata[field]
+      }
+    }
+
+    ticket.markModified('metadata')
+    ticket.updated = new Date()
+
+    const historyItem = {
+      action: 'ticket:update:metadata',
+      description: 'Ticket metadata was updated',
+      owner: req.user._id
+    }
+    ticket.history.push(historyItem)
+
+    await ticket.save()
+
+    return apiUtils.sendApiSuccess(res, { ticket })
+  } catch (err) {
+    return apiUtils.sendApiError(res, 500, err.message)
+  }
+}
+
 ticketsV2.delete = async function (req, res) {
   const uid = req.params.uid
   if (!uid) return apiUtils.sendApiError(res, 400, 'Invalid Parameters')
@@ -267,6 +306,156 @@ ticketsV2.info.tags = async (req, res) => {
     const tags = await Models.TicketTags.find({}).sort('normalized')
 
     return apiUtils.sendApiSuccess(res, { tags })
+  } catch (err) {
+    logger.warn(err)
+    return apiUtils.sendApiError(res, 500, err.message)
+  }
+}
+
+ticketsV2.deadline = async function (req, res) {
+  const uid = req.params.uid
+  if (!uid) return apiUtils.sendApiError(res, 400, 'Invalid Parameters')
+
+  try {
+    const ticket = await Models.Ticket.getTicketByUid(uid)
+    if (!ticket) return apiUtils.sendApiError(res, 404, 'Ticket not found')
+
+    if (!ticket.dueDate) {
+      return apiUtils.sendApiSuccess(res, { uid: ticket.uid, deadline: null })
+    }
+
+    const deadline = getDeadlineStatus(ticket.dueDate)
+    return apiUtils.sendApiSuccess(res, {
+      uid: ticket.uid,
+      dueDate: ticket.dueDate,
+      deadline
+    })
+  } catch (err) {
+    logger.warn(err)
+    return apiUtils.sendApiError(res, 500, err.message)
+  }
+}
+
+ticketsV2.overdue = async function (req, res) {
+  try {
+    const tickets = await Models.Ticket.find({ deleted: false, dueDate: { $lt: new Date() } })
+      .populate('owner assignee', 'username fullname email role image title')
+      .populate('type tags status group')
+      .sort({ dueDate: 1 })
+      .lean()
+      .exec()
+
+    const ticketsWithStatus = tickets.map(function (t) {
+      return Object.assign({}, t, { deadline: getDeadlineStatus(t.dueDate) })
+    })
+
+    return apiUtils.sendApiSuccess(res, { tickets: ticketsWithStatus, count: ticketsWithStatus.length })
+  } catch (err) {
+    logger.warn(err)
+    return apiUtils.sendApiError(res, 500, err.message)
+  }
+}
+
+ticketsV2.checklist = {}
+
+ticketsV2.checklist.add = async function (req, res) {
+  const uid = req.params.uid
+  const title = req.body.title
+  if (!uid || !title) return apiUtils.sendApiError(res, 400, 'Invalid Parameters')
+
+  try {
+    const ticket = await Models.Ticket.getTicketByUid(uid)
+    if (!ticket) return apiUtils.sendApiError(res, 404, 'Ticket not found')
+
+    ticket.checklist.push({ title })
+    ticket.updated = new Date()
+
+    const historyItem = {
+      action: 'ticket:checklist:add',
+      description: 'Checklist item added: ' + title,
+      owner: req.user._id
+    }
+    ticket.history.push(historyItem)
+
+    await ticket.save()
+
+    return apiUtils.sendApiSuccess(res, { ticket })
+  } catch (err) {
+    logger.warn(err)
+    return apiUtils.sendApiError(res, 500, err.message)
+  }
+}
+
+ticketsV2.checklist.update = async function (req, res) {
+  const uid = req.params.uid
+  const itemId = req.params.itemId
+  if (!uid || !itemId) return apiUtils.sendApiError(res, 400, 'Invalid Parameters')
+
+  try {
+    const ticket = await Models.Ticket.getTicketByUid(uid)
+    if (!ticket) return apiUtils.sendApiError(res, 404, 'Ticket not found')
+
+    const item = ticket.checklist.id(itemId)
+    if (!item) return apiUtils.sendApiError(res, 404, 'Checklist item not found')
+
+    if (!_.isUndefined(req.body.title)) {
+      item.title = req.body.title
+    }
+
+    if (!_.isUndefined(req.body.completed)) {
+      item.completed = req.body.completed
+      if (req.body.completed) {
+        item.completedBy = req.user._id
+        item.completedAt = new Date()
+      } else {
+        item.completedBy = undefined
+        item.completedAt = undefined
+      }
+    }
+
+    ticket.updated = new Date()
+
+    const historyItem = {
+      action: 'ticket:checklist:update',
+      description: 'Checklist item updated: ' + item.title,
+      owner: req.user._id
+    }
+    ticket.history.push(historyItem)
+
+    await ticket.save()
+
+    return apiUtils.sendApiSuccess(res, { ticket })
+  } catch (err) {
+    logger.warn(err)
+    return apiUtils.sendApiError(res, 500, err.message)
+  }
+}
+
+ticketsV2.checklist.remove = async function (req, res) {
+  const uid = req.params.uid
+  const itemId = req.params.itemId
+  if (!uid || !itemId) return apiUtils.sendApiError(res, 400, 'Invalid Parameters')
+
+  try {
+    const ticket = await Models.Ticket.getTicketByUid(uid)
+    if (!ticket) return apiUtils.sendApiError(res, 404, 'Ticket not found')
+
+    const item = ticket.checklist.id(itemId)
+    if (!item) return apiUtils.sendApiError(res, 404, 'Checklist item not found')
+
+    item.deleteOne()
+    ticket.updated = new Date()
+
+    const historyItem = {
+      action: 'ticket:checklist:remove',
+      description: 'Checklist item removed: ' + item.title,
+      owner: req.user._id
+    }
+    ticket.history.push(historyItem)
+
+    await ticket.save()
+
+    return apiUtils.sendApiSuccess(res, { ticket })
   } catch (err) {
     logger.warn(err)
     return apiUtils.sendApiError(res, 500, err.message)

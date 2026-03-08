@@ -12,7 +12,7 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-import React, { useEffect, useRef, useCallback } from 'react'
+import React, { useEffect, useRef } from 'react'
 import PropTypes from 'prop-types'
 import { merge } from 'lodash'
 import helpers from 'lib/helpers'
@@ -37,10 +37,6 @@ const Button = ({
     helpers.UI.waves()
   }, [])
 
-  const click = useCallback(() => {
-    if (buttonRef.current) buttonRef.current.click()
-  }, [])
-
   const classBuild =
     (small ? ' md-btn-small ' : '') +
     (flat ? ' md-btn-flat ' : '') +
@@ -60,21 +56,19 @@ const Button = ({
     <button
       className={'uk-clearfix md-btn' + classBuild}
       onClick={onClick}
-      type={type ? type : 'button'}
+      type={type || 'button'}
       disabled={disabled}
       style={renderStyleOverride}
       ref={buttonRef}
     >
       {icon && (
-        <i className={'material-icons'} style={{ fontSize: '18px', margin: '5px 0' }}>
+        <i className='material-icons' style={{ fontSize: '18px', margin: '5px 0' }}>
           {icon}
         </i>
       )}
-      {text && <div className={'uk-float-left uk-width-1-1 uk-text-center'}> {text}</div>}
+      {text && <div className='uk-float-left uk-width-1-1 uk-text-center'> {text}</div>}
       {hasDropdown && (
-        <i className={'material-icons'} style={{ fontSize: '18px', margin: '5px 0 0 5px' }}>
-
-        </i>
+        <i className='material-icons' style={{ fontSize: '18px', margin: '5px 0 0 5px' }} />
       )}
     </button>
   )

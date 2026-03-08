@@ -184,15 +184,15 @@ api.tickets.deletePriority = ({ id, newPriority }) => {
 }
 
 api.tickets.getTagsWithPage = ({ limit, page }) => {
-  limit = limit ? limit : 10
-  page = page ? page : 0
+  limit = limit || 10
+  page = page || 0
   return axios.get(`/api/v1/tags/limit?limit=${limit}&page=${page}`).then(res => {
     return res.data
   })
 }
 
 api.tickets.createTag = ({ name }) => {
-  return axios.post(`/api/v1/tags/create`, { tag: name }).then(res => {
+  return axios.post('/api/v1/tags/create', { tag: name }).then(res => {
     return res.data
   })
 }
@@ -247,12 +247,12 @@ api.accounts.enableAccount = ({ username }) => {
 }
 
 api.accounts.saveProfile = payload => {
-  return axios.put(`/api/v2/accounts/profile`, payload).then(res => {
+  return axios.put('/api/v2/accounts/profile', payload).then(res => {
     return res.data
   })
 }
 api.accounts.generateMFA = payload => {
-  return axios.post(`/api/v2/accounts/profile/mfa`, payload).then(res => {
+  return axios.post('/api/v2/accounts/profile/mfa', payload).then(res => {
     return res.data
   })
 }
@@ -455,7 +455,7 @@ api.settings.deleteRole = ({ _id, newRoleId }) => {
   })
 }
 api.settings.buildSass = () => {
-  return axios.get(`/api/v1/settings/buildsass`).then(res => {
+  return axios.get('/api/v1/settings/buildsass').then(res => {
     return res.data
   })
 }

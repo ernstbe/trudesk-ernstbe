@@ -12,18 +12,18 @@
 
  **/
 
-var _ = require('lodash')
-var mongoose = require('mongoose')
-var utils = require('../helpers/utils')
+const _ = require('lodash')
+const mongoose = require('mongoose')
+const utils = require('../helpers/utils')
 
 // Refs
 require('./group')
-var Teams = require('./team')
-var Groups = require('./group')
+const Teams = require('./team')
+const Groups = require('./group')
 
-var COLLECTION = 'departments'
+const COLLECTION = 'departments'
 
-var departmentSchema = mongoose.Schema({
+const departmentSchema = mongoose.Schema({
   name: { type: String, required: true, unique: true },
   normalized: { type: String },
   teams: [{ type: mongoose.Schema.Types.ObjectId, ref: 'teams', autopopulate: true }],

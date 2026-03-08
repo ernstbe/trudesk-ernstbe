@@ -1,37 +1,37 @@
 /* eslint-disable no-unused-expressions */
-var expect = require('chai').expect
-var request = require('supertest')
+const expect = require('chai').expect
+const request = require('supertest')
 
 describe('api/tickets.js', function () {
-  var tdapikey = 'da39a3ee5e6b4b0d3255bfef95601890afd80709'
-  var api = request('http://localhost:3111')
-  var createdTicketId
-  var createdTicketUid
+  const tdapikey = 'da39a3ee5e6b4b0d3255bfef95601890afd80709'
+  const api = request('http://localhost:3111')
+  let createdTicketId
+  let createdTicketUid
 
   before(async function () {
     // Ensure the admin user is in the TEST group so ticket creation works
-    var groupSchema = require('../../src/models/group')
-    var userSchema = require('../../src/models/user')
-    var user = await userSchema.getUserByUsername('trudesk')
-    var group = await groupSchema.getGroupByName('TEST')
+    const groupSchema = require('../../src/models/group')
+    const userSchema = require('../../src/models/user')
+    const user = await userSchema.getUserByUsername('trudesk')
+    const group = await groupSchema.getGroupByName('TEST')
     if (!group.isMember(user._id)) {
       await group.addMember(user._id)
     }
   })
 
   it('should create a ticket via API', async function () {
-    var tickettype = require('../../src/models/tickettype')
-    var groupSchema = require('../../src/models/group')
-    var prioritySchema = require('../../src/models/ticketpriority')
+    const tickettype = require('../../src/models/tickettype')
+    const groupSchema = require('../../src/models/group')
+    const prioritySchema = require('../../src/models/ticketpriority')
 
-    var type = await tickettype.getTypeByName('Task')
+    const type = await tickettype.getTypeByName('Task')
     expect(type).to.be.a('object')
-    var group = await groupSchema.getGroupByName('TEST')
+    const group = await groupSchema.getGroupByName('TEST')
     expect(group).to.be.a('object')
-    var priority = await prioritySchema.findOne({ default: true })
+    const priority = await prioritySchema.findOne({ default: true })
     expect(priority).to.be.a('object')
 
-    var ticket = {
+    const ticket = {
       subject: 'API Test Ticket',
       issue: 'This is a test issue created via API',
       type: type._id.toString(),
@@ -40,7 +40,7 @@ describe('api/tickets.js', function () {
       tags: []
     }
 
-    var res = await api
+    const res = await api
       .post('/api/v1/tickets/create')
       .set('accesstoken', tdapikey)
       .set('Content-Type', 'application/json')

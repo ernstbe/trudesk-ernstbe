@@ -1,19 +1,20 @@
 /* eslint-disable no-unused-expressions */
-var async = require('async')
-var expect = require('chai').expect
-var request = require('supertest')
+const async = require('async')
+const expect = require('chai').expect
+const request = require('supertest')
 
 describe('ticketsController', function () {
-  var authAgent = request.agent('http://localhost:3111')
-  var user = {
+  const authAgent = request.agent('http://localhost:3111')
+  const user = {
     'login-username': 'trudesk',
     'login-password': '$2a$04$350Dkwcq9EpJLFhbeLB0buFcyFkI9q3edQEPpy/zqLjROMD9LPToW'
   }
-  var cookie
+  // eslint-disable-next-line no-unused-vars
+  let _cookie
 
   // FIRST!
   before(function (done) {
-    cookie = []
+    _cookie = []
 
     authAgent
       .post('/login')

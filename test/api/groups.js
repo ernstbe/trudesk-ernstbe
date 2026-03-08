@@ -1,11 +1,11 @@
 /* eslint-disable no-unused-expressions */
-var expect = require('chai').expect
-var request = require('supertest')
+const expect = require('chai').expect
+const request = require('supertest')
 
 describe('api/groups.js', function () {
-  var tdapikey = 'da39a3ee5e6b4b0d3255bfef95601890afd80709'
-  var api = request('http://localhost:3111')
-  var createdGroupId
+  const tdapikey = 'da39a3ee5e6b4b0d3255bfef95601890afd80709'
+  const api = request('http://localhost:3111')
+  let createdGroupId
 
   it('should get all groups', function (done) {
     api

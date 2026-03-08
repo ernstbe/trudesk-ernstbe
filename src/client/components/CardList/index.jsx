@@ -24,10 +24,10 @@ const CardList = ({ header, headerRightComponent, children, extraClass }) => {
 
   return (
     <div className={'md-card-list-wrapper' + (extraClass ? ' ' + extraClass : '')}>
-      <div className={'md-card-list'}>
-        {header && <div className={'md-card-list-header heading_list'}>{header}</div>}
-        {headerRightComponent && <div className={'md-card-list-header-right'}>{headerRightComponent}</div>}
-        <ul className={'hierarchical_slide'} data-delay='100ms'>
+      <div className='md-card-list'>
+        {header && <div className='md-card-list-header heading_list'>{header}</div>}
+        {headerRightComponent && <div className='md-card-list-header-right'>{headerRightComponent}</div>}
+        <ul className='hierarchical_slide' data-delay='100ms'>
           {children}
         </ul>
       </div>

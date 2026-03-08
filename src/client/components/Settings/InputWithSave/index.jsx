@@ -24,7 +24,7 @@ const InputWithSave = ({ updateSetting, settingName, stateName, saveLabel, initi
   const [value, setValue] = useState('')
 
   useEffect(() => {
-    setValue(initialValue ? initialValue : '')
+    setValue(initialValue || '')
     helpers.UI.inputs()
   }, [])
 
@@ -35,7 +35,7 @@ const InputWithSave = ({ updateSetting, settingName, stateName, saveLabel, initi
   }, [initialValue])
 
   const onSaveClicked = useCallback(() => {
-    updateSetting({ name: settingName, value: value, stateName: stateName })
+    updateSetting({ name: settingName, value, stateName })
   }, [updateSetting, settingName, value, stateName])
 
   const updateValue = useCallback((evt) => {
@@ -57,7 +57,7 @@ const InputWithSave = ({ updateSetting, settingName, stateName, saveLabel, initi
       </div>
       <div className='uk-width-1-4 uk-float-right' style={{ marginTop: '10px', textAlign: 'center' }}>
         <button className='md-btn md-btn-small' onClick={onSaveClicked}>
-          {saveLabel ? saveLabel : 'Save'}
+          {saveLabel || 'Save'}
         </button>
       </div>
     </div>

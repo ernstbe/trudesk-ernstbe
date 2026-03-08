@@ -109,7 +109,7 @@ const PermissionsSettingsContainer = ({
             onSelectChange={e => {
               onDefaultUserRoleChange(e)
             }}
-            width={'50%'}
+            width='50%'
             showTextbox={false}
           />
         }
@@ -120,22 +120,22 @@ const PermissionsSettingsContainer = ({
         subtitle={
           <div>
             {t('settings.permissionsHint')}{' '}
-            <span className={'uk-text-danger'}>{t('settings.permissionsNote')}</span>
+            <span className='uk-text-danger'>{t('settings.permissionsNote')}</span>
           </div>
         }
         rightComponent={
           <Button
             text={t('common.create')}
-            style={'success'}
-            flat={true}
-            waves={true}
+            style='success'
+            flat
+            waves
             onClick={e => onCreateRoleClicked(e)}
           />
         }
         menuItems={getRoleMenu().map(role => {
           return { key: role.get('_id'), title: role.get('name'), bodyComponent: <PermissionBody role={role} /> }
         })}
-        menuDraggable={true}
+        menuDraggable
         menuOnDrag={e => {
           onRoleOrderChanged(e)
         }}

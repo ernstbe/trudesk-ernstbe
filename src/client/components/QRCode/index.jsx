@@ -22,7 +22,7 @@ const QRCode = ({
   if (css) cssStyle = css
   return (
     <div style={cssStyle}>
-      <div ref={qrcodeDiv}></div>
+      <div ref={qrcodeDiv} />
     </div>
   )
 }

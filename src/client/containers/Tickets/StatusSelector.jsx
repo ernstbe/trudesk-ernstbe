@@ -100,7 +100,7 @@ function StatusSelector ({
     <div className='floating-ticket-status'>
       <div
         title='Change Status'
-        className={clsx(`ticket-status`, hasPerm && `cursor-pointer`)}
+        className={clsx('ticket-status', hasPerm && 'cursor-pointer')}
         style={{ color: 'white', background: currentStatus != null ? currentStatus.get('htmlColor') : '#000000' }}
         onClick={e => toggleDropMenu(e)}
         ref={selectorButtonRef}
@@ -115,7 +115,7 @@ function StatusSelector ({
       )}
 
       <div
-        id={'statusSelect'}
+        id='statusSelect'
         ref={dropMenuRef}
         className='hide'
         style={{ height: 25 * ticketStatuses.size + 25 }}

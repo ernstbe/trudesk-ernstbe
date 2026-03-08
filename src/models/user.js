@@ -115,17 +115,17 @@ userSchema.pre('save', async function () {
 })
 
 userSchema.methods.addAccessToken = async function () {
-  var user = this
-  var date = new Date()
-  var salt = user.username.toString() + date.toISOString()
-  var chance = new Chance(salt)
+  const user = this
+  const date = new Date()
+  const salt = user.username.toString() + date.toISOString()
+  const chance = new Chance(salt)
   user.accessToken = chance.hash()
   await user.save()
   return user.accessToken
 }
 
 userSchema.methods.removeAccessToken = async function () {
-  var user = this
+  const user = this
   if (!user.accessToken) return
 
   user.accessToken = undefined
@@ -155,7 +155,7 @@ userSchema.methods.generateL2Auth = async function () {
 }
 
 userSchema.methods.removeL2Auth = async function () {
-  var user = this
+  const user = this
 
   user.tOTPKey = undefined
   user.hasL2Auth = false
@@ -166,8 +166,8 @@ userSchema.methods.addOpenChatWindow = async function (convoId) {
   if (convoId === undefined) {
     throw new Error('Invalid convoId')
   }
-  var user = this
-  var hasChatWindow =
+  const user = this
+  const hasChatWindow =
     _.filter(user.preferences.openChatWindows, function (value) {
       return value.toString() === convoId.toString()
     }).length > 0
@@ -184,8 +184,8 @@ userSchema.methods.removeOpenChatWindow = async function (convoId) {
   if (convoId === undefined) {
     throw new Error('Invalid convoId')
   }
-  var user = this
-  var hasChatWindow =
+  const user = this
+  const hasChatWindow =
     _.filter(user.preferences.openChatWindows, function (value) {
       return value.toString() === convoId.toString()
     }).length > 0
@@ -205,7 +205,7 @@ userSchema.methods.removeOpenChatWindow = async function (convoId) {
 }
 
 userSchema.methods.softDelete = async function () {
-  var user = this
+  const user = this
 
   user.deleted = true
 
@@ -344,13 +344,13 @@ userSchema.statics.getUserWithObject = async function (object) {
     throw new Error('Invalid Object (Must be of type Object) - UserSchema.GetUserWithObject()')
   }
 
-  var self = this
+  const self = this
 
-  var limit = object.limit === null ? 10 : object.limit
-  var page = object.page === null ? 0 : object.page
-  var search = object.search === null ? '' : object.search
+  const limit = object.limit === null ? 10 : object.limit
+  const page = object.page === null ? 0 : object.page
+  const search = object.search === null ? '' : object.search
 
-  var q = self
+  const q = self
     .model(COLLECTION)
     .find({}, '-password -resetPassHash -resetPassExpire')
     .sort({ fullname: 1 })
@@ -378,10 +378,10 @@ userSchema.statics.getUserWithObject = async function (object) {
  * @param {QueryCallback} callback MongoDB Query Callback
  */
 userSchema.statics.getAssigneeUsers = async function () {
-  var roles = global.roles
+  const roles = global.roles
   if (_.isUndefined(roles)) return []
 
-  var assigneeRoles = []
+  let assigneeRoles = []
   roles.forEach(function (role) {
     if (role.isAgent) assigneeRoles.push(role._id)
   })
@@ -407,7 +407,7 @@ userSchema.statics.getUsersByRoles = async function (roles) {
     roles = [roles]
   }
 
-  var q = this.model(COLLECTION).find({ role: { $in: roles }, deleted: false })
+  const q = this.model(COLLECTION).find({ role: { $in: roles }, deleted: false })
 
   return q.exec()
 }
@@ -427,7 +427,7 @@ userSchema.statics.createUser = async function (data) {
     throw new Error('Invalid User Data - UserSchema.CreateUser()')
   }
 
-  var self = this
+  const self = this
 
   const items = await self.model(COLLECTION).find({ username: data.username })
   if (_.size(items) > 0) {
@@ -447,24 +447,25 @@ userSchema.statics.createUserFromEmail = async function (email) {
     throw new Error('Invalid User Data - UserSchema.CreatePublicUser()')
   }
 
-  var self = this
+  const self = this
 
-  var settingSchema = require('./setting')
+  const settingSchema = require('./setting')
   const userRoleDefault = await settingSchema.getSetting('role:user:default')
   if (!userRoleDefault) throw new Error('Invalid Setting - UserRoleDefault')
 
-  var Chance = require('chance')
+  const Chance = require('chance')
 
-  var chance = new Chance()
+  const chance = new Chance()
 
-  var plainTextPass = chance.string({
+  const plainTextPass = chance.string({
     length: 6,
     pool: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890'
   })
 
-  var user = new self({
+  // eslint-disable-next-line new-cap
+  const user = new self({
     username: email,
-    email: email,
+    email,
     password: plainTextPass,
     fullname: email,
     role: userRoleDefault.value
@@ -476,8 +477,8 @@ userSchema.statics.createUserFromEmail = async function (email) {
   const savedUser = await user.save()
 
   // Create a group for this user
-  var GroupSchema = require('./group')
-  var group = new GroupSchema({
+  const GroupSchema = require('./group')
+  const group = new GroupSchema({
     name: savedUser.email,
     members: [savedUser._id],
     sendMailTo: [savedUser._id],
@@ -487,12 +488,12 @@ userSchema.statics.createUserFromEmail = async function (email) {
   const savedGroup = await group.save()
 
   // Send welcome email
-  var path = require('path')
-  var mailer = require('../mailer')
-  var Email = require('email-templates')
-  var templateDir = path.resolve(__dirname, '..', 'mailer', 'templates')
+  const path = require('path')
+  const mailer = require('../mailer')
+  const Email = require('email-templates')
+  const templateDir = path.resolve(__dirname, '..', 'mailer', 'templates')
 
-  var emailRenderer = new Email({
+  const emailRenderer = new Email({
     views: {
       root: templateDir,
       options: {
@@ -501,12 +502,12 @@ userSchema.statics.createUserFromEmail = async function (email) {
     }
   })
 
-  var settingSchema2 = require('./setting')
+  const settingSchema2 = require('./setting')
   const setting = await settingSchema2.getSetting('gen:siteurl')
 
-  var siteUrl = setting ? setting.value : ''
+  const siteUrl = setting ? setting.value : ''
 
-  var dataObject = {
+  const dataObject = {
     user: savedUser,
     username: savedUser.username,
     fullname: savedUser.fullname,
@@ -515,10 +516,10 @@ userSchema.statics.createUserFromEmail = async function (email) {
   }
 
   const html = await emailRenderer.render('public-account-created', dataObject)
-  var mailOptions = {
+  const mailOptions = {
     to: savedUser.email,
     subject: require('../i18n').t('welcomeAccount', { siteTitle: 'Trudesk' }),
-    html: html,
+    html,
     generateTextFromHTML: true
   }
 
@@ -536,22 +537,22 @@ userSchema.statics.createUserFromEmail = async function (email) {
 }
 
 userSchema.statics.getCustomers = async function (obj) {
-  var limit = obj.limit || 10
-  var page = obj.page || 0
-  var self = this
+  const limit = obj.limit || 10
+  const page = obj.page || 0
+  const self = this
 
   const accounts = await self
     .model(COLLECTION)
     .find({}, '-password -resetPassHash -resetPassExpire')
     .exec()
 
-  var customerRoleIds = _.filter(accounts, function (a) {
+  const customerRoleIds = _.filter(accounts, function (a) {
     return !a.role.isAdmin && !a.role.isAgent
   }).map(function (a) {
     return a.role._id
   })
 
-  var q = self
+  const q = self
     .find({ role: { $in: customerRoleIds } }, '-password -resetPassHash -resetPassExpire')
     .sort({ fullname: 1 })
     .skip(page * limit)
@@ -563,22 +564,22 @@ userSchema.statics.getCustomers = async function (obj) {
 }
 
 userSchema.statics.getAgents = async function (obj) {
-  var limit = obj.limit || 10
-  var page = obj.page || 0
-  var self = this
+  const limit = obj.limit || 10
+  const page = obj.page || 0
+  const self = this
 
   const accounts = await self
     .model(COLLECTION)
     .find({})
     .exec()
 
-  var agentRoleIds = _.filter(accounts, function (a) {
+  const agentRoleIds = _.filter(accounts, function (a) {
     return a.role.isAgent
   }).map(function (a) {
     return a.role._id
   })
 
-  var q = self
+  const q = self
     .model(COLLECTION)
     .find({ role: { $in: agentRoleIds } }, '-password -resetPassHash -resetPassExpire')
     .sort({ fullname: 1 })
@@ -591,22 +592,22 @@ userSchema.statics.getAgents = async function (obj) {
 }
 
 userSchema.statics.getAdmins = async function (obj) {
-  var limit = obj.limit || 10
-  var page = obj.page || 0
-  var self = this
+  const limit = obj.limit || 10
+  const page = obj.page || 0
+  const self = this
 
   const accounts = await self
     .model(COLLECTION)
     .find({})
     .exec()
 
-  var adminRoleIds = _.filter(accounts, function (a) {
+  const adminRoleIds = _.filter(accounts, function (a) {
     return a.role.isAdmin
   }).map(function (a) {
     return a.role._id
   })
 
-  var q = self
+  const q = self
     .model(COLLECTION)
     .find({ role: { $in: adminRoleIds } }, '-password -resetPassHash -resetPassExpire')
     .sort({ fullname: 1 })

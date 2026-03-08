@@ -67,8 +67,7 @@ accountsApi.create = async function (req, res) {
     const settings = settingsContent.data.settings
     const passwordComplexityEnabled = settings.accountsPasswordComplexity.value
 
-    if (passwordComplexityEnabled && !passwordComplexity.validate(postData.password))
-      throw new Error('Password does not meet requirements')
+    if (passwordComplexityEnabled && !passwordComplexity.validate(postData.password)) { throw new Error('Password does not meet requirements') }
 
     let user = await User.create({
       username: postData.username,
@@ -135,7 +134,7 @@ accountsApi.get = async function (req, res) {
 
   const obj = {
     limit: limit === -1 ? 999999 : limit,
-    page: page,
+    page,
     showDeleted: query.showDeleted && query.showDeleted === 'true'
   }
 
@@ -143,7 +142,7 @@ accountsApi.get = async function (req, res) {
     switch (type) {
       case 'all': {
         const accounts = await User.getUserWithObject(obj)
-        return apiUtil.sendApiSuccess(res, { accounts: accounts, count: accounts.length })
+        return apiUtil.sendApiSuccess(res, { accounts, count: accounts.length })
       }
       case 'customers': {
         const accounts = await User.getCustomers(obj)
@@ -327,8 +326,7 @@ accountsApi.saveProfile = async (req, res) => {
   const payload = req.body
   const user = req.user
 
-  if (payload.username !== user.username || payload._id.toString() !== user._id.toString())
-    return apiUtil.sendApiError(res, 400, 'Invalid User Account')
+  if (payload.username !== user.username || payload._id.toString() !== user._id.toString()) { return apiUtil.sendApiError(res, 400, 'Invalid User Account') }
 
   try {
     let dbUser = await User.findOne({ _id: payload._id })
@@ -337,8 +335,7 @@ accountsApi.saveProfile = async (req, res) => {
     if (!_.isUndefined(payload.fullname) && !_.isNull(payload.fullname)) dbUser.fullname = payload.fullname
     if (!_.isUndefined(payload.title) && !_.isNull(payload.title)) dbUser.title = payload.title
     if (!_.isUndefined(payload.workNumber) && !_.isNull(payload.workNumber)) dbUser.workNumber = payload.workNumber
-    if (!_.isUndefined(payload.mobileNumber) && !_.isNull(payload.mobileNumber))
-      dbUser.mobileNumber = payload.mobileNumber
+    if (!_.isUndefined(payload.mobileNumber) && !_.isNull(payload.mobileNumber)) { dbUser.mobileNumber = payload.mobileNumber }
 
     // User Preferences
     if (!_.isUndefined(payload.preferences) && !_.isNull(payload.preferences)) {
@@ -356,8 +353,7 @@ accountsApi.generateMFA = async (req, res) => {
   const payload = req.body
   const user = req.user
 
-  if (payload.username !== user.username || payload._id.toString() !== user._id.toString())
-    return apiUtil.sendApiError(res, 400, 'Invalid User Account')
+  if (payload.username !== user.username || payload._id.toString() !== user._id.toString()) { return apiUtil.sendApiError(res, 400, 'Invalid User Account') }
 
   try {
     const dbUser = await User.findOne({ _id: payload._id })
@@ -410,8 +406,7 @@ accountsApi.disableMFA = async (req, res) => {
     let user = await User.findOne({ _id: req.user }, '+password')
     if (!user) return apiUtil.sendApiError(res, 400, 'Invalid Account')
 
-    if (!User.validate(payload.confirmPassword, user.password))
-      return apiUtil.sendApiError(res, 400, 'Invalid Credentials')
+    if (!User.validate(payload.confirmPassword, user.password)) { return apiUtil.sendApiError(res, 400, 'Invalid Credentials') }
 
     user.tOTPKey = null
     user.tOTPPeriod = null
@@ -427,8 +422,7 @@ accountsApi.disableMFA = async (req, res) => {
 accountsApi.updatePassword = async (req, res) => {
   const payload = req.body
   const user = req.user
-  if (!payload.currentPassword || !payload.newPassword || !payload.confirmPassword)
-    return apiUtil.sendApiError(res, 400, 'Invalid Post Data')
+  if (!payload.currentPassword || !payload.newPassword || !payload.confirmPassword) { return apiUtil.sendApiError(res, 400, 'Invalid Post Data') }
 
   if (payload.newPassword !== payload.confirmPassword) return apiUtil.sendApiError(res, 400, 'Invalid Post Data')
 
@@ -436,8 +430,7 @@ accountsApi.updatePassword = async (req, res) => {
     let dbUser = await User.findOne({ _id: user._id }, '+password')
     if (!dbUser) return apiUtil.sendApiError(res, 400, 'Invalid User')
 
-    if (!User.validate(payload.currentPassword, dbUser.password))
-      return apiUtil.sendApiError(res, 400, 'Invalid Credentials')
+    if (!User.validate(payload.currentPassword, dbUser.password)) { return apiUtil.sendApiError(res, 400, 'Invalid Credentials') }
 
     // SETTINGS
     const SettingsUtil = require('../../../settings/settingsUtil')
@@ -445,8 +438,7 @@ accountsApi.updatePassword = async (req, res) => {
     const settings = settingsContent.data.settings
     const passwordComplexityEnabled = settings.accountsPasswordComplexity.value
 
-    if (passwordComplexityEnabled && !passwordComplexity.validate(payload.newPassword))
-      throw new Error('Password does not meet requirements')
+    if (passwordComplexityEnabled && !passwordComplexity.validate(payload.newPassword)) { throw new Error('Password does not meet requirements') }
 
     dbUser.password = payload.newPassword
 

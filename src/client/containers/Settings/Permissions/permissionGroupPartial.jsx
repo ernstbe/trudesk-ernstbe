@@ -125,36 +125,36 @@ const PermissionGroupPartial = ({ title, subtitle, role, grants, roleSpecials: r
       <SettingItem
         title={title}
         subtitle={subtitle}
-        subPanelPadding={'0'}
+        subPanelPadding='0'
         component={
           <EnableSwitch
             stateName={`all_perm_${title}_${role.get('_id')}`}
-            label={'All'}
+            label='All'
             checked={all}
             onChange={e => onEnableSwitchChanged(e, 'all')}
           />
         }
       >
         <PermSwitchPartial
-          title={'Create'}
+          title='Create'
           checked={create}
           onChange={e => onEnableSwitchChanged(e, 'create')}
           disabled={all}
         />
         <PermSwitchPartial
-          title={'View'}
+          title='View'
           onChange={e => onEnableSwitchChanged(e, 'view')}
           checked={view}
           disabled={all}
         />
         <PermSwitchPartial
-          title={'Update'}
+          title='Update'
           onChange={e => onEnableSwitchChanged(e, 'update')}
           checked={update}
           disabled={all}
         />
         <PermSwitchPartial
-          title={'Delete'}
+          title='Delete'
           onChange={e => onEnableSwitchChanged(e, 'delete')}
           checked={del}
           disabled={all}

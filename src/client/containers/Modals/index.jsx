@@ -79,7 +79,7 @@ const MODAL_COMPONENTS = {
 
 const ModalRoot = ({ modalType, modalProps }) => {
   if (!modalType) {
-    return <div id={'modal-wrap'} />
+    return <div id='modal-wrap' />
   }
 
   const SpecificModal = MODAL_COMPONENTS[modalType]

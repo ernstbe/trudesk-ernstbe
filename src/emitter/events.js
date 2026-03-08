@@ -22,6 +22,8 @@ const Email = require('email-templates')
 const templateDir = path.resolve(__dirname, '..', 'mailer', 'templates')
 const socketEvents = require('../socketio/socketEventConsts')
 const notifications = require('../notifications') // Load Push Events
+const { parseMentions } = require('../helpers/mentionParser')
+const UserSchema = require('../models/user')
 
 const eventTicketCreated = require('./events/event_ticket_created')
 
@@ -102,12 +104,12 @@ const eventTicketCreated = require('./events/event_ticket_created')
     }
 
     const n = {
-      title: title,
+      title,
       data: {
         ticketId: ticket._id,
         ticketUid: ticket.uid,
-        users: users,
-        hostname: hostname
+        users,
+        hostname
       }
     }
 
@@ -119,7 +121,7 @@ const eventTicketCreated = require('./events/event_ticket_created')
   }
 
   emitter.on('ticket:updated', function (ticket) {
-    io.sockets.emit('$trudesk:client:ticket:updated', { ticket: ticket })
+    io.sockets.emit('$trudesk:client:ticket:updated', { ticket })
   })
 
   emitter.on('ticket:deleted', function (oId) {
@@ -168,7 +170,7 @@ const eventTicketCreated = require('./events/event_ticket_created')
             title: 'Comment Added to Ticket#' + ticket.uid,
             message: ticket.subject,
             type: 1,
-            data: { ticket: ticket },
+            data: { ticket },
             unread: true
           })
 
@@ -185,7 +187,7 @@ const eventTicketCreated = require('./events/event_ticket_created')
               title: 'Comment Added to Ticket#' + ticket.uid,
               message: ticket.subject,
               type: 2,
-              data: { ticket: ticket },
+              data: { ticket },
               unread: true
             })
 
@@ -194,15 +196,45 @@ const eventTicketCreated = require('./events/event_ticket_created')
         }
       }
 
+      // Mention notifications
+      const commentText = comment.comment || ''
+      const mentionedUsernames = parseMentions(commentText)
+      for (const username of mentionedUsernames) {
+        try {
+          const mentionedUser = await UserSchema.getUserByUsername(username)
+          if (!mentionedUser) continue
+          if (mentionedUser._id.toString() === comment.owner.toString()) continue
+
+          // Skip if already getting a notification (owner or assignee)
+          const alreadyNotified =
+            (ticket.owner._id.toString() === mentionedUser._id.toString()) ||
+            (!_.isUndefined(ticket.assignee) && ticket.assignee._id.toString() === mentionedUser._id.toString())
+          if (alreadyNotified) continue
+
+          const mentionNotification = new NotificationSchema({
+            owner: mentionedUser._id,
+            title: 'You were mentioned in Ticket#' + ticket.uid,
+            message: ticket.subject,
+            type: 2,
+            data: { ticket },
+            unread: true
+          })
+
+          notificationPromises.push(mentionNotification.save())
+        } catch (mentionErr) {
+          winston.debug('Could not process mention for @' + username + ': ' + mentionErr.message)
+        }
+      }
+
       // Push notification
       sendPushNotification(
         {
-          tpsEnabled: tpsEnabled,
-          tpsUsername: tpsUsername,
-          tpsApiKey: tpsApiKey,
-          hostname: hostname
+          tpsEnabled,
+          tpsUsername,
+          tpsApiKey,
+          hostname
         },
-        { type: 2, ticket: ticket }
+        { type: 2, ticket }
       )
 
       await Promise.all(notificationPromises)
@@ -238,13 +270,13 @@ const eventTicketCreated = require('./events/event_ticket_created')
 
             const html = await email.render('ticket-comment-added', {
               ticket: ticketJSON,
-              comment: comment
+              comment
             })
 
             const mailOptions = {
               to: emails.join(),
               subject: require('../i18n').t('ticketUpdated', { uid: ticketJSON.uid, subject: ticketJSON.subject }),
-              html: html,
+              html,
               generateTextFromHTML: true
             }
 

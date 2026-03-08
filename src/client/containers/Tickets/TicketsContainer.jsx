@@ -108,7 +108,7 @@ function TicketsContainer (props) {
     socket.on('$trudesk:client:ticket:updated', onTicketUpdated)
     socket.on('$trudesk:client:ticket:deleted', onTicketDeleted)
 
-    propsFetchTickets({ limit: 50, page: page, type: view, filter: filter })
+    propsFetchTickets({ limit: 50, page, type: view, filter })
     propsFetchTicketStatus()
 
     return () => {
@@ -119,7 +119,7 @@ function TicketsContainer (props) {
       socket.off('$trudesk:client:ticket:updated', onTicketUpdated)
       socket.off('$trudesk:client:ticket:deleted', onTicketDeleted)
     }
-  }, [socket]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [socket])
 
   useEffect(() => {
     if (timelineRef.current) {
@@ -182,7 +182,7 @@ function TicketsContainer (props) {
       })
 
       axios
-        .put(`/api/v2/tickets/batch`, { batch })
+        .put('/api/v2/tickets/batch', { batch })
         .then(res => {
           if (res.data.success) {
             helpers.UI.showSnackbar({ text: t('tickets.statusSetTo', { status: status.get('name') }) })
@@ -239,8 +239,8 @@ function TicketsContainer (props) {
     const cells = []
     for (let k = 0; k < 10; k++) {
       cells.push(
-        <TableCell key={k} className={'vam'}>
-          <div className={'loadingTextAnimation'} />
+        <TableCell key={k} className='vam'>
+          <div className='loadingTextAnimation' />
         </TableCell>
       )
     }
@@ -252,13 +252,13 @@ function TicketsContainer (props) {
     <div style={{ marginLeft: 17 }}>
       <input
         type='checkbox'
-        id={'select_all'}
+        id='select_all'
         style={{ display: 'none' }}
         className='svgcheckinput'
         onChange={e => onSelectAll(e)}
         ref={selectAllCheckboxRef}
       />
-      <label htmlFor={'select_all'} className='svgcheck'>
+      <label htmlFor='select_all' className='svgcheck'>
         <svg width='16px' height='16px' viewBox='0 0 18 18'>
           <path d='M1,9 L1,3.5 C1,2 2,1 3.5,1 L14.5,1 C16,1 17,2 17,3.5 L17,14.5 C17,16 16,17 14.5,17 L3.5,17 C2,17 1,16 1,14.5 L1,9 Z' />
           <polyline points='1 9 7 14 15 4' />
@@ -274,7 +274,7 @@ function TicketsContainer (props) {
         shadow={false}
         rightComponent={
           <div>
-            <div className={'uk-float-right'}>
+            <div className='uk-float-right'>
               <TitlePagination
                 limit={50}
                 total={totalCount}
@@ -287,23 +287,23 @@ function TicketsContainer (props) {
                 filter={filter}
               />
               <PageTitleButton
-                fontAwesomeIcon={'fa-refresh'}
+                fontAwesomeIcon='fa-refresh'
                 onButtonClick={e => {
                   e.preventDefault()
                   propsUnloadTickets()
-                    .then(propsFetchTickets({ type: view, page: page }))
+                    .then(propsFetchTickets({ type: view, page }))
                 }}
               />
               <PageTitleButton
-                fontAwesomeIcon={'fa-filter'}
+                fontAwesomeIcon='fa-filter'
                 onButtonClick={e => {
                   e.preventDefault()
                   propsShowModal('FILTER_TICKET')
                 }}
               />
-              <DropdownTrigger pos={'bottom-right'} offset={5} extraClass={'uk-float-left'}>
-                <PageTitleButton fontAwesomeIcon={'fa-tasks'} />
-                <Dropdown small={true} width={120}>
+              <DropdownTrigger pos='bottom-right' offset={5} extraClass='uk-float-left'>
+                <PageTitleButton fontAwesomeIcon='fa-tasks' />
+                <Dropdown small width={120}>
                   <DropdownItem text={t('common.create')} onClick={() => propsShowModal('CREATE_TICKET')} />
                   <DropdownSeparator />
                   {ticketStatuses.map(s => (
@@ -315,13 +315,13 @@ function TicketsContainer (props) {
                   ))}
                   {helpers.canUser('tickets:delete', true) && <DropdownSeparator />}
                   {helpers.canUser('tickets:delete', true) && (
-                    <DropdownItem text={t('common.delete')} extraClass={'text-danger'} onClick={() => onDeleteClicked()} />
+                    <DropdownItem text={t('common.delete')} extraClass='text-danger' onClick={() => onDeleteClicked()} />
                   )}
                 </Dropdown>
               </DropdownTrigger>
-              <div className={'uk-float-right'}>
+              <div className='uk-float-right'>
                 <div
-                  id={'ticket-search-box'}
+                  id='ticket-search-box'
                   className='search-box uk-float-left nb'
                   style={{ marginTop: 8, paddingLeft: 0 }}
                 >
@@ -329,7 +329,7 @@ function TicketsContainer (props) {
                     type='text'
                     id='tickets_Search'
                     placeholder={t('common.search')}
-                    className={'ticket-top-search'}
+                    className='ticket-top-search'
                     value={searchTerm}
                     onChange={e => onSearchTermChanged(e)}
                     onFocus={e => _onSearchFocus(e)}
@@ -337,23 +337,23 @@ function TicketsContainer (props) {
                 </div>
               </div>
             </div>
-            <SearchResults target={'#ticket-search-box'} ref={searchContainerRef} />
+            <SearchResults target='#ticket-search-box' ref={searchContainerRef} />
           </div>
         }
       />
-      <PageContent padding={0} paddingBottom={0} extraClass={'uk-position-relative'}>
-        {/*<SpinLoader active={loading} />*/}
+      <PageContent padding={0} paddingBottom={0} extraClass='uk-position-relative'>
+        {/* <SpinLoader active={loading} /> */}
         <Table
           tableRef={ref => (ticketsTableRef.current = ref)}
           style={{ margin: 0 }}
-          extraClass={'pDataTable'}
-          stickyHeader={true}
-          striped={true}
+          extraClass='pDataTable'
+          stickyHeader
+          striped
           headers={[
             <TableHeader key={0} width={45} height={50} component={selectAllCheckbox} />,
             <TableHeader key={1} width={60} text={t('common.status')} />,
-            <TableHeader key={2} width={65} text={'#'} />,
-            <TableHeader key={3} width={'23%'} text={t('common.subject')} />,
+            <TableHeader key={2} width={65} text='#' />,
+            <TableHeader key={3} width='23%' text={t('common.subject')} />,
             <TableHeader key={4} width={110} text={t('tickets.created')} />,
             <TableHeader key={5} width={125} text={t('tickets.requester')} />,
             <TableHeader key={6} width={175} text={t('tickets.customer')} />,
@@ -390,8 +390,7 @@ function TicketsContainer (props) {
                 : '--'
 
               const isOverdue = () => {
-                if (!common.viewdata.get('showOverdue') || [2, 3].indexOf(ticket.get('status')) !== -1)
-                  return false
+                if (!common.viewdata.get('showOverdue') || [2, 3].indexOf(ticket.get('status')) !== -1) { return false }
                 const overdueIn = ticket.getIn(['priority', 'overdueIn'])
                 const now = moment()
                 let updated = ticket.get('updated')
@@ -408,7 +407,7 @@ function TicketsContainer (props) {
                   className={`ticket-${status == null ? 'unknonwn' : status.get('name')} ${
                     isOverdue() ? 'overdue' : ''
                   }`}
-                  clickable={true}
+                  clickable
                   onClick={e => {
                     const td = e.target.closest('td')
                     const input = td.getElementsByTagName('input')
@@ -417,7 +416,7 @@ function TicketsContainer (props) {
                   }}
                 >
                   <TableCell
-                    className={'ticket-priority nbb vam'}
+                    className='ticket-priority nbb vam'
                     style={{ borderColor: ticket.getIn(['priority', 'htmlColor']), padding: '18px 15px' }}
                   >
                     <input
@@ -435,24 +434,24 @@ function TicketsContainer (props) {
                       </svg>
                     </label>
                   </TableCell>
-                  <TableCell className={`ticket-status vam nbb uk-text-center`}>
+                  <TableCell className='ticket-status vam nbb uk-text-center'>
                     <span
-                      className={'uk-display-inline-block'}
+                      className='uk-display-inline-block'
                       style={{ backgroundColor: status == null ? '#000' : status.get('htmlColor') }}
                     >
                       {status == null ? 'U' : status.get('name')[0].toUpperCase()}
                     </span>
                   </TableCell>
-                  <TableCell className={'vam nbb'}>{ticket.get('uid')}</TableCell>
-                  <TableCell className={'vam nbb'}>{ticket.get('subject')}</TableCell>
-                  <TableCell className={'vam nbb'}>
+                  <TableCell className='vam nbb'>{ticket.get('uid')}</TableCell>
+                  <TableCell className='vam nbb'>{ticket.get('subject')}</TableCell>
+                  <TableCell className='vam nbb'>
                     {helpers.formatDate(ticket.get('date'), helpers.getShortDateFormat())}
                   </TableCell>
-                  <TableCell className={'vam nbb'}>{ticket.getIn(['owner', 'fullname'])}</TableCell>
-                  <TableCell className={'vam nbb'}>{ticket.getIn(['group', 'name'])}</TableCell>
-                  <TableCell className={'vam nbb'}>{assignee()}</TableCell>
-                  <TableCell className={'vam nbb'}>{dueDate}</TableCell>
-                  <TableCell className={'vam nbb'}>{updated}</TableCell>
+                  <TableCell className='vam nbb'>{ticket.getIn(['owner', 'fullname'])}</TableCell>
+                  <TableCell className='vam nbb'>{ticket.getIn(['group', 'name'])}</TableCell>
+                  <TableCell className='vam nbb'>{assignee()}</TableCell>
+                  <TableCell className='vam nbb'>{dueDate}</TableCell>
+                  <TableCell className='vam nbb'>{updated}</TableCell>
                 </TableRow>
               )
             })}

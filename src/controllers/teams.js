@@ -14,8 +14,6 @@
 
 const _ = require('lodash')
 const permissions = require('../permissions')
-const Team = require('../models/team')
-
 const teamController = {}
 
 teamController.get = function (req, res) {

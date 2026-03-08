@@ -3,7 +3,7 @@ import axios from 'axios'
 const startConversation = (owner, receiver, callback) => {
   return new Promise((resolve, reject) => {
     if (owner === receiver) {
-      if (typeof callback === 'function') return callback('Invalid Participants')
+      if (typeof callback === 'function') return callback(new Error('Invalid Participants'))
 
       return reject(new Error('Invalid Participants'))
     }

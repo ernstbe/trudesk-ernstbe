@@ -177,13 +177,13 @@ function CreateTicketModal (props) {
   })
   return (
     <BaseModal {...props} options={{ bgclose: false }}>
-      <form className={'uk-form-stacked'} onSubmit={e => onFormSubmit(e)}>
+      <form className='uk-form-stacked' onSubmit={e => onFormSubmit(e)}>
         <div className='uk-margin-medium-bottom'>
           <label>{t('modals.createTicket.subject')}</label>
           <input
             type='text'
-            name={'subject'}
-            className={'md-input'}
+            name='subject'
+            className='md-input'
             data-validation='length'
             data-validation-length={`min${viewdata.get('ticketSettings').get('minSubject')}`}
             data-validation-error-msg={t('modals.createTicket.validSubject', { min: viewdata.get('ticketSettings').get('minSubject') })}
@@ -192,25 +192,25 @@ function CreateTicketModal (props) {
         <div className='uk-margin-medium-bottom'>
           <Grid>
             {allowAgentUserTickets && (
-              <GridItem width={'1-3'}>
-                <label className={'uk-form-label'}>{t('modals.createTicket.owner')}</label>
+              <GridItem width='1-3'>
+                <label className='uk-form-label'>{t('modals.createTicket.owner')}</label>
                 <SingleSelect
-                  showTextbox={true}
+                  showTextbox
                   items={mappedAccounts}
                   defaultValue={shared.sessionUser._id}
-                  width={'100%'}
+                  width='100%'
                   ref={i => (ownerSelectRef.current = i)}
                 />
               </GridItem>
             )}
             <GridItem width={allowAgentUserTickets ? '2-3' : '1-1'}>
-              <label className={'uk-form-label'}>{t('modals.createTicket.group')}</label>
+              <label className='uk-form-label'>{t('modals.createTicket.group')}</label>
               <SingleSelect
                 showTextbox={false}
                 items={mappedGroups}
                 defaultValue={head(mappedGroups) ? head(mappedGroups).value : ''}
                 onSelectChange={e => onGroupSelectChange(e)}
-                width={'100%'}
+                width='100%'
                 ref={i => (groupSelectRef.current = i)}
               />
             </GridItem>
@@ -218,12 +218,12 @@ function CreateTicketModal (props) {
         </div>
         <div className='uk-margin-medium-bottom'>
           <Grid>
-            <GridItem width={'1-3'}>
-              <label className={'uk-form-label'}>{t('modals.createTicket.type')}</label>
+            <GridItem width='1-3'>
+              <label className='uk-form-label'>{t('modals.createTicket.type')}</label>
               <SingleSelect
                 showTextbox={false}
                 items={mappedTicketTypes}
-                width={'100%'}
+                width='100%'
                 defaultValue={viewdata.get('defaultTicketType').get('_id')}
                 onSelectChange={e => {
                   onTicketTypeSelectChange(e)
@@ -231,41 +231,41 @@ function CreateTicketModal (props) {
                 ref={i => (typeSelectRef.current = i)}
               />
             </GridItem>
-            <GridItem width={'2-3'}>
-              <label className={'uk-form-label'}>{t('modals.createTicket.tags')}</label>
+            <GridItem width='2-3'>
+              <label className='uk-form-label'>{t('modals.createTicket.tags')}</label>
               <SingleSelect
                 showTextbox={false}
                 items={mappedTicketTags}
-                width={'100%'}
-                multiple={true}
+                width='100%'
+                multiple
                 ref={i => (tagSelectRef.current = i)}
               />
             </GridItem>
           </Grid>
         </div>
         <div className='uk-margin-medium-bottom'>
-          <label className={'uk-form-label'}>{t('modals.createTicket.priority')}</label>
+          <label className='uk-form-label'>{t('modals.createTicket.priority')}</label>
           <div
             ref={priorityLoaderRef}
             style={{ height: '32px', width: '32px', position: 'relative' }}
-            className={'hide'}
+            className='hide'
           >
             <SpinLoader
               style={{ background: 'transparent' }}
               spinnerStyle={{ width: '24px', height: '24px' }}
-              active={true}
+              active
             />
           </div>
-          <div ref={priorityWrapperRef} className={'uk-clearfix'}>
+          <div ref={priorityWrapperRef} className='uk-clearfix'>
             {priorities.map(priority => {
               return (
-                <div key={priority._id} className={'uk-float-left'}>
-                  <span className={'icheck-inline'}>
+                <div key={priority._id} className='uk-float-left'>
+                  <span className='icheck-inline'>
                     <input
                       id={'p___' + priority._id}
-                      name={'priority'}
+                      name='priority'
                       type='radio'
-                      className={'with-gap'}
+                      className='with-gap'
                       value={priority._id}
                       onChange={e => {
                         onPriorityRadioChange(e)
@@ -273,7 +273,7 @@ function CreateTicketModal (props) {
                       checked={selectedPriority === priority._id}
                       data-md-icheck
                     />
-                    <label htmlFor={'p___' + priority._id} className={'mb-10 inline-label'}>
+                    <label htmlFor={'p___' + priority._id} className='mb-10 inline-label'>
                       <span className='uk-badge' style={{ backgroundColor: priority.htmlColor }}>
                         {t('priorities.' + priority.name, priority.name)}
                       </span>
@@ -290,18 +290,18 @@ function CreateTicketModal (props) {
             <EasyMDE
               ref={i => (issueMdeRef.current = i)}
               onChange={val => (issueTextRef.current = val)}
-              allowImageUpload={true}
-              inlineImageUploadUrl={'/tickets/uploadmdeimage'}
+              allowImageUpload
+              inlineImageUploadUrl='/tickets/uploadmdeimage'
               inlineImageUploadHeaders={{ ticketid: 'uploads' }}
             />
           </div>
-          <span style={{ marginTop: '6px', display: 'inline-block', fontSize: '11px' }} className={'uk-text-muted'}>
+          <span style={{ marginTop: '6px', display: 'inline-block', fontSize: '11px' }} className='uk-text-muted'>
             {t('modals.createTicket.descriptionHint')}
           </span>
         </div>
         <div className='uk-modal-footer uk-text-right'>
-          <Button text={t('common.cancel')} flat={true} waves={true} extraClass={'uk-modal-close'} />
-          <Button text={t('common.create')} style={'primary'} flat={true} type={'submit'} />
+          <Button text={t('common.cancel')} flat waves extraClass='uk-modal-close' />
+          <Button text={t('common.create')} style='primary' flat type='submit' />
         </div>
       </form>
     </BaseModal>

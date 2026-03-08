@@ -48,7 +48,7 @@ events.onClearNotice = function (socket) {
 }
 
 module.exports = {
-  events: events,
-  eventLoop: eventLoop,
-  register: register
+  events,
+  eventLoop,
+  register
 }

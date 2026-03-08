@@ -22,7 +22,6 @@ import { fetchViewData, showModal, hideModal, showNotice, clearNotice } from 'ac
 
 import Avatar from 'components/Avatar/Avatar'
 import PDropdownTrigger from 'components/PDropdown/PDropdownTrigger'
-import OffCanvasTrigger from 'components/OffCanvas/OffCanvasTrigger'
 import NoticeBanner from 'components/NoticeBanner'
 import NotificationsDropdownPartial from './notificationsDropdown'
 
@@ -52,15 +51,15 @@ function TopbarContainer ({
   const profileDropdownPartial = useRef(null)
 
   const [notificationCount, setNotificationCount] = useState(0)
-  const [activeUserCount, setActiveUserCount] = useState(0)
-  const [showInfoBanner, setShowInfoBanner] = useState(true)
+  // eslint-disable-next-line no-unused-vars
+  const [_activeUserCount, setActiveUserCount] = useState(0)
 
   const showNoticeHandler = useCallback((noticeData, cookieName) => {
     showNoticeAction(noticeData)
 
     if (cookieName) {
       const showNoticeWindow = Cookies.get(cookieName) !== 'false'
-      if (showNoticeWindow)
+      if (showNoticeWindow) {
         showModalAction('NOTICE_ALERT', {
           modalTag: 'NOTICE_ALERT',
           notice: noticeData,
@@ -68,6 +67,7 @@ function TopbarContainer ({
           shortDateFormat: viewdata.get('shortDateFormat'),
           timeFormat: viewdata.get('timeFormat')
         })
+      }
     }
   }, [showNoticeAction, showModalAction, viewdata])
 
@@ -101,8 +101,7 @@ function TopbarContainer ({
   useEffect(() => {
     if (!socket) return
     fetchViewDataAction().then(() => {
-      if (viewdata.get('notice'))
-        showNoticeHandler(viewdata.get('notice').toJS(), viewdata.get('noticeCookieName'))
+      if (viewdata.get('notice')) { showNoticeHandler(viewdata.get('notice').toJS(), viewdata.get('noticeCookieName')) }
     })
 
     socket.on(NOTIFICATIONS_UPDATE, onSocketUpdateNotifications)
@@ -120,8 +119,7 @@ function TopbarContainer ({
       socket.off(NOTICE_UI_SHOW, onSocketShowNotice)
       socket.off(NOTICE_UI_CLEAR, onSocketClearNotice)
     }
-  }, [socket]) // eslint-disable-line react-hooks/exhaustive-deps
-
+  }, [socket])
   const onConversationsClicked = (e) => {
     e.preventDefault()
   }
@@ -130,12 +128,12 @@ function TopbarContainer ({
   return (
     <div>
       {notice && <NoticeBanner notice={notice} />}
-      <div className={'uk-grid top-nav'}>
+      <div className='uk-grid top-nav'>
         <div className='uk-width-1-1'>
           <div className='top-bar' data-topbar>
             <div className='title-area uk-float-left'>
               <div className='logo'>
-                <img src={viewdata.get('logoImage')} alt='Logo' className={'site-logo'} />
+                <img src={viewdata.get('logoImage')} alt='Logo' className='site-logo' />
               </div>
             </div>
             <section className='top-bar-section uk-clearfix'>
@@ -146,7 +144,7 @@ function TopbarContainer ({
                     <li className='top-bar-icon nopadding'>
                       <button
                         title={t('topbar.createTicket')}
-                        className={'anchor'}
+                        className='anchor'
                         onClick={() => showModalAction('CREATE_TICKET')}
                       >
                         <i className='material-icons'>&#xE145;</i>
@@ -172,7 +170,7 @@ function TopbarContainer ({
                   </li>
                   <li className='top-bar-icon'>
                     <PDropdownTrigger target={notificationsDropdownPartial}>
-                      <a title={t('topbar.notifications')} className={'no-ajaxy uk-vertical-align'}>
+                      <a title={t('topbar.notifications')} className='no-ajaxy uk-vertical-align'>
                         <i className='material-icons'>notifications</i>
                         <span
                           className={'alert uk-border-circle label ' + (notificationCount < 1 ? 'hide' : '')}
@@ -182,21 +180,21 @@ function TopbarContainer ({
                       </a>
                     </PDropdownTrigger>
                   </li>
-                  {/*<li className='top-bar-icon'>*/}
-                  {/*  <OffCanvasTrigger target={'online-user-list'}>*/}
-                  {/*    <a title={'Online Users'} className='no-ajaxy'>*/}
-                  {/*      <i className='material-icons'>people_alt</i>*/}
-                  {/*      <span*/}
-                  {/*        className={*/}
-                  {/*          'online-user-count alert uk-border-circle label ' +*/}
-                  {/*          (activeUserCount < 1 ? 'hide' : '')*/}
-                  {/*        }*/}
-                  {/*      >*/}
-                  {/*        {activeUserCount}*/}
-                  {/*      </span>*/}
-                  {/*    </a>*/}
-                  {/*  </OffCanvasTrigger>*/}
-                  {/*</li>*/}
+                  {/* <li className='top-bar-icon'> */}
+                  {/*  <OffCanvasTrigger target={'online-user-list'}> */}
+                  {/*    <a title={'Online Users'} className='no-ajaxy'> */}
+                  {/*      <i className='material-icons'>people_alt</i> */}
+                  {/*      <span */}
+                  {/*        className={ */}
+                  {/*          'online-user-count alert uk-border-circle label ' + */}
+                  {/*          (activeUserCount < 1 ? 'hide' : '') */}
+                  {/*        } */}
+                  {/*      > */}
+                  {/*        {activeUserCount} */}
+                  {/*      </span> */}
+                  {/*    </a> */}
+                  {/*  </OffCanvasTrigger> */}
+                  {/* </li> */}
                   <li className='top-bar-icon nopadding nohover'>
                     <i className='material-icons separator'>remove</i>
                   </li>
@@ -208,11 +206,11 @@ function TopbarContainer ({
                         <a
                           href='#'
                           title={sessionUser.fullname}
-                          className={'profile-pic no-ajaxy uk-vertical-align-middle'}
+                          className='profile-pic no-ajaxy uk-vertical-align-middle'
                         >
                           <Avatar
                             image={sessionUser.image}
-                            showOnlineBubble={true}
+                            showOnlineBubble
                             userId={sessionUser._id}
                             size={35}
                             overrideBubbleSize={15}

@@ -349,12 +349,12 @@ debugController.populatedatabase = async function (req, res) {
     const groups = []
     for (let i = 0; i < 11; i++) {
       let name = chance.company()
-      while (_.find(groups, { name: name })) {
+      while (_.find(groups, { name })) {
         name = chance.company()
       }
 
       const group = {
-        name: name,
+        name,
         __v: 0,
         members: _.map(users, function (o) {
           return o._id
@@ -446,7 +446,6 @@ function randomDate (start, end) {
 
 debugController.sendmail = function (req, res) {
   const mailer = require('../mailer')
-  const templateSchema = require('../models/template')
   const Email = require('email-templates')
   const templateDir = path.resolve(__dirname, '..', 'mailer', 'templates')
 
@@ -480,12 +479,12 @@ debugController.sendmail = function (req, res) {
   }
 
   email
-    .render('ticket-comment-added', { base_url: global.TRUDESK_BASEURL, ticket: ticket, comment: ticket.comments[0] })
+    .render('ticket-comment-added', { base_url: global.TRUDESK_BASEURL, ticket, comment: ticket.comments[0] })
     .then(function (html) {
       const mailOptions = {
-        to: to,
+        to,
         subject: 'Trudesk Test Email #' + ticket.uid + ' [Debugger]',
-        html: html,
+        html,
         generateTextFromHTML: true
       }
 

@@ -46,7 +46,7 @@ const DatePicker = ({
   }, [value, format])
 
   return (
-    <Fragment>
+    <>
       <input
         ref={datepickerRef}
         id={name}
@@ -59,7 +59,7 @@ const DatePicker = ({
         style={{ width: '97%' }}
         defaultValue={value ? helpers.formatDate(value, format) : ''}
       />
-    </Fragment>
+    </>
   )
 }
 

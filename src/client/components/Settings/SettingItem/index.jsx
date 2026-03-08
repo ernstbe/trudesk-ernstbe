@@ -49,7 +49,7 @@ const SettingItem = ({ title, subtitle, component, tooltip, extraClass, children
               <div className='uk-position-relative'>
                 {React.Children.map(children, (child, k) => {
                   return (
-                    <div key={k} className={'uk-clearfix'}>
+                    <div key={k} className='uk-clearfix'>
                       {child}
                     </div>
                   )

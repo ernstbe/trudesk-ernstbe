@@ -45,7 +45,7 @@ const apiMessages = {}
 
 apiMessages.getConversations = async function (req, res) {
   try {
-    var conversations = await ConversationSchema.getConversations(req.user._id)
+    const conversations = await ConversationSchema.getConversations(req.user._id)
     return res.json({ success: true, conversations })
   } catch (err) {
     return res.status(400).json({ success: false, error: err.message })
@@ -54,7 +54,7 @@ apiMessages.getConversations = async function (req, res) {
 
 apiMessages.getRecentConversations = async function (req, res) {
   try {
-    var conversations = await ConversationSchema.getConversations(req.user._id)
+    const conversations = await ConversationSchema.getConversations(req.user._id)
 
     const result = []
     for (const item of conversations) {
@@ -65,7 +65,7 @@ apiMessages.getRecentConversations = async function (req, res) {
         return res.status(400).json({ success: false, error: 'Unable to attach to userMeta' })
       }
 
-      var m = await MessageSchema.getMostRecentMessage(item._id)
+      const m = await MessageSchema.getMostRecentMessage(item._id)
       const r = item.toObject()
 
       if (_.first(m) === undefined) {
@@ -91,12 +91,12 @@ apiMessages.getRecentConversations = async function (req, res) {
 
 apiMessages.get = async function (req, res) {
   try {
-    var conversations = await ConversationSchema.getConversations(req.user._id)
+    const conversations = await ConversationSchema.getConversations(req.user._id)
     const fullConversations = []
 
     await Promise.all(
       conversations.map(async function (item) {
-        var messages = await MessageSchema.getFullConversation(item._id)
+        const messages = await MessageSchema.getFullConversation(item._id)
         fullConversations.push({
           cId: item._id,
           p: item.participants,
@@ -118,7 +118,7 @@ apiMessages.startConversation = async function (req, res) {
     const participants = payload.participants
 
     // Check if Conversation with these participants exist
-    var convo = await ConversationSchema.getConversations(participants)
+    const convo = await ConversationSchema.getConversations(participants)
 
     if (convo.length > 0) {
       const conversation = _.first(convo)
@@ -126,7 +126,7 @@ apiMessages.startConversation = async function (req, res) {
         conversation.userMeta[_.findIndex(conversation.userMeta, i => i.userId.toString() === requester.toString())]
       if (userMeta) {
         userMeta.updatedAt = Date.now()
-        var updatedConvo = await conversation.save()
+        const updatedConvo = await conversation.save()
         return res.json({ success: true, conversation: updatedConvo })
       } else return res.json({ success: true, conversation })
     }
@@ -152,7 +152,7 @@ apiMessages.startConversation = async function (req, res) {
         updatedAt: new Date()
       })
 
-      var cSave = await Conversation.save()
+      const cSave = await Conversation.save()
       return res.json({ success: true, conversation: cSave })
     }
   } catch (err) {
@@ -182,14 +182,14 @@ apiMessages.send = async function (req, res) {
       })
     }
 
-    var convo = await ConversationSchema.findOne({ _id: cId })
+    const convo = await ConversationSchema.findOne({ _id: cId })
     if (!convo) throw new Error('Invalid Conversation')
 
     // Updated conversation to save UpdatedAt field.
     convo.updatedAt = new Date()
-    var savedConvo = await convo.save()
+    const savedConvo = await convo.save()
 
-    var user = await UserSchema.findOne({ _id: owner })
+    const user = await UserSchema.findOne({ _id: owner })
     if (!user) throw new Error('Invalid Conversation')
 
     const Message = new MessageSchema({
@@ -198,7 +198,7 @@ apiMessages.send = async function (req, res) {
       body: message
     })
 
-    var mSave = await Message.save()
+    const mSave = await Message.save()
     return res.json({ success: true, message: mSave })
   } catch (err) {
     winston.debug(err)
@@ -215,10 +215,10 @@ apiMessages.getMessagesForConversation = async function (req, res) {
   }
 
   try {
-    var convo = await ConversationSchema.getConversation(conversation)
+    const convo = await ConversationSchema.getConversation(conversation)
     if (!convo) throw new Error('Invalid Conversation')
 
-    var messages = await MessageSchema.getConversationWithObject({
+    const messages = await MessageSchema.getConversationWithObject({
       cid: conversation,
       page,
       limit,
@@ -229,7 +229,7 @@ apiMessages.getMessagesForConversation = async function (req, res) {
     return res.json({
       success: true,
       conversation: convo,
-      messages: messages
+      messages
     })
   } catch (err) {
     winston.debug(err)
@@ -245,7 +245,7 @@ apiMessages.deleteConversation = async function (req, res) {
   }
 
   try {
-    var convo = await ConversationSchema.getConversation(conversation)
+    const convo = await ConversationSchema.getConversation(conversation)
     const user = req.user
     const idx = _.findIndex(convo.userMeta, function (item) {
       return item.userId.toString() === user._id.toString()
@@ -256,7 +256,7 @@ apiMessages.deleteConversation = async function (req, res) {
 
     convo.userMeta[idx].deletedAt = new Date()
 
-    var sConvo = await convo.save()
+    const sConvo = await convo.save()
     const cleanConvo = sConvo.toObject()
     cleanConvo.participants.forEach(function (p) {
       delete p._id

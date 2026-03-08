@@ -35,7 +35,7 @@ function parseSetting (settings, name, defaultValue) {
 util.setSetting = async function (setting, value, callback) {
   const s = {
     name: setting,
-    value: value
+    value
   }
 
   try {

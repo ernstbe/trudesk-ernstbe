@@ -79,8 +79,7 @@ function MessagesContainer ({
     // Hide Bubbles
     if (messagesState.currentConversation) {
       if (messagesState.currentConversation.get('_id').toString() === cid.toString()) {
-        if (userTypingBubbles.current && !userTypingBubbles.current.classList.contains('hide'))
-          userTypingBubbles.current.classList.add('hide')
+        if (userTypingBubbles.current && !userTypingBubbles.current.classList.contains('hide')) { userTypingBubbles.current.classList.add('hide') }
       }
     }
   }, [messagesState.currentConversation])
@@ -96,8 +95,7 @@ function MessagesContainer ({
       currentConversation &&
       currentConversation.get('_id').toString() === data.message.conversation.toString()
     ) {
-      if (userTypingBubbles.current && !userTypingBubbles.current.classList.contains('hide'))
-        userTypingBubbles.current.classList.add('hide')
+      if (userTypingBubbles.current && !userTypingBubbles.current.classList.contains('hide')) { userTypingBubbles.current.classList.add('hide') }
     }
   }, [sessionUser, receiveMessageAction, messagesState.currentConversation])
 
@@ -113,8 +111,7 @@ function MessagesContainer ({
     if (messagesState.currentConversation) {
       if (messagesState.currentConversation.get('_id').toString() === data.cid.toString()) {
         scrollToMessagesBottom(false)
-        if (userTypingBubbles.current && userTypingBubbles.current.classList.contains('hide'))
-          userTypingBubbles.current.classList.remove('hide')
+        if (userTypingBubbles.current && userTypingBubbles.current.classList.contains('hide')) { userTypingBubbles.current.classList.remove('hide') }
       }
     }
   }, [messagesState.currentConversation, scrollToMessagesBottom, _stopTyping])
@@ -168,7 +165,7 @@ function MessagesContainer ({
       socket.off(MESSAGES_UI_USER_TYPING, onUserIsTyping)
       socket.off(MESSAGES_UI_RECEIVE, onReceiveMessage)
     }
-  }, [socket]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [socket])
 
   useEffect(() => {
     helpers.resizeAll()
@@ -184,16 +181,17 @@ function MessagesContainer ({
 
   const showUserList = useCallback((e) => {
     if (e) e.preventDefault()
-    if (sessionUser.role.isAdmin || sessionUser.role.isAgent)
+    if (sessionUser.role.isAdmin || sessionUser.role.isAgent) {
       fetchAccountsAction({ type: 'all', limit: -1 }).then(() => {
         setMutableUserList(accountsState.accounts)
         setUserListShown(true)
       })
-    else
+    } else {
       fetchAccountsAction({ type: 'agents' }).then(() => {
         setMutableUserList(accountsState.accounts)
         setUserListShown(true)
       })
+    }
   }, [sessionUser, fetchAccountsAction, accountsState.accounts])
 
   const hideUserList = useCallback((e) => {
@@ -246,8 +244,7 @@ function MessagesContainer ({
     if (
       messagesState.currentConversation &&
       messagesState.currentConversation.get('_id').toString() === id.toString()
-    )
-      return
+    ) { return }
 
     unloadSingleConversationAction().then(() => {
       setSingleConversationLoaded(false)
@@ -274,11 +271,13 @@ function MessagesContainer ({
         body: e.target.chatMessage.value.trim()
       })
         .then(res => {
-          if (socket) socket.emit(MESSAGES_SEND, {
-            to,
-            from: sessionUser._id,
-            message: res.message
-          })
+          if (socket) {
+            socket.emit(MESSAGES_SEND, {
+              to,
+              from: sessionUser._id,
+              message: res.message
+            })
+          }
 
           $(e.target.chatMessage).val('')
 
@@ -292,13 +291,13 @@ function MessagesContainer ({
   return (
     <div>
       <Grid>
-        <GridItem width={'3-10'} extraClass={'full-height'}>
+        <GridItem width='3-10' extraClass='full-height'>
           <PageTitle
             title={t('messages.conversations')}
-            extraClasses={'page-title-border-right'}
-            hideBorderBottom={true}
+            extraClasses='page-title-border-right'
+            hideBorderBottom
             rightComponent={
-              <div className={'uk-position-relative'}>
+              <div className='uk-position-relative'>
                 <div id='convo-actions' style={{ position: 'absolute', top: 20, right: 15 }}>
                   {!userListShown && (
                     <a
@@ -327,7 +326,7 @@ function MessagesContainer ({
           />
 
           {!userListShown && (
-            <div id={'conversationList'} className='page-content-left noborder full-height'>
+            <div id='conversationList' className='page-content-left noborder full-height'>
               <ul className='message-items scrollable'>
                 {messagesState.conversations.map(convo => {
                   const partnerId = convo.get('partner').get('_id')
@@ -389,26 +388,26 @@ function MessagesContainer ({
           )}
         </GridItem>
         {currentConversation && (
-          <GridItem width={'7-10'} extraClass={'nopadding page-message uk-position-relative'}>
-            <SpinLoader active={!singleConversationLoaded} animate={true} animateDelay={300} />
+          <GridItem width='7-10' extraClass='nopadding page-message uk-position-relative'>
+            <SpinLoader active={!singleConversationLoaded} animate animateDelay={300} />
             <div
               ref={messagesContainer}
               className='page-content page-content-right full-height scrollable'
               data-offset={41}
               style={{ marginBottom: '41px !important' }}
             >
-              <span className={'conversation-start'}>
+              <span className='conversation-start'>
                 {t('messages.conversationStartedOn')} {helpers.formatDate(currentConversation.get('createdAt'), helpers.getLongDateWithTimeFormat())}
               </span>
               {currentConversation.get('requestingUserMeta').get('deletedAt') && (
-                <span className={'conversation-deleted'}>
+                <span className='conversation-deleted'>
                   {t('messages.conversationDeletedAt')} {helpers.formatDate(currentConversation.get('requestingUserMeta').get('deletedAt'), helpers.getLongDateWithTimeFormat())}
                 </span>
               )}
               <div ref={conversationScrollSpy} className={clsx('uk-text-center', 'uk-hidden')}>
                 <i className='uk-icon-refresh uk-icon-spin' />
               </div>
-              <div id={'messages'}>
+              <div id='messages'>
                 {currentConversation.get('messages').map(message => {
                   const ownerImage = message.get('owner').get('image') || 'defaultProfile.jpg'
                   const isMessageOwner =
@@ -423,7 +422,7 @@ function MessagesContainer ({
                   return (
                     <div key={message.get('_id')}>
                       {!isMessageOwner && (
-                        <div className={'message message-left'}>
+                        <div className='message message-left'>
                           <img
                             src={`/uploads/users/${ownerImage}`}
                             alt='Profile Image'
@@ -434,7 +433,7 @@ function MessagesContainer ({
                         </div>
                       )}
                       {isMessageOwner && (
-                        <div className={'message message-right'}>
+                        <div className='message message-right'>
                           <div
                             className='message-body'
                             data-uk-tooltip="{pos:'right', animation: false}"
@@ -451,7 +450,7 @@ function MessagesContainer ({
                 <div ref={userTypingBubbles} className='user-is-typing-wrapper padding-10 uk-clearfix hide'>
                   <div className='chat-user-profile smaller' style={{ position: 'relative', float: 'left', left: 0 }}>
                     <img
-                      className={'round profileImage'}
+                      className='round profileImage'
                       src={`/uploads/users/${currentConversation.get('partner').get('image') ||
                         'defaultProfile.jpg'}`}
                       alt=''
@@ -476,29 +475,27 @@ function MessagesContainer ({
                     e,
                     currentConversation.get('_id'),
                     currentConversation.get('partner').get('_id')
-                  )
-                }
+                  )}
               >
                 <input
                   type='text'
-                  name={'chatMessage'}
+                  name='chatMessage'
                   placeholder={t('messages.typeMessage')}
                   onKeyDown={e =>
                     onSendMessageKeyDown(
                       e,
                       currentConversation.get('_id'),
                       currentConversation.get('partner').get('_id')
-                    )
-                  }
+                    )}
                 />
-                <button type={'submit'}>{t('messages.send')}</button>
+                <button type='submit'>{t('messages.send')}</button>
               </form>
             </div>
           </GridItem>
         )}
       </Grid>
       <ul className='context-menu'>
-        <li data-action={'delete'} style={{ color: '#d32f2f' }}>
+        <li data-action='delete' style={{ color: '#d32f2f' }}>
           {t('messages.deleteConversation')}
         </li>
       </ul>

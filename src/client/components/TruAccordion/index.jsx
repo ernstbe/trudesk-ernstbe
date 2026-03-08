@@ -11,7 +11,7 @@ const TruAccordion = ({ startExpanded = false, onExpandedChange, contentPadding,
     setExpanded(startExpanded)
     setExpandedContentShown(startExpanded)
     expandedRef.current = startExpanded
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [])
 
   const onHeaderClick = useCallback(
     e => {
@@ -43,19 +43,19 @@ const TruAccordion = ({ startExpanded = false, onExpandedChange, contentPadding,
 
   return (
     <div className={clsx('truaccordion-wrapper', expanded && ' expanded')}>
-      <div className={'truaccordion-header'} role={'button'} onClick={onHeaderClick}>
-        <div className={'truaccordion-header-content'}>
+      <div className='truaccordion-header' role='button' onClick={onHeaderClick}>
+        <div className='truaccordion-header-content'>
           <h4>{headerContent}</h4>
-          <div className={'arrow'}>
+          <div className='arrow'>
             <span>
-              <i className={'material-icons'}>chevron_right</i>
+              <i className='material-icons'>chevron_right</i>
             </span>
           </div>
         </div>
       </div>
       {expandedContentShown && (
-        <div className={'truaccordion-content'}>
-          <div className={'truaccordion-content-inner'} style={contentStyle}>
+        <div className='truaccordion-content'>
+          <div className='truaccordion-content-inner' style={contentStyle}>
             {content}
           </div>
         </div>

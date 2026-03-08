@@ -16,7 +16,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 
 const ZoneBox = ({ extraClass, children }) => {
-  return <div className={'z-box uk-clearfix ' + (extraClass ? extraClass : '')}>{children}</div>
+  return <div className={'z-box uk-clearfix ' + (extraClass || '')}>{children}</div>
 }
 
 ZoneBox.propTypes = {

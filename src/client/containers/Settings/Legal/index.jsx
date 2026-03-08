@@ -61,10 +61,10 @@ const LegalSettingsContainer = ({ active, settings, updateSetting, t }) => {
         <div className='uk-clearfix'>
           <Button
             text={t('common.save')}
-            extraClass={'uk-float-right'}
-            flat={true}
-            style={'success'}
-            waves={true}
+            extraClass='uk-float-right'
+            flat
+            style='success'
+            waves
             onClick={e => onSavePrivacyPolicyClicked(e)}
           />
         </div>

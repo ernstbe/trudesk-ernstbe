@@ -43,7 +43,7 @@ function GroupsContainer ({
 }) {
   useEffect(() => {
     fetchGroupsAction({ type: 'all' })
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [])
 
   const onCreateGroupClick = useCallback(() => {
     showModalAction('CREATE_GROUP')
@@ -76,7 +76,7 @@ function GroupsContainer ({
 
   const tableItems = groups.map(group => {
     return (
-      <TableRow key={group.get('_id')} className={'vam nbb'}>
+      <TableRow key={group.get('_id')} className='vam nbb'>
         <TableCell style={{ fontWeight: 500, padding: '18px 15px' }}>{group.get('name')}</TableCell>
         <TableCell style={{ padding: '13px 20px 8px 8px' }}>
           {group.get('members') &&
@@ -91,8 +91,8 @@ function GroupsContainer ({
                 return (
                   <div
                     key={user.get('_id')}
-                    className={'uk-float-left uk-position-relative mb-10'}
-                    data-uk-tooltip={'{pos: "bottom"}'}
+                    className='uk-float-left uk-position-relative mb-10'
+                    data-uk-tooltip='{pos: "bottom"}'
                     title={user.get('fullname')}
                   >
                     <Avatar size={25} style={{ marginRight: 5 }} image={profilePic} userId={user.get('_id')} />
@@ -104,14 +104,14 @@ function GroupsContainer ({
         <TableCell style={{ textAlign: 'right', paddingRight: 15 }}>
           <ButtonGroup>
             {helpers.canUser('groups:update', true) && (
-              <Button text={t('common.edit')} small={true} waves={true} onClick={() => onEditGroupClick(group.toJS())} />
+              <Button text={t('common.edit')} small waves onClick={() => onEditGroupClick(group.toJS())} />
             )}
             {helpers.canUser('groups:delete', true) && (
               <Button
                 text={t('common.delete')}
-                style={'danger'}
-                small={true}
-                waves={true}
+                style='danger'
+                small
+                waves
                 onClick={() => onDeleteGroupClick(group.get('_id'))}
               />
             )}
@@ -126,14 +126,14 @@ function GroupsContainer ({
       <PageTitle
         title={t('groups.title')}
         rightComponent={
-          <div className={'uk-grid uk-grid-collapse'}>
-            <div className={'uk-width-1-1 mt-15 uk-text-right'}>
+          <div className='uk-grid uk-grid-collapse'>
+            <div className='uk-width-1-1 mt-15 uk-text-right'>
               <Button
                 text={t('common.create')}
                 flat={false}
-                small={true}
+                small
                 waves={false}
-                extraClass={'hover-accent'}
+                extraClass='hover-accent'
                 onClick={() => onCreateGroupClick()}
               />
             </div>
@@ -143,8 +143,8 @@ function GroupsContainer ({
       <PageContent padding={0} paddingBottom={0}>
         <Table
           headers={[
-            <TableHeader key={0} width={'25%'} height={40} text={t('common.name')} padding={'8px 8px 8px 15px'} />,
-            <TableHeader key={1} width={'50%'} text={t('groups.groupMembers')} />,
+            <TableHeader key={0} width='25%' height={40} text={t('common.name')} padding='8px 8px 8px 15px' />,
+            <TableHeader key={1} width='50%' text={t('groups.groupMembers')} />,
             <TableHeader key={2} width={130} text={t('groups.groupActions')} />
           ]}
         >

@@ -43,7 +43,7 @@ function DashboardContainer ({
     fetchDashboardTopGroupsAction({ timespan: 30 })
     fetchDashboardTopTagsAction({ timespan: 30 })
     fetchDashboardOverdueTicketsAction()
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [])
 
   const onTimespanChange = useCallback((e) => {
     e.preventDefault()
@@ -57,8 +57,8 @@ function DashboardContainer ({
   const tz = helpers.getTimezone()
   const lastUpdatedFormatted = dashboardState.lastUpdated
     ? moment(dashboardState.lastUpdated, 'MM/DD/YYYY hh:mm:ssa')
-        .tz(tz)
-        .format(formatString)
+      .tz(tz)
+      .format(formatString)
     : t('dashboard.cacheLoading')
 
   const closedPercent = dashboardState.closedCount
@@ -71,7 +71,7 @@ function DashboardContainer ({
         title={t('dashboard.title')}
         rightComponent={
           <div>
-            <div className={'uk-float-right'} style={{ minWidth: 250 }}>
+            <div className='uk-float-right' style={{ minWidth: 250 }}>
               <div style={{ marginTop: 8 }}>
                 <SingleSelect
                   items={[
@@ -81,12 +81,12 @@ function DashboardContainer ({
                     { text: t('dashboard.last180Days'), value: '180' },
                     { text: t('dashboard.last365Days'), value: '365' }
                   ]}
-                  defaultValue={'30'}
+                  defaultValue='30'
                   onSelectChange={e => onTimespanChange(e)}
                 />
               </div>
             </div>
-            <div className={'uk-float-right uk-text-muted uk-text-small'} style={{ margin: '23px 25px 0 0' }}>
+            <div className='uk-float-right uk-text-muted uk-text-small' style={{ margin: '23px 25px 0 0' }}>
               <strong>{t('dashboard.lastUpdated')}: </strong>
               <span>{lastUpdatedFormatted}</span>
             </div>
@@ -95,12 +95,12 @@ function DashboardContainer ({
       />
       <PageContent>
         <Grid>
-          <GridItem width={'1-3'}>
+          <GridItem width='1-3'>
             <TruCard
               content={
                 <div>
                   <div className='right uk-margin-top uk-margin-small-right'>
-                    <PeityBar values={'5,3,9,6,5,9,7'} />
+                    <PeityBar values='5,3,9,6,5,9,7' />
                   </div>
                   <span className='uk-text-muted uk-text-small'>
                     {t('dashboard.totalTickets', { days: timespan.toString() })}
@@ -113,12 +113,12 @@ function DashboardContainer ({
               }
             />
           </GridItem>
-          <GridItem width={'1-3'}>
+          <GridItem width='1-3'>
             <TruCard
               content={
                 <div>
                   <div className='right uk-margin-top uk-margin-small-right'>
-                    <PeityPie type={'donut'} value={(closedPercent !== 'NaN' ? closedPercent : '0') + '/100'} />
+                    <PeityPie type='donut' value={(closedPercent !== 'NaN' ? closedPercent : '0') + '/100'} />
                   </div>
                   <span className='uk-text-muted uk-text-small'>{t('dashboard.ticketsCompleted')}</span>
 
@@ -129,12 +129,12 @@ function DashboardContainer ({
               }
             />
           </GridItem>
-          <GridItem width={'1-3'}>
+          <GridItem width='1-3'>
             <TruCard
               content={
                 <div>
                   <div className='right uk-margin-top uk-margin-small-right'>
-                    <PeityLine values={'5,3,9,6,5,9,7,3,5,2'} />
+                    <PeityLine values='5,3,9,6,5,9,7,3,5,2' />
                   </div>
                   <span className='uk-text-muted uk-text-small'>{t('dashboard.avgResponseTime')}</span>
 
@@ -145,32 +145,32 @@ function DashboardContainer ({
               }
             />
           </GridItem>
-          <GridItem width={'1-1'} extraClass={'uk-margin-medium-top'}>
+          <GridItem width='1-1' extraClass='uk-margin-medium-top'>
             <TruCard
               header={
                 <div className='uk-text-left'>
                   <h6 style={{ padding: 15, margin: 0, fontSize: '14px' }}>{t('dashboard.ticketBreakdown')}</h6>
                 </div>
               }
-              fullSize={true}
+              fullSize
               hover={false}
-              extraContentClass={'nopadding'}
+              extraContentClass='nopadding'
               content={
                 <div className='mGraph mGraph-panel' style={{ minHeight: 200, position: 'relative' }}>
                   <MGraph
                     height={250}
-                    x_accessor={'date'}
-                    y_accessor={'value'}
+                    x_accessor='date'
+                    y_accessor='value'
                     data={dashboardState.ticketBreakdownData.toJS() || []}
                   />
                 </div>
               }
             />
           </GridItem>
-          <GridItem width={'1-2'} extraClass={'uk-margin-medium-top'}>
+          <GridItem width='1-2' extraClass='uk-margin-medium-top'>
             <TruCard
               loaderActive={dashboardState.loadingTopGroups}
-              animateLoader={true}
+              animateLoader
               style={{ minHeight: 256 }}
               header={
                 <div className='uk-text-left'>
@@ -184,10 +184,10 @@ function DashboardContainer ({
               }
             />
           </GridItem>
-          <GridItem width={'1-2'} extraClass={'uk-margin-medium-top'}>
+          <GridItem width='1-2' extraClass='uk-margin-medium-top'>
             <TruCard
               loaderActive={dashboardState.loadingTopTags}
-              animateLoader={true}
+              animateLoader
               animateDelay={800}
               style={{ minHeight: 256 }}
               header={
@@ -197,12 +197,12 @@ function DashboardContainer ({
               }
               content={
                 <div>
-                  <D3Pie type={'donut'} data={dashboardState.topTags.toJS()} />
+                  <D3Pie type='donut' data={dashboardState.topTags.toJS()} />
                 </div>
               }
             />
           </GridItem>
-          <GridItem width={'1-2'} extraClass={'uk-margin-medium-top'}>
+          <GridItem width='1-2' extraClass='uk-margin-medium-top'>
             <TruCard
               style={{ minHeight: 250 }}
               header={
@@ -224,15 +224,15 @@ function DashboardContainer ({
                     <tbody>
                       {dashboardState.overdueTickets.map(ticket => {
                         return (
-                          <tr key={ticket.get('_id')} className={'uk-table-middle'}>
-                            <td className={'uk-width-1-10 uk-text-nowrap'}>
+                          <tr key={ticket.get('_id')} className='uk-table-middle'>
+                            <td className='uk-width-1-10 uk-text-nowrap'>
                               <a href={`/tickets/${ticket.get('uid')}`}>T#{ticket.get('uid')}</a>
                             </td>
-                            <td className={'uk-width-1-10 uk-text-nowrap'}>
-                              <span className={'uk-badge ticket-status-open uk-width-1-1 ml-0'}>{t('dashboard.open')}</span>
+                            <td className='uk-width-1-10 uk-text-nowrap'>
+                              <span className='uk-badge ticket-status-open uk-width-1-1 ml-0'>{t('dashboard.open')}</span>
                             </td>
-                            <td className={'uk-width-6-10'}>{ticket.get('subject')}</td>
-                            <td className={'uk-width-2-10 uk-text-right uk-text-muted uk-text-small'}>
+                            <td className='uk-width-6-10'>{ticket.get('subject')}</td>
+                            <td className='uk-width-2-10 uk-text-right uk-text-muted uk-text-small'>
                               {moment
                                 .utc(ticket.get('updated'))
                                 .tz(helpers.getTimezone())
@@ -247,7 +247,7 @@ function DashboardContainer ({
               }
             />
           </GridItem>
-          <GridItem width={'1-2'} extraClass={'uk-margin-medium-top'}>
+          <GridItem width='1-2' extraClass='uk-margin-medium-top'>
             <TruCard
               header={
                 <div className='uk-text-left'>

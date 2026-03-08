@@ -12,11 +12,11 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-var winston = require('winston')
-var axios = require('axios')
+const winston = require('winston')
+const axios = require('axios')
 
 module.exports.pushNotification = function (tpsUsername, tpsApiKey, notification) {
-  var body = {
+  const body = {
     title: notification.title,
     content: notification.content,
     data: {
@@ -47,7 +47,7 @@ module.exports.pushNotification = function (tpsUsername, tpsApiKey, notification
         winston.debug(err)
       }
     }
-  )
+    )
 }
 
 module.exports.init = function () {

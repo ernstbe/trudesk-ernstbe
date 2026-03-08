@@ -17,7 +17,6 @@ module.exports = function (middleware, router, controllers) {
   const apiv2Auth = middleware.apiv2
   const apiv2 = controllers.api.v2
   const isAdmin = middleware.isAdmin
-  const isAgent = middleware.isAgent
   const isAgentOrAdmin = middleware.isAgentOrAdmin
   const csrfCheck = middleware.csrfCheck
   const canUser = middleware.canUser
@@ -44,10 +43,16 @@ module.exports = function (middleware, router, controllers) {
   // Tickets
   router.get('/api/v2/tickets', apiv2Auth, canUser('tickets:view'), apiv2.tickets.get)
   router.post('/api/v2/tickets', apiv2Auth, canUser('tickets:create'), apiv2.tickets.create)
+  router.get('/api/v2/tickets/overdue', apiv2Auth, isAgentOrAdmin, apiv2.tickets.overdue)
   router.post('/api/v2/tickets/transfer/:uid', apiv2Auth, isAdmin, apiv2.tickets.transferToThirdParty)
   router.get('/api/v2/tickets/:uid', apiv2Auth, canUser('tickets:view'), apiv2.tickets.single)
+  router.get('/api/v2/tickets/:uid/deadline', apiv2Auth, canUser('tickets:view'), apiv2.tickets.deadline)
   router.put('/api/v2/tickets/batch', apiv2Auth, canUser('tickets:update'), apiv2.tickets.batchUpdate)
   router.put('/api/v2/tickets/:uid', apiv2Auth, canUser('tickets:update'), apiv2.tickets.update)
+  router.put('/api/v2/tickets/:uid/metadata', apiv2Auth, canUser('tickets:update'), apiv2.tickets.updateMetadata)
+  router.post('/api/v2/tickets/:uid/checklist', apiv2Auth, canUser('tickets:update'), apiv2.tickets.checklist.add)
+  router.put('/api/v2/tickets/:uid/checklist/:itemId', apiv2Auth, canUser('tickets:update'), apiv2.tickets.checklist.update)
+  router.delete('/api/v2/tickets/:uid/checklist/:itemId', apiv2Auth, canUser('tickets:update'), apiv2.tickets.checklist.remove)
   router.delete('/api/v2/tickets/:uid', apiv2Auth, canUser('tickets:delete'), apiv2.tickets.delete)
   router.delete('/api/v2/tickets/deleted/:id', apiv2Auth, isAdmin, apiv2.tickets.permDelete)
 
@@ -81,6 +86,47 @@ module.exports = function (middleware, router, controllers) {
   router.get('/api/v2/messages/conversations', apiv2Auth, apiv2.messages.getConversations)
   router.get('/api/v2/messages/conversations/:id', apiv2Auth, apiv2.messages.single)
   router.delete('/api/v2/messages/conversations/:id', apiv2Auth, apiv2.messages.deleteConversation)
+
+  // Recurring Tasks
+  router.get('/api/v2/recurring-tasks', apiv2Auth, isAgentOrAdmin, apiv2.recurringTasks.get)
+  router.get('/api/v2/recurring-tasks/:id', apiv2Auth, isAgentOrAdmin, apiv2.recurringTasks.single)
+  router.post('/api/v2/recurring-tasks', apiv2Auth, isAdmin, apiv2.recurringTasks.create)
+  router.put('/api/v2/recurring-tasks/:id', apiv2Auth, isAdmin, apiv2.recurringTasks.update)
+  router.delete('/api/v2/recurring-tasks/:id', apiv2Auth, isAdmin, apiv2.recurringTasks.delete)
+
+  // Ticket Templates
+  router.get('/api/v2/ticket-templates', apiv2Auth, isAgentOrAdmin, apiv2.ticketTemplates.get)
+  router.get('/api/v2/ticket-templates/:id', apiv2Auth, isAgentOrAdmin, apiv2.ticketTemplates.single)
+  router.post('/api/v2/ticket-templates', apiv2Auth, isAdmin, apiv2.ticketTemplates.create)
+  router.put('/api/v2/ticket-templates/:id', apiv2Auth, isAdmin, apiv2.ticketTemplates.update)
+  router.delete('/api/v2/ticket-templates/:id', apiv2Auth, isAdmin, apiv2.ticketTemplates.delete)
+
+  // Assets
+  router.get('/api/v2/assets', apiv2Auth, isAgentOrAdmin, apiv2.assets.get)
+  router.get('/api/v2/assets/export/pdf', apiv2Auth, isAgentOrAdmin, apiv2.assets.exportPdf)
+  router.get('/api/v2/assets/:id', apiv2Auth, isAgentOrAdmin, apiv2.assets.single)
+  router.post('/api/v2/assets', apiv2Auth, isAdmin, apiv2.assets.create)
+  router.put('/api/v2/assets/:id', apiv2Auth, isAdmin, apiv2.assets.update)
+  router.delete('/api/v2/assets/:id', apiv2Auth, isAdmin, apiv2.assets.delete)
+  router.post('/api/v2/assets/:id/link-ticket', apiv2Auth, isAgentOrAdmin, apiv2.assets.linkTicket)
+
+  // Reports
+  router.get('/api/v2/reports/handover', apiv2Auth, isAgentOrAdmin, apiv2.reports.handover)
+  router.get('/api/v2/reports/sitzung', apiv2Auth, isAgentOrAdmin, apiv2.reports.sitzung)
+
+  // Calendar
+  router.get('/api/v2/calendar/events', apiv2Auth, isAgentOrAdmin, apiv2.calendar.getEvents)
+
+  // Dashboard
+  router.get('/api/v2/dashboard/widgets', apiv2Auth, isAgentOrAdmin, apiv2.dashboard.widgets)
+
+  // Documents
+  router.get('/api/v2/documents', apiv2Auth, isAgentOrAdmin, apiv2.documents.get)
+  router.get('/api/v2/documents/:id', apiv2Auth, isAgentOrAdmin, apiv2.documents.single)
+  router.post('/api/v2/documents', apiv2Auth, isAgentOrAdmin, apiv2.documents.create)
+  router.put('/api/v2/documents/:id', apiv2Auth, isAgentOrAdmin, apiv2.documents.update)
+  router.delete('/api/v2/documents/:id', apiv2Auth, isAdmin, apiv2.documents.delete)
+  router.get('/api/v2/documents/:id/download', apiv2Auth, isAgentOrAdmin, apiv2.documents.download)
 
   // ElasticSearch
   router.get('/api/v2/es/search', middleware.api, apiv2.elasticsearch.search)

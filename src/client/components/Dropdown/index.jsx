@@ -20,7 +20,7 @@ const Dropdown = ({ small, width = 150, children, extraClass }) => {
   return (
     <div
       className={'nopadding-left nopadding-right uk-dropdown uk-margin-top-remove' + className}
-      style={{ width: width, minWidth: width }}
+      style={{ width, minWidth: width }}
     >
       <ul className='uk-nav uk-topbar nomargin'>{children}</ul>
     </div>

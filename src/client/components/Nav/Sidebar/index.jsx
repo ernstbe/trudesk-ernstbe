@@ -46,11 +46,11 @@ const Sidebar = ({ updateNavChange, activeItem, activeSubItem, sessionUser, noti
 
   return (
     <div
-      className={'sidebar nopadding'}
+      className='sidebar nopadding'
       style={{ overflowX: 'hidden', top: notice ? '95px' : '65px' }}
       data-scroll-opacitymax='0.1'
     >
-      <div id={'side-nav-container'} style={{ minHeight: 'calc(100% - 50px)' }}>
+      <div id='side-nav-container' style={{ minHeight: 'calc(100% - 50px)' }}>
         <ul className='side-nav'>
           {sessionUser && Helpers.canUser('agent:*', true) && (
             <SidebarItem
@@ -67,7 +67,7 @@ const Sidebar = ({ updateNavChange, activeItem, activeSubItem, sessionUser, noti
               icon='assignment'
               href='/tickets'
               class='navTickets no-ajaxy'
-              hasSubmenu={true}
+              hasSubmenu
               subMenuTarget='tickets'
               active={activeItem === 'tickets'}
             >
@@ -113,24 +113,24 @@ const Sidebar = ({ updateNavChange, activeItem, activeSubItem, sessionUser, noti
               {sessionUser && Helpers.canUser('agent:*', true) && (
                 <Submenu id='accounts'>
                   <SubmenuItem
-                    href={'/accounts/customers'}
+                    href='/accounts/customers'
                     text={t('accounts.customers')}
-                    icon={'account_box'}
+                    icon='account_box'
                     active={activeSubItem === 'accounts-customers'}
                   />
                   {sessionUser && Helpers.canUser('agent:*', true) && (
                     <SubmenuItem
-                      href={'/accounts/agents'}
+                      href='/accounts/agents'
                       text={t('accounts.agents')}
-                      icon={'account_circle'}
+                      icon='account_circle'
                       active={activeSubItem === 'accounts-agents'}
                     />
                   )}
                   {sessionUser && Helpers.canUser('admin:*') && (
                     <SubmenuItem
-                      href={'/accounts/admins'}
+                      href='/accounts/admins'
                       text={t('accounts.admins')}
-                      icon={'how_to_reg'}
+                      icon='how_to_reg'
                       active={activeSubItem === 'accounts-admins'}
                     />
                   )}
@@ -165,7 +165,7 @@ const Sidebar = ({ updateNavChange, activeItem, activeSubItem, sessionUser, noti
               icon='assessment'
               href='/reports/generate'
               class='navReports no-ajaxy'
-              hasSubmenu={true}
+              hasSubmenu
               subMenuTarget='reports'
               active={activeItem === 'reports'}
             >
@@ -176,24 +176,24 @@ const Sidebar = ({ updateNavChange, activeItem, activeSubItem, sessionUser, noti
                   href='/reports/generate'
                   active={activeSubItem === 'reports-generate'}
                 />
-                {/*<NavSeparator />*/}
-                {/*<SubmenuItem*/}
-                {/*  text='Group Breakdown'*/}
-                {/*  icon='supervisor_account'*/}
-                {/*  href='/reports/breakdown/group'*/}
-                {/*  active={activeSubItem === 'reports-breakdown-group'}*/}
-                {/*/>*/}
-                {/*<SubmenuItem*/}
-                {/*  text='User Breakdown'*/}
-                {/*  icon='perm_identity'*/}
-                {/*  href='/reports/breakdown/user'*/}
-                {/*  active={activeSubItem === 'reports-breakdown-user'}*/}
-                {/*/>*/}
+                {/* <NavSeparator /> */}
+                {/* <SubmenuItem */}
+                {/*  text='Group Breakdown' */}
+                {/*  icon='supervisor_account' */}
+                {/*  href='/reports/breakdown/group' */}
+                {/*  active={activeSubItem === 'reports-breakdown-group'} */}
+                {/* /> */}
+                {/* <SubmenuItem */}
+                {/*  text='User Breakdown' */}
+                {/*  icon='perm_identity' */}
+                {/*  href='/reports/breakdown/user' */}
+                {/*  active={activeSubItem === 'reports-breakdown-user'} */}
+                {/* /> */}
               </Submenu>
             </SidebarItem>
           )}
 
-          {/*{renderPlugins()}*/}
+          {/* {renderPlugins()} */}
 
           {sessionUser && Helpers.canUser('notices:view') && (
             <SidebarItem
@@ -211,7 +211,7 @@ const Sidebar = ({ updateNavChange, activeItem, activeSubItem, sessionUser, noti
               icon='settings'
               href='/settings/general'
               class='navSettings no-ajaxy'
-              hasSubmenu={true}
+              hasSubmenu
               subMenuTarget='settings'
               active={activeItem === 'settings'}
             >
@@ -253,9 +253,9 @@ const Sidebar = ({ updateNavChange, activeItem, activeSubItem, sessionUser, noti
                   active={activeSubItem === 'settings-mailer'}
                 />
                 <SubmenuItem
-                  href={'/settings/elasticsearch'}
-                  text={'Elasticsearch'}
-                  icon={'search'}
+                  href='/settings/elasticsearch'
+                  text='Elasticsearch'
+                  icon='search'
                   active={activeSubItem === 'settings-elasticsearch'}
                 />
                 <SubmenuItem
@@ -281,7 +281,7 @@ const Sidebar = ({ updateNavChange, activeItem, activeSubItem, sessionUser, noti
                     text={t('settings.logs')}
                     icon='remove_from_queue'
                     href='/settings/logs'
-                    hasSeperator={true}
+                    hasSeperator
                     active={activeSubItem === 'settings-logs'}
                   />
                 )}
@@ -290,7 +290,7 @@ const Sidebar = ({ updateNavChange, activeItem, activeSubItem, sessionUser, noti
           )}
           <NavSeparator />
           <SidebarItem href='/about' icon='help' text={t('common.about', 'About')} active={activeItem === 'about'} />
-          {/*<SidebarItem href={'https://www.trudesk.io'} icon={'cloud'} text={'Cloud'} target={'_blank'} />*/}
+          {/* <SidebarItem href={'https://www.trudesk.io'} icon={'cloud'} text={'Cloud'} target={'_blank'} /> */}
         </ul>
       </div>
       <div className='side-nav-bottom-panel'>

@@ -47,7 +47,7 @@ function CreateTicketTypeModal (props) {
 
   return (
     <BaseModal {...props}>
-      <form className={'uk-form-stacked'} onSubmit={e => onCreateTicketTypeSubmit(e)}>
+      <form className='uk-form-stacked' onSubmit={e => onCreateTicketTypeSubmit(e)}>
         <div>
           <h2 className='nomargin mb-5'>{t('modals.createTicketType.title')}</h2>
           <p className='uk-text-small uk-text-muted'>{t('modals.createTicketType.title')}</p>
@@ -56,16 +56,16 @@ function CreateTicketTypeModal (props) {
             value={typeName}
             onChange={e => onTypeNameChanged(e)}
             type='text'
-            className={'md-input'}
-            name={'typeName'}
+            className='md-input'
+            name='typeName'
             data-validation='length'
             data-validation-length='min3'
             data-validation-error-msg={t('modals.createTicketType.validName')}
           />
         </div>
         <div className='uk-modal-footer uk-text-right'>
-          <Button text={t('common.close')} flat={true} waves={true} extraClass={'uk-modal-close'} />
-          <Button text={t('common.create')} style={'success'} type={'submit'} />
+          <Button text={t('common.close')} flat waves extraClass='uk-modal-close' />
+          <Button text={t('common.create')} style='success' type='submit' />
         </div>
       </form>
     </BaseModal>

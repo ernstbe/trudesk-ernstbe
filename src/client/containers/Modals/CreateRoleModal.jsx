@@ -33,21 +33,21 @@ function CreateRoleModal (props) {
   const onCreateRoleClicked = useCallback((e) => {
     e.preventDefault()
 
-    props.createRole({ name: name })
+    props.createRole({ name })
   }, [name])
 
   return (
     <BaseModal>
-      <div className={'uk-form-stacked'}>
+      <div className='uk-form-stacked'>
         <div>
-          <h2 className={'nomargin mb-5'}>{t('modals.createRole.title')}</h2>
+          <h2 className='nomargin mb-5'>{t('modals.createRole.title')}</h2>
           <p className='uk-text-muted'>{t('modals.createRole.hint')}</p>
 
           <label>{t('modals.createRole.roleName')}</label>
           <input
             type='text'
-            className={'md-input'}
-            name={'name'}
+            className='md-input'
+            name='name'
             data-validation='length'
             data-validation-length='min3'
             data-validation-error-msg={t('modals.createRole.validName')}
@@ -56,13 +56,13 @@ function CreateRoleModal (props) {
           />
         </div>
         <div className='uk-modal-footer uk-text-right'>
-          <Button text={t('common.close')} extraClass={'uk-modal-close'} flat={true} waves={true} />
+          <Button text={t('common.close')} extraClass='uk-modal-close' flat waves />
           <Button
             text={t('common.create')}
-            type={'button'}
-            flat={true}
-            waves={true}
-            style={'success'}
+            type='button'
+            flat
+            waves
+            style='success'
             onClick={e => onCreateRoleClicked(e)}
           />
         </div>

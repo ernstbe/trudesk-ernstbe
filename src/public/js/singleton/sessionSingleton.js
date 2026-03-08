@@ -105,7 +105,6 @@ SessionService.forceUpdate = callback => {
   SessionService.init(callback, true)
 }
 
-if (_.isUndefined(window.trudeskSessionService) || window.trudeskSessionService === null)
-  window.trudeskSessionService = SessionService
+if (_.isUndefined(window.trudeskSessionService) || window.trudeskSessionService === null) { window.trudeskSessionService = SessionService }
 
 module.exports = SessionService

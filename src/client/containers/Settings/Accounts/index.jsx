@@ -18,20 +18,12 @@ import { connect } from 'react-redux'
 import { withTranslation } from 'react-i18next'
 import { updateSetting, updateMultipleSettings } from 'actions/settings'
 
-import Button from 'components/Button'
 import SettingItem from 'components/Settings/SettingItem'
-
-import helpers from 'lib/helpers'
-import axios from 'axios'
-import Log from '../../../logger'
 import EnableSwitch from 'components/Settings/EnableSwitch'
-import UIKit from 'uikit'
 
 const AccountsSettingsContainer = ({ active, updateSetting, updateMultipleSettings, settings, t }) => {
   const [passwordComplexityEnabled, setPasswordComplexityEnabled] = useState(false)
   const [allowUserRegistrationEnabled, setAllowUserRegistrationEnabled] = useState(false)
-  const [restarting, setRestarting] = useState(false)
-
   const getSetting = useCallback(
     stateName => {
       return settings.getIn(['settings', stateName, 'value']) ? settings.getIn(['settings', stateName, 'value']) : ''
@@ -45,31 +37,6 @@ const AccountsSettingsContainer = ({ active, updateSetting, updateMultipleSettin
     const aurVal = getSetting('allowUserRegistration')
     if (allowUserRegistrationEnabled !== aurVal) setAllowUserRegistrationEnabled(aurVal)
   }, [settings])
-
-  const restartServer = useCallback(() => {
-    setRestarting(true)
-
-    const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-    axios
-      .post(
-        '/api/v1/admin/restart',
-        {},
-        {
-          headers: {
-            'CSRF-TOKEN': token
-          }
-        }
-      )
-      .catch(error => {
-        helpers.hideLoader()
-        Log.error(error.responseText)
-        Log.error('Unable to restart server. Server must run under PM2 and Account must have admin rights.')
-        helpers.UI.showSnackbar('Unable to restart server. Are you an Administrator?', true)
-      })
-      .then(() => {
-        setRestarting(false)
-      })
-  }, [])
 
   const doUpdateSetting = useCallback(
     (stateName, name, value) => {
@@ -100,7 +67,7 @@ const AccountsSettingsContainer = ({ active, updateSetting, updateMultipleSettin
         tooltip={t('settings.passwordComplexityTooltip')}
         component={
           <EnableSwitch
-            stateName={'accountsPasswordComplexity'}
+            stateName='accountsPasswordComplexity'
             label={t('settings.enable')}
             checked={passwordComplexityEnabled}
             onChange={e => {

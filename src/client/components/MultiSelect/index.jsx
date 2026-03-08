@@ -112,7 +112,7 @@ const MultiSelect = forwardRef(({
   }), [getSelected, selectAll, deselectAll])
 
   return (
-    <select id={id} multiple={'multiple'} className={'multiselect'} ref={selectRef}>
+    <select id={id} multiple='multiple' className='multiselect' ref={selectRef}>
       {items &&
         items.map((item, i) => {
           return (

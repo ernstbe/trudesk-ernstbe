@@ -108,10 +108,17 @@ const ticketSchema = mongoose.Schema({
   issue: { type: String, required: true },
   closedDate: { type: Date },
   dueDate: { type: Date },
+  metadata: { type: mongoose.Schema.Types.Mixed, default: {} },
   comments: [commentSchema],
   notes: [noteSchema],
   attachments: [attachmentSchema],
   history: [historySchema],
+  checklist: [{
+    title: { type: String, required: true },
+    completed: { type: Boolean, default: false },
+    completedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'accounts' },
+    completedAt: { type: Date }
+  }],
   subscribers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'accounts' }]
 })
 
@@ -188,7 +195,7 @@ ticketSchema.virtual('statusFormatted').get(function (callback) {
 
   ticketStatus.findOne({ uid: s }, function (err, status) {
     if (err) return callback(err)
-    if (!status) return callback('Invalid Status Id: ' + typeId)
+    if (!status) return callback(new Error('Invalid Status Id: ' + s))
     if (typeof callback === 'function') return callback(null, status.get('name'))
   })
 })
@@ -709,8 +716,7 @@ ticketSchema.statics.getTickets = async function (grpIds) {
  * }
  */
 ticketSchema.statics.getTicketsByDepartments = async function (departments, object) {
-  if (!departments || !_.isObject(departments) || !object)
-    throw new Error('Invalid Data - TicketSchema.GetTicketsByDepartments()')
+  if (!departments || !_.isObject(departments) || !object) { throw new Error('Invalid Data - TicketSchema.GetTicketsByDepartments()') }
 
   if (_.some(departments, { allGroups: true })) {
     const groups = await groupSchema.find({})
@@ -740,11 +746,12 @@ function buildQueryWithObject (SELF, grpId, object, count) {
     _status = _.join(_status, ',').split(',')
   }
 
-  if (object.filter && object.filter.groups)
+  if (object.filter && object.filter.groups) {
     grpId = _.intersection(
       object.filter.groups,
       _.map(grpId, g => g._id.toString())
     )
+  }
 
   let query
   if (count) query = SELF.model(COLLECTION).countDocuments({ groups: { $in: grpId }, deleted: false })
@@ -818,8 +825,7 @@ function buildQueryWithObject (SELF, grpId, object, count) {
 }
 
 ticketSchema.statics.getTicketsWithObject = async function (grpId, object) {
-  if (!grpId || !_.isArray(grpId) || !_.isObject(object))
-    throw new Error('Invalid parameter in - TicketSchema.GetTicketsWithObject()')
+  if (!grpId || !_.isArray(grpId) || !_.isObject(object)) { throw new Error('Invalid parameter in - TicketSchema.GetTicketsWithObject()') }
 
   const query = buildQueryWithObject(this, grpId, object)
 
@@ -827,8 +833,7 @@ ticketSchema.statics.getTicketsWithObject = async function (grpId, object) {
 }
 
 ticketSchema.statics.getCountWithObject = async function (grpId, object) {
-  if (!grpId || !_.isArray(grpId) || !_.isObject(object))
-    throw new Error('Invalid parameter in - TicketSchema.GetCountWithObject()')
+  if (!grpId || !_.isArray(grpId) || !_.isObject(object)) { throw new Error('Invalid parameter in - TicketSchema.GetCountWithObject()') }
 
   const query = buildQueryWithObject(this, grpId, object, true)
 
@@ -964,8 +969,7 @@ ticketSchema.statics.getTicketsByRequester = async function (userId) {
 }
 
 ticketSchema.statics.getTicketsWithSearchString = async function (grps, search) {
-  if (_.isUndefined(grps) || _.isUndefined(search))
-    throw new Error('Invalid Post Data - TicketSchema.GetTicketsWithSearchString()')
+  if (_.isUndefined(grps) || _.isUndefined(search)) { throw new Error('Invalid Post Data - TicketSchema.GetTicketsWithSearchString()') }
 
   const [uidResults, subjectResults, issueResults] = await Promise.all([
     this.model(COLLECTION)

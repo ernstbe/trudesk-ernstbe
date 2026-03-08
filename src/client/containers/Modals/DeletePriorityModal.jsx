@@ -66,11 +66,11 @@ const DeletePriorityModal = ({ priority, settings, deletePriority, t }) => {
           </div>
           <div className='uk-margin-medium-bottom uk-clearfix'>
             <div className='uk-float-left' style={{ width: '100%' }}>
-              <label className={'uk-form-label'}>{t('common.priority')}</label>
+              <label className='uk-form-label'>{t('common.priority')}</label>
               <SingleSelect
                 items={mappedPriorities}
                 showTextbox={false}
-                width={'100%'}
+                width='100%'
                 value={selectedPriority}
                 onSelectChange={e => onSelectChanged(e)}
               />
@@ -82,8 +82,8 @@ const DeletePriorityModal = ({ priority, settings, deletePriority, t }) => {
             </span>
           </div>
           <div className='uk-modal-footer uk-text-right'>
-            <Button type={'button'} flat={true} waves={true} text={t('common.cancel')} extraClass={'uk-modal-close'} />
-            <Button type={'submit'} flat={true} waves={true} text={t('common.delete')} style={'danger'} />
+            <Button type='button' flat waves text={t('common.cancel')} extraClass='uk-modal-close' />
+            <Button type='submit' flat waves text={t('common.delete')} style='danger' />
           </div>
         </form>
       </div>
