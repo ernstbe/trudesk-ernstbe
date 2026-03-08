@@ -12,20 +12,92 @@
 const _ = require('lodash')
 const async = require('async')
 const axios = require('axios')
+const cron = require('node-cron')
+const winston = require('../logger')
 const ticketSchema = require('../models/ticket')
 const userSchema = require('../models/user')
 const groupSchema = require('../models/group')
 const conversationSchema = require('../models/chat/conversation')
 const settingSchema = require('../models/setting')
+const RecurringTask = require('../models/recurringTask')
+const StatusSchema = require('../models/ticketStatus')
+const sanitizeHtml = require('sanitize-html')
 
 const taskRunner = {}
 
 taskRunner.init = function (callback) {
-  // taskRunner.sendStats(function (err) {
-  //   if (!err) setInterval(taskRunner.sendStats, 86400000) // 24 hours
-  // })
+  // Run recurring tasks check every 5 minutes
+  cron.schedule('*/5 * * * *', function () {
+    taskRunner.processRecurringTasks()
+  })
+
+  winston.debug('TaskRunner: Recurring tasks cron scheduled (every 5 minutes)')
 
   return callback()
+}
+
+taskRunner.processRecurringTasks = async function () {
+  try {
+    var tasks = await RecurringTask.getEnabled()
+    var now = new Date()
+
+    for (var i = 0; i < tasks.length; i++) {
+      var task = tasks[i]
+
+      if (!task.nextRun || task.nextRun > now) continue
+
+      try {
+        await taskRunner.createTicketFromRecurringTask(task)
+
+        task.lastRun = now
+        task.nextRun = RecurringTask.calculateNextRun(task)
+        await task.save()
+
+        winston.info('TaskRunner: Created ticket from recurring task "' + task.name + '", next run: ' + task.nextRun)
+      } catch (err) {
+        winston.warn('TaskRunner: Failed to process recurring task "' + task.name + '" — ' + err.message)
+      }
+    }
+  } catch (err) {
+    winston.warn('TaskRunner: Error fetching recurring tasks — ' + err.message)
+  }
+}
+
+taskRunner.createTicketFromRecurringTask = async function (task) {
+  var defaultStatus = await StatusSchema.findOne({ isResolved: false }).sort({ order: 1 })
+  if (!defaultStatus) throw new Error('No open status found')
+
+  var historyItem = {
+    action: 'ticket:created',
+    description: 'Ticket automatically created from recurring task: ' + task.name,
+    owner: task.createdBy
+  }
+
+  var ticketData = {
+    owner: task.createdBy,
+    group: task.ticketGroup,
+    type: task.ticketType,
+    status: defaultStatus._id,
+    priority: task.ticketPriority,
+    subject: sanitizeHtml(task.ticketSubject).trim(),
+    issue: sanitizeHtml(task.ticketIssue).trim(),
+    tags: task.ticketTags || [],
+    history: [historyItem],
+    subscribers: [task.createdBy]
+  }
+
+  if (task.ticketAssignee) {
+    ticketData.assignee = task.ticketAssignee
+  }
+
+  var ticket = new ticketSchema(ticketData)
+  var saved = await ticket.save()
+  await saved.populate('group owner priority')
+
+  var emitter = require('../emitter')
+  emitter.emit('ticket:created', { ticket: saved })
+
+  return saved
 }
 
 taskRunner.sendStats = function (callback) {

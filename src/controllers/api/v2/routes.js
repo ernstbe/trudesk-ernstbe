@@ -83,6 +83,13 @@ module.exports = function (middleware, router, controllers) {
   router.get('/api/v2/messages/conversations/:id', apiv2Auth, apiv2.messages.single)
   router.delete('/api/v2/messages/conversations/:id', apiv2Auth, apiv2.messages.deleteConversation)
 
+  // Recurring Tasks
+  router.get('/api/v2/recurring-tasks', apiv2Auth, isAgentOrAdmin, apiv2.recurringTasks.get)
+  router.get('/api/v2/recurring-tasks/:id', apiv2Auth, isAgentOrAdmin, apiv2.recurringTasks.single)
+  router.post('/api/v2/recurring-tasks', apiv2Auth, isAdmin, apiv2.recurringTasks.create)
+  router.put('/api/v2/recurring-tasks/:id', apiv2Auth, isAdmin, apiv2.recurringTasks.update)
+  router.delete('/api/v2/recurring-tasks/:id', apiv2Auth, isAdmin, apiv2.recurringTasks.delete)
+
   // ElasticSearch
   router.get('/api/v2/es/search', middleware.api, apiv2.elasticsearch.search)
   router.get('/api/v2/es/rebuild', apiv2Auth, isAdmin, apiv2.elasticsearch.rebuild)
