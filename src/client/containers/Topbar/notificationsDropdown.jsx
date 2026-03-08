@@ -34,19 +34,20 @@ function NotificationsDropdownPartial ({ socket, shortDateFormat, timezone, onVi
     e.preventDefault()
     e.stopPropagation()
 
-    socket.emit(NOTIFICATIONS_CLEAR)
+    if (socket) socket.emit(NOTIFICATIONS_CLEAR)
   }, [socket])
 
   const markNotificationRead = useCallback((e, notification) => {
     e.preventDefault()
     e.stopPropagation()
 
-    socket.emit(NOTIFICATIONS_MARK_READ, notification._id)
+    if (socket) socket.emit(NOTIFICATIONS_MARK_READ, notification._id)
 
     History.pushState(null, null, `/tickets/${notification.data.ticket.uid}`)
   }, [socket])
 
   useEffect(() => {
+    if (!socket) return
     socket.on(NOTIFICATIONS_UPDATE, onSocketUpdateNotifications)
 
     return () => {

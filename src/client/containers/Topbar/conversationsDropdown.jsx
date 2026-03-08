@@ -31,6 +31,7 @@ function ConversationsDropdownPartial ({ timezone, shortDateFormat, socket, forw
   }, [])
 
   useEffect(() => {
+    if (!socket) return
     socket.on(MESSAGES_UPDATE_UI_CONVERSATION_NOTIFICATIONS, onUpdateConversationsNotifications)
 
     return () => {
@@ -53,7 +54,7 @@ function ConversationsDropdownPartial ({ timezone, shortDateFormat, socket, forw
       topOffset={-4}
       leftOffset={4}
       onShow={() => {
-        socket.emit(MESSAGES_UPDATE_UI_CONVERSATION_NOTIFICATIONS)
+        if (socket) socket.emit(MESSAGES_UPDATE_UI_CONVERSATION_NOTIFICATIONS)
       }}
       rightComponent={
         <a href={'/messages/startconversation'} className={'hoverUnderline'}>

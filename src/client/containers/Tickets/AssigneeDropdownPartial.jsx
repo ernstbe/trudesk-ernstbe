@@ -30,6 +30,7 @@ function AssigneeDropdownPartial ({ ticketId, onClearClick, onAssigneeClick, soc
   }, [])
 
   useEffect(() => {
+    if (!socket) return
     socket.on(TICKETS_ASSIGNEE_LOAD, onUpdateAssigneeList)
     return () => {
       socket.off(TICKETS_ASSIGNEE_LOAD, onUpdateAssigneeList)
@@ -53,7 +54,7 @@ function AssigneeDropdownPartial ({ ticketId, onClearClick, onAssigneeClick, soc
           onClick={() => {
             helpers.hideAllpDropDowns()
             if (onClearClick) onClearClick()
-            socket.emit(TICKETS_ASSIGNEE_CLEAR, ticketId)
+            if (socket) socket.emit(TICKETS_ASSIGNEE_CLEAR, ticketId)
           }}
         >
           Clear Assignee
@@ -67,7 +68,7 @@ function AssigneeDropdownPartial ({ ticketId, onClearClick, onAssigneeClick, soc
             onClick={() => {
               if (onAssigneeClick) onAssigneeClick({ agent })
               helpers.hideAllpDropDowns()
-              socket.emit(TICKETS_ASSIGNEE_SET, { _id: agent._id, ticketId: ticketId })
+              if (socket) socket.emit(TICKETS_ASSIGNEE_SET, { _id: agent._id, ticketId: ticketId })
             }}
           >
             <a className='messageNotification no-ajaxy' role='button'>

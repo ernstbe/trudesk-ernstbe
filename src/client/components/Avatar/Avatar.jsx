@@ -71,6 +71,7 @@ const Avatar = ({
 
   // Mount: bind socket event if showOnlineBubble and userId are present
   useEffect(() => {
+    if (!socket) return
     if (showOnlineBubble && userId) {
       socket.on(UI_ONLINE_STATUS_UPDATE, onOnlineStatusUpdate)
     }

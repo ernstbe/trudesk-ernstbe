@@ -164,6 +164,7 @@ function SingleTicketContainer (props) {
   }, [])
 
   useEffect(() => {
+    if (!socket) return
     socket.on(TICKETS_UPDATE, onUpdateTicket)
     socket.on(TICKETS_ASSIGNEE_UPDATE, onUpdateAssignee)
     socket.on(TICKETS_UI_TYPE_UPDATE, onUpdateTicketType)
@@ -188,7 +189,7 @@ function SingleTicketContainer (props) {
 
       propsUnloadGroups()
     }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [socket]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     helpers.resizeFullHeight()
@@ -342,7 +343,7 @@ function SingleTicketContainer (props) {
                           title={t('tickets.setAssignee')}
                           style={{ float: 'left' }}
                           className='relative no-ajaxy'
-                          onClick={() => socket.emit(TICKETS_ASSIGNEE_LOAD)}
+                          onClick={() => { if (socket) socket.emit(TICKETS_ASSIGNEE_LOAD) }}
                         >
                           <PDropdownTrigger target={assigneeDropdownPartial}>
                             <Avatar
@@ -407,7 +408,7 @@ function SingleTicketContainer (props) {
                                 const hasPriority = priority !== -1
 
                                 if (!hasPriority) {
-                                  socket.emit(TICKETS_PRIORITY_SET, {
+                                  if (socket) socket.emit(TICKETS_PRIORITY_SET, {
                                     _id: ticket._id,
                                     value: type.get('priorities').find(() => true)
                                   })
@@ -415,7 +416,7 @@ function SingleTicketContainer (props) {
                                   showPriorityConfirm()
                                 }
 
-                                socket.emit(TICKETS_TYPE_SET, {
+                                if (socket) socket.emit(TICKETS_TYPE_SET, {
                                   _id: ticket._id,
                                   value: e.target.value
                                 })
@@ -441,12 +442,12 @@ function SingleTicketContainer (props) {
                               name='tPriority'
                               id='tPriority'
                               value={ticket.priority._id}
-                              onChange={e =>
-                                socket.emit(TICKETS_PRIORITY_SET, {
+                              onChange={e => {
+                                if (socket) socket.emit(TICKETS_PRIORITY_SET, {
                                   _id: ticket._id,
                                   value: e.target.value
                                 })
-                              }
+                              }}
                             >
                               {ticket.type &&
                                 ticket.type.priorities &&
@@ -467,7 +468,7 @@ function SingleTicketContainer (props) {
                           <select
                             value={ticket.group._id}
                             onChange={e => {
-                              socket.emit(TICKETS_GROUP_SET, {
+                              if (socket) socket.emit(TICKETS_GROUP_SET, {
                                 _id: ticket._id,
                                 value: e.target.value
                               })
@@ -492,7 +493,7 @@ function SingleTicketContainer (props) {
                               role={'button'}
                               onClick={e => {
                                 e.preventDefault()
-                                socket.emit(TICKETS_DUEDATE_SET, {
+                                if (socket) socket.emit(TICKETS_DUEDATE_SET, {
                                   _id: ticket._id,
                                   value: undefined
                                 })
@@ -510,7 +511,7 @@ function SingleTicketContainer (props) {
                                   .utc()
                                   .toISOString()
 
-                                socket.emit(TICKETS_DUEDATE_SET, { _id: ticket._id, value: dueDate })
+                                if (socket) socket.emit(TICKETS_DUEDATE_SET, { _id: ticket._id, value: dueDate })
                               }}
                             />
                           </div>
@@ -709,7 +710,7 @@ function SingleTicketContainer (props) {
                                 showSubject: false,
                                 text: !item.isNote ? item.comment : item.note,
                                 onPrimaryClick: data => {
-                                  socket.emit(TICKETS_COMMENT_NOTE_SET, {
+                                  if (socket) socket.emit(TICKETS_COMMENT_NOTE_SET, {
                                     _id: ticket._id,
                                     item: item._id,
                                     isNote: item.isNote,
@@ -719,7 +720,7 @@ function SingleTicketContainer (props) {
                               })
                             }}
                             onRemoveClick={() => {
-                              socket.emit(TICKETS_COMMENT_NOTE_REMOVE, {
+                              if (socket) socket.emit(TICKETS_COMMENT_NOTE_REMOVE, {
                                 _id: ticket._id,
                                 value: item._id,
                                 isNote: item.isNote
@@ -746,7 +747,7 @@ function SingleTicketContainer (props) {
                                   showSubject: false,
                                   text: comment.comment,
                                   onPrimaryClick: data => {
-                                    socket.emit(TICKETS_COMMENT_NOTE_SET, {
+                                    if (socket) socket.emit(TICKETS_COMMENT_NOTE_SET, {
                                       _id: ticket._id,
                                       item: comment._id,
                                       isNote: comment.isNote,
@@ -756,7 +757,7 @@ function SingleTicketContainer (props) {
                                 })
                               }}
                               onRemoveClick={() => {
-                                socket.emit(TICKETS_COMMENT_NOTE_REMOVE, {
+                                if (socket) socket.emit(TICKETS_COMMENT_NOTE_REMOVE, {
                                   _id: ticket._id,
                                   value: comment._id,
                                   isNote: comment.isNote
@@ -784,7 +785,7 @@ function SingleTicketContainer (props) {
                                   showSubject: false,
                                   text: note.note,
                                   onPrimaryClick: data => {
-                                    socket.emit(TICKETS_COMMENT_NOTE_SET, {
+                                    if (socket) socket.emit(TICKETS_COMMENT_NOTE_SET, {
                                       _id: ticket._id,
                                       item: note._id,
                                       isNote: note.isNote,
@@ -794,7 +795,7 @@ function SingleTicketContainer (props) {
                                 })
                               }}
                               onRemoveClick={() => {
-                                socket.emit(TICKETS_COMMENT_NOTE_REMOVE, {
+                                if (socket) socket.emit(TICKETS_COMMENT_NOTE_REMOVE, {
                                   _id: ticket._id,
                                   value: note._id,
                                   isNote: note.isNote

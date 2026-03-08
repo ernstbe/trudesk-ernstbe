@@ -99,6 +99,7 @@ function TopbarContainer ({
   }, [clearNoticeAction, hideModalAction])
 
   useEffect(() => {
+    if (!socket) return
     fetchViewDataAction().then(() => {
       if (viewdata.get('notice'))
         showNoticeHandler(viewdata.get('notice').toJS(), viewdata.get('noticeCookieName'))
@@ -119,7 +120,7 @@ function TopbarContainer ({
       socket.off(NOTICE_UI_SHOW, onSocketShowNotice)
       socket.off(NOTICE_UI_CLEAR, onSocketClearNotice)
     }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [socket]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const onConversationsClicked = (e) => {
     e.preventDefault()

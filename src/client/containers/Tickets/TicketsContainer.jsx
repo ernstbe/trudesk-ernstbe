@@ -103,6 +103,7 @@ function TicketsContainer (props) {
   )
 
   useEffect(() => {
+    if (!socket) return
     socket.on('$trudesk:client:ticket:created', onTicketCreated)
     socket.on('$trudesk:client:ticket:updated', onTicketUpdated)
     socket.on('$trudesk:client:ticket:deleted', onTicketDeleted)
@@ -118,7 +119,7 @@ function TicketsContainer (props) {
       socket.off('$trudesk:client:ticket:updated', onTicketUpdated)
       socket.off('$trudesk:client:ticket:deleted', onTicketDeleted)
     }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [socket]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (timelineRef.current) {

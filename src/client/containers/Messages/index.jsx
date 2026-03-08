@@ -146,6 +146,7 @@ function MessagesContainer ({
   }, [t, deleteConversationAction])
 
   useEffect(() => {
+    if (!socket) return
     fetchConversationsAction()
 
     socket.on(MESSAGES_UI_USER_TYPING, onUserIsTyping)
@@ -167,7 +168,7 @@ function MessagesContainer ({
       socket.off(MESSAGES_UI_USER_TYPING, onUserIsTyping)
       socket.off(MESSAGES_UI_RECEIVE, onReceiveMessage)
     }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [socket]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     helpers.resizeAll()
@@ -258,7 +259,7 @@ function MessagesContainer ({
 
   const onSendMessageKeyDown = useCallback((e, cid, to) => {
     if (e.code !== 'Enter' || e.code !== 'NumpadEnter') {
-      socket.emit(MESSAGES_USER_TYPING, { cid, to, from: sessionUser._id })
+      if (socket) socket.emit(MESSAGES_USER_TYPING, { cid, to, from: sessionUser._id })
     }
   }, [socket, sessionUser])
 
@@ -273,7 +274,7 @@ function MessagesContainer ({
         body: e.target.chatMessage.value.trim()
       })
         .then(res => {
-          socket.emit(MESSAGES_SEND, {
+          if (socket) socket.emit(MESSAGES_SEND, {
             to,
             from: sessionUser._id,
             message: res.message

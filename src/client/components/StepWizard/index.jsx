@@ -31,11 +31,11 @@ class StepWizard extends React.Component {
   componentDidMount () {
     this.init()
 
-    this.props.socket.on('$trudesk:accounts:import:onStatusChange', this.onImportStatusChange)
+    if (this.props.socket) this.props.socket.on('$trudesk:accounts:import:onStatusChange', this.onImportStatusChange)
   }
 
   componentWillUnmount () {
-    this.props.socket.removeAllListeners('$trudesk:accounts:import:onStatusChange')
+    if (this.props.socket) this.props.socket.removeAllListeners('$trudesk:accounts:import:onStatusChange')
   }
 
   onImportStatusChange = data => {
@@ -94,7 +94,7 @@ class StepWizard extends React.Component {
 
           setTimeout(() => {
             // Importing...
-            this.props.socket.emit('$trudesk:accounts:importer:send_csv')
+            if (this.props.socket) this.props.socket.emit('$trudesk:accounts:importer:send_csv')
           }, 1000)
         }
 

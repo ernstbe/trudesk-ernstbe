@@ -59,6 +59,7 @@ function StatusSelector ({
   )
 
   useEffect(() => {
+    if (!socket) return
     document.addEventListener('click', onDocumentClick)
     socket.on(TICKETS_UI_STATUS_UPDATE, onUpdateTicketStatus)
     propsFetchTicketStatus()
@@ -85,7 +86,7 @@ function StatusSelector ({
     statusValue => {
       if (!hasPerm) return
 
-      socket.emit(TICKETS_STATUS_SET, { _id: ticketId, value: statusValue })
+      if (socket) socket.emit(TICKETS_STATUS_SET, { _id: ticketId, value: statusValue })
       forceClose()
     },
     [hasPerm, socket, ticketId, forceClose]

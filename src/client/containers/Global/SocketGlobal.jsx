@@ -6,7 +6,7 @@ import helpers from 'lib/helpers'
 import TicketSocketEvents from 'lib2/socket/ticketSocketEvents'
 import UserIdleTimer from 'lib2/userIdleTimer'
 
-function SocketGlobal ({ socket, initSocket: initSocketAction, updateSocket: updateSocketAction }) {
+function SocketGlobal ({ socket, socketInitialized, initSocket: initSocketAction, updateSocket: updateSocketAction }) {
   const socketRef = useRef(socket)
   socketRef.current = socket
 
@@ -14,45 +14,36 @@ function SocketGlobal ({ socket, initSocket: initSocketAction, updateSocket: upd
     updateSocketAction({ socket: socketData })
   }, [updateSocketAction])
 
-  const onReconnect = useCallback((socketData) => {
+  const onReconnect = useCallback(() => {
     helpers.UI.hideDisconnectedOverlay()
-    updateSocketAction({ socket: socketData })
-  }, [updateSocketAction])
+  }, [])
 
-  const onDisconnect = useCallback((socketData) => {
+  const onDisconnect = useCallback(() => {
     helpers.UI.showDisconnectedOverlay()
-    refreshSocketState(socketData)
-
-    socketRef.current.io.removeAllListeners('reconnect_attempt')
-    socketRef.current.io.on('reconnect_attempt', function (s) {
-      helpers.UI.showDisconnectedOverlay()
-      refreshSocketState(s)
-    })
-
-    socketRef.current.removeAllListeners('connect_timeout')
-    socketRef.current.on('connect_timeout', function (s) {
-      helpers.UI.showDisconnectedOverlay()
-      refreshSocketState(s)
-    })
-  }, [refreshSocketState])
+  }, [])
 
   useEffect(() => {
-    initSocketAction().then(() => {
-      socketRef.current.on('connect', onReconnect)
-      socketRef.current.on('connecting', refreshSocketState)
-      socketRef.current.io.on('reconnect', onReconnect)
-      socketRef.current.on('disconnect', onDisconnect)
+    initSocketAction()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!socketInitialized || !socketRef.current || typeof socketRef.current.on !== 'function') return
+
+    const s = socketRef.current
+    s.on('connect', onReconnect)
+    s.io.on('reconnect', onReconnect)
+    s.on('disconnect', onDisconnect)
+
+    s.io.on('reconnect_attempt', function () {
+      helpers.UI.showDisconnectedOverlay()
     })
 
     return () => {
-      if (socketRef.current) {
-        socketRef.current.off('connect', refreshSocketState)
-        socketRef.current.off('connecting', refreshSocketState)
-        socketRef.current.io.off('reconnect', onReconnect)
-        socketRef.current.off('disconnect', onDisconnect)
-      }
+      s.off('connect', onReconnect)
+      s.io.off('reconnect', onReconnect)
+      s.off('disconnect', onDisconnect)
     }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [socketInitialized]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <>
@@ -69,7 +60,8 @@ SocketGlobal.propTypes = {
 }
 
 const mapStateToProps = state => ({
-  socket: state.shared.socket
+  socket: state.shared.socket,
+  socketInitialized: state.shared.socketInitialized
 })
 
 export default connect(mapStateToProps, { initSocket, updateSocket })(SocketGlobal)

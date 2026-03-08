@@ -32,6 +32,7 @@ function OnlineUserListPartial ({ sessionUser, timezone, users, socket }) {
   }, [])
 
   useEffect(() => {
+    if (!socket) return
     socket.on('updateUsers', onSocketUpdateUsers)
 
     return () => {
@@ -48,7 +49,7 @@ function OnlineUserListPartial ({ sessionUser, timezone, users, socket }) {
     UIkit.offcanvas.hide()
 
     startConversation(sessionUser._id, _id).then(conversation => {
-      socket.emit(MESSAGES_SPAWN_CHAT_WINDOW, { convoId: conversation._id })
+      if (socket) socket.emit(MESSAGES_SPAWN_CHAT_WINDOW, { convoId: conversation._id })
     })
   }, [sessionUser, socket])
 

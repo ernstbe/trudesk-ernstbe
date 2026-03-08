@@ -34,7 +34,7 @@ const initialState = {
   loadingViewData: true,
   viewdata: Map({}),
 
-  socket: {},
+  socket: null,
   socketInitialized: false
 }
 

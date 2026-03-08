@@ -17,6 +17,7 @@ function BackupRestoreOverlay ({ socket }) {
   }, [])
 
   useEffect(() => {
+    if (!socket) return
     socket.on(BACKUP_RESTORE_UI_SHOW_OVERLAY, onShowRestoreOverlay)
     socket.on(BACKUP_RESTORE_UI_COMPLETE, onRestoreComplete)
 

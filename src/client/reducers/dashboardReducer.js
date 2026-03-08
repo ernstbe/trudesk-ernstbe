@@ -54,18 +54,19 @@ const reducer = handleActions(
     },
 
     [FETCH_DASHBOARD_DATA.SUCCESS]: (state, action) => {
+      const r = action.response || {}
       return {
         ...state,
         loading: false,
-        lastUpdated: action.response.lastUpdated,
-        ticketBreakdownData: fromJS(action.response.data),
-        mostActiveTicket: fromJS(action.response.mostActiveTicket),
-        mostCommenter: fromJS(action.response.mostCommenter),
-        mostRequester: fromJS(action.response.mostRequester),
-        mostAssignee: fromJS(action.response.mostAssignee),
-        ticketAvg: fromJS(action.response.ticketAvg),
-        ticketCount: action.response.ticketCount,
-        closedCount: action.response.closedCount
+        lastUpdated: r.lastUpdated || state.lastUpdated,
+        ticketBreakdownData: r.data ? fromJS(r.data) : state.ticketBreakdownData,
+        mostActiveTicket: r.mostActiveTicket ? fromJS(r.mostActiveTicket) : state.mostActiveTicket,
+        mostCommenter: r.mostCommenter ? fromJS(r.mostCommenter) : state.mostCommenter,
+        mostRequester: r.mostRequester ? fromJS(r.mostRequester) : state.mostRequester,
+        mostAssignee: r.mostAssignee ? fromJS(r.mostAssignee) : state.mostAssignee,
+        ticketAvg: r.ticketAvg != null ? fromJS(r.ticketAvg) : state.ticketAvg,
+        ticketCount: r.ticketCount != null ? r.ticketCount : state.ticketCount,
+        closedCount: r.closedCount != null ? r.closedCount : state.closedCount
       }
     },
 
@@ -77,7 +78,7 @@ const reducer = handleActions(
     },
 
     [FETCH_DASHBOARD_TOP_GROUPS.SUCCESS]: (state, action) => {
-      const items = action.response.items
+      const items = action.response && action.response.items ? action.response.items : []
       let top5 = sortBy(items, i => i.count)
         .reverse()
         .slice(0, 5)
@@ -99,7 +100,7 @@ const reducer = handleActions(
     },
 
     [FETCH_DASHBOARD_TOP_TAGS.SUCCESS]: (state, action) => {
-      const items = action.response.tags
+      const items = action.response && action.response.tags ? action.response.tags : {}
       const topTags = map(items, (v, k) => [k, v])
       return {
         ...state,
@@ -116,14 +117,14 @@ const reducer = handleActions(
     },
 
     [FETCH_DASHBOARD_OVERDUE_TICKETS.SUCCESS]: (state, action) => {
-      if (action.response.success && action.response.error) {
+      if (!action.response || (action.response.success && action.response.error)) {
         return { ...state, loadingOverdueTickets: false, overdueTickets: initialState.overdueTickets }
       }
 
       return {
         ...state,
         loadingOverdueTickets: false,
-        overdueTickets: fromJS(action.response.tickets)
+        overdueTickets: fromJS(action.response.tickets || [])
       }
     }
   },

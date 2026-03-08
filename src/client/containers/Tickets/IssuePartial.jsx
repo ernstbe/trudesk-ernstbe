@@ -61,6 +61,7 @@ function IssuePartial (props) {
   )
 
   useEffect(() => {
+    if (!socket) return
     socket.on(TICKETS_UI_ATTACHMENTS_UPDATE, onUpdateTicketAttachments)
     return () => {
       socket.off(TICKETS_UI_ATTACHMENTS_UPDATE, onUpdateTicketAttachments)
@@ -82,7 +83,7 @@ function IssuePartial (props) {
           }
         })
         .then(() => {
-          socket.emit(TICKETS_UI_ATTACHMENTS_UPDATE, { _id: ticketId })
+          if (socket) socket.emit(TICKETS_UI_ATTACHMENTS_UPDATE, { _id: ticketId })
           helpers.UI.showSnackbar('Attachment Successfully Uploaded')
         })
         .catch(error => {
@@ -99,7 +100,7 @@ function IssuePartial (props) {
       axios
         .delete(`/api/v1/tickets/${ticketId}/attachments/remove/${attachmentId}`)
         .then(() => {
-          socket.emit(TICKETS_UI_ATTACHMENTS_UPDATE, { _id: ticketId })
+          if (socket) socket.emit(TICKETS_UI_ATTACHMENTS_UPDATE, { _id: ticketId })
           helpers.UI.showSnackbar('Attachment Removed')
         })
         .catch(error => {
@@ -161,7 +162,7 @@ function IssuePartial (props) {
                     subject: subject,
                     text: issue,
                     onPrimaryClick: data => {
-                      socket.emit(TICKETS_ISSUE_SET, {
+                      if (socket) socket.emit(TICKETS_ISSUE_SET, {
                         _id: ticketId,
                         value: data.text,
                         subject: data.subjectText

@@ -69,6 +69,7 @@ function ChatWindow ({
   }, [conversationId])
 
   useEffect(() => {
+    if (!socket) return
     getConversation()
     socket.on(MESSAGES_UI_USER_TYPING, onUserTyping)
     socket.on(MESSAGES_SAVE_CHAT_WINDOW_COMPLETE, onSaveChatWindowComplete)
@@ -77,7 +78,7 @@ function ChatWindow ({
       socket.off(MESSAGES_UI_USER_TYPING, onUserTyping)
       socket.off(MESSAGES_SAVE_CHAT_WINDOW_COMPLETE, onSaveChatWindowComplete)
     }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [socket]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     helpers.setupScrollers()
@@ -116,7 +117,7 @@ function ChatWindow ({
     }
 
     // Save chat window
-    socket.emit(MESSAGES_SAVE_CHAT_WINDOW, {
+    if (socket) socket.emit(MESSAGES_SAVE_CHAT_WINDOW, {
       userId: sessionUser._id,
       convoId: conversationId,
       remove: true
