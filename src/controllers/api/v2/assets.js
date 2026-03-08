@@ -1,38 +1,38 @@
-var _ = require('lodash')
-var Asset = require('../../../models/asset')
-var Ticket = require('../../../models/ticket')
-var apiUtil = require('../apiUtils')
+const _ = require('lodash')
+const Asset = require('../../../models/asset')
+const Ticket = require('../../../models/ticket')
+const apiUtil = require('../apiUtils')
 
-var assetsApi = {}
+const assetsApi = {}
 
 assetsApi.get = async function (req, res) {
   try {
-    var assets = await Asset.getAll()
-    return apiUtil.sendApiSuccess(res, { assets: assets })
+    const assets = await Asset.getAll()
+    return apiUtil.sendApiSuccess(res, { assets })
   } catch (err) {
     return apiUtil.sendApiError(res, 500, err.message)
   }
 }
 
 assetsApi.single = async function (req, res) {
-  var id = req.params.id
+  const id = req.params.id
   if (!id) return apiUtil.sendApiError(res, 400, 'Invalid Parameters')
 
   try {
-    var asset = await Asset.getById(id)
+    const asset = await Asset.getById(id)
     if (!asset) return apiUtil.sendApiError(res, 404, 'Asset not found')
-    return apiUtil.sendApiSuccess(res, { asset: asset })
+    return apiUtil.sendApiSuccess(res, { asset })
   } catch (err) {
     return apiUtil.sendApiError(res, 500, err.message)
   }
 }
 
 assetsApi.create = async function (req, res) {
-  var postData = req.body
+  const postData = req.body
   if (!postData) return apiUtil.sendApiError_InvalidPostData(res)
 
   try {
-    var asset = await Asset.create({
+    const asset = await Asset.create({
       name: postData.name,
       assetTag: postData.assetTag,
       category: postData.category,
@@ -40,7 +40,7 @@ assetsApi.create = async function (req, res) {
       description: postData.description
     })
 
-    return apiUtil.sendApiSuccess(res, { asset: asset })
+    return apiUtil.sendApiSuccess(res, { asset })
   } catch (err) {
     if (err.code === 11000) return apiUtil.sendApiError(res, 400, 'Asset tag already exists')
     return apiUtil.sendApiError(res, 500, err.message)
@@ -48,25 +48,25 @@ assetsApi.create = async function (req, res) {
 }
 
 assetsApi.update = async function (req, res) {
-  var id = req.params.id
-  var postData = req.body
+  const id = req.params.id
+  const postData = req.body
   if (!id || !postData) return apiUtil.sendApiError(res, 400, 'Invalid Parameters')
 
   try {
-    var asset = await Asset.findById(id)
+    const asset = await Asset.findById(id)
     if (!asset) return apiUtil.sendApiError(res, 404, 'Asset not found')
 
-    var allowedFields = ['name', 'assetTag', 'category', 'location', 'description']
+    const allowedFields = ['name', 'assetTag', 'category', 'location', 'description']
 
-    for (var i = 0; i < allowedFields.length; i++) {
-      var field = allowedFields[i]
+    for (let i = 0; i < allowedFields.length; i++) {
+      const field = allowedFields[i]
       if (!_.isUndefined(postData[field])) {
         asset[field] = postData[field]
       }
     }
 
     await asset.save()
-    return apiUtil.sendApiSuccess(res, { asset: asset })
+    return apiUtil.sendApiSuccess(res, { asset })
   } catch (err) {
     if (err.code === 11000) return apiUtil.sendApiError(res, 400, 'Asset tag already exists')
     return apiUtil.sendApiError(res, 500, err.message)
@@ -74,11 +74,11 @@ assetsApi.update = async function (req, res) {
 }
 
 assetsApi.delete = async function (req, res) {
-  var id = req.params.id
+  const id = req.params.id
   if (!id) return apiUtil.sendApiError(res, 400, 'Invalid Parameters')
 
   try {
-    var asset = await Asset.findById(id)
+    const asset = await Asset.findById(id)
     if (!asset) return apiUtil.sendApiError(res, 404, 'Asset not found')
 
     await Asset.deleteOne({ _id: id })
@@ -89,15 +89,15 @@ assetsApi.delete = async function (req, res) {
 }
 
 assetsApi.linkTicket = async function (req, res) {
-  var assetId = req.params.id
-  var ticketUid = req.body.ticketUid
+  const assetId = req.params.id
+  const ticketUid = req.body.ticketUid
   if (!assetId || !ticketUid) return apiUtil.sendApiError(res, 400, 'Invalid Parameters')
 
   try {
-    var asset = await Asset.findById(assetId)
+    let asset = await Asset.findById(assetId)
     if (!asset) return apiUtil.sendApiError(res, 404, 'Asset not found')
 
-    var ticket = await Ticket.getTicketByUid(ticketUid)
+    const ticket = await Ticket.getTicketByUid(ticketUid)
     if (!ticket) return apiUtil.sendApiError(res, 404, 'Ticket not found')
 
     // Link asset to ticket metadata
@@ -113,7 +113,7 @@ assetsApi.linkTicket = async function (req, res) {
     await Asset.addTicket(assetId, ticket._id)
 
     asset = await Asset.getById(assetId)
-    return apiUtil.sendApiSuccess(res, { asset: asset })
+    return apiUtil.sendApiSuccess(res, { asset })
   } catch (err) {
     return apiUtil.sendApiError(res, 500, err.message)
   }

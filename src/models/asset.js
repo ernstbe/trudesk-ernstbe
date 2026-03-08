@@ -1,8 +1,8 @@
-var mongoose = require('mongoose')
+const mongoose = require('mongoose')
 
-var COLLECTION = 'assets'
+const COLLECTION = 'assets'
 
-var assetSchema = mongoose.Schema({
+const assetSchema = mongoose.Schema({
   name: { type: String, required: true },
   assetTag: { type: String, unique: true, required: true },
   category: { type: String },

@@ -6,7 +6,7 @@ const recurringTasksApi = {}
 
 recurringTasksApi.get = async function (req, res) {
   try {
-    var tasks = await RecurringTask.getAll()
+    const tasks = await RecurringTask.getAll()
     return apiUtil.sendApiSuccess(res, { recurringTasks: tasks })
   } catch (err) {
     return apiUtil.sendApiError(res, 500, err.message)
@@ -14,11 +14,11 @@ recurringTasksApi.get = async function (req, res) {
 }
 
 recurringTasksApi.single = async function (req, res) {
-  var id = req.params.id
+  const id = req.params.id
   if (!id) return apiUtil.sendApiError(res, 400, 'Invalid Parameters')
 
   try {
-    var task = await RecurringTask.getById(id)
+    const task = await RecurringTask.getById(id)
     if (!task) return apiUtil.sendApiError(res, 404, 'Recurring task not found')
     return apiUtil.sendApiSuccess(res, { recurringTask: task })
   } catch (err) {
@@ -27,11 +27,11 @@ recurringTasksApi.single = async function (req, res) {
 }
 
 recurringTasksApi.create = async function (req, res) {
-  var postData = req.body
+  const postData = req.body
   if (!postData) return apiUtil.sendApiError_InvalidPostData(res)
 
   try {
-    var task = await RecurringTask.create({
+    let task = await RecurringTask.create({
       name: postData.name,
       description: postData.description,
       ticketSubject: postData.ticketSubject,
@@ -57,22 +57,22 @@ recurringTasksApi.create = async function (req, res) {
 }
 
 recurringTasksApi.update = async function (req, res) {
-  var id = req.params.id
-  var postData = req.body
+  const id = req.params.id
+  const postData = req.body
   if (!id || !postData) return apiUtil.sendApiError(res, 400, 'Invalid Parameters')
 
   try {
-    var task = await RecurringTask.findById(id)
+    let task = await RecurringTask.findById(id)
     if (!task) return apiUtil.sendApiError(res, 404, 'Recurring task not found')
 
-    var allowedFields = [
+    const allowedFields = [
       'name', 'description', 'ticketSubject', 'ticketIssue', 'ticketType',
       'ticketGroup', 'ticketPriority', 'ticketAssignee', 'ticketTags',
       'scheduleType', 'dayOfMonth', 'monthsOfYear', 'daysBeforeDeadline', 'enabled'
     ]
 
-    for (var i = 0; i < allowedFields.length; i++) {
-      var field = allowedFields[i]
+    for (let i = 0; i < allowedFields.length; i++) {
+      const field = allowedFields[i]
       if (!_.isUndefined(postData[field])) {
         task[field] = postData[field]
       }
@@ -90,11 +90,11 @@ recurringTasksApi.update = async function (req, res) {
 }
 
 recurringTasksApi.delete = async function (req, res) {
-  var id = req.params.id
+  const id = req.params.id
   if (!id) return apiUtil.sendApiError(res, 400, 'Invalid Parameters')
 
   try {
-    var task = await RecurringTask.findById(id)
+    const task = await RecurringTask.findById(id)
     if (!task) return apiUtil.sendApiError(res, 404, 'Recurring task not found')
 
     await RecurringTask.deleteOne({ _id: id })

@@ -1,8 +1,8 @@
-var mongoose = require('mongoose')
+const mongoose = require('mongoose')
 
-var COLLECTION = 'recurringtasks'
+const COLLECTION = 'recurringtasks'
 
-var recurringTaskSchema = mongoose.Schema({
+const recurringTaskSchema = mongoose.Schema({
   name: { type: String, required: true },
   description: { type: String },
 
@@ -63,16 +63,15 @@ recurringTaskSchema.statics.getEnabled = async function () {
 }
 
 function calculateNextRun (task) {
-  var now = new Date()
-  var year = now.getFullYear()
-  var currentMonth = now.getMonth()
-  var day = task.dayOfMonth || 1
+  const now = new Date()
+  const year = now.getFullYear()
+  const day = task.dayOfMonth || 1
 
-  var months = []
+  let months = []
 
   if (task.scheduleType === 'monthly') {
     // Every month
-    for (var m = 0; m < 12; m++) {
+    for (let m = 0; m < 12; m++) {
       months.push(m)
     }
   } else if (task.scheduleType === 'quarterly') {
@@ -82,9 +81,9 @@ function calculateNextRun (task) {
   }
 
   // Find the next deadline date
-  for (var i = 0; i < months.length; i++) {
-    var deadline = new Date(year, months[i], day)
-    var triggerDate = new Date(deadline)
+  for (let i = 0; i < months.length; i++) {
+    const deadline = new Date(year, months[i], day)
+    const triggerDate = new Date(deadline)
     triggerDate.setDate(triggerDate.getDate() - (task.daysBeforeDeadline || 30))
 
     if (triggerDate > now) {
@@ -93,9 +92,9 @@ function calculateNextRun (task) {
   }
 
   // Wrap to next year
-  var firstMonth = months[0] || 0
-  var nextYearDeadline = new Date(year + 1, firstMonth, day)
-  var nextYearTrigger = new Date(nextYearDeadline)
+  const firstMonth = months[0] || 0
+  const nextYearDeadline = new Date(year + 1, firstMonth, day)
+  const nextYearTrigger = new Date(nextYearDeadline)
   nextYearTrigger.setDate(nextYearTrigger.getDate() - (task.daysBeforeDeadline || 30))
   return nextYearTrigger
 }

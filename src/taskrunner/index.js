@@ -14,7 +14,7 @@ const async = require('async')
 const axios = require('axios')
 const cron = require('node-cron')
 const winston = require('../logger')
-const ticketSchema = require('../models/ticket')
+const TicketSchema = require('../models/ticket')
 const userSchema = require('../models/user')
 const groupSchema = require('../models/group')
 const conversationSchema = require('../models/chat/conversation')
@@ -38,11 +38,11 @@ taskRunner.init = function (callback) {
 
 taskRunner.processRecurringTasks = async function () {
   try {
-    var tasks = await RecurringTask.getEnabled()
-    var now = new Date()
+    const tasks = await RecurringTask.getEnabled()
+    const now = new Date()
 
-    for (var i = 0; i < tasks.length; i++) {
-      var task = tasks[i]
+    for (let i = 0; i < tasks.length; i++) {
+      const task = tasks[i]
 
       if (!task.nextRun || task.nextRun > now) continue
 
@@ -64,16 +64,16 @@ taskRunner.processRecurringTasks = async function () {
 }
 
 taskRunner.createTicketFromRecurringTask = async function (task) {
-  var defaultStatus = await StatusSchema.findOne({ isResolved: false }).sort({ order: 1 })
+  const defaultStatus = await StatusSchema.findOne({ isResolved: false }).sort({ order: 1 })
   if (!defaultStatus) throw new Error('No open status found')
 
-  var historyItem = {
+  const historyItem = {
     action: 'ticket:created',
     description: 'Ticket automatically created from recurring task: ' + task.name,
     owner: task.createdBy
   }
 
-  var ticketData = {
+  const ticketData = {
     owner: task.createdBy,
     group: task.ticketGroup,
     type: task.ticketType,
@@ -90,11 +90,11 @@ taskRunner.createTicketFromRecurringTask = async function (task) {
     ticketData.assignee = task.ticketAssignee
   }
 
-  var ticket = new ticketSchema(ticketData)
-  var saved = await ticket.save()
+  const ticket = new TicketSchema(ticketData)
+  const saved = await ticket.save()
   await saved.populate('group owner priority')
 
-  var emitter = require('../emitter')
+  const emitter = require('../emitter')
   emitter.emit('ticket:created', { ticket: saved })
 
   return saved
@@ -133,7 +133,7 @@ taskRunner.sendStats = function (callback) {
       [
         async function (done) {
           try {
-            const count = await ticketSchema.countDocuments({ deleted: false })
+            const count = await TicketSchema.countDocuments({ deleted: false })
             result.ticketCount = count
             return done()
           } catch (err) {
