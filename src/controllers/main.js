@@ -73,7 +73,7 @@ mainController.about = async function (req, res) {
     const privacyPolicy = await settings.getSettingByName('legal:privacypolicy')
 
     const content = {}
-    content.title = 'About'
+    content.title = 'Über'
     content.nav = 'about'
 
     content.data = {}
@@ -99,7 +99,7 @@ mainController.about = async function (req, res) {
 
 mainController.dashboard = function (req, res) {
   const content = {}
-  content.title = 'Dashboard'
+  content.title = 'Übersicht'
   content.nav = 'dashboard'
 
   content.data = {}

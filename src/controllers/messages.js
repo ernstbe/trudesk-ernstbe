@@ -23,7 +23,7 @@ messagesController.content = {}
 
 messagesController.view = (req, res) => {
   const content = {}
-  content.title = 'Messages'
+  content.title = 'Nachrichten'
   content.nav = 'messages'
   content.data = {}
   content.data.common = req.viewdata
@@ -34,7 +34,7 @@ messagesController.view = (req, res) => {
 
 messagesController.get = function (req, res) {
   const content = {}
-  content.title = 'Messages'
+  content.title = 'Nachrichten'
   content.nav = 'messages'
   content.data = {}
   content.data.user = req.user
@@ -106,7 +106,7 @@ messagesController.getConversation = async (req, res) => {
   if (_.isUndefined(cid)) return handleError(res, 'Invalid Conversation ID!')
 
   const content = {}
-  content.title = 'Messages'
+  content.title = 'Nachrichten'
   content.nav = 'messages'
   content.data = {}
   content.data.user = req.user

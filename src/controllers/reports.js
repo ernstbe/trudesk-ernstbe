@@ -27,7 +27,7 @@ reportsController.overview = function (req, res) {
   }
 
   const content = {}
-  content.title = 'Overview'
+  content.title = 'Übersicht'
   content.nav = 'reports'
   content.subnav = 'reports-overview'
 
@@ -49,7 +49,7 @@ reportsController.generate = function (req, res) {
   }
 
   const content = {}
-  content.title = 'Generate Report'
+  content.title = 'Bericht erstellen'
   content.nav = 'reports'
   content.subnav = 'reports-generate'
 
@@ -81,7 +81,7 @@ reportsController.breakdownGroup = function (req, res) {
   }
 
   const content = {}
-  content.title = 'Group Breakdown'
+  content.title = 'Gruppenauswertung'
   content.nav = 'reports'
   content.subnav = 'reports-breakdown-group'
 
@@ -103,7 +103,7 @@ reportsController.breakdownUser = function (req, res) {
   }
 
   const content = {}
-  content.title = 'User Breakdown'
+  content.title = 'Benutzerauswertung'
   content.nav = 'reports'
   content.subnav = 'reports-breakdown-user'
 

@@ -36,7 +36,7 @@ noticesController.get = function (req, res) {
   }
 
   const content = {}
-  content.title = 'Notices'
+  content.title = 'Mitteilungen'
   content.nav = 'notices'
 
   content.data = {}
@@ -55,7 +55,7 @@ noticesController.create = function (req, res) {
   }
 
   const content = {}
-  content.title = 'Notices - Create'
+  content.title = 'Mitteilung erstellen'
   content.nav = 'notices'
 
   content.data = {}
@@ -73,7 +73,7 @@ noticesController.edit = function (req, res) {
   }
 
   const content = {}
-  content.title = 'Notices - Edit'
+  content.title = 'Mitteilung bearbeiten'
   content.nav = 'notices'
 
   content.data = {}
