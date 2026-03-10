@@ -523,8 +523,10 @@ mainController.resetPass = async function (req, res) {
 
 mainController.l2authget = async function (req, res) {
   if (!req.user || !req.user.hasL2Auth) {
-    req.logout()
-    return res.redirect('/')
+    req.logout(function () {
+      return res.redirect('/')
+    })
+    return
   }
 
   const content = {}
