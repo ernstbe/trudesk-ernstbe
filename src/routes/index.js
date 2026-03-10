@@ -435,26 +435,20 @@ module.exports = function (app, middleware) {
   app.use(handleErrors)
 }
 
-function handleErrors (err, req, res) {
+function handleErrors (err, req, res, next) {
   const status = err.status || 500
-  res.status(err.status)
+  res.status(status)
 
-  if (status === 429) {
-    res.render('429', { layout: false })
-    return
+  winston.warn(err.stack || err.message)
+
+  // Return JSON for API requests
+  if (req.path.startsWith('/api/')) {
+    return res.json({ success: false, error: err.message || 'Internal Server Error' })
   }
 
-  if (status === 500) {
-    res.render('500', { layout: false })
-    return
-  }
-
-  if (status === 503) {
-    res.render('503', { layout: false })
-    return
-  }
-
-  winston.warn(err.stack)
+  if (status === 429) return res.render('429', { layout: false })
+  if (status === 500) return res.render('500', { layout: false })
+  if (status === 503) return res.render('503', { layout: false })
 
   res.render('error', {
     message: err.message,
@@ -464,5 +458,8 @@ function handleErrors (err, req, res) {
 }
 
 function handle404 (req, res) {
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ success: false, error: 'Not Found' })
+  }
   return res.status(404).render('404', { layout: false })
 }

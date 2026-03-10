@@ -167,28 +167,48 @@ ticketsV2.batchUpdate = async function (req, res) {
   const batch = req.body.batch
   if (!_.isArray(batch)) return apiUtils.sendApiError_InvalidPostData(res)
 
-  try {
-    await Promise.all(batch.map(async (batchTicket) => {
+  const results = { success: 0, failed: 0, errors: [] }
+
+  await Promise.allSettled(batch.map(async (batchTicket) => {
+    try {
       const ticket = await Models.Ticket.getTicketById(batchTicket.id)
 
       if (!_.isUndefined(batchTicket.status)) {
         ticket.status = batchTicket.status
-        const HistoryItem = {
+        ticket.history.push({
           action: 'ticket:set:status',
           description: 'status set to: ' + batchTicket.status,
           owner: req.user._id
-        }
+        })
+      }
 
-        ticket.history.push(HistoryItem)
+      if (!_.isUndefined(batchTicket.assignee)) {
+        ticket.assignee = batchTicket.assignee || undefined
+        ticket.history.push({
+          action: 'ticket:set:assignee',
+          description: 'assignee set to: ' + (batchTicket.assignee || 'unassigned'),
+          owner: req.user._id
+        })
+      }
+
+      if (!_.isUndefined(batchTicket.priority)) {
+        ticket.priority = batchTicket.priority
+        ticket.history.push({
+          action: 'ticket:set:priority',
+          description: 'priority set to: ' + batchTicket.priority,
+          owner: req.user._id
+        })
       }
 
       await ticket.save()
-    }))
+      results.success++
+    } catch (err) {
+      results.failed++
+      results.errors.push({ id: batchTicket.id, error: err.message })
+    }
+  }))
 
-    return apiUtils.sendApiSuccess(res)
-  } catch (err) {
-    return apiUtils.sendApiError(res, 400, err.message)
-  }
+  return apiUtils.sendApiSuccess(res, results)
 }
 
 ticketsV2.updateMetadata = async function (req, res) {

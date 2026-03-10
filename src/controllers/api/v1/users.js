@@ -61,20 +61,20 @@ apiUsers.getWithLimit = async function (req, res) {
     const users = await UserSchema.getUserWithObject(obj)
     const grps = await groupSchema.getAllGroups()
 
+    // Build user→groups lookup map to avoid O(users×groups) filtering
+    const userGroupMap = new Map()
+    for (const g of grps) {
+      for (const m of g.members) {
+        const memberId = m._id.toString()
+        if (!userGroupMap.has(memberId)) userGroupMap.set(memberId, [])
+        userGroupMap.get(memberId).push({ name: g.name, _id: g._id })
+      }
+    }
+
     const result = []
     for (const u of users) {
       const user = u.toObject()
-
-      const groups = _.filter(grps, function (g) {
-        return _.some(g.members, function (m) {
-          return m._id.toString() === user._id.toString()
-        })
-      })
-
-      user.groups = _.map(groups, function (group) {
-        return { name: group.name, _id: group._id }
-      })
-
+      user.groups = userGroupMap.get(user._id.toString()) || []
       result.push(stripUserFields(user))
     }
 
