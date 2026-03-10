@@ -44,7 +44,7 @@ import DropdownItem from 'components/Dropdown/DropdownItem'
 import DropdownSeparator from 'components/Dropdown/DropdownSeperator'
 
 import helpers from 'lib/helpers'
-import anime from 'animejs'
+import { createTimeline, utils } from 'animejs'
 import moment from 'moment-timezone'
 import SearchResults from 'components/SearchResults'
 
@@ -112,7 +112,7 @@ function TicketsContainer (props) {
     propsFetchTicketStatus()
 
     return () => {
-      anime.remove('tr.overdue td')
+      utils.remove('tr.overdue td')
       timelineRef.current = null
       propsUnloadTickets()
       socket.off('$trudesk:client:ticket:created', onTicketCreated)
@@ -127,19 +127,17 @@ function TicketsContainer (props) {
       timelineRef.current.seek(0)
     }
 
-    anime.remove('tr.overdue td')
+    utils.remove('tr.overdue td')
 
-    timelineRef.current = anime.timeline({
-      direction: 'alternate',
+    timelineRef.current = createTimeline({
+      alternate: true,
       duration: 800,
-      autoPlay: false,
-      easing: 'steps(1)',
-      loop: true,
-      backgroundColor: 'blue'
+      autoplay: false,
+      ease: 'steps(1)',
+      loop: true
     })
 
-    timelineRef.current.add({
-      targets: 'tr.overdue td',
+    timelineRef.current.add('tr.overdue td', {
       backgroundColor: '#b71c1c',
       color: '#ffffff'
     })

@@ -11,7 +11,7 @@ import { sendMessage } from 'actions/messages'
 import { setSessionUser } from 'actions/common'
 
 import axios from 'axios'
-import anime from 'animejs'
+import { animate } from 'animejs'
 import $ from 'jquery'
 import 'autogrow'
 import helpers from 'lib/helpers'
@@ -99,11 +99,10 @@ function ChatWindow ({
 
     if (containerRef.current) {
       const topValue = containerRef.current.offsetTop
-      anime({
-        targets: containerRef.current,
+      animate(containerRef.current, {
         top: topValue === -280 ? '-29px' : '-280px',
         duration: 250,
-        easing: 'easeInOutCirc'
+        ease: 'inOutCirc'
       })
     }
   }, [])

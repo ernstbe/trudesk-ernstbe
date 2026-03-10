@@ -14,9 +14,8 @@
 
 const utils = require('../helpers/utils')
 const path = require('path')
-const AnsiUp = require('ansi_up')
-// eslint-disable-next-line new-cap
-const ansiUp = new AnsiUp.default()
+const { AnsiUp } = require('ansi_up')
+const ansiUp = new AnsiUp()
 const Tail = require('tail').Tail
 const fs = require('fs-extra')
 
