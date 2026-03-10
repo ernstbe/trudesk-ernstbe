@@ -16,7 +16,7 @@
     "codacy": "npm run coverage && bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r ./coverage/lcov.info && rm -rf ./coverage",
     "webpackwatch": "webpack --config webpack.config.js --watch",
     "webpackdev": "webpack --config webpack.config.js",
-    "webpackdist": "rimraf public/js/* && webpack --env production --node-env production --config webpack.config.js"
+    "webpackdist": "rimraf public/js/* && webpack --env production --config-node-env production --config webpack.config.js"
   },
   "dependencies": {
     "@elastic/elasticsearch": "8.19.1",
@@ -195,7 +195,7 @@
     "terser-webpack-plugin": "5.3.17",
     "webpack": "5.105.4",
     "webpack-bundle-analyzer": "5.2.0",
-    "webpack-cli": "4.10.0"
+    "webpack-cli": "6.0.1"
   },
   "resolutions": {
     "npm/chalk": "^4.1.2"
