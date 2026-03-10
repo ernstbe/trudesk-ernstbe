@@ -44,9 +44,8 @@ function setupDatabase (callback) {
 function setupClient () {
   ES.esclient = new elasticsearch.Client({
     node: process.env.ELASTICSEARCH_URI,
-    pingTimeout: 10000,
-    requestTimeout: 10000,
-    maxRetries: 5
+    maxRetries: 5,
+    requestTimeout: 10000
   })
 }
 
@@ -71,102 +70,100 @@ async function createIndex (callback) {
   try {
     await ES.esclient.indices.create({
       index: ES.indexName,
-      body: {
-        settings: {
-          index: {
-            number_of_replicas: 0
-          },
-          analysis: {
-            filter: {
-              leadahead: {
-                type: 'edge_ngram',
-                min_gram: 1,
-                max_gram: 20
-              },
-              email: {
-                type: 'pattern_capture',
-                preserve_original: true,
-                patterns: ['([^@]+)', '(\\p{L}+)', '(\\d+)', '@(.+)']
-              }
+      settings: {
+        index: {
+          number_of_replicas: 0
+        },
+        analysis: {
+          filter: {
+            leadahead: {
+              type: 'edge_ngram',
+              min_gram: 1,
+              max_gram: 20
             },
-            analyzer: {
-              leadahead: {
-                type: 'custom',
-                tokenizer: 'standard',
-                filter: ['lowercase', 'leadahead']
-              },
-              email: {
-                tokenizer: 'uax_url_email',
-                filter: ['email', 'lowercase', 'unique']
-              }
+            email: {
+              type: 'pattern_capture',
+              preserve_original: true,
+              patterns: ['([^@]+)', '(\\p{L}+)', '(\\d+)', '@(.+)']
+            }
+          },
+          analyzer: {
+            leadahead: {
+              type: 'custom',
+              tokenizer: 'standard',
+              filter: ['lowercase', 'leadahead']
+            },
+            email: {
+              tokenizer: 'uax_url_email',
+              filter: ['email', 'lowercase', 'unique']
             }
           }
-        },
-        mappings: {
-          properties: {
-            type: {
-              type: 'keyword'
-            },
-            uid: {
-              type: 'text',
-              analyzer: 'leadahead',
-              search_analyzer: 'standard'
-            },
-            subject: {
-              type: 'text',
-              analyzer: 'leadahead',
-              search_analyzer: 'standard'
-            },
-            issue: {
-              type: 'text',
-              analyzer: 'leadahead',
-              search_analyzer: 'standard'
-            },
-            dateFormatted: {
-              type: 'text',
-              analyzer: 'leadahead',
-              search_analyzer: 'standard'
-            },
-            comments: {
-              properties: {
-                comment: {
-                  type: 'text',
-                  analyzer: 'leadahead',
-                  search_analyzer: 'standard'
-                },
-                owner: {
-                  properties: {
-                    email: {
-                      type: 'text',
-                      analyzer: 'email'
-                    }
+        }
+      },
+      mappings: {
+        properties: {
+          type: {
+            type: 'keyword'
+          },
+          uid: {
+            type: 'text',
+            analyzer: 'leadahead',
+            search_analyzer: 'standard'
+          },
+          subject: {
+            type: 'text',
+            analyzer: 'leadahead',
+            search_analyzer: 'standard'
+          },
+          issue: {
+            type: 'text',
+            analyzer: 'leadahead',
+            search_analyzer: 'standard'
+          },
+          dateFormatted: {
+            type: 'text',
+            analyzer: 'leadahead',
+            search_analyzer: 'standard'
+          },
+          comments: {
+            properties: {
+              comment: {
+                type: 'text',
+                analyzer: 'leadahead',
+                search_analyzer: 'standard'
+              },
+              owner: {
+                properties: {
+                  email: {
+                    type: 'text',
+                    analyzer: 'email'
                   }
                 }
               }
-            },
-            notes: {
-              properties: {
-                note: {
-                  type: 'text',
-                  analyzer: 'leadahead',
-                  search_analyzer: 'standard'
-                },
-                owner: {
-                  properties: {
-                    email: {
-                      type: 'text',
-                      analyzer: 'email'
-                    }
+            }
+          },
+          notes: {
+            properties: {
+              note: {
+                type: 'text',
+                analyzer: 'leadahead',
+                search_analyzer: 'standard'
+              },
+              owner: {
+                properties: {
+                  email: {
+                    type: 'text',
+                    analyzer: 'email'
                   }
                 }
               }
-            },
-            owner: {
-              properties: {
-                email: {
-                  type: 'text',
-                  analyzer: 'email'
-                }
+            }
+          },
+          owner: {
+            properties: {
+              email: {
+                type: 'text',
+                analyzer: 'email'
               }
             }
           }
@@ -187,7 +184,7 @@ async function sendAndEmptyQueue (bulk) {
     ;(async () => {
       try {
         if (bulk.length > 0) {
-          await ES.esclient.bulk({ body: bulk, timeout: '3m' })
+          await ES.esclient.bulk({ operations: bulk, timeout: '3m' })
           winston.debug(`Sent ${bulk.length} documents to Elasticsearch!`)
 
           return resolve([])
@@ -214,7 +211,7 @@ function _crawlUsers (callback) {
   stream
     .on('data', async function (doc) {
       count += 1
-      bulk.push({ index: { _index: ES.indexName, _type: 'doc', _id: doc._id } })
+      bulk.push({ index: { _index: ES.indexName, _id: doc._id } })
       bulk.push({
         datatype: 'user',
         username: doc.username,

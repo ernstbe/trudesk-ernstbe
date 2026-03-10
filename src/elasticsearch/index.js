@@ -154,7 +154,7 @@ ES.setupHooks = () => {
         index: ES.indexName,
         id: ticket._id.toString(),
         refresh: 'true',
-        body: cleanedTicket
+        document: cleanedTicket
       })
     } catch (e) {
       winston.warn('Elasticsearch Error: ' + e)
@@ -204,7 +204,7 @@ ES.setupHooks = () => {
       await ES.esclient.index({
         index: ES.indexName,
         id: _id,
-        body: cleanedTicket
+        document: cleanedTicket
       })
     } catch (e) {
       winston.warn('Elasticsearch Error: ' + e)
@@ -213,12 +213,14 @@ ES.setupHooks = () => {
 }
 
 ES.buildClient = host => {
-  if (ES.esclient) ES.esclient.close()
+  if (ES.esclient) {
+    try { ES.esclient.close() } catch (e) { /* ignore close errors */ }
+  }
 
   ES.esclient = new elasticsearch.Client({
     node: host,
-    pingTimeout: 10000,
-    maxRetries: 5
+    maxRetries: 5,
+    requestTimeout: 10000
   })
 }
 

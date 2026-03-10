@@ -1,0 +1,5 @@
+feat: upgrade @elastic/elasticsearch from 8.19.1 to 9.x
+
+Migrate to v9 JS client API: remove body param from search/index/bulk/indices.create, use document for index(), operations for bulk(), remove pingTimeout, remove _type from bulk metadata, wrap close() in try-catch.
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
