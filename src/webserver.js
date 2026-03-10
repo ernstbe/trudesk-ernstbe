@@ -69,7 +69,6 @@ let port = nconf.get('port') || 8118
     const path = require('path')
     const hbs = require('express-hbs')
     const hbsHelpers = require('./helpers/hbs/helpers')
-    const bodyParser = require('body-parser')
     const favicon = require('serve-favicon')
     const pkg = require('../package.json')
     const routeMiddleware = require('./middleware/middleware')(app)
@@ -89,8 +88,8 @@ let port = nconf.get('port') || 8118
 
     app.use(express.static(path.join(__dirname, '../public')))
     app.use(favicon(path.join(__dirname, '../public/img/favicon.ico')))
-    app.use(bodyParser.urlencoded({ extended: false }))
-    app.use(bodyParser.json())
+    app.use(express.urlencoded({ extended: false }))
+    app.use(express.json())
 
     router.get('/healthz', (req, res) => {
       res.status(200).send('OK')

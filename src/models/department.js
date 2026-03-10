@@ -34,11 +34,9 @@ const departmentSchema = mongoose.Schema({
 
 departmentSchema.plugin(require('mongoose-autopopulate'))
 
-departmentSchema.pre('save', function (next) {
+departmentSchema.pre('save', function () {
   this.name = utils.sanitizeFieldPlainText(this.name.trim())
   this.normalized = utils.sanitizeFieldPlainText(this.name.trim().toLowerCase())
-
-  return next()
 })
 
 departmentSchema.statics.getDepartmentsByTeam = async function (teamIds) {

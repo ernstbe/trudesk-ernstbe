@@ -70,38 +70,36 @@ apiElasticSearch.search = function (req, res) {
 
     const obj = {
       index: 'trudesk',
-      body: {
-        size: limit,
-        from: 0,
-        query: {
-          bool: {
-            must: {
-              multi_match: {
-                query: req.query.q,
-                type: 'cross_fields',
-                operator: 'and',
-                fields: [
-                  'uid^5',
-                  'subject^4',
-                  'issue^4',
-                  'owner.fullname',
-                  'owner.username',
-                  'owner.email',
-                  'comments.owner.email',
-                  'tags.normalized',
-                  'priority.name',
-                  'type.name',
-                  'group.name',
-                  'comments.comment^3',
-                  'notes.note^3',
-                  'dateFormatted'
-                ],
-                tie_breaker: 0.3
-              }
-            },
-            filter: {
-              terms: { 'group._id': g }
+      size: limit,
+      from: 0,
+      query: {
+        bool: {
+          must: {
+            multi_match: {
+              query: req.query.q,
+              type: 'cross_fields',
+              operator: 'and',
+              fields: [
+                'uid^5',
+                'subject^4',
+                'issue^4',
+                'owner.fullname',
+                'owner.username',
+                'owner.email',
+                'comments.owner.email',
+                'tags.normalized',
+                'priority.name',
+                'type.name',
+                'group.name',
+                'comments.comment^3',
+                'notes.note^3',
+                'dateFormatted'
+              ],
+              tie_breaker: 0.3
             }
+          },
+          filter: {
+            terms: { 'group._id': g }
           }
         }
       }

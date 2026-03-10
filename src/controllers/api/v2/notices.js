@@ -51,7 +51,7 @@ apiNotices.update = async function (req, res) {
   if (!id || !payload || !payload.name || !payload.message || !payload.color || !payload.fontColor) { return apiUtils.sendApiError_InvalidPostData(res) }
 
   try {
-    const updatedNotice = await Notice.findOneAndUpdate({ _id: id }, payload, { new: true })
+    const updatedNotice = await Notice.findOneAndUpdate({ _id: id }, payload, { returnDocument: 'after' })
     return apiUtils.sendApiSuccess(res, { notice: updatedNotice })
   } catch (err) {
     return apiUtils.sendApiError(res, 500, err.message)

@@ -22,7 +22,7 @@ import PDropDown from 'components/PDropdown'
 
 import helpers from 'lib/helpers'
 
-function AssigneeDropdownPartial ({ ticketId, onClearClick, onAssigneeClick, socket, forwardedRef }) {
+function AssigneeDropdownPartial ({ ticketId, onClearClick, onAssigneeClick, socket, ref }) {
   const [agents, setAgents] = useState([])
 
   const onUpdateAssigneeList = useCallback(data => {
@@ -39,7 +39,7 @@ function AssigneeDropdownPartial ({ ticketId, onClearClick, onAssigneeClick, soc
 
   return (
     <PDropDown
-      ref={forwardedRef}
+      ref={ref}
       title='Select Assignee'
       id='assigneeDropdown'
       className='opt-ignore-notice'
@@ -95,11 +95,11 @@ AssigneeDropdownPartial.propTypes = {
   onClearClick: PropTypes.func,
   onAssigneeClick: PropTypes.func,
   socket: PropTypes.object.isRequired,
-  forwardedRef: PropTypes.any.isRequired
+  ref: PropTypes.any.isRequired
 }
 
 const mapStateToProps = state => ({
   socket: state.shared.socket
 })
 
-export default connect(mapStateToProps, {}, null, { forwardRef: true })(AssigneeDropdownPartial)
+export default connect(mapStateToProps, {})(AssigneeDropdownPartial)

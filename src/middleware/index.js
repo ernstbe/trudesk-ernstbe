@@ -25,7 +25,6 @@ const hbsHelpers = require('../helpers/hbs/helpers')
 const winston = require('../logger')
 const nconf = require('nconf')
 const flash = require('connect-flash')
-const bodyParser = require('body-parser')
 const cookieParser = require('cookie-parser')
 const session = require('express-session')
 const MongoStore = require('connect-mongo').default || require('connect-mongo').MongoStore
@@ -36,6 +35,7 @@ let middleware = {}
 module.exports = function (app, db, callback) {
   middleware = require('./middleware')(app)
   app.disable('x-powered-by')
+  app.set('query parser', 'extended')
 
   app.set('views', path.join(__dirname, '../views/'))
 
@@ -52,8 +52,8 @@ module.exports = function (app, db, callback) {
   // Required to access handlebars in mail templates
   global.Handlebars = hbs.handlebars
 
-  app.use(bodyParser.urlencoded({ limit: '2mb', extended: false }))
-  app.use(bodyParser.json({ limit: '2mb' }))
+  app.use(express.urlencoded({ limit: '2mb', extended: false }))
+  app.use(express.json({ limit: '2mb' }))
   app.use(cookieParser())
 
   if (global.env === 'production') {

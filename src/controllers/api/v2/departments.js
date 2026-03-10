@@ -56,7 +56,7 @@ apiDepartments.update = async (req, res) => {
   if (putData.allGroups) putData.groups = []
 
   try {
-    let department = await Department.findOneAndUpdate(({ _id: id }, putData, { new: true }))
+    let department = await Department.findOneAndUpdate({ _id: id }, putData, { returnDocument: 'after' })
     department = await department.populate('teams groups')
 
     return apiUtils.sendApiSuccess(res, { department })

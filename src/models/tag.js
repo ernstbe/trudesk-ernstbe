@@ -31,11 +31,9 @@ const tagSchema = mongoose.Schema({
   normalized: String
 })
 
-tagSchema.pre('save', function (next) {
+tagSchema.pre('save', function () {
   this.name = utils.sanitizeFieldPlainText(this.name.trim())
   this.normalized = utils.sanitizeFieldPlainText(this.name.toLowerCase().trim())
-
-  return next()
 })
 
 tagSchema.statics.getTag = async function (id) {

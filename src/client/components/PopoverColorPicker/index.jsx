@@ -4,7 +4,7 @@ import { HexColorPicker } from 'react-colorful'
 import useClickOutside from './useClickOutside'
 
 export const PopoverColorPicker = ({ color, onChange, style }) => {
-  const popover = useRef()
+  const popover = useRef(null)
   const [isOpen, toggle] = useState(false)
 
   const close = useCallback(() => toggle(false), [])

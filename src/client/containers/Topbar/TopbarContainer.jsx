@@ -221,18 +221,18 @@ function TopbarContainer ({
                   </li>
                 </ul>
                 <NotificationsDropdownPartial
-                  forwardedRef={notificationsDropdownPartial}
+                  ref={notificationsDropdownPartial}
                   shortDateFormat={viewdata.get('shortDateFormat')}
                   timezone={viewdata.get('timezone')}
                   onViewAllNotificationsClick={() => showModalAction('VIEW_ALL_NOTIFICATIONS')}
                 />
                 <ConversationsDropdownPartial
-                  forwardedRef={conversationsDropdownPartial}
+                  ref={conversationsDropdownPartial}
                   shortDateFormat={viewdata.get('shortDateFormat')}
                   timezone={viewdata.get('timezone')}
                   socket={socket}
                 />
-                <ProfileDropdownPartial forwardedRef={profileDropdownPartial} />
+                <ProfileDropdownPartial ref={profileDropdownPartial} />
               </div>
             </section>
           </div>

@@ -13,9 +13,8 @@ const assetSchema = mongoose.Schema({
   updatedAt: { type: Date }
 })
 
-assetSchema.pre('save', function (next) {
+assetSchema.pre('save', function () {
   this.updatedAt = new Date()
-  return next()
 })
 
 assetSchema.statics.getAll = async function () {

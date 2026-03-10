@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Trudesk is a help desk / ticketing system built with Express + Handlebars (server-rendered) and React 18 (client islands). It uses MongoDB 8 via Mongoose 8, optional Elasticsearch 8, and Socket.IO for real-time features.
+Trudesk is a help desk / ticketing system built with Express + Handlebars (server-rendered) and React 18 (client islands). It uses MongoDB 8 via Mongoose 8, optional Elasticsearch 9, and Socket.IO for real-time features.
 
 ## Commands
 

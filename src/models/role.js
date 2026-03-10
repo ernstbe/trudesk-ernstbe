@@ -51,11 +51,9 @@ roleSchema.virtual('isAgent').get(function () {
 
 roleSchema.plugin(mongooseLeanVirtuals)
 
-roleSchema.pre('save', function (next) {
+roleSchema.pre('save', function () {
   this.name = utils.sanitizeFieldPlainText(this.name.trim())
   this.normalized = utils.sanitizeFieldPlainText(this.name.toLowerCase().trim())
-
-  return next()
 })
 
 roleSchema.methods.updateGrants = async function (grants) {
