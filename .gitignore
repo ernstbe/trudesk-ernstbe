@@ -1,9 +1,10 @@
 # Logs
 *.log
 
-# Yarn Cache
-.yarn/cache
-.yarn/*.gz
+# Yarn (removed, using npm)
+.yarn/
+.yarnrc.yml
+yarn.lock
 
 # Runtime data
 pids
