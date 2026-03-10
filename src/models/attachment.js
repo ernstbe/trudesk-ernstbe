@@ -23,10 +23,8 @@ const attachmentSchema = mongoose.Schema({
   type: { type: String, required: true }
 })
 
-attachmentSchema.pre('save', function (next) {
+attachmentSchema.pre('save', function () {
   this.name = utils.sanitizeFieldPlainText(this.name.trim())
-
-  return next()
 })
 
 module.exports = attachmentSchema

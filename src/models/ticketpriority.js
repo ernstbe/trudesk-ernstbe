@@ -36,10 +36,8 @@ const prioritySchema = mongoose.Schema(
   }
 )
 
-prioritySchema.pre('save', function (next) {
+prioritySchema.pre('save', function () {
   this.name = utils.sanitizeFieldPlainText(this.name.trim())
-
-  return next()
 })
 
 prioritySchema.virtual('durationFormatted').get(function () {

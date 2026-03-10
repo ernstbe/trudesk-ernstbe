@@ -254,7 +254,7 @@ backupRestore.uploadBackup = function (req, res) {
   })
 
   busboy.on('finish', function () {
-    if (error) return res.status(error.status).json({ success: false, error: error.message })
+    if (error) return res.status(error.status || 500).json({ success: false, error: error.message })
 
     if (_.isUndefined(object.filePath) || _.isUndefined(object.filename)) {
       return res.status(400).json({ success: false, error: 'Invalid Form Data' })

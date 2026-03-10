@@ -24,10 +24,8 @@ const templateSchema = mongoose.Schema({
   data: { type: Object, required: true }
 })
 
-templateSchema.pre('save', function (next) {
+templateSchema.pre('save', function () {
   this.name = this.name.trim()
-
-  return next()
 })
 
 templateSchema.statics.get = async function (name) {

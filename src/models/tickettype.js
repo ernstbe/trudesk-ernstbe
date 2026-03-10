@@ -35,18 +35,15 @@ const ticketTypeSchema = mongoose.Schema({
   priorities: [{ type: mongoose.Schema.Types.ObjectId, ref: 'priorities' }]
 })
 
-const autoPopulatePriorities = function (next) {
+const autoPopulatePriorities = function () {
   this.populate('priorities')
-  return next()
 }
 
 ticketTypeSchema.pre('find', autoPopulatePriorities)
 ticketTypeSchema.pre('findOne', autoPopulatePriorities)
 
-ticketTypeSchema.pre('save', function (next) {
+ticketTypeSchema.pre('save', function () {
   this.name = utils.sanitizeFieldPlainText(this.name.trim())
-
-  return next()
 })
 
 /**

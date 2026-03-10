@@ -615,7 +615,7 @@ ticketsController.uploadImageMDE = function (req, res) {
   })
 
   busboy.on('finish', function () {
-    if (error) return res.status(error.status).send(error.message)
+    if (error) return res.status(error.status || 500).send(error.message)
 
     if (_.isUndefined(object.ticketId) || _.isUndefined(object.filename) || _.isUndefined(object.filePath)) {
       return res.status(400).send('Invalid Form Data')
@@ -765,7 +765,7 @@ ticketsController.uploadAttachment = function (req, res) {
 
   busboy.on('finish', function () {
     async.series(events, async function () {
-      if (error) return res.status(error.status).send(error.message)
+      if (error) return res.status(error.status || 500).send(error.message)
 
       if (_.isUndefined(object.ticketId) || _.isUndefined(object.ownerId) || _.isUndefined(object.filePath)) {
         fs.unlinkSync(object.filePath)

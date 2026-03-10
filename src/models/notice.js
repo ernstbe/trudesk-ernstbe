@@ -41,11 +41,9 @@ const noticeSchema = mongoose.Schema({
   alertWindow: { type: Boolean, default: false }
 })
 
-noticeSchema.pre('save', function (next) {
+noticeSchema.pre('save', function () {
   this.name = utils.sanitizeFieldPlainText(this.name.trim())
   this.message = utils.sanitizeFieldPlainText(this.message.trim())
-
-  return next()
 })
 
 noticeSchema.statics.getNotices = async function () {

@@ -14,7 +14,7 @@
 
 import React from 'react'
 import { createRoot } from 'react-dom/client'
-import { applyMiddleware, createStore, compose } from 'redux'
+import { applyMiddleware, legacy_createStore as createStore, compose } from 'redux'
 import { Provider } from 'react-redux'
 import createSagaMiddleware from 'redux-saga'
 import { middleware as thunkMiddleware } from 'redux-saga-thunk'

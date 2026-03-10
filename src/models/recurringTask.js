@@ -31,14 +31,12 @@ const recurringTaskSchema = mongoose.Schema({
   updatedAt: { type: Date }
 })
 
-recurringTaskSchema.pre('save', function (next) {
+recurringTaskSchema.pre('save', function () {
   this.updatedAt = new Date()
 
   if (!this.nextRun) {
     this.nextRun = calculateNextRun(this)
   }
-
-  return next()
 })
 
 recurringTaskSchema.statics.getAll = async function () {
