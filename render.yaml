@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: trudesk
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: TRUDESK_DOCKER
+        value: "true"
+      - key: USE_XFORWARDIP
+        value: "true"
+      - key: PORT
+        value: "8118"
+      - key: TD_MONGODB_URI
+        sync: false # set manually in Render dashboard
+      - key: TRUDESK_JWTSECRET
+        generateValue: true
