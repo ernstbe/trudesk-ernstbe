@@ -34,7 +34,6 @@ node_modules
 *.sassc
 
 #custom
-package-lock.json
 config.json
 config.yml
 import.csv
