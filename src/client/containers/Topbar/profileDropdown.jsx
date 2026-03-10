@@ -17,7 +17,7 @@ function ProfileDropdownPartial ({
   setSessionUser: setSessionUserAction,
   showModal: showModalAction,
   saveEditAccount: saveEditAccountAction,
-  forwardedRef,
+  ref,
   t
 }) {
   const [, setKeyboardShortcutsChecked] = useState(true)
@@ -35,7 +35,7 @@ function ProfileDropdownPartial ({
 
   return (
     <PDropdown
-      ref={forwardedRef}
+      ref={ref}
       id='profile-drop'
       className='profile-drop'
       showTitlebar={false}
@@ -123,7 +123,7 @@ ProfileDropdownPartial.propTypes = {
   setSessionUser: PropTypes.func.isRequired,
   showModal: PropTypes.func.isRequired,
   saveEditAccount: PropTypes.func.isRequired,
-  forwardedRef: PropTypes.any,
+  ref: PropTypes.any,
   t: PropTypes.func.isRequired
 }
 
@@ -131,6 +131,6 @@ const mapStateToProps = state => ({
   sessionUser: state.shared.sessionUser
 })
 
-export default withTranslation()(connect(mapStateToProps, { setSessionUser, showModal, saveEditAccount }, null, { forwardRef: true })(
+export default withTranslation()(connect(mapStateToProps, { setSessionUser, showModal, saveEditAccount })(
   ProfileDropdownPartial
 ))

@@ -381,7 +381,7 @@ function SingleTicketContainer (props) {
 
                     {hasTicketUpdate && (
                       <AssigneeDropdownPartial
-                        forwardedRef={assigneeDropdownPartial}
+                        ref={assigneeDropdownPartial}
                         ticketId={ticket._id}
                         onClearClick={() => setTicket(prev => ({ ...prev, assignee: undefined }))}
                         onAssigneeClick={({ agent }) => setTicket(prev => ({ ...prev, assignee: agent }))}

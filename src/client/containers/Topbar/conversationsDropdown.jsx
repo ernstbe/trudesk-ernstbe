@@ -22,7 +22,7 @@ import PDropDown from 'components/PDropdown'
 import helpers from 'lib/helpers'
 import 'history'
 
-function ConversationsDropdownPartial ({ timezone, shortDateFormat, socket, forwardedRef }) {
+function ConversationsDropdownPartial ({ timezone, shortDateFormat, socket, ref }) {
   const [conversations, setConversations] = useState([])
 
   const onUpdateConversationsNotifications = useCallback((data) => {
@@ -47,7 +47,7 @@ function ConversationsDropdownPartial ({ timezone, shortDateFormat, socket, forw
 
   return (
     <PDropDown
-      ref={forwardedRef}
+      ref={ref}
       id='conversations'
       title='Conversations'
       titleHref='/messages'
@@ -120,7 +120,7 @@ ConversationsDropdownPartial.propTypes = {
   timezone: PropTypes.string.isRequired,
   shortDateFormat: PropTypes.string.isRequired,
   socket: PropTypes.object.isRequired,
-  forwardedRef: PropTypes.any.isRequired
+  ref: PropTypes.any.isRequired
 }
 
 export default ConversationsDropdownPartial

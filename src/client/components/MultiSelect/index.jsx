@@ -12,20 +12,21 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-import React, { useRef, useEffect, useCallback, useImperativeHandle, forwardRef } from 'react'
+import React, { useRef, useEffect, useCallback, useImperativeHandle } from 'react'
 import PropTypes from 'prop-types'
 import { each } from 'lodash'
 
 import $ from 'jquery'
 import helpers from 'lib/helpers'
 
-const MultiSelect = forwardRef(({
+const MultiSelect = ({
   id,
   items,
   initialSelected,
   onChange,
-  disabled
-}, ref) => {
+  disabled,
+  ref
+}) => {
   const selectRef = useRef(null)
   const prevItemsRef = useRef(items)
   const prevInitialSelectedRef = useRef(initialSelected)
@@ -123,7 +124,7 @@ const MultiSelect = forwardRef(({
         })}
     </select>
   )
-})
+}
 
 MultiSelect.displayName = 'MultiSelect'
 

@@ -54,7 +54,7 @@ function documentMouseEvent (event) {
   toggleAnimation(true, false)
 }
 
-const SearchResults = React.forwardRef(({ target, searchResults, error, unloadSearchResults }, ref) => {
+const SearchResults = ({ target, searchResults, error, unloadSearchResults, ref }) => {
   useEffect(() => {
     helpers.UI.setupDataTethers()
     $(document).on('mousedown', documentMouseEvent)
@@ -114,7 +114,7 @@ const SearchResults = React.forwardRef(({ target, searchResults, error, unloadSe
       </ul>
     </div>
   )
-})
+}
 
 SearchResults.displayName = 'SearchResults'
 
@@ -130,7 +130,7 @@ const mapStateToProps = state => ({
   error: state.searchState.error
 })
 
-const ConnectedSearchResults = connect(mapStateToProps, { unloadSearchResults }, null, { forwardRef: true })(SearchResults)
+const ConnectedSearchResults = connect(mapStateToProps, { unloadSearchResults })(SearchResults)
 
 // Attach toggleAnimation as a static method on the connected component for backward compatibility
 ConnectedSearchResults.toggleAnimation = toggleAnimation

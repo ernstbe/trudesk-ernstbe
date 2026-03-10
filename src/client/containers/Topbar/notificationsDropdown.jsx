@@ -23,7 +23,7 @@ import helpers from 'lib/helpers'
 import { NOTIFICATIONS_UPDATE, NOTIFICATIONS_MARK_READ, NOTIFICATIONS_CLEAR } from 'serverSocket/socketEventConsts'
 import 'history'
 
-function NotificationsDropdownPartial ({ socket, shortDateFormat, timezone, onViewAllNotificationsClick, forwardedRef }) {
+function NotificationsDropdownPartial ({ socket, shortDateFormat, timezone, onViewAllNotificationsClick, ref }) {
   const [notifications, setNotifications] = useState([])
 
   const onSocketUpdateNotifications = useCallback((data) => {
@@ -57,7 +57,7 @@ function NotificationsDropdownPartial ({ socket, shortDateFormat, timezone, onVi
 
   return (
     <PDropdown
-      ref={forwardedRef}
+      ref={ref}
       id='notifications'
       title='Notifications'
       topOffset={-4}
@@ -129,11 +129,11 @@ NotificationsDropdownPartial.propTypes = {
   timezone: PropTypes.string.isRequired,
   shortDateFormat: PropTypes.string.isRequired,
   onViewAllNotificationsClick: PropTypes.func.isRequired,
-  forwardedRef: PropTypes.any
+  ref: PropTypes.any
 }
 
 const mapStateToProps = state => ({
   socket: state.shared.socket
 })
 
-export default connect(mapStateToProps, {}, null, { forwardRef: true })(NotificationsDropdownPartial)
+export default connect(mapStateToProps, {})(NotificationsDropdownPartial)

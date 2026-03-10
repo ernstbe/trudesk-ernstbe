@@ -12,11 +12,11 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-import React, { useRef, useCallback, useImperativeHandle, forwardRef } from 'react'
+import React, { useRef, useCallback, useImperativeHandle } from 'react'
 import PropTypes from 'prop-types'
 import clsx from 'clsx'
 
-const PDropDown = forwardRef(({
+const PDropDown = ({
   id,
   title,
   titleHref,
@@ -33,8 +33,9 @@ const PDropDown = forwardRef(({
   minHeight = 0,
   minWidth,
   isListItems = true,
-  onShow = () => {}
-}, ref) => {
+  onShow = () => {},
+  ref
+}) => {
   const dropRef = useRef(null)
   const pTriggerRefStore = useRef(null)
 
@@ -178,7 +179,7 @@ const PDropDown = forwardRef(({
       )}
     </div>
   )
-})
+}
 
 PDropDown.displayName = 'PDropDown'
 
