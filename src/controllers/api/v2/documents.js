@@ -115,7 +115,7 @@ documentsApi.create = async function (req, res) {
     })
 
     busboy.on('finish', async function () {
-      if (error) return res.status(error.status).send(error.message)
+      if (error) return res.status(error.status || 500).send(error.message)
 
       if (!fields.name) {
         return apiUtil.sendApiError(res, 400, 'Name is required')

@@ -601,7 +601,7 @@ mainController.uploadFavicon = function (req, res) {
   busboy.on('finish', async function () {
     if (error) {
       winston.warn(error)
-      return res.status(error.status).send(error.message)
+      return res.status(error.status || 500).send(error.message)
     }
 
     if (_.isUndefined(object.filePath) || _.isUndefined(object.filename)) {
@@ -674,7 +674,7 @@ mainController.uploadLogo = function (req, res) {
   busboy.once('finish', async function () {
     if (error) {
       winston.warn(error)
-      return res.status(error.status).send(error.message)
+      return res.status(error.status || 500).send(error.message)
     }
 
     if (_.isUndefined(object.filePath) || _.isUndefined(object.filename)) {
@@ -748,7 +748,7 @@ mainController.uploadPageLogo = function (req, res) {
   busboy.once('finish', async function () {
     if (error) {
       winston.warn(error)
-      return res.status(error.status).send(error.message)
+      return res.status(error.status || 500).send(error.message)
     }
 
     if (_.isUndefined(object.filePath) || _.isUndefined(object.filename)) {

@@ -120,7 +120,7 @@ editor.assetsUpload = function (req, res) {
   })
 
   busboy.on('finish', function () {
-    if (error) return res.status(error.status).json({ success: false, error })
+    if (error) return res.status(error.status || 500).json({ success: false, error })
 
     if (_.isUndefined(object.filename) || _.isUndefined(object.filePath)) {
       return res.status(400).json({ success: false, error: { message: 'Invalid Form Data' } })

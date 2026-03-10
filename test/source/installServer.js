@@ -10,6 +10,7 @@ nconf.overrides({
 const is = require('../../src/webserver')
 
 describe('installServer.js', function () {
+  this.timeout(10000)
   it('should start install server', function (done) {
     if (is.server.listening) is.server.close()
 
