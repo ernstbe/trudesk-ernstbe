@@ -4,9 +4,9 @@ node_modules
 .vs
 *.log
 *.md
-.yarn/cache
-.yarn/install-state.gz
-.pnp.*
+.yarn
+.yarnrc.yml
+yarn.lock
 coverage
 .nyc_output
 .env

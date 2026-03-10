@@ -15,7 +15,7 @@
  * @private
  */
 
-const Cookie = require('cookie')
+const { serialize: cookieSerialize } = require('cookie')
 const createError = require('http-errors')
 const sign = require('cookie-signature').sign
 const Tokens = require('csrf')
@@ -259,7 +259,7 @@ function getSecretBag (req, sessionKey, cookie) {
  */
 
 function setCookie (res, name, val, options) {
-  const data = Cookie.serialize(name, val, options)
+  const data = cookieSerialize(name, val, options)
 
   const prev = res.getHeader('set-cookie') || []
   const header = Array.isArray(prev) ? prev.concat(data) : [prev, data]

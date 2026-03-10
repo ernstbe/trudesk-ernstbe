@@ -11,13 +11,11 @@ WORKDIR /usr/src/trudesk
 COPY . /usr/src/trudesk
 
 RUN apk add --no-cache --update bash make gcc g++ python3
-RUN yarn plugin import workspace-tools
-RUN yarn workspaces focus --all --production
+RUN npm install --legacy-peer-deps --omit=dev
 RUN cp -R node_modules prod_node_modules
-RUN yarn install
-RUN yarn build
+RUN npm install --legacy-peer-deps
+RUN npm run build
 RUN rm -rf node_modules && mv prod_node_modules node_modules
-RUN rm -rf .yarn/cache
 
 FROM node:22-alpine
 WORKDIR /usr/src/trudesk
