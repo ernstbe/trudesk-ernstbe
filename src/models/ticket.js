@@ -124,10 +124,8 @@ const ticketSchema = mongoose.Schema({
 
 ticketSchema.index({ deleted: -1, group: 1, status: 1 })
 
-const autoPopulate = function (next) {
+const autoPopulate = function () {
   this.populate('priority')
-
-  return next()
 }
 
 ticketSchema.pre('findOne', autoPopulate).pre('find', autoPopulate)
@@ -150,7 +148,7 @@ ticketSchema.pre('save', async function () {
   }
 })
 
-ticketSchema.post('save', async function (doc, next) {
+ticketSchema.post('save', async function (doc) {
   if (!this.wasNew) {
     const emitter = require('../emitter')
     try {
@@ -182,22 +180,13 @@ ticketSchema.post('save', async function (doc, next) {
     } catch (err) {
       winston.warn('WARNING: ' + err)
     }
-
-    return next()
-  } else {
-    return next()
   }
 })
 
-ticketSchema.virtual('statusFormatted').get(function (callback) {
-  const s = this.status
-  const ticketStatus = require('./ticketStatus')
-
-  ticketStatus.findOne({ uid: s }, function (err, status) {
-    if (err) return callback(err)
-    if (!status) return callback(new Error('Invalid Status Id: ' + s))
-    if (typeof callback === 'function') return callback(null, status.get('name'))
-  })
+ticketSchema.virtual('statusFormatted').get(function () {
+  // This virtual previously relied on callback-style queries which are not supported.
+  // It returns the status ObjectId. Use populate('status') to get the name.
+  return this.status
 })
 
 ticketSchema.virtual('commentsAndNotes').get(function () {
@@ -1314,19 +1303,19 @@ ticketSchema.statics.getCount = async function () {
 ticketSchema.statics.softDelete = async function (oId) {
   if (_.isUndefined(oId)) throw new Error('Invalid ObjectID - TicketSchema.SoftDelete()')
 
-  return this.model(COLLECTION).findOneAndUpdate({ _id: oId }, { deleted: true }, { new: true })
+  return this.model(COLLECTION).findOneAndUpdate({ _id: oId }, { deleted: true }, { returnDocument: 'after' })
 }
 
 ticketSchema.statics.softDeleteUid = async function (uid) {
   if (_.isUndefined(uid)) throw new Error('Invalid UID - TicketSchema.SoftDeleteUid()')
 
-  return this.model(COLLECTION).findOneAndUpdate({ uid }, { deleted: true }, { new: true })
+  return this.model(COLLECTION).findOneAndUpdate({ uid }, { deleted: true }, { returnDocument: 'after' })
 }
 
 ticketSchema.statics.restoreDeleted = async function (oId) {
   if (_.isUndefined(oId)) throw new Error('Invalid ObjectID - TicketSchema.RestoreDeleted()')
 
-  return this.model(COLLECTION).findOneAndUpdate({ _id: oId }, { deleted: false }, { new: true })
+  return this.model(COLLECTION).findOneAndUpdate({ _id: oId }, { deleted: false }, { returnDocument: 'after' })
 }
 
 ticketSchema.statics.getDeleted = async function () {

@@ -44,10 +44,8 @@ const groupSchema = mongoose.Schema({
 
 groupSchema.plugin(require('mongoose-autopopulate'))
 
-groupSchema.pre('save', function (next) {
+groupSchema.pre('save', function () {
   this.name = utils.sanitizeFieldPlainText(this.name.trim())
-
-  next()
 })
 
 groupSchema.methods.addMember = async function (memberId) {

@@ -39,10 +39,8 @@ teamSchema.pre('validate', function () {
   this.normalized = utils.sanitizeFieldPlainText(this.name.trim().toLowerCase())
 })
 
-teamSchema.pre('save', function (next) {
+teamSchema.pre('save', function () {
   this.name = utils.sanitizeFieldPlainText(this.name.trim())
-
-  return next()
 })
 
 teamSchema.methods.addMember = async function (memberId) {

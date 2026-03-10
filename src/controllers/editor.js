@@ -150,31 +150,34 @@ editor.assetsUpload = function (req, res) {
   req.pipe(busboy)
 }
 
-editor.load = function (req, res) {
-  templateSchema.get(req.params.id, function (err, template) {
-    if (err) return res.status(400).json({ success: false, error: err })
+editor.load = async function (req, res) {
+  try {
+    const template = await templateSchema.get(req.params.id)
 
     if (!template) { return res.status(400).json({ success: false, invalid: true, error: { message: 'Invalid Template.' } }) }
 
     template.data.id = 'gjs-'
 
     return res.json(template.data)
-  })
+  } catch (err) {
+    return res.status(400).json({ success: false, error: err })
+  }
 }
 
-editor.save = function (req, res) {
+editor.save = async function (req, res) {
   const name = req.body.template
   delete req.body.template
-  templateSchema.findOneAndUpdate(
-    { name },
-    { name, data: req.body },
-    { new: true, upsert: true },
-    function (err, template) {
-      if (err) return res.status(500).json({ success: false, error: err })
+  try {
+    const template = await templateSchema.findOneAndUpdate(
+      { name },
+      { name, data: req.body },
+      { returnDocument: 'after', upsert: true }
+    )
 
-      return res.json({ success: true, tempalte: template })
-    }
-  )
+    return res.json({ success: true, tempalte: template })
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err })
+  }
 }
 
 module.exports = editor

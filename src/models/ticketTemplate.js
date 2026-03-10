@@ -15,9 +15,8 @@ const ticketTemplateSchema = mongoose.Schema({
   updatedAt: { type: Date }
 })
 
-ticketTemplateSchema.pre('save', function (next) {
+ticketTemplateSchema.pre('save', function () {
   this.updatedAt = new Date()
-  return next()
 })
 
 ticketTemplateSchema.statics.getAll = async function () {

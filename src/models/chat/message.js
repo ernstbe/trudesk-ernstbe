@@ -36,10 +36,8 @@ const messageSchema = mongoose.Schema(
   { timestamps: true }
 )
 
-messageSchema.pre('save', function (next) {
+messageSchema.pre('save', function () {
   this.body = utils.sanitizeFieldPlainText(utils.applyExtremeTextLength(this.body))
-
-  next()
 })
 
 messageSchema.statics.getFullConversation = async function (convoId) {

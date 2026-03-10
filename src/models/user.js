@@ -87,9 +87,8 @@ const userSchema = mongoose.Schema({
 
 userSchema.set('toObject', { getters: true })
 
-const autoPopulateRole = function (next) {
+const autoPopulateRole = function () {
   this.populate('role', 'name description normalized _id')
-  next()
 }
 
 userSchema.pre('findOne', autoPopulateRole).pre('find', autoPopulateRole)

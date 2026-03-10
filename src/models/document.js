@@ -17,9 +17,8 @@ const documentSchema = mongoose.Schema({
   updatedAt: { type: Date }
 })
 
-documentSchema.pre('save', function (next) {
+documentSchema.pre('save', function () {
   this.updatedAt = new Date()
-  return next()
 })
 
 documentSchema.statics.getAll = async function () {
