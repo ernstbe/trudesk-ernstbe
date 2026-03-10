@@ -95,7 +95,7 @@ module.exports = {
       serverSocket: path.resolve(__dirname, 'src/socketio')
     },
 
-    extensions: ['.js', '.jsx', '.ts', 'tsx']
+    extensions: ['.js', '.jsx', '.ts', '.tsx']
   },
   externals: {
     // These are bunbled already
