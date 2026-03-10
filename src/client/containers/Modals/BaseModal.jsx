@@ -21,7 +21,7 @@ import UIKit from 'uikit'
 import { hideModal, clearModal } from 'actions/common'
 
 const BaseModal = ({ large, options, modalTag, hideModal, clearModal, parentExtraClass, extraClass, children }) => {
-  const [modal, setModal] = useState(null)
+  const [, setModal] = useState(null)
   const modalRef = useRef(null)
 
   const clearModalHandler = useCallback(() => {
@@ -37,11 +37,10 @@ const BaseModal = ({ large, options, modalTag, hideModal, clearModal, parentExtr
     return () => {
       $(modalRef.current).off('hide.uk.modal', clearModalHandler)
     }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
+  }, [])
   return (
     <div
-      id={'uk-modal'}
+      id='uk-modal'
       className={'uk-modal' + (parentExtraClass ? ' ' + parentExtraClass : '')}
       ref={modalRef}
       data-modal-tag={modalTag}

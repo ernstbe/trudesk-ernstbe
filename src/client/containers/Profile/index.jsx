@@ -24,7 +24,6 @@ import TruAccordion from 'components/TruAccordion'
 import SingleSelect from 'components/SingleSelect'
 
 import helpers from 'lib/helpers'
-import RGrid from 'components/RGrid'
 
 function ProfileContainer ({
   t,
@@ -66,7 +65,7 @@ function ProfileContainer ({
   useEffect(() => {
     // This will update the profile with the latest values
     setSessionUserAction()
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     if (sessionUser) {
@@ -133,16 +132,16 @@ function ProfileContainer ({
       _id: sessionUser._id,
       username: sessionUser.username,
 
-      fullname: fullname,
-      title: title,
-      workNumber: workNumber,
-      mobileNumber: mobileNumber,
-      companyName: companyName,
-      facebookUrl: facebookUrl,
-      linkedinUrl: linkedinUrl,
-      twitterUrl: twitterUrl,
+      fullname,
+      title,
+      workNumber,
+      mobileNumber,
+      companyName,
+      facebookUrl,
+      linkedinUrl,
+      twitterUrl,
       preferences: {
-        timezone: timezone
+        timezone
       }
     })
       .then(() => {
@@ -174,9 +173,9 @@ function ProfileContainer ({
 
     axios
       .post('/api/v2/accounts/profile/update-password', {
-        currentPassword: currentPassword,
-        newPassword: newPassword,
-        confirmPassword: confirmPassword
+        currentPassword,
+        newPassword,
+        confirmPassword
       })
       .then(res => {
         if (res.data && res.data.success) {
@@ -188,8 +187,7 @@ function ProfileContainer ({
       })
       .catch(error => {
         let errorMsg = t('profile.invalidRequest')
-        if (error && error.response && error.response.data && error.response.data.error)
-          errorMsg = error.response.data.error
+        if (error && error.response && error.response.data && error.response.data.error) { errorMsg = error.response.data.error }
 
         helpers.UI.showSnackbar(errorMsg, true)
       })
@@ -255,7 +253,7 @@ function ProfileContainer ({
 
   const InfoItem = ({ label, prop, paddingLeft, paddingRight, isRequired, onUpdate }) => {
     return (
-      <div style={{ width: '33%', paddingRight: paddingRight, paddingLeft: paddingLeft }}>
+      <div style={{ width: '33%', paddingRight, paddingLeft }}>
         <label style={{ cursor: 'default', fontSize: '13px', fontWeight: 400, marginRight: 15 }}>
           {label}
           {isRequired && <span style={{ color: 'red' }}>*</span>}
@@ -289,25 +287,25 @@ function ProfileContainer ({
           hover={false}
           content={
             <>
-              <div className={'uk-position-relative'}>
+              <div className='uk-position-relative'>
                 <Avatar
                   userId={sessionUser._id}
                   image={sessionUser.image}
-                  enableImageUpload={true}
+                  enableImageUpload
                   username={sessionUser.username}
                   socket={socket}
                   showOnlineBubble={false}
-                  showBorder={true}
+                  showBorder
                   size={72}
                 />
-                <div className={'uk-clearfix'} style={{ paddingLeft: 85 }}>
+                <div className='uk-clearfix' style={{ paddingLeft: 85 }}>
                   <h2
-                    className={'ml-15'}
+                    className='ml-15'
                     style={{ fontSize: 24, lineHeight: '36px', letterSpacing: '0.5px', fontWeight: 600 }}
                   >
                     {sessionUser.fullname}
                   </h2>
-                  <p className={'ml-15'} style={{ lineHeight: '9px' }}>
+                  <p className='ml-15' style={{ lineHeight: '9px' }}>
                     <span style={{ marginRight: 10 }}>{sessionUser.email}</span>|
                     <span style={{ margin: '0 10px' }}>{sessionUser.title}</span>|
                     <span
@@ -327,9 +325,9 @@ function ProfileContainer ({
                 </div>
                 <Button
                   text={t('profile.editProfile')}
-                  small={true}
-                  waves={true}
-                  style={'primary'}
+                  small
+                  waves
+                  style='primary'
                   styleOverride={{ position: 'absolute', top: '5px', right: 5 }}
                   disabled={editingProfile}
                   onClick={() => {
@@ -347,12 +345,12 @@ function ProfileContainer ({
           content={
             <div>
               <TruTabWrapper style={{ padding: '0' }}>
-                <TruTabSelectors showTrack={true}>
-                  <TruTabSelector selectorId={0} label={t('profile.title')} active={true} />
+                <TruTabSelectors showTrack>
+                  <TruTabSelector selectorId={0} label={t('profile.title')} active />
                   <TruTabSelector selectorId={1} label={t('profile.security')} />
                   <TruTabSelector selectorId={2} label={t('profile.preferences')} />
                 </TruTabSelectors>
-                <TruTabSection sectionId={0} active={true} style={{ minHeight: 480 }}>
+                <TruTabSection sectionId={0} active style={{ minHeight: 480 }}>
                   <div style={{ maxWidth: 900, padding: '10px 25px' }}>
                     <h4 style={{ marginBottom: 15 }}>{t('profile.workInformation')}</h4>
                     <div style={{ display: 'flex' }}>
@@ -361,7 +359,7 @@ function ProfileContainer ({
                         prop={sessionUser.fullname}
                         paddingLeft={0}
                         paddingRight={30}
-                        isRequired={true}
+                        isRequired
                         onUpdate={val => setFullname(val)}
                       />
                       <InfoItem
@@ -395,7 +393,7 @@ function ProfileContainer ({
                         onUpdate={val => setMobileNumber(val)}
                       />
                     </div>
-                    <Spacer top={25} bottom={25} showBorder={true} />
+                    <Spacer top={25} bottom={25} showBorder />
                     <h4 style={{ marginBottom: 15 }}>{t('profile.otherInformation')}</h4>
                     <div style={{ display: 'flex', marginTop: 25 }}>
                       <InfoItem
@@ -421,14 +419,14 @@ function ProfileContainer ({
                       />
                     </div>
                     {editingProfile && (
-                      <div className={'uk-display-flex uk-margin-large-top'}>
+                      <div className='uk-display-flex uk-margin-large-top'>
                         <Button
                           text={t('common.save')}
-                          style={'primary'}
-                          small={true}
+                          style='primary'
+                          small
                           onClick={e => onSaveProfileClicked(e)}
                         />
-                        <Button text={t('common.cancel')} small={true} onClick={() => setEditingProfile(false)} />
+                        <Button text={t('common.cancel')} small onClick={() => setEditingProfile(false)} />
                       </div>
                     )}
                   </div>
@@ -441,7 +439,7 @@ function ProfileContainer ({
                         <div>
                           <form onSubmit={e => onUpdatePasswordClicked(e)}>
                             <div
-                              className={'uk-alert uk-alert-warning'}
+                              className='uk-alert uk-alert-warning'
                               style={{ display: 'flex', alignItems: 'center' }}
                             >
                               <i className='material-icons mr-10' style={{ opacity: 0.5 }}>
@@ -452,26 +450,26 @@ function ProfileContainer ({
                               </p>
                             </div>
                             <div>
-                              <div className={'uk-margin-medium-bottom'}>
+                              <div className='uk-margin-medium-bottom'>
                                 <label>{t('profile.currentPassword')}</label>
-                                <Input type={'password'} onChange={v => setCurrentPassword(v)} />
+                                <Input type='password' onChange={v => setCurrentPassword(v)} />
                               </div>
-                              <div className={'uk-margin-medium-bottom'}>
+                              <div className='uk-margin-medium-bottom'>
                                 <label>{t('profile.newPassword')}</label>
-                                <Input type={'password'} onChange={v => setNewPassword(v)} />
+                                <Input type='password' onChange={v => setNewPassword(v)} />
                               </div>
-                              <div className={'uk-margin-medium-bottom'}>
+                              <div className='uk-margin-medium-bottom'>
                                 <label>{t('profile.confirmPassword')}</label>
-                                <Input type={'password'} onChange={v => setConfirmPassword(v)} />
+                                <Input type='password' onChange={v => setConfirmPassword(v)} />
                               </div>
                             </div>
                             <div>
                               <Button
-                                type={'submit'}
+                                type='submit'
                                 text={t('profile.updatePassword')}
-                                style={'primary'}
-                                small={true}
-                                extraClass={'uk-width-1-1'}
+                                style='primary'
+                                small
+                                extraClass='uk-width-1-1'
                                 onClick={e => onUpdatePasswordClicked(e)}
                               />
                             </div>
@@ -494,9 +492,9 @@ function ProfileContainer ({
                                   <div>
                                     <Button
                                       text={t('settings.enable')}
-                                      style={'primary'}
-                                      small={true}
-                                      waves={true}
+                                      style='primary'
+                                      small
+                                      waves
                                       onClick={e => onEnableMFAClicked(e)}
                                     />
                                   </div>
@@ -558,14 +556,14 @@ function ProfileContainer ({
                                         {t('profile.verifyCodeHint')}
                                       </p>
                                       <label>{t('profile.verificationCode')}</label>
-                                      <Input type={'text'} onChange={val => setL2VerifyText(val)} />
+                                      <Input type='text' onChange={val => setL2VerifyText(val)} />
                                       <div style={{ marginTop: 25 }}>
                                         <Button
                                           text={t('profile.verifyAndContinue')}
-                                          style={'primary'}
-                                          small={true}
-                                          waves={true}
-                                          extraClass={'uk-width-1-1'}
+                                          style='primary'
+                                          small
+                                          waves
+                                          extraClass='uk-width-1-1'
                                           onClick={e => onVerifyMFAClicked(e)}
                                         />
                                       </div>
@@ -578,9 +576,9 @@ function ProfileContainer ({
                           {sessionUser.hasL2Auth && (
                             <div>
                               <h4 style={{ fontWeight: 500 }}>
-                                <Trans i18nKey="profile.twoFactorEnabled">
+                                <Trans i18nKey='profile.twoFactorEnabled'>
                                   Two-factor authentication is{' '}
-                                  <span className={'uk-text-success'} style={{ fontWeight: 600 }}>
+                                  <span className='uk-text-success' style={{ fontWeight: 600 }}>
                                     enabled
                                   </span>
                                 </Trans>
@@ -590,9 +588,9 @@ function ProfileContainer ({
                               </p>
                               <div>
                                 <Button
-                                  text={'Disable'}
-                                  style={'danger'}
-                                  small={true}
+                                  text='Disable'
+                                  style='danger'
+                                  small
                                   onClick={e => onDisableMFAClicked(e)}
                                 />
                               </div>
@@ -606,7 +604,7 @@ function ProfileContainer ({
                 <TruTabSection sectionId={2} style={{ minHeight: 480 }}>
                   <div style={{ maxWidth: 450, padding: '10px 25px' }}>
                     <h4 style={{ marginBottom: 15 }}>{t('profile.uiPreferences')}</h4>
-                    <div className={'uk-clearfix uk-margin-large-bottom'}>
+                    <div className='uk-clearfix uk-margin-large-bottom'>
                       <label style={{ fontSize: '13px' }}>{t('profile.timezone')}</label>
                       <SingleSelect
                         items={_getTimezones()}
@@ -617,9 +615,9 @@ function ProfileContainer ({
                     <div>
                       <Button
                         text={t('profile.savePreferences')}
-                        style={'primary'}
-                        small={true}
-                        type={'button'}
+                        style='primary'
+                        small
+                        type='button'
                         onClick={e => onSaveProfileClicked(e)}
                       />
                     </div>

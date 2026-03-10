@@ -124,8 +124,8 @@ function EditAccountModal ({ edit = false, ...restProps }) {
     const data = {
       username: user.username,
       fullname: name,
-      title: title,
-      email: email,
+      title,
+      email,
       groups: !isAgentRole && groupSelectRef.current ? groupSelectRef.current.getSelected() : undefined,
       teams: isAgentRole && teamsSelectRef.current ? teamsSelectRef.current.getSelected() : undefined,
       role: selectedRoleRef.current,
@@ -145,26 +145,26 @@ function EditAccountModal ({ edit = false, ...restProps }) {
 
   const teams = props.teams
     ? props.teams
-        .map(team => {
-          return { text: team.get('name'), value: team.get('_id') }
-        })
-        .toArray()
+      .map(team => {
+        return { text: team.get('name'), value: team.get('_id') }
+      })
+      .toArray()
     : []
 
   const departments = props.departments
     ? props.departments
-        .map(department => {
-          return { text: department.get('name'), value: department.get('_id') }
-        })
-        .toArray()
+      .map(department => {
+        return { text: department.get('name'), value: department.get('_id') }
+      })
+      .toArray()
     : []
 
   const groups = props.groups
     ? props.groups
-        .map(group => {
-          return { text: group.get('name'), value: group.get('_id') }
-        })
-        .toArray()
+      .map(group => {
+        return { text: group.get('name'), value: group.get('_id') }
+      })
+      .toArray()
     : []
 
   if (!user.teams) user.teams = []
@@ -172,15 +172,15 @@ function EditAccountModal ({ edit = false, ...restProps }) {
   if (!user.groups) user.groups = []
 
   return (
-    <BaseModal parentExtraClass={'pt-0'} extraClass={'p-0 pb-25'} options={{ bgclose: false }}>
+    <BaseModal parentExtraClass='pt-0' extraClass='p-0 pb-25' options={{ bgclose: false }}>
       <div className='user-heading' style={{ minHeight: '130px', background: '#1976d2', padding: '24px' }}>
         <div className='uk-width-1-1'>
           <div style={{ width: '82px', height: '82px', float: 'left', marginRight: '24px', position: 'relative' }}>
             {edit && (
-              <form className={'form nomargin'} encType={'multipart/form-data'}>
+              <form className='form nomargin' encType='multipart/form-data'>
                 <div className='mediumProfilePic' style={{ position: 'relative' }}>
-                  <input name={'_id'} type='hidden' value={user._id} readOnly={true} />
-                  <input name={'username'} type='hidden' value={user.username} readOnly={true} />
+                  <input name='_id' type='hidden' value={user._id} readOnly />
+                  <input name='username' type='hidden' value={user.username} readOnly />
                   <input
                     type='file'
                     style={{ display: 'none' }}
@@ -212,7 +212,7 @@ function EditAccountModal ({ edit = false, ...restProps }) {
           </div>
           <div className='user-heading-content'>
             <h2>
-              <span className={'uk-text-truncate'}>{user.username}</span>
+              <span className='uk-text-truncate'>{user.username}</span>
               <span className='sub-heading'>{user.title}</span>
             </h2>
           </div>
@@ -222,20 +222,20 @@ function EditAccountModal ({ edit = false, ...restProps }) {
         <form className='uk-form-stacked' onSubmit={e => onSubmitSaveAccount(e)}>
           <div className='uk-margin-medium-bottom uk-clearfix'>
             <div className='uk-float-left' style={{ width: '50%', paddingRight: '20px' }}>
-              <label className={'uk-form-label'}>{t('modals.createAccount.name')}</label>
+              <label className='uk-form-label'>{t('modals.createAccount.name')}</label>
               <input
                 type='text'
-                className={'md-input'}
+                className='md-input'
                 value={name}
                 onChange={e => onInputChanged(e, 'name')}
                 disabled={!edit}
               />
             </div>
             <div className='uk-float-left uk-width-1-2'>
-              <label className={'uk-form-label'}>{t('modals.createAccount.title_field')}</label>
+              <label className='uk-form-label'>{t('modals.createAccount.title_field')}</label>
               <input
                 type='text'
-                className={'md-input'}
+                className='md-input'
                 value={title}
                 onChange={e => onInputChanged(e, 'title')}
                 disabled={!edit}
@@ -246,19 +246,19 @@ function EditAccountModal ({ edit = false, ...restProps }) {
             <div>
               <div className='uk-margin-medium-bottom uk-clearfix'>
                 <div className='uk-float-left' style={{ width: '50%', paddingRight: '20px' }}>
-                  <label className={'uk-form-label'}>{t('modals.createAccount.password')}</label>
+                  <label className='uk-form-label'>{t('modals.createAccount.password')}</label>
                   <input
                     type='password'
-                    className={'md-input'}
+                    className='md-input'
                     value={password}
                     onChange={e => onInputChanged(e, 'password')}
                   />
                 </div>
                 <div className='uk-float-left uk-width-1-2'>
-                  <label className={'uk-form-label'}>{t('modals.createAccount.confirmPassword')}</label>
+                  <label className='uk-form-label'>{t('modals.createAccount.confirmPassword')}</label>
                   <input
                     type='password'
-                    className={'md-input'}
+                    className='md-input'
                     value={confirmPassword}
                     onChange={e => onInputChanged(e, 'confirmPassword')}
                   />
@@ -270,7 +270,7 @@ function EditAccountModal ({ edit = false, ...restProps }) {
             <label className='uk-form-label'>{t('modals.createAccount.email')}</label>
             <input
               type='email'
-              className={'md-input'}
+              className='md-input'
               value={email}
               onChange={e => onInputChanged(e, 'email')}
               disabled={!edit}
@@ -278,10 +278,10 @@ function EditAccountModal ({ edit = false, ...restProps }) {
           </div>
           {edit && (
             <div className='uk-margin-medium-bottom'>
-              <label className={'uk-form-label'}>{t('modals.createAccount.role')}</label>
+              <label className='uk-form-label'>{t('modals.createAccount.role')}</label>
               <SingleSelect
                 items={roles}
-                width={'100'}
+                width='100'
                 showTextbox={false}
                 defaultValue={user.role._id}
                 onSelectChange={e => onRoleSelectChange(e)}
@@ -320,19 +320,19 @@ function EditAccountModal ({ edit = false, ...restProps }) {
                   items={departments}
                   initialSelected={user.departments.map(i => i._id)}
                   onChange={() => {}}
-                  disabled={true}
+                  disabled
                 />
               </div>
             </div>
           )}
           <div className='uk-modal-footer uk-text-right'>
-            <Button text={t('common.close')} flat={true} waves={true} extraClass={'uk-modal-close'} />
+            <Button text={t('common.close')} flat waves extraClass='uk-modal-close' />
             <Button
               text={t('modals.editAccount.saveAccount')}
-              flat={true}
-              waves={true}
-              style={'primary'}
-              type={'submit'}
+              flat
+              waves
+              style='primary'
+              type='submit'
               disabled={!edit}
             />
           </div>

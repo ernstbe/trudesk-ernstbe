@@ -30,6 +30,7 @@ function AssigneeDropdownPartial ({ ticketId, onClearClick, onAssigneeClick, soc
   }, [])
 
   useEffect(() => {
+    if (!socket) return
     socket.on(TICKETS_ASSIGNEE_LOAD, onUpdateAssigneeList)
     return () => {
       socket.off(TICKETS_ASSIGNEE_LOAD, onUpdateAssigneeList)
@@ -39,21 +40,21 @@ function AssigneeDropdownPartial ({ ticketId, onClearClick, onAssigneeClick, soc
   return (
     <PDropDown
       ref={forwardedRef}
-      title={'Select Assignee'}
-      id={'assigneeDropdown'}
-      className={'opt-ignore-notice'}
-      override={true}
-      leftArrow={true}
+      title='Select Assignee'
+      id='assigneeDropdown'
+      className='opt-ignore-notice'
+      override
+      leftArrow
       topOffset={75}
       leftOffset={35}
       minHeight={215}
       rightComponent={
         <a
-          className={'hoverUnderline no-ajaxy'}
+          className='hoverUnderline no-ajaxy'
           onClick={() => {
             helpers.hideAllpDropDowns()
             if (onClearClick) onClearClick()
-            socket.emit(TICKETS_ASSIGNEE_CLEAR, ticketId)
+            if (socket) socket.emit(TICKETS_ASSIGNEE_CLEAR, ticketId)
           }}
         >
           Clear Assignee
@@ -67,7 +68,7 @@ function AssigneeDropdownPartial ({ ticketId, onClearClick, onAssigneeClick, soc
             onClick={() => {
               if (onAssigneeClick) onAssigneeClick({ agent })
               helpers.hideAllpDropDowns()
-              socket.emit(TICKETS_ASSIGNEE_SET, { _id: agent._id, ticketId: ticketId })
+              if (socket) socket.emit(TICKETS_ASSIGNEE_SET, { _id: agent._id, ticketId })
             }}
           >
             <a className='messageNotification no-ajaxy' role='button'>

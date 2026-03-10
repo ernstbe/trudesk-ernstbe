@@ -78,19 +78,19 @@ const SearchResults = React.forwardRef(({ target, searchResults, error, unloadSe
 
   return (
     <div
-      className={'search-results-container animate-in'}
+      className='search-results-container animate-in'
       data-tether={`{target: '${target}', pos: 'top right', targetAttachment: 'bottom right', offset: '0 8px'}`}
     >
-      {error && <h4 className={'uk-width-1-1 uk-text-center text-light mt-15 text-danger'}>{error.error}</h4>}
+      {error && <h4 className='uk-width-1-1 uk-text-center text-light mt-15 text-danger'>{error.error}</h4>}
       {!searchResults ||
-        (searchResults.size < 1 && <h4 className={'uk-width-1-1 uk-text-center text-light mt-15'}>No Results</h4>)}
-      <ul className={'search-results-list'}>
+        (searchResults.size < 1 && <h4 className='uk-width-1-1 uk-text-center text-light mt-15'>No Results</h4>)}
+      <ul className='search-results-list'>
         {searchResults &&
           searchResults.map(item => {
             const doc = item.get('_source')
 
             return (
-              <li key={item.get('_id')} className={`search-results-item`} style={{ position: 'relative' }}>
+              <li key={item.get('_id')} className='search-results-item' style={{ position: 'relative' }}>
                 <span
                   style={{
                     display: 'block',
@@ -101,7 +101,7 @@ const SearchResults = React.forwardRef(({ target, searchResults, error, unloadSe
                     top: 0,
                     left: 0
                   }}
-                ></span>
+                />
                 <a href={`/tickets/${doc.get('uid')}`} onClick={onSearchItemClick}>
                   <span className='priority' style={{ background: `${doc.getIn(['priority', 'htmlColor'])}` }} />
                   <span className='uid'>{doc.get('uid')}</span>

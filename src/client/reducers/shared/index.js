@@ -34,17 +34,18 @@ const initialState = {
   loadingViewData: true,
   viewdata: Map({}),
 
-  socket: {},
+  socket: null,
   socketInitialized: false
 }
 
 const sharedReducer = handleActions(
   {
     [INIT_SOCKET.SUCCESS]: (state, action) => {
-      if (state.socketInitialized)
+      if (state.socketInitialized) {
         return {
           ...state
         }
+      }
 
       return {
         ...state,

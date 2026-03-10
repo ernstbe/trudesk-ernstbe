@@ -312,9 +312,10 @@ define('pages/messages', [
             if (message.owner._id.toString() === $loggedInAccountId.toString()) {
               partner = data.toUser
             }
-            const newLI = buildConversationListItem({
+            // eslint-disable-next-line no-unused-vars
+            const _newLI = buildConversationListItem({
               _id: message.conversation,
-              partner: partner,
+              partner,
               updatedAt: new Date(),
               recentMessage: message.owner.fullname + ': ' + message.body
             })

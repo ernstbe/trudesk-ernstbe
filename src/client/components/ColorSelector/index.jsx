@@ -113,7 +113,7 @@ const ColorSelector = ({
           {showLabel && <label>Color</label>}
           {validationEnabled && (
             <input
-              name={inputName ? inputName : ''}
+              name={inputName || ''}
               type='text'
               className='md-input'
               value={selectedColor}
@@ -125,7 +125,7 @@ const ColorSelector = ({
           )}
           {!validationEnabled && (
             <input
-              name={inputName ? inputName : ''}
+              name={inputName || ''}
               type='text'
               className='md-input'
               value={selectedColor}
@@ -137,8 +137,8 @@ const ColorSelector = ({
       </div>
       {!hideRevert && (
         <button
-          type={'button'}
-          className={'md-btn md-btn-small md-btn-flat ml-10 mt-10'}
+          type='button'
+          className='md-btn md-btn-small md-btn-flat ml-10 mt-10'
           onClick={revertColor}
         >
           Revert

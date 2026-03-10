@@ -115,9 +115,9 @@ const ServerSettingsController = ({ active, updateSetting, updateMultipleSetting
           <Button
             text={t('settings.restart')}
             flat={false}
-            waves={true}
-            style={'danger'}
-            extraClass={'right mt-8 mr-5'}
+            waves
+            style='danger'
+            extraClass='right mt-8 mr-5'
             onClick={restartServer}
             disabled={restarting}
           />
@@ -128,7 +128,7 @@ const ServerSettingsController = ({ active, updateSetting, updateMultipleSetting
         subtitle={t('settings.maintenanceModeHint')}
         component={
           <EnableSwitch
-            stateName={'maintenanceMode'}
+            stateName='maintenanceMode'
             label={t('settings.enable')}
             checked={maintenanceModeEnabled}
             onChange={e => onMaintenanceModeChange(e)}

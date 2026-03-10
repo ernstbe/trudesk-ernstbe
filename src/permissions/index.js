@@ -148,9 +148,9 @@ function hasPermOverRole (ownRole, extRole) {
 async function isAdmin (roleId, callback) {
   try {
     const role = await roleSchema.get(roleId)
-    return callback(role.isAdmin)
+    return callback(null, role.isAdmin)
   } catch (err) {
-    return callback(false)
+    return callback(err)
   }
 }
 

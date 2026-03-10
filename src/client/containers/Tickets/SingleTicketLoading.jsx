@@ -12,22 +12,12 @@
  */
 
 import React, { Fragment } from 'react'
-import PropTypes from 'prop-types'
-import helpers from 'lib/helpers'
-import socket from 'lib/socket'
 import Avatar from 'components/Avatar/Avatar'
-import IssuePartial from 'containers/Tickets/IssuePartial'
-import TruTabWrapper from 'components/TruTabs/TruTabWrapper'
-import TruTabSelectors from 'components/TruTabs/TruTabSelectors'
-import TruTabSelector from 'components/TruTabs/TruTabSelector'
-import TruTabSection from 'components/TruTabs/TruTabSection'
-import CommentNotePartial from 'containers/Tickets/CommentNotePartial'
-import EasyMDE from 'components/EasyMDE'
 
 function SingleTicketLoading () {
   return (
-    <Fragment>
-      <div className={'page-content'}>
+    <>
+      <div className='page-content'>
         <div
           className='uk-float-left page-title page-title-small noshadow nopadding relative'
           style={{ width: 360, maxWidth: 360, minWidth: 360 }}
@@ -43,15 +33,15 @@ function SingleTicketLoading () {
                 <div className='ticket-assignee uk-clearfix'>
                   <Avatar image={undefined} showOnlineBubble={false} />
                   <div className='ticket-assignee-details'>
-                    <Fragment>
+                    <>
                       <h3>
-                        <div className={'loadingTextAnimation'} />
+                        <div className='loadingTextAnimation' />
                       </h3>
-                      <div className={'mb-5 loadingTextAnimation'} style={{ width: '65%' }} />
-                      <span className={'uk-display-block'}>
-                        <div className={'loadingTextAnimation'} />
+                      <div className='mb-5 loadingTextAnimation' style={{ width: '65%' }} />
+                      <span className='uk-display-block'>
+                        <div className='loadingTextAnimation' />
                       </span>
-                    </Fragment>
+                    </>
                   </div>
                 </div>
               </div>
@@ -63,7 +53,7 @@ function SingleTicketLoading () {
                     <div className='marginright5'>
                       <span>Type</span>
                       <div className='input-box' style={{ paddingTop: 8 }}>
-                        <div className={'loadingTextAnimation'} />
+                        <div className='loadingTextAnimation' />
                       </div>
                     </div>
                   </div>
@@ -108,7 +98,7 @@ function SingleTicketLoading () {
             className='onoffswitch subscribeSwitch uk-float-right'
             style={{ marginRight: 10, position: 'relative', top: 18 }}
           >
-            <input id={'subscribeSwitch'} type='checkbox' name='subscribeSwitch' className='onoffswitch-checkbox' />
+            <input id='subscribeSwitch' type='checkbox' name='subscribeSwitch' className='onoffswitch-checkbox' />
             <label className='onoffswitch-label' htmlFor='subscribeSwitch'>
               <span className='onoffswitch-inner subscribeSwitch-inner' />
               <span className='onoffswitch-switch subscribeSwitch-switch' />
@@ -126,21 +116,21 @@ function SingleTicketLoading () {
         </div>
         <div className='page-content-right full-height scrollable'>
           <div className='comments-wrapper'>
-            {/*<IssuePartial*/}
-            {/*  ticketId={this.ticket._id}*/}
-            {/*  status={this.ticket.status}*/}
-            {/*  owner={this.ticket.owner}*/}
-            {/*  subject={this.ticket.subject}*/}
-            {/*  issue={this.ticket.issue}*/}
-            {/*  date={this.ticket.date}*/}
-            {/*  dateFormat={`${this.props.common.longDateFormat}, ${this.props.common.timeFormat}`}*/}
-            {/*  attachments={this.ticket.attachments}*/}
-            {/*  editorWindow={this.editorWindow}*/}
-            {/*/>*/}
+            {/* <IssuePartial */}
+            {/*  ticketId={this.ticket._id} */}
+            {/*  status={this.ticket.status} */}
+            {/*  owner={this.ticket.owner} */}
+            {/*  subject={this.ticket.subject} */}
+            {/*  issue={this.ticket.issue} */}
+            {/*  date={this.ticket.date} */}
+            {/*  dateFormat={`${this.props.common.longDateFormat}, ${this.props.common.timeFormat}`} */}
+            {/*  attachments={this.ticket.attachments} */}
+            {/*  editorWindow={this.editorWindow} */}
+            {/* /> */}
           </div>
         </div>
       </div>
-    </Fragment>
+    </>
   )
 }
 

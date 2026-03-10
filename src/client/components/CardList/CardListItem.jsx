@@ -17,7 +17,7 @@ import PropTypes from 'prop-types'
 
 const CardListItem = ({ children }) => {
   return (
-    <li className={'uk-clearfix'} style={{ minHeight: 34 }}>
+    <li className='uk-clearfix' style={{ minHeight: 34 }}>
       {children}
     </li>
   )

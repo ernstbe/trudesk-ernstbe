@@ -30,8 +30,7 @@ const CreateTagModal = ({ createTag, page, currentPage, t }) => {
 
   const onSubmit = useCallback((e) => {
     e.preventDefault()
-    if (page === 'settings')
-      return createTag({ name, currentPage })
+    if (page === 'settings') { return createTag({ name, currentPage }) }
 
     createTag({ name })
   }, [name, page, currentPage, createTag])
@@ -40,14 +39,14 @@ const CreateTagModal = ({ createTag, page, currentPage, t }) => {
     <BaseModal>
       <form className='uk-form-stacked' onSubmit={e => onSubmit(e)}>
         <div>
-          <h2 className={'nomargin mb-5'}>{t('modals.createTag.title')}</h2>
+          <h2 className='nomargin mb-5'>{t('modals.createTag.title')}</h2>
           <p className='uk-text-muted'>{t('modals.createTag.hint')}</p>
 
           <label>{t('modals.createTag.tagName')}</label>
           <input
             type='text'
-            className={'md-input'}
-            name={'name'}
+            className='md-input'
+            name='name'
             data-validation='length'
             data-validation-length='min2'
             data-validation-error-msg={t('modals.createTag.validName')}
@@ -56,8 +55,8 @@ const CreateTagModal = ({ createTag, page, currentPage, t }) => {
           />
         </div>
         <div className='uk-modal-footer uk-text-right'>
-          <Button text={t('common.close')} extraClass={'uk-modal-close'} flat={true} waves={true} />
-          <Button text={t('common.create')} type={'submit'} flat={true} waves={true} style={'success'} />
+          <Button text={t('common.close')} extraClass='uk-modal-close' flat waves />
+          <Button text={t('common.create')} type='submit' flat waves style='success' />
         </div>
       </form>
     </BaseModal>

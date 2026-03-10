@@ -15,7 +15,6 @@
 const _ = require('lodash')
 const winston = require('../../../logger')
 const permissions = require('../../../permissions')
-const emitter = require('../../../emitter')
 const UserSchema = require('../../../models/user')
 const groupSchema = require('../../../models/group')
 const notificationSchema = require('../../../models/notification')
@@ -54,28 +53,28 @@ apiUsers.getWithLimit = async function (req, res) {
     const search = req.query.search
 
     const obj = {
-      limit: limit,
-      page: page,
-      search: search
+      limit,
+      page,
+      search
     }
 
     const users = await UserSchema.getUserWithObject(obj)
     const grps = await groupSchema.getAllGroups()
 
+    // Build user→groups lookup map to avoid O(users×groups) filtering
+    const userGroupMap = new Map()
+    for (const g of grps) {
+      for (const m of g.members) {
+        const memberId = m._id.toString()
+        if (!userGroupMap.has(memberId)) userGroupMap.set(memberId, [])
+        userGroupMap.get(memberId).push({ name: g.name, _id: g._id })
+      }
+    }
+
     const result = []
     for (const u of users) {
       const user = u.toObject()
-
-      const groups = _.filter(grps, function (g) {
-        return _.some(g.members, function (m) {
-          return m._id.toString() === user._id.toString()
-        })
-      })
-
-      user.groups = _.map(groups, function (group) {
-        return { name: group.name, _id: group._id }
-      })
-
+      user.groups = userGroupMap.get(user._id.toString()) || []
       result.push(stripUserFields(user))
     }
 
@@ -140,16 +139,14 @@ apiUsers.create = async function (req, res) {
     return res.status(400).json({ success: false, error: 'Invalid Group Array' })
   }
 
-  if (postData.aPass !== postData.aPassConfirm)
-    return res.status(400).json({ success: false, error: 'Invalid Password Match' })
+  if (postData.aPass !== postData.aPassConfirm) { return res.status(400).json({ success: false, error: 'Invalid Password Match' }) }
 
   try {
     const content = await SettingUtil.getSettings()
     const settings = content.data.settings
     if (settings.accountsPasswordComplexity.value) {
       const passwordComplexity = require('../../../settings/passwordComplexity')
-      if (!passwordComplexity.validate(postData.aPass))
-        throw new Error('Password does not meet minimum requirements.')
+      if (!passwordComplexity.validate(postData.aPass)) { throw new Error('Password does not meet minimum requirements.') }
     }
 
     const chance = new Chance()
@@ -245,8 +242,7 @@ apiUsers.createPublicAccount = async function (req, res) {
     const passwordComplexitySetting = await SettingSchema.getSetting('accountsPasswordComplexity:enable')
     if (!passwordComplexitySetting || passwordComplexitySetting.value === true) {
       const passwordComplexity = require('../../../settings/passwordComplexity')
-      if (!passwordComplexity.validate(postData.user.password))
-        throw new Error('Password does not minimum requirements.')
+      if (!passwordComplexity.validate(postData.user.password)) { throw new Error('Password does not minimum requirements.') }
     }
 
     const LocalUserSchema = require('../../../models/user')
@@ -286,8 +282,7 @@ apiUsers.createPublicAccount = async function (req, res) {
 apiUsers.profileUpdate = async function (req, res) {
   if (!req.user) return res.status(400).json({ success: false, error: 'Invalid Post Data' })
   const username = req.user.username
-  if (_.isNull(username) || _.isUndefined(username))
-    return res.status(400).json({ success: false, error: 'Invalid Post Data' })
+  if (_.isNull(username) || _.isUndefined(username)) { return res.status(400).json({ success: false, error: 'Invalid Post Data' }) }
 
   const data = req.body
   let passwordUpdated = false
@@ -385,8 +380,7 @@ apiUsers.profileUpdate = async function (req, res) {
  */
 apiUsers.update = async function (req, res) {
   const username = req.params.username
-  if (_.isNull(username) || _.isUndefined(username))
-    return res.status(400).json({ success: false, error: 'Invalid Post Data' })
+  if (_.isNull(username) || _.isUndefined(username)) { return res.status(400).json({ success: false, error: 'Invalid Post Data' }) }
 
   const data = req.body
   // saveGroups - Profile saving where groups are not sent
@@ -601,7 +595,7 @@ apiUsers.deleteUser = async function (req, res) {
       disabled = false
     }
 
-    return res.json({ success: true, disabled: disabled })
+    return res.json({ success: true, disabled })
   } catch (err) {
     return res.status(400).json({ success: false, error: err.message })
   }
@@ -636,8 +630,7 @@ apiUsers.enableUser = async function (req, res) {
 
     if (_.isUndefined(user) || _.isNull(user)) return res.status(400).json({ error: 'Invalid Request' })
 
-    if (!permissions.canThis(req.user.role, 'accounts:delete'))
-      return res.status(401).json({ error: 'Invalid Permissions' })
+    if (!permissions.canThis(req.user.role, 'accounts:delete')) { return res.status(401).json({ error: 'Invalid Permissions' }) }
 
     user.deleted = false
 
@@ -734,7 +727,7 @@ apiUsers.notificationCount = async function (req, res) {
 apiUsers.getNotifications = async function (req, res) {
   try {
     const notifications = await notificationSchema.findAllForUser(req.user._id)
-    return res.json({ success: true, notifications: notifications })
+    return res.json({ success: true, notifications })
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message })
   }
@@ -762,15 +755,14 @@ apiUsers.getNotifications = async function (req, res) {
 apiUsers.generateApiKey = async function (req, res) {
   const id = req.params.id
   if (_.isUndefined(id) || _.isNull(id)) return res.status(400).json({ error: 'Invalid Request' })
-  if (!req.user.role.isAdmin && req.user._id.toString() !== id)
-    return res.status(401).json({ success: false, error: 'Unauthorized' })
+  if (!req.user.role.isAdmin && req.user._id.toString() !== id) { return res.status(401).json({ success: false, error: 'Unauthorized' }) }
 
   try {
     const user = await UserSchema.getUser(id)
     if (!user) return res.status(400).json({ success: false, error: 'Invalid Request' })
 
     const token = await user.addAccessToken()
-    res.json({ token: token })
+    res.json({ token })
   } catch (err) {
     return res.status(400).json({ error: 'Invalid Request' })
   }
@@ -839,7 +831,7 @@ apiUsers.generateL2Auth = async function (req, res) {
     const user = await UserSchema.getUser(id)
     const generatedKey = await user.generateL2Auth()
     req.session.l2auth = 'totp'
-    return res.json({ success: true, generatedKey: generatedKey })
+    return res.json({ success: true, generatedKey })
   } catch (err) {
     return res.status(400).json({ success: false, error: 'Invalid Request' })
   }
@@ -967,8 +959,7 @@ apiUsers.getGroups = async function (req, res) {
 
       return res.json({ success: true, groups: mappedGroups })
     } else {
-      if (req.user.username !== req.params.username)
-        return res.status(400).json({ success: false, error: 'Invalid API Call' })
+      if (req.user.username !== req.params.username) { return res.status(400).json({ success: false, error: 'Invalid API Call' }) }
 
       const groups = await groupSchema.getAllGroupsOfUserNoPopulate(req.user._id)
 

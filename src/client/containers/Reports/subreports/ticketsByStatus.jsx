@@ -20,7 +20,7 @@ const ReportTicketsByStatus = () => {
   const statuses = useSelector((state) => state.ticketsState.ticketStatuses)
   const dispatch = useDispatch()
 
-  const mappedStatuses = statuses.map(s => ({text: s.get('name'), value: s.get('uid')}))
+  const mappedStatuses = statuses.map(s => ({ text: s.get('name'), value: s.get('uid') }))
 
   const [groups, setGroups] = useState([])
 
@@ -91,7 +91,7 @@ const ReportTicketsByStatus = () => {
             <h4 style={{ width: '100%', textAlign: 'left', fontSize: '14px', margin: 0 }}>Tickets by Status</h4>
           </div>
         }
-        extraContentClass={'nopadding'}
+        extraContentClass='nopadding'
         content={
           <div>
             <SpinLoader active={isLoading} />
@@ -99,15 +99,15 @@ const ReportTicketsByStatus = () => {
               Please select the start and end dates and which groups to include in the report.
             </p>
             <hr className='uk-margin-large-bottom' style={{ marginTop: 0 }} />
-            <div className={'padding-15'}>
+            <div className='padding-15'>
               <form onSubmit={e => onFormSubmit(e)}>
                 <Grid>
-                  <GridItem width={'1-2'}>
-                    <label htmlFor='filterDate_Start' className={'uk-form-label nopadding nomargin'}>
+                  <GridItem width='1-2'>
+                    <label htmlFor='filterDate_Start' className='uk-form-label nopadding nomargin'>
                       Start Date
                     </label>
                     <DatePicker
-                      name={'filterDate_start'}
+                      name='filterDate_start'
                       format={helpers.getShortDateFormat()}
                       onChange={e => {
                         setStartDate(e.target.value)
@@ -115,12 +115,12 @@ const ReportTicketsByStatus = () => {
                       value={startDate}
                     />
                   </GridItem>
-                  <GridItem width={'1-2'}>
-                    <label htmlFor='filterDate_End' className={'uk-form-label nopadding nomargin'}>
+                  <GridItem width='1-2'>
+                    <label htmlFor='filterDate_End' className='uk-form-label nopadding nomargin'>
                       End Date
                     </label>
                     <DatePicker
-                      name={'filterDate_End'}
+                      name='filterDate_End'
                       format={helpers.getShortDateFormat()}
                       onChange={e => {
                         setEndDate(e.target.value)
@@ -128,13 +128,13 @@ const ReportTicketsByStatus = () => {
                       value={endDate}
                     />
                   </GridItem>
-                  <GridItem width={'1-1'}>
+                  <GridItem width='1-1'>
                     <div className='uk-margin-medium-top uk-margin-medium-bottom'>
-                      <label htmlFor='groups' className={'uk-form-label'}>
+                      <label htmlFor='groups' className='uk-form-label'>
                         Groups
                       </label>
                       <SingleSelect
-                        multiple={true}
+                        multiple
                         items={groups}
                         value={selectedGroups}
                         onSelectChange={(e, value) => {
@@ -143,12 +143,12 @@ const ReportTicketsByStatus = () => {
                       />
                     </div>
                   </GridItem>
-                  <GridItem width={'1-1'}>
+                  <GridItem width='1-1'>
                     <div className='uk-margin-medium-top uk-margin-medium-bottom'>
                       <label htmlFor='status'>Status</label>
                       <SingleSelect
-                        id={'status'}
-                        multiple={true}
+                        id='status'
+                        multiple
                         items={mappedStatuses}
                         value={selectedStatuses}
                         onSelectChange={(e, value) => {
@@ -157,15 +157,15 @@ const ReportTicketsByStatus = () => {
                       />
                     </div>
                   </GridItem>
-                  <GridItem width={'1-1'}>
+                  <GridItem width='1-1'>
                     <div>
                       <Button
                         disabled={isLoading}
-                        text={'Generate'}
-                        type={'submit'}
-                        style={'primary'}
-                        waves={true}
-                        small={true}
+                        text='Generate'
+                        type='submit'
+                        style='primary'
+                        waves
+                        small
                       />
                     </div>
                   </GridItem>

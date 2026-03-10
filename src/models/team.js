@@ -12,16 +12,16 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-var _ = require('lodash')
-var mongoose = require('mongoose')
-var utils = require('../helpers/utils')
+const _ = require('lodash')
+const mongoose = require('mongoose')
+const utils = require('../helpers/utils')
 
 // Refs
 require('./user')
 
-var COLLECTION = 'teams'
+const COLLECTION = 'teams'
 
-var teamSchema = mongoose.Schema({
+const teamSchema = mongoose.Schema({
   name: { type: String, required: true, unique: true },
   normalized: { type: String, required: true, unique: true, lowercase: true },
   members: [
@@ -79,7 +79,7 @@ teamSchema.methods.isMember = function (memberId) {
 teamSchema.statics.getWithObject = async function (obj) {
   if (!obj) throw new Error('Invalid Team Object - TeamSchema.GetWithObject()')
 
-  var q = this.model(COLLECTION)
+  const q = this.model(COLLECTION)
     .find({})
     .skip(obj.limit * obj.page)
     .limit(obj.limit)
@@ -91,13 +91,13 @@ teamSchema.statics.getWithObject = async function (obj) {
 teamSchema.statics.getTeamByName = async function (name) {
   if (_.isUndefined(name) || name.length < 1) throw new Error('Invalid Team Name - TeamSchema.GetTeamByName()')
 
-  var q = this.model(COLLECTION).findOne({ normalized: name })
+  const q = this.model(COLLECTION).findOne({ normalized: name })
 
   return q.exec()
 }
 
 teamSchema.statics.getTeams = async function () {
-  var q = this.model(COLLECTION)
+  const q = this.model(COLLECTION)
     .find({})
     .sort('name')
 
@@ -112,7 +112,7 @@ teamSchema.statics.getTeamsByIds = async function (ids) {
 }
 
 teamSchema.statics.getTeamsNoPopulate = async function () {
-  var q = this.model(COLLECTION)
+  const q = this.model(COLLECTION)
     .find({})
     .sort('name')
 
@@ -134,7 +134,7 @@ teamSchema.statics.getTeamsOfUser = async function (userId) {
 teamSchema.statics.getTeamsOfUserNoPopulate = async function (userId) {
   if (_.isUndefined(userId)) throw new Error('Invalid UserId - TeamSchema.GetTeamsOfUserNoPopulate()')
 
-  var q = this.model(COLLECTION)
+  const q = this.model(COLLECTION)
     .find({ members: userId })
     .sort('name')
 
@@ -144,13 +144,13 @@ teamSchema.statics.getTeamsOfUserNoPopulate = async function (userId) {
 teamSchema.statics.getTeam = async function (id) {
   if (_.isUndefined(id)) throw new Error('Invalid TeamId - TeamSchema.GetTeam()')
 
-  var q = this.model(COLLECTION).findOne({ _id: id })
+  const q = this.model(COLLECTION).findOne({ _id: id })
 
   return q.exec()
 }
 
 function isMember (arr, id) {
-  var matches = _.filter(arr, function (value) {
+  const matches = _.filter(arr, function (value) {
     if (value._id.toString() === id.toString()) return value
   })
 

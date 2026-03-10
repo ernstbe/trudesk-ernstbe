@@ -88,10 +88,10 @@ const AddPriorityToTypeModal = ({ settings, type, fetchSettings, t }) => {
           {getPriorities().map(priority => {
             if (some(type.get('priorities').toJS(), priority.toObject())) {
               return (
-                <div key={priority.get('_id')} className={'z-box uk-clearfix'}>
+                <div key={priority.get('_id')} className='z-box uk-clearfix'>
                   <div className='uk-float-left'>
                     <h5 style={{ color: priority.get('htmlColor'), fontWeight: 'bold' }}>{t('priorities.' + priority.get('name'), priority.get('name'))}</h5>
-                    <p className={'uk-text-muted'}>
+                    <p className='uk-text-muted'>
                       {t('modals.addPriority.slaOverdue')}: <strong>{priority.get('durationFormatted')}</strong>
                     </p>
                   </div>
@@ -104,16 +104,16 @@ const AddPriorityToTypeModal = ({ settings, type, fetchSettings, t }) => {
               )
             } else {
               return (
-                <div key={priority.get('_id')} className={'z-box uk-clearfix'}>
+                <div key={priority.get('_id')} className='z-box uk-clearfix'>
                   <div className='uk-float-left'>
                     <h5 style={{ color: priority.get('htmlColor'), fontWeight: 'bold' }}>{t('priorities.' + priority.get('name'), priority.get('name'))}</h5>
-                    <p className={'uk-text-muted'}>
+                    <p className='uk-text-muted'>
                       {t('modals.addPriority.slaOverdue')}: <strong>{priority.get('durationFormatted')}</strong>
                     </p>
                   </div>
                   <div className='uk-float-right'>
                     <a
-                      type={'button'}
+                      type='button'
                       className='uk-button uk-button-success mt-10 mr-10 no-ajaxy'
                       onClick={e => onAddClick(e, type, priority)}
                     >
@@ -132,7 +132,7 @@ const AddPriorityToTypeModal = ({ settings, type, fetchSettings, t }) => {
           })}
         </div>
         <div className='uk-modal-footer uk-text-right'>
-          <Button type={'button'} flat={true} waves={true} text={t('common.close')} extraClass={'uk-modal-close'} />
+          <Button type='button' flat waves text={t('common.close')} extraClass='uk-modal-close' />
         </div>
       </form>
     </BaseModal>

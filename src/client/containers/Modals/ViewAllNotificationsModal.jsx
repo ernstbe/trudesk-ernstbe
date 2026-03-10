@@ -54,7 +54,7 @@ const ViewAllNotificationsModal = ({ hideModal, socket, t }) => {
   }, [hideModal, socket])
 
   return (
-    <BaseModal large={true}>
+    <BaseModal large>
       <div className='uk-modal-header'>
         <h2>{t('modals.viewNotifications.title')}</h2>
       </div>
@@ -62,9 +62,9 @@ const ViewAllNotificationsModal = ({ hideModal, socket, t }) => {
         <table className='notificationsTable'>
           <thead>
             <tr>
-              <th className={'type'}>{t('modals.viewNotifications.type')}</th>
-              <th className={'title'}>{t('modals.viewNotifications.title_col')}</th>
-              <th className={'date'}>{t('modals.viewNotifications.date')}</th>
+              <th className='type'>{t('modals.viewNotifications.type')}</th>
+              <th className='title'>{t('modals.viewNotifications.title_col')}</th>
+              <th className='date'>{t('modals.viewNotifications.date')}</th>
             </tr>
           </thead>
           <tbody>
@@ -76,17 +76,17 @@ const ViewAllNotificationsModal = ({ hideModal, socket, t }) => {
               return (
                 <tr
                   key={notification._id}
-                  className={'notification-row'}
+                  className='notification-row'
                   onClick={e => onNotificationClick(e, notification)}
                 >
-                  <td className={'type'}>
+                  <td className='type'>
                     <i className='fa fa-2x fa-check' />
                   </td>
-                  <td className={'title'}>
+                  <td className='title'>
                     <p>{notification.title}</p>
-                    <div className={'body'}>{notification.message}</div>
+                    <div className='body'>{notification.message}</div>
                   </td>
-                  <td className={'date'}>
+                  <td className='date'>
                     <time dateTime={helpers.formatDate(notification.created, 'YYY-MM-DDThh:mm')}>
                       {formattedDate}
                     </time>
@@ -98,7 +98,7 @@ const ViewAllNotificationsModal = ({ hideModal, socket, t }) => {
         </table>
       </div>
       <div className='uk-modal-footer uk-text-right'>
-        <Button text={t('common.close')} flat={true} waves={true} onClick={() => hideModal()} />
+        <Button text={t('common.close')} flat waves onClick={() => hideModal()} />
       </div>
     </BaseModal>
   )

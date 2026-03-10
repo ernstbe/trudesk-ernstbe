@@ -13,7 +13,6 @@
  */
 
 const _ = require('lodash')
-const async = require('async')
 const winston = require('../logger')
 const conversationSchema = require('../models/chat/conversation')
 const messageSchema = require('../models/chat/message')
@@ -23,7 +22,7 @@ messagesController.content = {}
 
 messagesController.view = (req, res) => {
   const content = {}
-  content.title = 'Messages'
+  content.title = 'Nachrichten'
   content.nav = 'messages'
   content.data = {}
   content.data.common = req.viewdata
@@ -32,9 +31,9 @@ messagesController.view = (req, res) => {
   return res.render('messages', content)
 }
 
-messagesController.get = function (req, res) {
+messagesController.get = async function (req, res) {
   const content = {}
-  content.title = 'Messages'
+  content.title = 'Nachrichten'
   content.nav = 'messages'
   content.data = {}
   content.data.user = req.user
@@ -42,210 +41,161 @@ messagesController.get = function (req, res) {
   content.data.conversations = []
   content.data.showNewConvo = req.showNewConvo
 
-  conversationSchema.getConversationsWithLimit(req.user._id, undefined, function (err, convos) {
-    if (err) {
-      winston.debug(err)
-      return handleError(res, err)
+  try {
+    const convos = await conversationSchema.getConversationsWithLimit(req.user._id, undefined)
+
+    for (let i = 0; i < convos.length; i++) {
+      const convo = convos[i]
+      const c = convo.toObject()
+
+      const userMeta =
+        convo.userMeta[
+          _.findIndex(convo.userMeta, function (item) {
+            return item.userId.toString() === req.user._id.toString()
+          })
+        ]
+      if (!_.isUndefined(userMeta) && !_.isUndefined(userMeta.deletedAt) && userMeta.deletedAt > convo.updatedAt) {
+        continue
+      }
+
+      const rm = await messageSchema.getMostRecentMessage(c._id)
+      const recentMsg = _.first(rm)
+
+      _.each(c.participants, function (p) {
+        if (p._id.toString() !== req.user._id.toString()) {
+          c.partner = p
+        }
+      })
+
+      if (!_.isUndefined(recentMsg)) {
+        if (String(c.partner._id) === String(recentMsg.owner._id)) {
+          c.recentMessage = c.partner.fullname + ': ' + recentMsg.body
+        } else {
+          c.recentMessage = 'Du: ' + recentMsg.body
+        }
+      } else {
+        c.recentMessage = 'Neue Unterhaltung'
+      }
+
+      content.data.conversations.push(c)
     }
 
-    async.eachSeries(
-      convos,
-      function (convo, done) {
-        const c = convo.toObject()
-
-        const userMeta =
-          convo.userMeta[
-            _.findIndex(convo.userMeta, function (item) {
-              return item.userId.toString() === req.user._id.toString()
-            })
-          ]
-        if (!_.isUndefined(userMeta) && !_.isUndefined(userMeta.deletedAt) && userMeta.deletedAt > convo.updatedAt) {
-          return done()
-        }
-
-        messageSchema.getMostRecentMessage(c._id, function (err, rm) {
-          if (err) return done(err)
-
-          _.each(c.participants, function (p) {
-            if (p._id.toString() !== req.user._id.toString()) {
-              c.partner = p
-            }
-          })
-
-          rm = _.first(rm)
-
-          if (!_.isUndefined(rm)) {
-            if (String(c.partner._id) === String(rm.owner._id)) {
-              c.recentMessage = c.partner.fullname + ': ' + rm.body
-            } else {
-              c.recentMessage = 'You: ' + rm.body
-            }
-          } else {
-            c.recentMessage = 'New Conversation'
-          }
-
-          content.data.conversations.push(c)
-
-          return done()
-        })
-      },
-      function (err) {
-        if (err) {
-          winston.debug(err)
-          return handleError(res, err)
-        }
-
-        return res.render('messages', content)
-      }
-    )
-  })
+    return res.render('messages', content)
+  } catch (err) {
+    winston.warn(err)
+    return res.status(500).render('error', { layout: false, error: err, message: err.message })
+  }
 }
 
-messagesController.getConversation = async (req, res) => {
+messagesController.getConversation = async function (req, res) {
   const cid = req.params.convoid
-  if (_.isUndefined(cid)) return handleError(res, 'Invalid Conversation ID!')
+  if (_.isUndefined(cid)) {
+    return res.status(400).render('error', { layout: false, error: 'Invalid Conversation ID!', message: 'Invalid Conversation ID!' })
+  }
 
   const content = {}
-  content.title = 'Messages'
+  content.title = 'Nachrichten'
   content.nav = 'messages'
   content.data = {}
   content.data.user = req.user
   content.data.common = req.viewdata
   content.data.conversations = []
 
-  async.parallel(
-    [
-      function (next) {
-        conversationSchema.getConversationsWithLimit(req.user._id, undefined, function (err, convos) {
-          if (err) return next(err)
+  try {
+    const convos = await conversationSchema.getConversationsWithLimit(req.user._id, undefined)
 
-          async.eachSeries(
-            convos,
-            function (convo, done) {
-              const userMeta =
-                convo.userMeta[
-                  _.findIndex(convo.userMeta, function (item) {
-                    return item.userId.toString() === req.user._id.toString()
-                  })
-                ]
-              if (
-                !_.isUndefined(userMeta) &&
-                !_.isUndefined(userMeta.deletedAt) &&
-                userMeta.deletedAt > convo.updatedAt &&
-                req.params.convoid.toString() !== convo._id.toString()
-              ) {
-                return done()
-              }
-
-              const c = convo.toObject()
-              messageSchema.getMostRecentMessage(c._id, function (err, rm) {
-                if (err) return done(err)
-
-                _.each(c.participants, function (p) {
-                  if (p._id.toString() !== req.user._id.toString()) {
-                    c.partner = p
-                  }
-                })
-
-                rm = _.first(rm)
-
-                if (!_.isUndefined(rm)) {
-                  if (String(c.partner._id) === String(rm.owner._id)) {
-                    c.recentMessage = c.partner.fullname + ': ' + rm.body
-                  } else {
-                    c.recentMessage = 'You: ' + rm.body
-                  }
-                } else {
-                  c.recentMessage = 'New Conversation'
-                }
-
-                if (
-                  !_.isUndefined(userMeta) &&
-                  !_.isUndefined(userMeta.deletedAt) &&
-                  !_.isUndefined(rm) &&
-                  rm.createdAt < userMeta.deletedAt
-                ) {
-                  c.recentMessage = 'New Conversation'
-                }
-
-                content.data.conversations.push(c)
-
-                return done()
-              })
-            },
-            function (err) {
-              if (err) return next(err)
-
-              return next()
-            }
-          )
-        })
-      },
-      function (next) {
-        content.data.page = 2
-
-        conversationSchema.getConversation(cid, function (err, convo) {
-          if (err) return next(err)
-
-          if (convo === null || convo === undefined) {
-            return res.redirect('/messages')
-          }
-
-          const c = convo.toObject()
-
-          let isPart = false
-          _.each(c.participants, function (p) {
-            if (p._id.toString() === req.user._id.toString()) isPart = true
+    for (let i = 0; i < convos.length; i++) {
+      const convo = convos[i]
+      const userMeta =
+        convo.userMeta[
+          _.findIndex(convo.userMeta, function (item) {
+            return item.userId.toString() === req.user._id.toString()
           })
-
-          if (!isPart) {
-            return res.redirect('/messages')
-          }
-
-          messageSchema.getConversationWithObject(
-            { cid: c._id, userMeta: convo.userMeta, requestingUser: req.user },
-            function (err, messages) {
-              if (err) return next(err)
-
-              _.each(c.participants, function (p) {
-                if (p._id.toString() !== req.user._id.toString()) {
-                  c.partner = p
-                }
-              })
-
-              c.requestingUserMeta =
-                convo.userMeta[
-                  _.findIndex(convo.userMeta, function (item) {
-                    return item.userId.toString() === req.user._id.toString()
-                  })
-                ]
-
-              content.data.conversation = c
-              content.data.conversation.messages = messages.reverse()
-
-              return next()
-            }
-          )
-        })
+        ]
+      if (
+        !_.isUndefined(userMeta) &&
+        !_.isUndefined(userMeta.deletedAt) &&
+        userMeta.deletedAt > convo.updatedAt &&
+        req.params.convoid.toString() !== convo._id.toString()
+      ) {
+        continue
       }
-    ],
-    function (err) {
-      if (err) return handleError(res, err)
-      return res.render('messages', content)
-    }
-  )
-}
 
-function handleError (res, err) {
-  if (err) {
-    winston.warn(err)
-    if (!err.status) res.status = 500
-    else res.status = err.status
-    return res.render('error', {
-      layout: false,
-      error: err,
-      message: err.message
+      const c = convo.toObject()
+      const rm = await messageSchema.getMostRecentMessage(c._id)
+      const recentMsg = _.first(rm)
+
+      _.each(c.participants, function (p) {
+        if (p._id.toString() !== req.user._id.toString()) {
+          c.partner = p
+        }
+      })
+
+      if (!_.isUndefined(recentMsg)) {
+        if (String(c.partner._id) === String(recentMsg.owner._id)) {
+          c.recentMessage = c.partner.fullname + ': ' + recentMsg.body
+        } else {
+          c.recentMessage = 'Du: ' + recentMsg.body
+        }
+      } else {
+        c.recentMessage = 'Neue Unterhaltung'
+      }
+
+      if (
+        !_.isUndefined(userMeta) &&
+        !_.isUndefined(userMeta.deletedAt) &&
+        !_.isUndefined(recentMsg) &&
+        recentMsg.createdAt < userMeta.deletedAt
+      ) {
+        c.recentMessage = 'Neue Unterhaltung'
+      }
+
+      content.data.conversations.push(c)
+    }
+
+    const convo = await conversationSchema.getConversation(cid)
+    if (convo === null || convo === undefined) {
+      return res.redirect('/messages')
+    }
+
+    const c = convo.toObject()
+
+    let isPart = false
+    _.each(c.participants, function (p) {
+      if (p._id.toString() === req.user._id.toString()) isPart = true
     })
+
+    if (!isPart) {
+      return res.redirect('/messages')
+    }
+
+    const messages = await messageSchema.getConversationWithObject({
+      cid: c._id,
+      userMeta: convo.userMeta,
+      requestingUser: req.user
+    })
+
+    _.each(c.participants, function (p) {
+      if (p._id.toString() !== req.user._id.toString()) {
+        c.partner = p
+      }
+    })
+
+    c.requestingUserMeta =
+      convo.userMeta[
+        _.findIndex(convo.userMeta, function (item) {
+          return item.userId.toString() === req.user._id.toString()
+        })
+      ]
+
+    content.data.page = 2
+    content.data.conversation = c
+    content.data.conversation.messages = messages.reverse()
+
+    return res.render('messages', content)
+  } catch (err) {
+    winston.warn(err)
+    return res.status(500).render('error', { layout: false, error: err, message: err.message })
   }
 }
 

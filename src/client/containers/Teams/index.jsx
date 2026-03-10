@@ -44,7 +44,7 @@ function TeamsContainer ({
 }) {
   useEffect(() => {
     fetchTeamsAction({ page: 0, limit: 1000 })
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     helpers.resizeFullHeight()
@@ -95,7 +95,7 @@ function TeamsContainer ({
 
   const tableItems = teamsState.teams.map(team => {
     return (
-      <TableRow key={team.get('_id')} className={'vam nbb'}>
+      <TableRow key={team.get('_id')} className='vam nbb'>
         <TableCell style={{ fontWeight: 500, padding: '18px 15px' }}>{team.get('name')}</TableCell>
         <TableCell style={{ padding: '13px 8px 8px 8px' }}>
           {team.get('members') &&
@@ -110,8 +110,8 @@ function TeamsContainer ({
                 return (
                   <div
                     key={user.get('_id')}
-                    className={'uk-float-left uk-position-relative mb-10'}
-                    data-uk-tooltip={'{pos: "bottom"}'}
+                    className='uk-float-left uk-position-relative mb-10'
+                    data-uk-tooltip='{pos: "bottom"}'
                     title={user.get('fullname')}
                   >
                     <Avatar image={profilePic} userId={user.get('_id')} size={25} style={{ marginRight: 5 }} />
@@ -122,14 +122,14 @@ function TeamsContainer ({
         <TableCell style={{ textAlign: 'right', paddingRight: 15 }}>
           <ButtonGroup>
             {helpers.canUser('teams:update', true) && (
-              <Button text={t('common.edit')} small={true} waves={true} onClick={() => onEditTeamClick(team.toJS())} />
+              <Button text={t('common.edit')} small waves onClick={() => onEditTeamClick(team.toJS())} />
             )}
             {helpers.canUser('teams:delete', true) && (
               <Button
                 text={t('common.delete')}
-                style={'danger'}
-                small={true}
-                waves={true}
+                style='danger'
+                small
+                waves
                 onClick={() => onDeleteTeamClick(team.get('_id'))}
               />
             )}
@@ -143,27 +143,27 @@ function TeamsContainer ({
     <div>
       <PageTitle
         title={t('teams.title')}
-        shadow={true}
+        shadow
         rightComponent={
-          <div className={'uk-grid uk-grid-collapse'}>
-            <div className={'uk-width-1-1 mt-15 uk-text-right'}>
+          <div className='uk-grid uk-grid-collapse'>
+            <div className='uk-width-1-1 mt-15 uk-text-right'>
               <Button
                 text={t('common.create')}
                 flat={false}
-                small={true}
+                small
                 waves={false}
-                extraClass={'hover-accent'}
+                extraClass='hover-accent'
                 onClick={e => onCreateTeamClick(e)}
               />
             </div>
           </div>
         }
       />
-      <PageContent id={'teams-page-content'} padding={0} paddingBottom={0}>
+      <PageContent id='teams-page-content' padding={0} paddingBottom={0}>
         <Table
           headers={[
-            <TableHeader key={0} width={'25%'} height={40} text={t('common.name')} padding={'8px 8px 8px 15px'} />,
-            <TableHeader key={1} width={'50%'} text={t('teams.teamMembers')} />,
+            <TableHeader key={0} width='25%' height={40} text={t('common.name')} padding='8px 8px 8px 15px' />,
+            <TableHeader key={1} width='50%' text={t('teams.teamMembers')} />,
             <TableHeader key={2} width={130} text={t('teams.teamActions')} />
           ]}
         >

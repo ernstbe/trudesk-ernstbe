@@ -16,7 +16,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 
 const DropdownHeader = ({ text }) => {
-  return <li className={'uk-nav-header'}>{text}</li>
+  return <li className='uk-nav-header'>{text}</li>
 }
 
 DropdownHeader.propTypes = {

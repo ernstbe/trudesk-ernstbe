@@ -108,11 +108,9 @@ module.exports = function () {
       {
         jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
         secretOrKey: nconf.get('tokens') ? nconf.get('tokens').secret : false,
-        ignoreExpiration: true
+        ignoreExpiration: false
       },
       function (jwtPayload, done) {
-        if (jwtPayload.exp < Date.now() / 1000) return done({ type: 'exp' })
-
         return done(null, jwtPayload.user)
       }
     )

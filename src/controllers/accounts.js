@@ -12,14 +12,12 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-const async = require('async')
 const _ = require('lodash')
 const winston = require('../logger')
 const userSchema = require('../models/user')
 const permissions = require('../permissions')
 const emitter = require('../emitter')
 const xss = require('xss')
-const path = require('path')
 
 const accountsController = {}
 
@@ -45,7 +43,7 @@ accountsController.signup = async function (req, res) {
       const privacyPolicy = await settings.getSettingByName('legal:privacypolicy')
 
       const content = {}
-      content.title = 'Create Account'
+      content.title = 'Konto erstellen'
       content.layout = false
       content.data = {}
 
@@ -71,7 +69,7 @@ accountsController.get = function (req, res) {
   }
 
   const content = {}
-  content.title = 'Accounts'
+  content.title = 'Benutzer'
   content.nav = 'accounts'
 
   content.data = {}
@@ -88,7 +86,7 @@ accountsController.getCustomers = function (req, res) {
   }
 
   const content = {}
-  content.title = 'Customers'
+  content.title = 'Helfer'
   content.nav = 'accounts'
   content.subnav = 'accounts-customers'
 
@@ -107,7 +105,7 @@ accountsController.getAgents = function (req, res) {
   }
 
   const content = {}
-  content.title = 'Agents'
+  content.title = 'Bearbeiter'
   content.nav = 'accounts'
   content.subnav = 'accounts-agents'
 
@@ -126,7 +124,7 @@ accountsController.getAdmins = function (req, res) {
   }
 
   const content = {}
-  content.title = 'Admins'
+  content.title = 'Administratoren'
   content.nav = 'accounts'
   content.subnav = 'accounts-admins'
 
@@ -145,7 +143,7 @@ accountsController.importPage = function (req, res) {
   }
 
   const content = {}
-  content.title = 'Accounts - Import'
+  content.title = 'Benutzer - Import'
   content.nav = 'accounts'
 
   content.data = {}
@@ -165,7 +163,7 @@ accountsController.profile = async function (req, res) {
   }
 
   const content = {}
-  content.title = 'Profile'
+  content.title = 'Profil'
   content.nav = 'profile'
 
   content.data = {}
@@ -346,8 +344,8 @@ accountsController.uploadCSV = function (req, res) {
         return res.json({
           success: true,
           contents: object.csv,
-          addedUsers: addedUsers,
-          updatedUsers: updatedUsers
+          addedUsers,
+          updatedUsers
         })
       } catch (err) {
         winston.warn(err.message)
@@ -406,8 +404,8 @@ accountsController.uploadJSON = function (req, res) {
           return res.json({
             success: true,
             contents: object.json,
-            addedUsers: addedUsers,
-            updatedUsers: updatedUsers
+            addedUsers,
+            updatedUsers
           })
         } catch (err) {
           return res.status(400).json({ success: false, error: err })
@@ -422,7 +420,7 @@ accountsController.uploadJSON = function (req, res) {
 
   busboy.on('finish', function () {
     if (error) {
-      return res.status(error.status).json({ success: false, error: error })
+      return res.status(error.status).json({ success: false, error })
     }
   })
 

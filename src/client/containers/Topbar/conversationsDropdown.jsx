@@ -31,6 +31,7 @@ function ConversationsDropdownPartial ({ timezone, shortDateFormat, socket, forw
   }, [])
 
   useEffect(() => {
+    if (!socket) return
     socket.on(MESSAGES_UPDATE_UI_CONVERSATION_NOTIFICATIONS, onUpdateConversationsNotifications)
 
     return () => {
@@ -47,23 +48,23 @@ function ConversationsDropdownPartial ({ timezone, shortDateFormat, socket, forw
   return (
     <PDropDown
       ref={forwardedRef}
-      id={'conversations'}
-      title={'Conversations'}
-      titleHref={'/messages'}
+      id='conversations'
+      title='Conversations'
+      titleHref='/messages'
       topOffset={-4}
       leftOffset={4}
       onShow={() => {
-        socket.emit(MESSAGES_UPDATE_UI_CONVERSATION_NOTIFICATIONS)
+        if (socket) socket.emit(MESSAGES_UPDATE_UI_CONVERSATION_NOTIFICATIONS)
       }}
       rightComponent={
-        <a href={'/messages/startconversation'} className={'hoverUnderline'}>
+        <a href='/messages/startconversation' className='hoverUnderline'>
           Start Conversation
         </a>
       }
       footerComponent={
         <div className={'uk-text-center' + (conversations.length < 1 ? ' hide' : '')}>
           <a
-            className={'no-ajaxy hoverUnderline'}
+            className='no-ajaxy hoverUnderline'
             onClick={() => {
               History.pushState(null, null, '/messages')
             }}
@@ -73,7 +74,7 @@ function ConversationsDropdownPartial ({ timezone, shortDateFormat, socket, forw
         </div>
       }
     >
-      <div className={'items scrollable close-on-click'}>
+      <div className='items scrollable close-on-click'>
         <ul>
           {conversations.map(conversation => {
             const profilePic = conversation.partner.image || 'defaultProfile.jpg'

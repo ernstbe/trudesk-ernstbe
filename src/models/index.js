@@ -12,6 +12,10 @@ const Team = require('./team')
 const Department = require('./department')
 const Message = require('./chat/message')
 const Conversation = require('./chat/conversation')
+const RecurringTask = require('./recurringTask')
+const Asset = require('./asset')
+const TicketTemplate = require('./ticketTemplate')
+const Document = require('./document')
 
 module.exports = {
   User,
@@ -27,5 +31,9 @@ module.exports = {
   Department,
   Message,
   Conversation,
-  Status
+  Status,
+  RecurringTask,
+  Asset,
+  TicketTemplate,
+  Document
 }

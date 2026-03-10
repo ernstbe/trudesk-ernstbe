@@ -37,7 +37,7 @@ const NoticeAlertModal = ({ notice, noticeCookieName, shortDateFormat, timeForma
 
   const dateFormat = shortDateFormat + ', ' + timeFormat
   return (
-    <BaseModal {...rest} notice={notice} noticeCookieName={noticeCookieName} shortDateFormat={shortDateFormat} timeFormat={timeFormat} hideModal={hideModal} options={{ bgclose: false }} large={true}>
+    <BaseModal {...rest} notice={notice} noticeCookieName={noticeCookieName} shortDateFormat={shortDateFormat} timeFormat={timeFormat} hideModal={hideModal} options={{ bgclose: false }} large>
       <div>
         <div
           style={{
@@ -62,12 +62,12 @@ const NoticeAlertModal = ({ notice, noticeCookieName, shortDateFormat, timeForma
             Important: {notice.message}
           </p>
           <Button
-            text={'Confirm'}
-            flat={true}
-            style={'success'}
-            extraClass={'uk-float-right'}
+            text='Confirm'
+            flat
+            style='success'
+            extraClass='uk-float-right'
             styleOverride={{ marginBottom: 0 }}
-            waves={true}
+            waves
             onClick={e => onConfirmClick(e)}
           />
         </div>

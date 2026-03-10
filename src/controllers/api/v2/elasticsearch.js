@@ -57,7 +57,7 @@ apiElasticSearch.status = async (req, res) => {
         })()
       })
 
-    const [__, indexCount, ticketCount] = await Promise.all([es.checkConnection(), getIndexCountData(), getDBCount()])
+    const [, indexCount, ticketCount] = await Promise.all([es.checkConnection(), getIndexCountData(), getDBCount()])
     response.indexCount = indexCount
     response.dbCount = ticketCount
     response.esStatus = global.esStatus
@@ -73,7 +73,7 @@ apiElasticSearch.status = async (req, res) => {
 }
 
 apiElasticSearch.search = async function (req, res) {
-  var limit = !_.isUndefined(req.query['limit']) ? req.query.limit : 100
+  let limit = !_.isUndefined(req.query.limit) ? req.query.limit : 100
   try {
     limit = parseInt(limit)
   } catch (e) {
@@ -81,24 +81,24 @@ apiElasticSearch.search = async function (req, res) {
   }
 
   try {
-    var grps
+    let grps
     if (req.user.role.isAdmin || req.user.role.isAgent) {
-      var Department = require('../../../models/department')
+      const Department = require('../../../models/department')
       grps = await Department.getDepartmentGroupsOfUser(req.user._id)
     } else {
       grps = await groupSchema.getAllGroupsOfUserNoPopulate(req.user._id)
     }
 
-    var g = _.map(grps, function (i) {
+    const g = _.map(grps, function (i) {
       return i._id
     })
 
     // Fall back to MongoDB search when Elasticsearch is not available
     if (!es || !es.esclient) {
-      var searchQuery = req.query['q']
+      const searchQuery = req.query.q
       if (!searchQuery) return apiUtil.sendApiError(res, 400, 'Missing search query parameter "q"')
 
-      var results = await ticketSchema.getTicketsWithSearchString(g, searchQuery)
+      const results = await ticketSchema.getTicketsWithSearchString(g, searchQuery)
       return res.json({
         success: true,
         count: _.size(results),
@@ -107,7 +107,7 @@ apiElasticSearch.search = async function (req, res) {
       })
     }
 
-    var obj = {
+    const obj = {
       index: es.indexName,
       body: {
         size: limit,
@@ -116,7 +116,7 @@ apiElasticSearch.search = async function (req, res) {
           bool: {
             must: {
               multi_match: {
-                query: req.query['q'],
+                query: req.query.q,
                 type: 'cross_fields',
                 operator: 'and',
                 fields: [
@@ -146,7 +146,7 @@ apiElasticSearch.search = async function (req, res) {
       }
     }
 
-    var r = await es.esclient.search(obj)
+    const r = await es.esclient.search(obj)
     return res.send(r)
   } catch (err) {
     return apiUtil.sendApiError(res, 500, err.message)

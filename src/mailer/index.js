@@ -12,12 +12,12 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-var _ = require('lodash')
-var nodeMailer = require('nodemailer')
+const _ = require('lodash')
+const nodeMailer = require('nodemailer')
 
-var settings = require('../models/setting')
+const settings = require('../models/setting')
 
-var mailer = {}
+const mailer = {}
 
 mailer.sendMail = function (data, callback) {
   createTransporter(function (err, mailSettings) {
@@ -27,11 +27,11 @@ mailer.sendMail = function (data, callback) {
       return callback(null, 'Mail Disabled')
     }
 
-    if (!mailSettings.from) return callback('No From Address Set.')
+    if (!mailSettings.from) return callback(new Error('No From Address Set.'))
 
     data.from = mailSettings.from.value
 
-    if (!data.from) return callback('No From Address Set.')
+    if (!data.from) return callback(new Error('No From Address Set.'))
 
     mailSettings.transporter.sendMail(data, callback)
   })
@@ -41,7 +41,11 @@ mailer.verify = function (callback) {
   createTransporter(function (err, mailSettings) {
     if (err) return callback(err)
 
-    if (!mailSettings.enabled) return callback({ code: 'Mail Disabled' })
+    if (!mailSettings.enabled) {
+      const e = new Error('Mail Disabled')
+      e.code = 'Mail Disabled'
+      return callback(e)
+    }
 
     mailSettings.transporter.verify(function (err) {
       if (err) return callback(err)
@@ -55,7 +59,7 @@ function createTransporter (callback) {
   settings.getSettings(function (err, s) {
     if (err) return callback(err)
 
-    var mailSettings = {}
+    const mailSettings = {}
     mailSettings.enabled = _.find(s, function (x) {
       return x.name === 'mailer:enable'
     })
@@ -80,7 +84,7 @@ function createTransporter (callback) {
 
     mailSettings.enabled = mailSettings.enabled && mailSettings.enabled.value ? mailSettings.enabled.value : false
 
-    var transport = {
+    const transport = {
       host: mailSettings.host && mailSettings.host.value ? mailSettings.host.value : '127.0.0.1',
       port: mailSettings.port && mailSettings.port.value ? mailSettings.port.value : 25,
       secure: mailSettings.ssl && mailSettings.ssl.value ? mailSettings.ssl.value : false,

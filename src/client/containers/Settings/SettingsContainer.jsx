@@ -114,7 +114,7 @@ const SettingsContainer = ({ fetchSettings, t }) => {
               }}
             />
             <MenuItem
-              title={'Elasticsearch'}
+              title='Elasticsearch'
               active={activeCategory === 'settings-elasticsearch'}
               onClick={e => {
                 onMenuItemClick(e, 'elasticsearch')

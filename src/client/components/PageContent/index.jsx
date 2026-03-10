@@ -27,9 +27,9 @@ const PageContent = ({ id, padding = 25, paddingBottom = 100, extraClass, childr
     <div
       id={id}
       className={'page-content no-border-top full-height scrollable ' + (extraClass || '')}
-      style={{ padding: padding }}
+      style={{ padding }}
     >
-      <div style={{ paddingBottom: paddingBottom }}>{children}</div>
+      <div style={{ paddingBottom }}>{children}</div>
     </div>
   )
 }

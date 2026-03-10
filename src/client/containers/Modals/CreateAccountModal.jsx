@@ -114,10 +114,10 @@ function CreateAccountModal (props) {
     if (!isValid) return
 
     const payload = {
-      username: username,
-      fullname: fullname,
-      title: title,
-      email: email,
+      username,
+      fullname,
+      title,
+      email,
       groups: groupSelectRef.current ? groupSelectRef.current.getSelected() : undefined,
       teams: teamSelectRef.current ? teamSelectRef.current.getSelected() : undefined,
       role: selectedRoleRef.current,
@@ -147,17 +147,17 @@ function CreateAccountModal (props) {
     .toArray()
 
   return (
-    <BaseModal parentExtraClass={'pt-0'} extraClass={'p-0 pb-25'}>
+    <BaseModal parentExtraClass='pt-0' extraClass='p-0 pb-25'>
       <div className='user-heading' style={{ minHeight: '130px', background: '#1976d2', padding: '24px' }}>
         <div className='uk-width-1-1'>
           <div style={{ width: '82px', height: '82px', float: 'left', marginRight: '24px', position: 'relative' }}>
             <div className='mediumProfilePic' style={{ position: 'relative' }}>
-              <img src={`/uploads/users/defaultProfile.jpg`} alt='Profile Picture' />
+              <img src='/uploads/users/defaultProfile.jpg' alt='Profile Picture' />
             </div>
           </div>
           <div className='user-heading-content'>
             <h2>
-              <span className={'uk-text-truncate'}>{t('modals.createAccount.title')}</span>
+              <span className='uk-text-truncate'>{t('modals.createAccount.title')}</span>
               <span className='sub-heading'>{t('modals.createAccount.subtitle')}</span>
             </h2>
           </div>
@@ -169,32 +169,32 @@ function CreateAccountModal (props) {
             <label className='uk-form-label'>{t('modals.createAccount.username')}</label>
             <input
               type='text'
-              className={'md-input'}
+              className='md-input'
               value={username}
               onChange={e => onInputChanged(e, 'username')}
-              data-validation={'length'}
-              data-validation-length={'min4'}
+              data-validation='length'
+              data-validation-length='min4'
               data-validation-error-msg={t('modals.createAccount.usernameMinLength')}
             />
           </div>
           <div className='uk-margin-medium-bottom uk-clearfix'>
             <div className='uk-float-left' style={{ width: '50%', paddingRight: '20px' }}>
-              <label className={'uk-form-label'}>{t('modals.createAccount.name')}</label>
+              <label className='uk-form-label'>{t('modals.createAccount.name')}</label>
               <input
                 type='text'
-                className={'md-input'}
+                className='md-input'
                 value={fullname}
                 onChange={e => onInputChanged(e, 'fullname')}
-                data-validation={'length'}
-                data-validation-length={'min1'}
+                data-validation='length'
+                data-validation-length='min1'
                 data-validation-error-msg={t('modals.createAccount.nameMinLength')}
               />
             </div>
             <div className='uk-float-left uk-width-1-2'>
-              <label className={'uk-form-label'}>{t('modals.createAccount.title_field')}</label>
+              <label className='uk-form-label'>{t('modals.createAccount.title_field')}</label>
               <input
                 type='text'
-                className={'md-input'}
+                className='md-input'
                 value={title}
                 onChange={e => onInputChanged(e, 'title')}
               />
@@ -202,21 +202,21 @@ function CreateAccountModal (props) {
           </div>
           <div className='uk-margin-medium-bottom uk-clearfix'>
             <div className='uk-float-left' style={{ width: '50%', paddingRight: '20px' }}>
-              <label className={'uk-form-label'}>{t('modals.createAccount.password')}</label>
+              <label className='uk-form-label'>{t('modals.createAccount.password')}</label>
               <input
                 type='password'
-                className={'md-input'}
-                name={'password_confirmation'}
+                className='md-input'
+                name='password_confirmation'
                 value={password}
                 onChange={e => onInputChanged(e, 'password')}
               />
             </div>
             <div className='uk-float-left uk-width-1-2'>
-              <label className={'uk-form-label'}>{t('modals.createAccount.confirmPassword')}</label>
+              <label className='uk-form-label'>{t('modals.createAccount.confirmPassword')}</label>
               <input
                 type='password'
-                className={'md-input'}
-                name={'password'}
+                className='md-input'
+                name='password'
                 value={passwordConfirm}
                 onChange={e => onInputChanged(e, 'passwordConfirm')}
                 data-validation='confirmation'
@@ -228,17 +228,17 @@ function CreateAccountModal (props) {
             <label className='uk-form-label'>{t('modals.createAccount.email')}</label>
             <input
               type='email'
-              className={'md-input'}
+              className='md-input'
               value={email}
               onChange={e => onInputChanged(e, 'email')}
               data-validation='email'
             />
           </div>
           <div className='uk-margin-medium-bottom'>
-            <label className={'uk-form-label'}>{t('modals.createAccount.role')}</label>
+            <label className='uk-form-label'>{t('modals.createAccount.role')}</label>
             <SingleSelect
               items={roles}
-              width={'100'}
+              width='100'
               showTextbox={false}
               onSelectChange={e => onRoleSelectChange(e)}
             />
@@ -260,7 +260,7 @@ function CreateAccountModal (props) {
                   ref={r => (groupSelectRef.current = r)}
                 />
                 <span
-                  className={'hide help-block'}
+                  className='hide help-block'
                   style={{ display: 'inline-block', marginTop: '3px', fontWeight: 'bold', color: '#d85030' }}
                   ref={r => (groupSelectErrorMessageRef.current = r)}
                 >
@@ -278,8 +278,8 @@ function CreateAccountModal (props) {
             </div>
           )}
           <div className='uk-modal-footer uk-text-right'>
-            <Button text={t('common.close')} flat={true} waves={true} extraClass={'uk-modal-close'} />
-            <Button text={t('modals.createAccount.title')} flat={true} waves={true} style={'success'} type={'submit'} />
+            <Button text={t('common.close')} flat waves extraClass='uk-modal-close' />
+            <Button text={t('modals.createAccount.title')} flat waves style='success' type='submit' />
           </div>
         </form>
       </div>

@@ -34,7 +34,7 @@ const NumberWithSave = ({ updateSetting, settingName, stateName, value: propValu
   }, [propValue])
 
   const onSaveClicked = useCallback(() => {
-    updateSetting({ name: settingName, value: value, stateName: stateName })
+    updateSetting({ name: settingName, value, stateName })
   }, [updateSetting, settingName, value, stateName])
 
   const updateValue = useCallback((evt) => {

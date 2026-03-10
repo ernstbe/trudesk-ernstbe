@@ -27,7 +27,7 @@ reportsController.overview = function (req, res) {
   }
 
   const content = {}
-  content.title = 'Overview'
+  content.title = 'Übersicht'
   content.nav = 'reports'
   content.subnav = 'reports-overview'
 
@@ -41,7 +41,7 @@ reportsController.overview = function (req, res) {
   return res.render('subviews/reports/overview', content)
 }
 
-reportsController.generate = function (req, res) {
+reportsController.generate = async function (req, res) {
   const user = req.user
   if (_.isUndefined(user) || !permissions.canThis(user.role, 'reports:create')) {
     req.flash('message', 'Permission Denied.')
@@ -49,7 +49,7 @@ reportsController.generate = function (req, res) {
   }
 
   const content = {}
-  content.title = 'Generate Report'
+  content.title = 'Bericht erstellen'
   content.nav = 'reports'
   content.subnav = 'reports-generate'
 
@@ -57,20 +57,15 @@ reportsController.generate = function (req, res) {
   content.data.user = req.user
   content.data.common = req.viewdata
 
-  const prioritySchema = require('../models/ticketpriority')
-  prioritySchema.getPriorities(function (err, priorities) {
-    if (err) {
-      return res.render('error', {
-        layout: false,
-        error: err,
-        message: err.message
-      })
-    }
-
+  try {
+    const prioritySchema = require('../models/ticketpriority')
+    const priorities = await prioritySchema.getPriorities()
     content.data.priorities = priorities
 
     return res.render('subviews/reports/generate', content)
-  })
+  } catch (err) {
+    return res.render('error', { layout: false, error: err, message: err.message })
+  }
 }
 
 reportsController.breakdownGroup = function (req, res) {
@@ -81,7 +76,7 @@ reportsController.breakdownGroup = function (req, res) {
   }
 
   const content = {}
-  content.title = 'Group Breakdown'
+  content.title = 'Gruppenauswertung'
   content.nav = 'reports'
   content.subnav = 'reports-breakdown-group'
 
@@ -103,7 +98,7 @@ reportsController.breakdownUser = function (req, res) {
   }
 
   const content = {}
-  content.title = 'User Breakdown'
+  content.title = 'Benutzerauswertung'
   content.nav = 'reports'
   content.subnav = 'reports-breakdown-user'
 
@@ -116,11 +111,5 @@ reportsController.breakdownUser = function (req, res) {
 
   return res.render('subviews/reports/breakdown_User', content)
 }
-
-// function handleError(res, err) {
-//     if (err) {
-//         return res.render('error', {layout: false, error: err, message: err.message});
-//     }
-// }
 
 module.exports = reportsController

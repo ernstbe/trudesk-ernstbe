@@ -17,7 +17,7 @@ import PropTypes from 'prop-types'
 
 const OffCanvas = ({ title, id, children }) => {
   return (
-    <div id={id} className={'uk-offcanvas'}>
+    <div id={id} className='uk-offcanvas'>
       <div className='uk-offcanvas-bar uk-offcanvas-bar-flip scrollable'>
         {title && (
           <div className='uk-offcanvas-title'>

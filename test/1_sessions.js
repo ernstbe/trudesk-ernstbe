@@ -1,12 +1,12 @@
 /* eslint-disable no-unused-expressions */
-var expect = require('chai').expect
-var should = require('chai').should()
-var superagent = require('superagent')
+const expect = require('chai').expect
+const should = require('chai').should()
+const superagent = require('superagent')
 
 describe('sessions', function () {
-  var agent = superagent.agent()
-  var unauthAgent = superagent.agent()
-  var user = {
+  const agent = superagent.agent()
+  const unauthAgent = superagent.agent()
+  const user = {
     'login-username': 'trudesk',
     'login-password': '$2a$04$350Dkwcq9EpJLFhbeLB0buFcyFkI9q3edQEPpy/zqLjROMD9LPToW'
   }
@@ -39,7 +39,7 @@ describe('sessions', function () {
     agent.get('http://localhost:3111/').end(function (err, res) {
       expect(err).to.not.exist
       expect(res.status).to.equal(200)
-      expect(res.text).to.include('<title>Trudesk &middot; Dashboard</title>')
+      expect(res.text).to.include('<title>Trudesk &middot; Übersicht</title>')
 
       done()
     })

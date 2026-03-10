@@ -1,4 +1,4 @@
-var nconf = require('nconf')
+const nconf = require('nconf')
 nconf.argv().env()
 nconf.overrides({
   tokens: {
@@ -7,7 +7,7 @@ nconf.overrides({
   }
 })
 
-var is = require('../../src/webserver')
+const is = require('../../src/webserver')
 
 describe('installServer.js', function () {
   it('should start install server', function (done) {

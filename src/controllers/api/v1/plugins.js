@@ -12,33 +12,34 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-var winston = require('winston')
+const winston = require('winston')
 
-var path = require('path')
+const path = require('path')
 
-var fs = require('fs')
+const fs = require('fs')
 
-var request = require('request')
+const axios = require('axios')
 
-var rimraf = require('rimraf')
+const rimraf = require('rimraf')
 
-var mkdirp = require('mkdirp')
+const mkdirp = require('mkdirp')
 
-var tar = require('tar')
+const tar = require('tar')
 
-var apiPlugins = {}
+const { pipeline } = require('stream/promises')
 
-var pluginPath = path.join(__dirname, '../../../../plugins')
+const apiPlugins = {}
 
-var pluginServerUrl = 'http://plugins.trudesk.io'
+const pluginPath = path.join(__dirname, '../../../../plugins')
 
-apiPlugins.installPlugin = function (req, res) {
-  var packageid = req.params.packageid
+const pluginServerUrl = 'http://plugins.trudesk.io'
 
-  request.get(pluginServerUrl + '/api/plugin/package/' + packageid, function (err, response) {
-    if (err) return res.status(400).json({ success: false, error: err })
+apiPlugins.installPlugin = async function (req, res) {
+  const packageid = req.params.packageid
 
-    var plugin = JSON.parse(response.body).plugin
+  try {
+    const response = await axios.get(pluginServerUrl + '/api/plugin/package/' + packageid)
+    const plugin = response.data.plugin
 
     if (!plugin || !plugin.url) {
       return res.status(400).json({
@@ -47,100 +48,57 @@ apiPlugins.installPlugin = function (req, res) {
       })
     }
 
-    request
-      .get(pluginServerUrl + '/plugin/download/' + plugin.url)
-      .on('response', function (response) {
-        var fws = fs.createWriteStream(path.join(pluginPath, plugin.url))
+    const downloadResponse = await axios.get(pluginServerUrl + '/plugin/download/' + plugin.url, {
+      responseType: 'stream'
+    })
 
-        response.pipe(fws)
+    const fws = fs.createWriteStream(path.join(pluginPath, plugin.url))
+    await pipeline(downloadResponse.data, fws)
 
-        response.on('end', function () {
-          // Extract plugin
-          var pluginExtractFolder = path.join(pluginPath, plugin.name.toLowerCase())
-          rimraf(pluginExtractFolder, function (error) {
-            if (error) winston.debug(error)
-            if (error)
-              return res.json({
-                success: false,
-                error: 'Unable to remove plugin directory.'
-              })
+    const pluginExtractFolder = path.join(pluginPath, plugin.name.toLowerCase())
+    await rimraf(pluginExtractFolder)
+    mkdirp.sync(pluginExtractFolder)
 
-            var fileFullPath = path.join(pluginPath, plugin.url)
-            mkdirp.sync(pluginExtractFolder)
+    await tar.extract({
+      C: pluginExtractFolder,
+      file: path.join(pluginPath, plugin.url)
+    })
 
-            tar.extract(
-              {
-                C: pluginExtractFolder,
-                file: path.join(pluginPath, plugin.url)
-              },
-              function () {
-                rimraf(fileFullPath, function (err) {
-                  if (err) return res.status(400).json({ success: false, error: err })
+    await rimraf(path.join(pluginPath, plugin.url))
 
-                  request.get(
-                    pluginServerUrl + '/api/plugin/package/' + plugin._id + '/increasedownloads',
-                    function () {
-                      res.json({ success: true, plugin: plugin })
-                      restartServer()
-                    }
-                  )
-                })
-              }
-            )
-          })
-        })
+    axios.get(pluginServerUrl + '/api/plugin/package/' + plugin._id + '/increasedownloads').catch(function () {})
 
-        response.on('error', function (err) {
-          return res.status(400).json({ success: false, error: err })
-        })
-      })
-      .on('error', function (err) {
-        return res.status(400).json({ success: false, error: err })
-      })
-  })
+    res.json({ success: true, plugin })
+    restartServer()
+  } catch (err) {
+    return res.status(400).json({ success: false, error: err.message })
+  }
 }
 
-apiPlugins.removePlugin = function (req, res) {
-  var packageid = req.params.packageid
+apiPlugins.removePlugin = async function (req, res) {
+  const packageid = req.params.packageid
 
-  request.get(pluginServerUrl + '/api/plugin/package/' + packageid, function (err, response, body) {
-    if (err) return res.status(400).json({ success: false, error: err })
-
-    var plugin = JSON.parse(body).plugin
+  try {
+    const response = await axios.get(pluginServerUrl + '/api/plugin/package/' + packageid)
+    const plugin = response.data.plugin
 
     if (plugin === null) {
       return res.json({ success: false, error: 'Invalid Plugin' })
     }
 
-    rimraf(path.join(pluginPath, plugin.name.toLowerCase()), function (err) {
-      if (err) winston.debug(err)
-      if (err)
-        return res.json({
-          success: false,
-          error: 'Unable to remove plugin directory.'
-        })
+    await rimraf(path.join(pluginPath, plugin.name.toLowerCase()))
 
-      res.json({ success: true })
-      restartServer()
-    })
-  })
+    res.json({ success: true })
+    restartServer()
+  } catch (err) {
+    if (err.message) winston.debug(err)
+    return res.status(400).json({ success: false, error: err.message })
+  }
 }
 
 function restartServer () {
-  var pm2 = require('pm2')
-  pm2.connect(function (err) {
-    if (err) {
-      winston.error(err)
-    }
-
-    pm2.restart('trudesk', function (err) {
-      if (err) {
-        return winston.error(err)
-      }
-
-      pm2.disconnect()
-    })
-  })
+  winston.info('Restarting server process...')
+  process.exit(0)
 }
 
 module.exports = apiPlugins

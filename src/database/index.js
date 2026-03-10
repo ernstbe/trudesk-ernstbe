@@ -33,11 +33,10 @@ let CONNECTION_URI = ''
 if (!mongoConnectionUri.username) {
   CONNECTION_URI =
     'mongodb://' + mongoConnectionUri.server + ':' + mongoConnectionUri.port + '/' + mongoConnectionUri.database
-  if (mongoConnectionUri.shard === true)
-    CONNECTION_URI = 'mongodb+srv://' + mongoConnectionUri.server + '/' + mongoConnectionUri.database
+  if (mongoConnectionUri.shard === true) { CONNECTION_URI = 'mongodb+srv://' + mongoConnectionUri.server + '/' + mongoConnectionUri.database }
 } else {
   mongoConnectionUri.password = encodeURIComponent(mongoConnectionUri.password)
-  if (mongoConnectionUri.shard === true)
+  if (mongoConnectionUri.shard === true) {
     CONNECTION_URI =
       'mongodb+srv://' +
       mongoConnectionUri.username +
@@ -47,7 +46,7 @@ if (!mongoConnectionUri.username) {
       mongoConnectionUri.server +
       '/' +
       mongoConnectionUri.database
-  else
+  } else {
     CONNECTION_URI =
       'mongodb://' +
       mongoConnectionUri.username +
@@ -59,6 +58,7 @@ if (!mongoConnectionUri.username) {
       mongoConnectionUri.port +
       '/' +
       mongoConnectionUri.database
+  }
 }
 
 if (process.env.TD_MONGODB_URI) CONNECTION_URI = process.env.TD_MONGODB_URI

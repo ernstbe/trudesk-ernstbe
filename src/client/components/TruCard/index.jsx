@@ -62,10 +62,10 @@ const TruCard = ({
         {header && (
           <div className={'tru-card-head ' + (extraHeadClass || '')}>
             {menu && (
-              <div className={'tru-card-head-menu'}>
-                <DropdownTrigger pos={'bottom-right'} mode={'click'}>
+              <div className='tru-card-head-menu'>
+                <DropdownTrigger pos='bottom-right' mode='click'>
                   <i className='material-icons tru-icon'>more_vert</i>
-                  <Dropdown small={true}>
+                  <Dropdown small>
                     {menu.map(child => {
                       return child
                     })}
@@ -74,7 +74,7 @@ const TruCard = ({
               </div>
             )}
             {/* HEADER TEXT */}
-            {header && <div className={'uk-text-center'}>{header}</div>}
+            {header && <div className='uk-text-center'>{header}</div>}
           </div>
         )}
         {/* Tru Card Content */}

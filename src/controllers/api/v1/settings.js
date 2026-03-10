@@ -12,15 +12,15 @@
 
  **/
 
-var _ = require('lodash')
-var emitter = require('../../../emitter')
-var winston = require('winston')
-var sanitizeHtml = require('sanitize-html')
-var SettingsSchema = require('../../../models/setting')
-var settingsUtil = require('../../../settings/settingsUtil')
+const _ = require('lodash')
+const emitter = require('../../../emitter')
+const winston = require('winston')
+const sanitizeHtml = require('sanitize-html')
+const SettingsSchema = require('../../../models/setting')
+const settingsUtil = require('../../../settings/settingsUtil')
 const socketEventConsts = require('../../../socketio/socketEventConsts')
 
-var apiSettings = {}
+const apiSettings = {}
 
 function defaultApiResponse (err, res) {
   if (err) return res.status(400).json({ success: false, error: err })
@@ -30,7 +30,7 @@ function defaultApiResponse (err, res) {
 
 apiSettings.getSettings = async function (req, res) {
   try {
-    var settings = await settingsUtil.getSettings()
+    const settings = await settingsUtil.getSettings()
 
     // Sanitize
     if (!req.user.role.isAdmin) {
@@ -56,7 +56,7 @@ apiSettings.getSettings = async function (req, res) {
       delete settings.data.mailTemplates
     }
 
-    return res.json({ success: true, settings: settings })
+    return res.json({ success: true, settings })
   } catch (err) {
     return res.status(400).json({ success: false, error: err })
   }
@@ -64,12 +64,12 @@ apiSettings.getSettings = async function (req, res) {
 
 apiSettings.getSingleSetting = async function (req, res) {
   try {
-    var settings = await settingsUtil.getSettings()
+    const settings = await settingsUtil.getSettings()
 
-    var setting = settings.data.settings[req.params.name]
+    const setting = settings.data.settings[req.params.name]
     if (!setting) return res.status(400).json({ success: false, error: 'invalid setting' })
 
-    return res.json({ success: true, setting: setting })
+    return res.json({ success: true, setting })
   } catch (err) {
     return res.status(400).json({ success: false, error: err })
   }
@@ -105,16 +105,16 @@ apiSettings.getSingleSetting = async function (req, res) {
  }
  */
 apiSettings.updateSetting = async function (req, res) {
-  var postData = req.body
+  let postData = req.body
   if (_.isUndefined(postData)) return res.status(400).json({ success: false, error: 'Invalid Post Data' })
 
   if (!_.isArray(postData)) postData = [postData]
 
   try {
-    var updatedSettings = []
+    const updatedSettings = []
 
-    for (var item of postData) {
-      var s = await SettingsSchema.getSettingByName(item.name)
+    for (const item of postData) {
+      let s = await SettingsSchema.getSettingByName(item.name)
       if (_.isNull(s) || _.isUndefined(s)) {
         s = new SettingsSchema({
           name: item.name
@@ -129,18 +129,18 @@ apiSettings.updateSetting = async function (req, res) {
 
       s.value = item.value
 
-      var savedSetting = await s.save()
+      const savedSetting = await s.save()
       updatedSettings.push(savedSetting)
     }
 
-    return res.json({ success: true, updatedSettings: updatedSettings })
+    return res.json({ success: true, updatedSettings })
   } catch (err) {
     return res.status(400).json({ success: false, error: err })
   }
 }
 
 apiSettings.testMailer = function (req, res) {
-  var mailer = require('../../../mailer')
+  const mailer = require('../../../mailer')
   mailer.verify(function (err) {
     if (err) {
       winston.debug(err)
@@ -153,13 +153,13 @@ apiSettings.testMailer = function (req, res) {
 
 apiSettings.updateTemplateSubject = async function (req, res) {
   try {
-    var templateSchema = require('../../../models/template')
-    var id = req.params.id
-    var subject = req.body.subject
+    const templateSchema = require('../../../models/template')
+    const id = req.params.id
+    let subject = req.body.subject
     if (!subject) return res.status(400).json({ sucess: false, error: 'Invalid PUT data' })
     subject = subject.trim()
 
-    var template = await templateSchema.findOne({ _id: id })
+    const template = await templateSchema.findOne({ _id: id })
     if (!template) return res.status(404).json({ success: false, error: 'No Template Found' })
 
     template.subject = subject
@@ -172,7 +172,7 @@ apiSettings.updateTemplateSubject = async function (req, res) {
 }
 
 apiSettings.buildsass = function (req, res) {
-  var buildsass = require('../../../sass/buildsass')
+  const buildsass = require('../../../sass/buildsass')
   buildsass.build(function (err) {
     return defaultApiResponse(err, res)
   })
@@ -182,19 +182,19 @@ apiSettings.updateRoleOrder = async function (req, res) {
   if (!req.body.roleOrder) return res.status(400).json({ success: false, error: 'Invalid PUT Data' })
 
   try {
-    var RoleOrderSchema = require('../../../models/roleorder')
-    var order = await RoleOrderSchema.getOrder()
+    const RoleOrderSchema = require('../../../models/roleorder')
+    let order = await RoleOrderSchema.getOrder()
     if (!order) {
       order = new RoleOrderSchema({
         order: req.body.roleOrder
       })
-      var savedOrder = await order.save()
+      const savedOrder = await order.save()
 
       emitter.emit(socketEventConsts.ROLES_FLUSH)
 
       return res.json({ success: true, roleOrder: savedOrder })
     } else {
-      var updatedOrder = await order.updateOrder(req.body.roleOrder)
+      const updatedOrder = await order.updateOrder(req.body.roleOrder)
 
       emitter.emit(socketEventConsts.ROLES_FLUSH)
 

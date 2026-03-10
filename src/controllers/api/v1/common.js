@@ -43,22 +43,21 @@ const commonV1 = {}
  *
  */
 commonV1.login = async function (req, res) {
-  var userModel = require('../../../models/user')
-  var username = req.body.username
-  var password = req.body.password
+  const userModel = require('../../../models/user')
+  const username = req.body.username
+  const password = req.body.password
 
   if (_.isUndefined(username) || _.isUndefined(password)) {
     return res.sendStatus(403)
   }
 
   try {
-    var user = await userModel.getUserByUsername(username)
+    const user = await userModel.getUserByUsername(username)
     if (!user) return res.status(401).json({ success: false, error: 'Invalid User' })
 
-    if (!userModel.validate(password, user.password))
-      return res.status(401).json({ success: false, error: 'Invalid Password' })
+    if (!userModel.validate(password, user.password)) { return res.status(401).json({ success: false, error: 'Invalid Password' }) }
 
-    var resUser = _.clone(user._doc)
+    const resUser = _.clone(user._doc)
     delete resUser.resetPassExpire
     delete resUser.resetPassHash
     delete resUser.password
@@ -114,8 +113,8 @@ commonV1.getLoggedInUser = function (req, res) {
  * var deviceToken = req.headers.devicetoken;
  */
 commonV1.logout = function (req, res) {
-  var deviceToken = req.headers.devicetoken
-  var user = req.user
+  const deviceToken = req.headers.devicetoken
+  const user = req.user
 
   async.series(
     [

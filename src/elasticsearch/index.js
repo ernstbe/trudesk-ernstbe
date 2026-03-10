@@ -17,7 +17,6 @@ const path = require('path')
 const nconf = require('nconf')
 const winston = require('../logger')
 const elasticsearch = require('@elastic/elasticsearch')
-const ESErrors = require('@elastic/elasticsearch').errors
 const emitter = require('../emitter')
 const moment = require('moment-timezone')
 const settingUtil = require('../settings/settingsUtil')
@@ -247,7 +246,7 @@ ES.rebuildIndex = async () => {
         FORK: 1,
         NODE_ENV: global.env,
         ELASTICSEARCH_INDEX_NAME: ES.indexName,
-        ELASTICSEARCH_URI: ELASTICSEARCH_URI,
+        ELASTICSEARCH_URI,
         MONGODB_URI: global.CONNECTION_URI
       }
     })

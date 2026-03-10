@@ -120,15 +120,14 @@ editor.assetsUpload = function (req, res) {
   })
 
   busboy.on('finish', function () {
-    if (error) return res.status(error.status).json({ success: false, error: error })
+    if (error) return res.status(error.status).json({ success: false, error })
 
     if (_.isUndefined(object.filename) || _.isUndefined(object.filePath)) {
       return res.status(400).json({ success: false, error: { message: 'Invalid Form Data' } })
     }
 
     // Everything Checks out lets make sure the file exists and then add it to the attachments array
-    if (!fs.existsSync(object.filePath))
-      return res.status(500).json({ success: false, error: { message: 'File Failed to Save to Disk' } })
+    if (!fs.existsSync(object.filePath)) { return res.status(500).json({ success: false, error: { message: 'File Failed to Save to Disk' } }) }
 
     const includePort = global.TRUDESK_PORT && global.TRUDESK_PORT !== (80 || 443)
 
@@ -155,8 +154,7 @@ editor.load = function (req, res) {
   templateSchema.get(req.params.id, function (err, template) {
     if (err) return res.status(400).json({ success: false, error: err })
 
-    if (!template)
-      return res.status(400).json({ success: false, invalid: true, error: { message: 'Invalid Template.' } })
+    if (!template) { return res.status(400).json({ success: false, invalid: true, error: { message: 'Invalid Template.' } }) }
 
     template.data.id = 'gjs-'
 
@@ -168,8 +166,8 @@ editor.save = function (req, res) {
   const name = req.body.template
   delete req.body.template
   templateSchema.findOneAndUpdate(
-    { name: name },
-    { name: name, data: req.body },
+    { name },
+    { name, data: req.body },
     { new: true, upsert: true },
     function (err, template) {
       if (err) return res.status(500).json({ success: false, error: err })

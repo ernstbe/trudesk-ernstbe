@@ -29,9 +29,9 @@ const DropdownTrigger = ({
   useEffect(() => {
     if (dropRef.current) {
       UIkit.dropdown(dropRef.current, {
-        mode: mode,
-        pos: pos,
-        offset: offset
+        mode,
+        pos,
+        offset
       })
     }
 
@@ -44,7 +44,7 @@ const DropdownTrigger = ({
     <div
       ref={dropRef}
       className={'uk-position-relative' + (extraClass ? ' ' + extraClass : '')}
-      aria-haspopup={true}
+      aria-haspopup
       aria-expanded={false}
     >
       {children}

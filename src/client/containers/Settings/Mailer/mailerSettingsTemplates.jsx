@@ -31,39 +31,39 @@ import ZoneBox from 'components/ZoneBox'
 
 const templateBody = ({ template, handleSaveSubject, handleOpenEditor, t }) => (
   <div>
-    <h3 className={'font-light mb-5'}>{t('settings.templateDescription')}</h3>
+    <h3 className='font-light mb-5'>{t('settings.templateDescription')}</h3>
     <p className='mb-10' style={{ fontSize: '13px' }}>
       {template.description}
     </p>
     <hr className='uk-margin-medium-bottom' />
     <form onSubmit={handleSaveSubject}>
-      <input name={'id'} type='hidden' value={template._id} />
+      <input name='id' type='hidden' value={template._id} />
       <div className='uk-input-group'>
         <div className='md-input-wrapper'>
           <label>{t('settings.mailSubject')}</label>
-          <input name={'subject'} type='text' className={'md-input'} defaultValue={template.subject} />
+          <input name='subject' type='text' className='md-input' defaultValue={template.subject} />
         </div>
         <span className='uk-input-group-addon'>
-          <Button type={'submit'} text={t('common.save')} small={true} />
+          <Button type='submit' text={t('common.save')} small />
         </span>
       </div>
     </form>
 
-    <Zone extraClass={'uk-margin-medium-top'}>
+    <Zone extraClass='uk-margin-medium-top'>
       <ZoneBox>
-        <div className={'uk-float-left'}>
+        <div className='uk-float-left'>
           <h6 style={{ margin: 0, fontSize: '16px', lineHeight: '14px' }}>{t('settings.editTemplate')}</h6>
-          <h5 className={'uk-text-muted'} style={{ margin: '2px 0 0 0', fontSize: '12px' }}>
+          <h5 className='uk-text-muted' style={{ margin: '2px 0 0 0', fontSize: '12px' }}>
             {t('settings.editTemplateHint')}
           </h5>
         </div>
         <div className='uk-float-right uk-width-1-3 uk-clearfix'>
           <div className='uk-width-1-1 uk-float-right' style={{ textAlign: 'right' }}>
             <button
-              className={'md-btn md-btn-small right disabled'}
+              className='md-btn md-btn-small right disabled'
               style={{ textTransform: 'none' }}
               onClick={handleOpenEditor}
-              disabled={true}
+              disabled
             >
               {t('settings.openEditor')}
             </button>
@@ -178,7 +178,7 @@ const MailerSettingsTemplates = ({ updateSetting, settings, t }) => {
         }
         component={
           <EnableSwitch
-            stateName={'emailBeta'}
+            stateName='emailBeta'
             label={t('settings.enable')}
             checked={betaEnabled}
             onChange={e => onEmailBetaChange(e)}
@@ -193,7 +193,7 @@ const MailerSettingsTemplates = ({ updateSetting, settings, t }) => {
             <strong> {t('settings.notificationTemplatesNote')}</strong>
           </div>
         }
-        rightComponent={<h4 className={'uk-display-block uk-text-danger mt-20 mr-20'}>{t('settings.betaFeature')}</h4>}
+        rightComponent={<h4 className='uk-display-block uk-text-danger mt-20 mr-20'>{t('settings.betaFeature')}</h4>}
         menuItems={mappedValues}
       />
     </div>

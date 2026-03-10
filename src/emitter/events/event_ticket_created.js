@@ -187,7 +187,8 @@ const saveNotification = async (user, ticket) => {
 
 module.exports = async data => {
   const ticketObject = data.ticket
-  const hostname = data.hostname
+  // eslint-disable-next-line no-unused-vars
+  const _hostname = data.hostname
 
   try {
     const ticket = await Ticket.getTicketById(ticketObject._id)

@@ -14,8 +14,6 @@
 
 const _ = require('lodash')
 const permissions = require('../permissions')
-const Department = require('../models/department')
-
 const departmentController = {}
 
 departmentController.get = function (req, res) {
@@ -25,7 +23,7 @@ departmentController.get = function (req, res) {
   }
 
   const content = {}
-  content.title = 'Departments'
+  content.title = 'Sachgebiete'
   content.nav = 'departments'
 
   content.data = {}

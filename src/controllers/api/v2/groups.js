@@ -12,42 +12,42 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-var apiUtils = require('../apiUtils')
-var Ticket = require('../../../models/ticket')
-var Group = require('../../../models/group')
-var Department = require('../../../models/department')
+const apiUtils = require('../apiUtils')
+const Ticket = require('../../../models/ticket')
+const Group = require('../../../models/group')
+const Department = require('../../../models/department')
 
-var apiGroups = {}
+const apiGroups = {}
 
 apiGroups.create = async function (req, res) {
-  var postGroup = req.body
+  const postGroup = req.body
   if (!postGroup) return apiUtils.sendApiError_InvalidPostData(res)
 
   try {
     let group = await Group.create(postGroup)
     group = await group.populate('members sendMailTo')
-    return apiUtils.sendApiSuccess(res, { group: group })
+    return apiUtils.sendApiSuccess(res, { group })
   } catch (err) {
     return apiUtils.sendApiError(res, 500, err.message)
   }
 }
 
 apiGroups.get = async function (req, res) {
-  var limit = Number(req.query.limit) || 50
-  var page = Number(req.query.page) || 0
-  var type = req.query.type || 'user'
+  const limit = Number(req.query.limit) || 50
+  const page = Number(req.query.page) || 0
+  const type = req.query.type || 'user'
 
   try {
     if (type === 'all') {
-      const groups = await Group.getWithObject({ limit: limit, page: page })
-      return apiUtils.sendApiSuccess(res, { groups: groups, count: groups.length })
+      const groups = await Group.getWithObject({ limit, page })
+      return apiUtils.sendApiSuccess(res, { groups, count: groups.length })
     } else {
       if (req.user.role.isAdmin || req.user.role.isAgent) {
         const groups = await Department.getDepartmentGroupsOfUser(req.user._id)
-        return apiUtils.sendApiSuccess(res, { groups: groups, count: groups.length })
+        return apiUtils.sendApiSuccess(res, { groups, count: groups.length })
       } else {
         const groups = await Group.getAllGroupsOfUser(req.user._id)
-        return apiUtils.sendApiSuccess(res, { groups: groups, count: groups.length })
+        return apiUtils.sendApiSuccess(res, { groups, count: groups.length })
       }
     }
   } catch (err) {
@@ -56,10 +56,10 @@ apiGroups.get = async function (req, res) {
 }
 
 apiGroups.update = async function (req, res) {
-  var id = req.params.id
+  const id = req.params.id
   if (!id) return apiUtils.sendApiError(res, 400, 'Invalid Group Id')
 
-  var putData = req.body
+  const putData = req.body
   if (!putData) return apiUtils.sendApiError_InvalidPostData(res)
 
   try {
@@ -72,14 +72,14 @@ apiGroups.update = async function (req, res) {
 
     group = await group.save()
     group = await group.populate('members sendMailTo')
-    return apiUtils.sendApiSuccess(res, { group: group })
+    return apiUtils.sendApiSuccess(res, { group })
   } catch (err) {
     return apiUtils.sendApiError(res, 500, err.message)
   }
 }
 
 apiGroups.delete = async function (req, res) {
-  var id = req.params.id
+  const id = req.params.id
   if (!id) return apiUtils.sendApiError_InvalidPostData(res)
 
   try {

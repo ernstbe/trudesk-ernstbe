@@ -44,16 +44,16 @@ function CreateStatusModal (props) {
 
     //  Form is valid... Submit..
     props.createStatus({
-      name: name,
-      htmlColor: htmlColor,
-      slatimer: slatimer,
-      isResolved: isResolved
+      name,
+      htmlColor,
+      slatimer,
+      isResolved
     })
   }, [name, htmlColor, slatimer, isResolved])
 
   return (
-    <BaseModal {...props} large={true}>
-      <form className={'uk-form-stacked'} onSubmit={e => onCreateStatusSubmit(e)}>
+    <BaseModal {...props} large>
+      <form className='uk-form-stacked' onSubmit={e => onCreateStatusSubmit(e)}>
         <div className='uk-margin-medium-bottom uk-clearfix'>
           <h2>{t('modals.createStatus.title')}</h2>
         </div>
@@ -65,7 +65,7 @@ function CreateStatusModal (props) {
                 <label>{t('modals.createStatus.statusName')}</label>
                 <input
                   type='text'
-                  className={'md-input'}
+                  className='md-input'
                   value={name}
                   onChange={e => setName(e.target.value)}
                   data-validation='length'
@@ -76,24 +76,24 @@ function CreateStatusModal (props) {
 
               <div className='uk-width-1-4'>
                 <ColorSelector
-                  hideRevert={true}
-                  defaultColor={'#29B995'}
-                  validationEnabled={true}
+                  hideRevert
+                  defaultColor='#29B995'
+                  validationEnabled
                   onChange={e => setHtmlColor(e.target.value)}
                 />
               </div>
-              <div className={'uk-width-1-4'}>
-                <div className={'uk-float-left'}>
+              <div className='uk-width-1-4'>
+                <div className='uk-float-left'>
                   <EnableSwitch
-                    stateName={'slatimer'}
+                    stateName='slatimer'
                     label={t('modals.createStatus.sla')}
                     checked={slatimer}
                     onChange={e => setSlatimer(e.target.checked)}
                   />
                 </div>
-                <div className={'uk-float-left'}>
+                <div className='uk-float-left'>
                   <EnableSwitch
-                    stateName={'isResolved'}
+                    stateName='isResolved'
                     label={t('modals.createStatus.isResolved')}
                     checked={isResolved}
                     onChange={e => setIsResolved(e.target.checked)}
@@ -102,8 +102,8 @@ function CreateStatusModal (props) {
               </div>
             </div>
             <div className='uk-modal-footer uk-text-right'>
-              <Button text={t('common.cancel')} type={'button'} extraClass={'uk-modal-close'} flat={true} waves={true} />
-              <Button text={t('common.create')} type={'submit'} flat={true} waves={true} style={'success'} />
+              <Button text={t('common.cancel')} type='button' extraClass='uk-modal-close' flat waves />
+              <Button text={t('common.create')} type='submit' flat waves style='success' />
             </div>
           </div>
         </div>

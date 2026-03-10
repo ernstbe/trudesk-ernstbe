@@ -16,7 +16,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 
 const SettingSubItem = ({ parentClass = '', title, titleCss, subtitle, component, tooltip }) => {
-  const headCss = titleCss ? titleCss : { fontWeight: 'normal' }
+  const headCss = titleCss || { fontWeight: 'normal' }
   return (
     <div className={parentClass}>
       <div className='uk-float-left uk-width-1-2'>

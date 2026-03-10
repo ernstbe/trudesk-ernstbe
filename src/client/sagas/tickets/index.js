@@ -268,7 +268,7 @@ function * transferToThirdParty ({ payload }) {
   try {
     const response = yield call(api.tickets.transferToThirdParty, payload)
     yield put({ type: TRANSFER_TO_THIRDPARTY.SUCCESS, response })
-    helpers.UI.showSnackbar(`Ticket Transferred Successfully`, false)
+    helpers.UI.showSnackbar('Ticket Transferred Successfully', false)
   } catch (error) {
     const errorText = error.response ? error.response.data.error : error
     if (error.response && error.response.status !== (401 || 403)) {

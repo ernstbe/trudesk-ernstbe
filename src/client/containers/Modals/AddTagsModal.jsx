@@ -34,12 +34,11 @@ const AddTagsModal = ({ ticketId, currentTags, tagsSettings, getTagsWithPage, so
 
   useEffect(() => {
     getTagsWithPage({ limit: -1, page: 0 })
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     helpers.setupChosen()
-    if (!$(selectRef.current).val() && currentTags && currentTags.length > 0)
-      $(selectRef.current).val(currentTags)
+    if (!$(selectRef.current).val() && currentTags && currentTags.length > 0) { $(selectRef.current).val(currentTags) }
 
     $(selectRef.current).trigger('chosen:updated')
   })
@@ -100,7 +99,7 @@ const AddTagsModal = ({ ticketId, currentTags, tagsSettings, getTagsWithPage, so
 
   return (
     <BaseModal options={{ bgclose: false }}>
-      <div className={'uk-clearfix'}>
+      <div className='uk-clearfix'>
         <h5 style={{ fontWeight: 300 }}>{t('modals.addTags.title')}</h5>
         <div>
           <form className='nomargin' onSubmit={e => onSubmit(e)}>
@@ -129,26 +128,26 @@ const AddTagsModal = ({ ticketId, currentTags, tagsSettings, getTagsWithPage, so
 
             <div className='left' style={{ marginTop: 15 }}>
               <Button
-                type={'button'}
+                type='button'
                 text={t('tickets.clear')}
-                small={true}
-                flat={true}
-                style={'danger'}
+                small
+                flat
+                style='danger'
                 onClick={e => onClearClicked(e)}
               />
             </div>
             <div className='right' style={{ marginTop: 15 }}>
               <Button
-                type={'button'}
+                type='button'
                 text={t('common.cancel')}
-                style={'secondary'}
-                small={true}
-                flat={true}
-                waves={true}
-                extraClass={'uk-modal-close'}
+                style='secondary'
+                small
+                flat
+                waves
+                extraClass='uk-modal-close'
                 ref={closeButtonRef}
               />
-              <Button type={'submit'} text={t('modals.addTags.saveTags')} style={'success'} small={true} waves={true} />
+              <Button type='submit' text={t('modals.addTags.saveTags')} style='success' small waves />
             </div>
           </form>
         </div>

@@ -12,7 +12,6 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-const async = require('async')
 const _ = require('lodash')
 const userSchema = require('../models/user')
 const groupSchema = require('../models/group')
@@ -22,7 +21,7 @@ const groupsController = {}
 
 groupsController.content = {}
 
-groupsController.get = function (req, res) {
+groupsController.get = async function (req, res) {
   const user = req.user
   if (_.isUndefined(user) || !permissions.canThis(user.role, 'groups:view')) {
     req.flash('message', 'Permission Denied.')
@@ -30,7 +29,7 @@ groupsController.get = function (req, res) {
   }
 
   const content = {}
-  content.title = 'Groups'
+  content.title = 'Gruppen'
   content.nav = 'groups'
 
   content.data = {}
@@ -39,22 +38,20 @@ groupsController.get = function (req, res) {
   content.data.groups = {}
   content.data.users = []
 
-  groupSchema.getAllGroups(function (err, groups) {
-    if (err) handleError(res, err)
-
+  try {
+    const groups = await groupSchema.getAllGroups()
     content.data.groups = _.sortBy(groups, 'name')
 
-    userSchema.findAll(function (err, users) {
-      if (err) handleError(res, err)
+    const users = await userSchema.findAll()
+    content.data.users = _.sortBy(users, 'fullname')
 
-      content.data.users = _.sortBy(users, 'fullname')
-
-      res.render('groups', content)
-    })
-  })
+    return res.render('groups', content)
+  } catch (err) {
+    return res.render('error', { layout: false, error: err, message: err.message })
+  }
 }
 
-groupsController.getCreate = function (req, res) {
+groupsController.getCreate = async function (req, res) {
   const user = req.user
   if (_.isUndefined(user) || !permissions.canThis(user.role, 'groups:create')) {
     req.flash('message', 'Permission Denied.')
@@ -62,7 +59,7 @@ groupsController.getCreate = function (req, res) {
   }
 
   const content = {}
-  content.title = 'Groups'
+  content.title = 'Gruppen'
   content.nav = 'groups'
 
   content.data = {}
@@ -71,16 +68,17 @@ groupsController.getCreate = function (req, res) {
   content.data.groups = {}
   content.data.users = []
 
-  userSchema.findAll(function (err, users) {
-    if (err) return handleError(res, err)
-
+  try {
+    const users = await userSchema.findAll()
     content.data.users = _.sortBy(users, 'fullname')
 
-    res.render('subviews/createGroup', content)
-  })
+    return res.render('subviews/createGroup', content)
+  } catch (err) {
+    return res.render('error', { layout: false, error: err, message: err.message })
+  }
 }
 
-groupsController.edit = function (req, res) {
+groupsController.edit = async function (req, res) {
   const user = req.user
   if (_.isUndefined(user) || !permissions.canThis(user.role, 'groups:edit')) {
     req.flash('message', 'Permission Denied.')
@@ -88,7 +86,7 @@ groupsController.edit = function (req, res) {
   }
 
   const content = {}
-  content.title = 'Groups'
+  content.title = 'Gruppen'
   content.nav = 'groups'
 
   content.data = {}
@@ -98,41 +96,16 @@ groupsController.edit = function (req, res) {
   const groupId = req.params.id
   if (_.isUndefined(groupId)) return res.redirect('/groups/')
 
-  async.parallel(
-    {
-      users: function (next) {
-        userSchema.findAll(function (err, users) {
-          if (err) return next(err)
+  try {
+    const users = await userSchema.findAll()
+    const group = await groupSchema.getGroupById(groupId)
 
-          next(null, users)
-        })
-      },
-      group: function (next) {
-        groupSchema.getGroupById(groupId, function (err, group) {
-          if (err) return next(err)
+    content.data.users = _.sortBy(users, 'fullname')
+    content.data.group = group
 
-          next(null, group)
-        })
-      }
-    },
-    function (err, done) {
-      if (err) return handleError(res, err)
-
-      content.data.users = _.sortBy(done.users, 'fullname')
-      content.data.group = done.group
-
-      res.render('subviews/editGroup', content)
-    }
-  )
-}
-
-function handleError (res, err) {
-  if (err) {
-    return res.render('error', {
-      layout: false,
-      error: err,
-      message: err.message
-    })
+    return res.render('subviews/editGroup', content)
+  } catch (err) {
+    return res.render('error', { layout: false, error: err, message: err.message })
   }
 }
 

@@ -61,7 +61,7 @@ function EditTeamModal (props) {
 
     const payload = {
       _id: team._id,
-      name: name,
+      name,
       members: membersSelectRef.current.getSelected() || []
     }
 
@@ -82,23 +82,23 @@ function EditTeamModal (props) {
   return (
     <BaseModal {...props} options={{ bgclose: false }}>
       <SpinLoader active={props.accountsLoading} />
-      <div className={'mb-25'}>
+      <div className='mb-25'>
         <h2>{t('modals.editTeam.title')}</h2>
       </div>
-      <form className={'uk-form-stacked'} onSubmit={e => onSaveTeamEdit(e)}>
-        <div className={'uk-margin-medium-bottom'}>
+      <form className='uk-form-stacked' onSubmit={e => onSaveTeamEdit(e)}>
+        <div className='uk-margin-medium-bottom'>
           <label>{t('modals.createTeam.teamName')}</label>
           <input
             type='text'
-            className={'md-input'}
+            className='md-input'
             value={name}
             onChange={e => onInputChange(e)}
             data-validation='length'
-            data-validation-length={'2-25'}
+            data-validation-length='2-25'
             data-validation-error-msg={t('modals.createTeam.validName')}
           />
         </div>
-        <div className={'uk-margin-medium-bottom'}>
+        <div className='uk-margin-medium-bottom'>
           <label style={{ marginBottom: 5 }}>{t('modals.createTeam.teamMembers')}</label>
           <MultiSelect
             items={mappedAccounts}
@@ -108,8 +108,8 @@ function EditTeamModal (props) {
           />
         </div>
         <div className='uk-modal-footer uk-text-right'>
-          <Button text={t('common.close')} flat={true} waves={true} extraClass={'uk-modal-close'} />
-          <Button text={t('modals.editTeam.saveButton')} flat={true} waves={true} style={'primary'} type={'submit'} />
+          <Button text={t('common.close')} flat waves extraClass='uk-modal-close' />
+          <Button text={t('modals.editTeam.saveButton')} flat waves style='primary' type='submit' />
         </div>
       </form>
     </BaseModal>

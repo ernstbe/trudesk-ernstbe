@@ -42,15 +42,15 @@ function CreatePriorityModal (props) {
 
     //  Form is valid... Submit..
     props.createPriority({
-      name: name,
-      overdueIn: overdueIn,
-      htmlColor: htmlColor
+      name,
+      overdueIn,
+      htmlColor
     })
   }, [name, overdueIn, htmlColor])
 
   return (
     <BaseModal {...props}>
-      <form className={'uk-form-stacked'} onSubmit={e => onCreatePrioritySubmit(e)}>
+      <form className='uk-form-stacked' onSubmit={e => onCreatePrioritySubmit(e)}>
         <div className='uk-margin-medium-bottom uk-clearfix'>
           <h2>{t('modals.createPriority.title')}</h2>
         </div>
@@ -62,7 +62,7 @@ function CreatePriorityModal (props) {
                 <label>{t('modals.createPriority.priorityName')}</label>
                 <input
                   type='text'
-                  className={'md-input'}
+                  className='md-input'
                   value={name}
                   onChange={e => setName(e.target.value)}
                   data-validation='length'
@@ -74,7 +74,7 @@ function CreatePriorityModal (props) {
                 <label>{t('modals.createPriority.slaOverdue')}</label>
                 <input
                   type='text'
-                  className={'md-input'}
+                  className='md-input'
                   value={overdueIn}
                   onChange={e => setOverdueIn(e.target.value)}
                   data-validation='number'
@@ -84,16 +84,16 @@ function CreatePriorityModal (props) {
               </div>
               <div className='uk-width-1-3'>
                 <ColorSelector
-                  hideRevert={true}
-                  defaultColor={'#29B995'}
-                  validationEnabled={true}
+                  hideRevert
+                  defaultColor='#29B995'
+                  validationEnabled
                   onChange={e => setHtmlColor(e.target.value)}
                 />
               </div>
             </div>
             <div className='uk-modal-footer uk-text-right'>
-              <Button text={t('common.cancel')} type={'button'} extraClass={'uk-modal-close'} flat={true} waves={true} />
-              <Button text={t('common.create')} type={'submit'} flat={true} waves={true} style={'success'} />
+              <Button text={t('common.cancel')} type='button' extraClass='uk-modal-close' flat waves />
+              <Button text={t('common.create')} type='submit' flat waves style='success' />
             </div>
           </div>
         </div>

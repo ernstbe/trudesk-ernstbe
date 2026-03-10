@@ -11,12 +11,12 @@
  *  Updated:    1/20/19 4:43 PM
  *  Copyright (c) 2014-2019. All rights reserved.
  */
-var _ = require('lodash')
-var winston = require('../logger')
-var utils = require('../helpers/utils')
-var socketEvents = require('./socketEventConsts')
+const _ = require('lodash')
+const winston = require('../logger')
+const utils = require('../helpers/utils')
+const socketEvents = require('./socketEventConsts')
 
-var events = {}
+const events = {}
 
 function register (socket) {
   events.updateNotifications(socket)
@@ -54,9 +54,9 @@ async function updateNotifications (socket) {
 }
 
 async function updateAllNotifications (socket) {
-  var notificationSchema = require('../models/notification')
+  const notificationSchema = require('../models/notification')
   try {
-    var notifications = {}
+    const notifications = {}
     const items = await notificationSchema.findAllForUser(socket.request.user._id)
     notifications.items = items
 
@@ -81,7 +81,7 @@ events.updateAllNotifications = function (socket) {
 events.markNotificationRead = function (socket) {
   socket.on(socketEvents.NOTIFICATIONS_MARK_READ, async function (_id) {
     if (_.isUndefined(_id)) return true
-    var notificationSchema = require('../models/notification')
+    const notificationSchema = require('../models/notification')
     try {
       const notification = await notificationSchema.getNotification(_id)
       await notification.markRead()
@@ -95,13 +95,13 @@ events.markNotificationRead = function (socket) {
 
 events.clearNotifications = function (socket) {
   socket.on(socketEvents.NOTIFICATIONS_CLEAR, async function () {
-    var userId = socket.request.user._id
+    const userId = socket.request.user._id
     if (_.isUndefined(userId)) return true
-    var notifications = {}
+    const notifications = {}
     notifications.items = []
     notifications.count = 0
 
-    var notificationSchema = require('../models/notification')
+    const notificationSchema = require('../models/notification')
     try {
       await notificationSchema.clearNotifications(userId)
       utils.sendToSelf(socket, socketEvents.UPDATE_NOTIFICATIONS, notifications)
@@ -112,7 +112,7 @@ events.clearNotifications = function (socket) {
 }
 
 module.exports = {
-  events: events,
-  eventLoop: eventLoop,
-  register: register
+  events,
+  eventLoop,
+  register
 }

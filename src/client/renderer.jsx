@@ -31,6 +31,17 @@ import MessagesContainer from 'containers/Messages'
 import ReportsContainer from 'containers/Reports'
 import AboutContainer from 'containers/About'
 
+// Track React 18 roots for cleanup in ajaxify
+window.react.roots = window.react.roots || {}
+
+function mountRoot (id, element) {
+  const el = document.getElementById(id)
+  if (!el) return
+  const root = createRoot(el)
+  root.render(element)
+  window.react.roots[id] = root
+}
+
 export default function (store) {
   if (document.getElementById('dashboard-container')) {
     const DashboardContainerWithProvider = (
@@ -39,7 +50,7 @@ export default function (store) {
       </Provider>
     )
 
-    createRoot(document.getElementById('dashboard-container')).render(DashboardContainerWithProvider)
+    mountRoot('dashboard-container', DashboardContainerWithProvider)
   }
 
   if (document.getElementById('tickets-container')) {
@@ -54,7 +65,7 @@ export default function (store) {
       </Provider>
     )
 
-    createRoot(document.getElementById('tickets-container')).render(TicketsContainerWithProvider)
+    mountRoot('tickets-container', TicketsContainerWithProvider)
   }
 
   if (document.getElementById('single-ticket-container')) {
@@ -66,120 +77,98 @@ export default function (store) {
       </Provider>
     )
 
-    createRoot(document.getElementById('single-ticket-container')).render(SingleTicketContainerWithProvider)
+    mountRoot('single-ticket-container', SingleTicketContainerWithProvider)
   }
 
   if (document.getElementById('profile-container')) {
-    const ProfileContainerWithProvider = (
+    mountRoot('profile-container',
       <Provider store={store}>
         <ProfileContainer />
       </Provider>
     )
-
-    createRoot(document.getElementById('profile-container')).render(ProfileContainerWithProvider)
   }
 
   if (document.getElementById('accounts-container')) {
     const title = document.getElementById('accounts-container').getAttribute('data-title')
     const view = document.getElementById('accounts-container').getAttribute('data-view')
-    const AccountsContainerWithProvider = (
+    mountRoot('accounts-container',
       <Provider store={store}>
         <AccountsContainer title={title} view={view} />
       </Provider>
     )
-
-    createRoot(document.getElementById('accounts-container')).render(AccountsContainerWithProvider)
   }
 
   if (document.getElementById('accounts-import-container')) {
-    const AccountsImportContainerWithProvider = (
+    mountRoot('accounts-import-container',
       <Provider store={store}>
         <AccountsImportContainer />
       </Provider>
     )
-
-    createRoot(document.getElementById('accounts-import-container')).render(AccountsImportContainerWithProvider)
   }
 
   if (document.getElementById('groups-container')) {
-    const GroupsContainerWithProvider = (
+    mountRoot('groups-container',
       <Provider store={store}>
         <GroupsContainer />
       </Provider>
     )
-
-    createRoot(document.getElementById('groups-container')).render(GroupsContainerWithProvider)
   }
 
   if (document.getElementById('teams-container')) {
-    const TeamsContainerWithProvider = (
+    mountRoot('teams-container',
       <Provider store={store}>
         <TeamsContainer />
       </Provider>
     )
-
-    createRoot(document.getElementById('teams-container')).render(TeamsContainerWithProvider)
   }
 
   if (document.getElementById('departments-container')) {
-    const TeamsContainerWithProvider = (
+    mountRoot('departments-container',
       <Provider store={store}>
         <DepartmentsContainer />
       </Provider>
     )
-
-    createRoot(document.getElementById('departments-container')).render(TeamsContainerWithProvider)
   }
 
   if (document.getElementById('messages-container')) {
     const conversation = document.getElementById('messages-container').getAttribute('data-conversation-id')
     const showNewConversation = document.getElementById('messages-container').getAttribute('data-show-new-convo')
-    const MessagesContainterWithProvider = (
+    mountRoot('messages-container',
       <Provider store={store}>
         <MessagesContainer initialConversation={conversation} showNewConvo={showNewConversation} />
       </Provider>
     )
-
-    createRoot(document.getElementById('messages-container')).render(MessagesContainterWithProvider)
   }
 
   if (document.getElementById('notices-container')) {
-    const NoticeContainerWithProvider = (
+    mountRoot('notices-container',
       <Provider store={store}>
         <NoticeContainer />
       </Provider>
     )
-
-    createRoot(document.getElementById('notices-container')).render(NoticeContainerWithProvider)
   }
 
   if (document.getElementById('reports-container')) {
-    const ReportsContainerWithProvider = (
+    mountRoot('reports-container',
       <Provider store={store}>
         <ReportsContainer />
       </Provider>
     )
-
-    createRoot(document.getElementById('reports-container')).render(ReportsContainerWithProvider)
   }
 
   if (document.getElementById('settings-container')) {
-    const SettingsContainerWithProvider = (
+    mountRoot('settings-container',
       <Provider store={store}>
         <SettingsContainer />
       </Provider>
     )
-
-    createRoot(document.getElementById('settings-container')).render(SettingsContainerWithProvider)
   }
 
   if (document.getElementById('about-container')) {
-    const AboutContainerWithProvider = (
+    mountRoot('about-container',
       <Provider store={store}>
         <AboutContainer />
       </Provider>
     )
-
-    createRoot(document.getElementById('about-container')).render(AboutContainerWithProvider)
   }
 }

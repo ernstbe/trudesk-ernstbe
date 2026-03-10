@@ -17,9 +17,9 @@ import clsx from 'clsx'
 
 const TruTabSelector = ({ label, active = false, selectorId, showBadge = false, badgeText }) => {
   return (
-    <Fragment>
+    <>
       <a
-        role={'button'}
+        role='button'
         className={clsx('tru-tab-selector no-ajaxy', active && 'active')}
         data-tabid={selectorId}
         onClick={e => e.preventDefault()}
@@ -27,7 +27,7 @@ const TruTabSelector = ({ label, active = false, selectorId, showBadge = false, 
         {label}
         {showBadge && <span className='uk-badge uk-badge-grey uk-badge-small'>{badgeText}</span>}
       </a>
-    </Fragment>
+    </>
   )
 }
 

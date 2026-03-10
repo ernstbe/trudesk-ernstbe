@@ -13,19 +13,19 @@
  */
 
 define('pages/plugins', ['jquery', 'modules/helpers', 'tether', 'history'], function ($, helpers, Tether) {
-  var pluginsPage = {}
+  const pluginsPage = {}
 
   pluginsPage.init = function (callback) {
     $(document).ready(function () {
-      var $searchPluginList = $('#search_plugin_list')
+      const $searchPluginList = $('#search_plugin_list')
       $searchPluginList.off('keyup')
       $searchPluginList.on('keyup', function () {
-        var value = this.value.toLowerCase()
+        const value = this.value.toLowerCase()
         $('table#plugin_list_table')
           .find('tbody')
           .find('tr')
           .each(function () {
-            var id = $(this)
+            const id = $(this)
               .find('td')
               .text()
               .toLowerCase()

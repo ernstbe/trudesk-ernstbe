@@ -19,13 +19,13 @@ const TableHeader = ({ width, height, padding, textAlign = 'left', text, compone
   return (
     <th
       style={{
-        width: width,
-        padding: padding,
-        height: height,
+        width,
+        padding,
+        height,
         verticalAlign: 'middle',
         fontSize: 12,
         textTransform: 'uppercase',
-        textAlign: textAlign
+        textAlign
       }}
     >
       {component}

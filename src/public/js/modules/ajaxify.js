@@ -151,7 +151,7 @@ define('modules/ajaxify', ['jquery', 'lodash', 'modules/helpers', 'history'], fu
       // Ajax Request the Traditional Page
 
       $.ajax({
-        url: url,
+        url,
         success: function (data) {
           // Prepare
           const $data = $(documentHtml(data))
@@ -176,38 +176,30 @@ define('modules/ajaxify', ['jquery', 'lodash', 'modules/helpers', 'history'], fu
             let $oldContent = $('#page-content')
             $oldContent.find('*').off('click click.chosen mouseup mousemove mousedown change')
 
-            // Manually Unload React components from renders
-            if (document.getElementById('dashboard-container'))
-              window.react.dom.unmountComponentAtNode(document.getElementById('dashboard-container'))
-            if (document.getElementById('tickets-container'))
-              window.react.dom.unmountComponentAtNode(document.getElementById('tickets-container'))
-            if (document.getElementById('single-ticket-container'))
-              window.react.dom.unmountComponentAtNode(document.getElementById('single-ticket-container'))
-            if (document.getElementById('settings-container'))
-              window.react.dom.unmountComponentAtNode(document.getElementById('settings-container'))
-            if (document.getElementById('profile-container'))
-              window.react.dom.unmountComponentAtNode(document.getElementById('profile-container'))
-            if (document.getElementById('accounts-container'))
-              window.react.dom.unmountComponentAtNode(document.getElementById('accounts-container'))
-            if (document.getElementById('accounts-import-container'))
-              window.react.dom.unmountComponentAtNode(document.getElementById('accounts-import-container'))
-            if (document.getElementById('groups-container'))
-              window.react.dom.unmountComponentAtNode(document.getElementById('groups-container'))
-            if (document.getElementById('teams-container'))
-              window.react.dom.unmountComponentAtNode(document.getElementById('teams-container'))
-            if (document.getElementById('departments-container'))
-              window.react.dom.unmountComponentAtNode(document.getElementById('departments-container'))
-            if (document.getElementById('notices-container'))
-              window.react.dom.unmountComponentAtNode(document.getElementById('notices-container'))
-            if (document.getElementById('messages-container'))
-              window.react.dom.unmountComponentAtNode(document.getElementById('messages-container'))
-            if (document.getElementById('reports-container'))
-              window.react.dom.unmountComponentAtNode(document.getElementById('reports-container'))
-            if (document.getElementById('about-container'))
-              window.react.dom.unmountComponentAtNode(document.getElementById('about-container'))
-
-            // if (document.getElementById('modal-wrapper'))
-            //   window.react.dom.unmountComponentAtNode(document.getElementById('modal-wrapper'))
+            // Manually Unload React components from renders (React 18 root API)
+            const reactRoots = window.react.roots || {}
+            const containerIds = [
+              'dashboard-container',
+              'tickets-container',
+              'single-ticket-container',
+              'settings-container',
+              'profile-container',
+              'accounts-container',
+              'accounts-import-container',
+              'groups-container',
+              'teams-container',
+              'departments-container',
+              'notices-container',
+              'messages-container',
+              'reports-container',
+              'about-container'
+            ]
+            containerIds.forEach(function (id) {
+              if (reactRoots[id]) {
+                reactRoots[id].unmount()
+                delete reactRoots[id]
+              }
+            })
 
             // Update the content
             $content.stop(true, true)
@@ -246,8 +238,7 @@ define('modules/ajaxify', ['jquery', 'lodash', 'modules/helpers', 'history'], fu
             })
 
             // Complete the change
-            if ($body.ScrollTo || false)
-              $body.ScrollTo(scrollOptions) /* http://balupton.com/projects/jquery-scrollto */
+            if ($body.ScrollTo || false) { $body.ScrollTo(scrollOptions) } /* http://balupton.com/projects/jquery-scrollto */
             $body.removeClass('loading')
             $window.trigger(completedEventName)
 

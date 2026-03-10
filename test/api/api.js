@@ -1,11 +1,10 @@
 /* eslint-disable no-unused-expressions */
 /* globals server */
-var expect = require('chai').expect
-var request = require('supertest')
+const request = require('supertest')
 
 describe('api/api.js', function () {
   it('should return 401 for failed login', function (done) {
-    var user = { username: 'test', password: '' }
+    const user = { username: 'test', password: '' }
     request(server)
       .post('/api/v1/login')
       .send(user)
@@ -13,7 +12,7 @@ describe('api/api.js', function () {
   })
 
   it('should login', function (done) {
-    var user = { username: 'trudesk', password: '$2a$04$350Dkwcq9EpJLFhbeLB0buFcyFkI9q3edQEPpy/zqLjROMD9LPToW' }
+    const user = { username: 'trudesk', password: '$2a$04$350Dkwcq9EpJLFhbeLB0buFcyFkI9q3edQEPpy/zqLjROMD9LPToW' }
     request(server)
       .post('/api/v1/login')
       .send(user)

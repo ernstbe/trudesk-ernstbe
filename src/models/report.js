@@ -9,10 +9,10 @@
  ========================================================================
  */
 
-var mongoose = require('mongoose')
-var _ = require('lodash')
+const mongoose = require('mongoose')
+const _ = require('lodash')
 
-var COLLECTION = 'reports'
+const COLLECTION = 'reports'
 
 /**
  * @since 1.0
@@ -31,7 +31,7 @@ var COLLECTION = 'reports'
  * @property {Number} status ```Required``` [default:0] Status of report.
  * @property {Array} data ```Required``` Data for the given report. *Based on report type*
  */
-var reportSchema = mongoose.Schema({
+const reportSchema = mongoose.Schema({
   uid: { type: Number, required: true, unique: true },
   name: { type: String, required: true },
   type: { type: Number, required: true },
@@ -43,8 +43,8 @@ var reportSchema = mongoose.Schema({
 reportSchema.pre('save', async function () {
   if (!_.isUndefined(this.uid) || this.uid) return
 
-  var c = require('./counters')
-  var res = await c.increment('reports')
+  const c = require('./counters')
+  const res = await c.increment('reports')
 
   this.uid = res.next
 
@@ -95,20 +95,18 @@ reportSchema.statics.getReports = async function () {
 // };
 
 reportSchema.statics.getReportByType = async function (type) {
-  if (_.isUndefined(type) || _.isNull(type))
-    throw new Error('Invalid Report Type - ReportSchema.GetReportByType();')
+  if (_.isUndefined(type) || _.isNull(type)) { throw new Error('Invalid Report Type - ReportSchema.GetReportByType();') }
 
   return this.model(COLLECTION)
-    .find({ type: type })
+    .find({ type })
     .exec()
 }
 
 reportSchema.statics.getReportByStatus = async function (status) {
-  if (_.isUndefined(status) || _.isNull(status))
-    throw new Error('Invalid Report Status - ReportSchema.GetReportByStatus();')
+  if (_.isUndefined(status) || _.isNull(status)) { throw new Error('Invalid Report Status - ReportSchema.GetReportByStatus();') }
 
   return this.model(COLLECTION)
-    .find({ status: status })
+    .find({ status })
     .exec()
 }
 

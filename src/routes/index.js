@@ -374,23 +374,9 @@ function mainRoutes (router, middleware, controllers) {
   router.post('/api/v1/admin/restart', middleware.csrfCheck, middleware.api, middleware.isAdmin, function (req, res) {
     if (process.env.DISABLE_RESTART) return res.json({ success: true })
 
-    const pm2 = require('pm2')
-    pm2.connect(function (err) {
-      if (err) {
-        winston.error(err)
-        res.status(400).send(err)
-        return
-      }
-      pm2.restart('trudesk', function (err) {
-        if (err) {
-          res.status(400).send(err)
-          return winston.error(err)
-        }
-
-        pm2.disconnect()
-        res.json({ success: true })
-      })
-    })
+    res.json({ success: true })
+    winston.info('Restarting server process...')
+    process.exit(0)
   })
 
   if (global.env === 'development') {
@@ -410,23 +396,9 @@ function mainRoutes (router, middleware, controllers) {
 
     router.get('/debug/restart', function (req, res) {
       if (process.env.DISABLE_RESTART) return res.send('RESTART DISABLED')
-      const pm2 = require('pm2')
-      pm2.connect(function (err) {
-        if (err) {
-          winston.error(err)
-          res.status(400).send(err)
-          return
-        }
-        pm2.restart('trudesk', function (err) {
-          if (err) {
-            res.status(400).send(err)
-            return winston.error(err)
-          }
-
-          pm2.disconnect()
-          res.send('OK')
-        })
-      })
+      res.send('OK')
+      winston.info('Restarting server process (debug)...')
+      process.exit(0)
     })
   }
 }
@@ -463,26 +435,20 @@ module.exports = function (app, middleware) {
   app.use(handleErrors)
 }
 
-function handleErrors (err, req, res) {
+function handleErrors (err, req, res, next) {
   const status = err.status || 500
-  res.status(err.status)
+  res.status(status)
 
-  if (status === 429) {
-    res.render('429', { layout: false })
-    return
+  winston.warn(err.stack || err.message)
+
+  // Return JSON for API requests
+  if (req.path.startsWith('/api/')) {
+    return res.json({ success: false, error: err.message || 'Internal Server Error' })
   }
 
-  if (status === 500) {
-    res.render('500', { layout: false })
-    return
-  }
-
-  if (status === 503) {
-    res.render('503', { layout: false })
-    return
-  }
-
-  winston.warn(err.stack)
+  if (status === 429) return res.render('429', { layout: false })
+  if (status === 500) return res.render('500', { layout: false })
+  if (status === 503) return res.render('503', { layout: false })
 
   res.render('error', {
     message: err.message,
@@ -492,5 +458,8 @@ function handleErrors (err, req, res) {
 }
 
 function handle404 (req, res) {
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ success: false, error: 'Not Found' })
+  }
   return res.status(404).render('404', { layout: false })
 }

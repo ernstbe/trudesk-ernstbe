@@ -12,20 +12,20 @@
 
  **/
 
-var _ = require('lodash')
-var async = require('async')
-var winston = require('../logger')
-var semver = require('semver')
-var moment = require('moment')
-var version = require('../../package.json').version
+const _ = require('lodash')
+const async = require('async')
+const winston = require('../logger')
+const semver = require('semver')
+const moment = require('moment')
+const version = require('../../package.json').version
 
-var SettingsSchema = require('../models/setting')
-var userSchema = require('../models/user')
-var roleSchema = require('../models/role')
-var database = require('../database')
+const SettingsSchema = require('../models/setting')
+const userSchema = require('../models/user')
+const roleSchema = require('../models/role')
+const database = require('../database')
 const path = require('path')
 
-var migrations = {}
+const migrations = {}
 
 function performBackup (dbVersion, callback) {
   const child = require('child_process').fork(path.join(__dirname, '../../src/backup/backup'), {
@@ -60,7 +60,7 @@ function performBackup (dbVersion, callback) {
 
   child.on('close', function () {
     if (!result) {
-      return callback({ success: false, error: 'An Unknown Error Occurred' })
+      return callback({ success: false, error: 'An Unknown Error Occurred' }) // eslint-disable-line n/no-callback-literal
     }
 
     if (result.error) {
@@ -73,10 +73,10 @@ function performBackup (dbVersion, callback) {
 
 async function saveVersion (callback) {
   try {
-    var setting = await SettingsSchema.getSettingByName('gen:version')
+    const setting = await SettingsSchema.getSettingByName('gen:version')
 
     if (!setting) {
-      var s = new SettingsSchema({
+      const s = new SettingsSchema({
         name: 'gen:version',
         value: version
       })
@@ -94,7 +94,7 @@ async function saveVersion (callback) {
 
 async function getDatabaseVersion (callback) {
   try {
-    var setting = await SettingsSchema.getSettingByName('gen:version')
+    const setting = await SettingsSchema.getSettingByName('gen:version')
 
     if (!setting) {
       if (semver.satisfies(version, '>=1.0.11')) {
@@ -108,7 +108,8 @@ async function getDatabaseVersion (callback) {
   }
 }
 
-function migrateUserRoles (callback) {
+// eslint-disable-next-line no-unused-vars
+function _migrateUserRoles (callback) {
   winston.debug('Migrating Roles...')
   async.waterfall(
     [
@@ -116,7 +117,7 @@ function migrateUserRoles (callback) {
         roleSchema.getRoles(next)
       },
       function (roles, next) {
-        var adminRole = _.find(roles, { normalized: 'admin' })
+        const adminRole = _.find(roles, { normalized: 'admin' })
         userSchema.collection
           .updateMany({ role: 'admin' }, { $set: { role: adminRole._id } })
           .then(function (res) {
@@ -135,7 +136,7 @@ function migrateUserRoles (callback) {
           })
       },
       function (roles, next) {
-        var supportRole = _.find(roles, { normalized: 'support' })
+        const supportRole = _.find(roles, { normalized: 'support' })
         userSchema.collection
           .updateMany({ $or: [{ role: 'support' }, { role: 'mod' }] }, { $set: { role: supportRole._id } })
           .then(function (res) {
@@ -154,7 +155,7 @@ function migrateUserRoles (callback) {
           })
       },
       function (roles, next) {
-        var userRole = _.find(roles, { normalized: 'user' })
+        const userRole = _.find(roles, { normalized: 'user' })
         userSchema.collection
           .updateMany({ role: 'user' }, { $set: { role: userRole._id } })
           .then(function (res) {
@@ -218,7 +219,7 @@ function createAdminTeamDepartment (callback) {
 
 function removeAgentsFromGroups (callback) {
   // winston.debug('Migrating Agents from Groups...')
-  var groupSchema = require('../models/group')
+  const groupSchema = require('../models/group')
   groupSchema.getAllGroups(function (err, groups) {
     if (err) return callback(err)
     async.eachSeries(
@@ -344,7 +345,7 @@ function createTicketStatus (callback) {
 }
 
 migrations.run = function (callback) {
-  var databaseVersion
+  let databaseVersion
 
   async.series(
     [

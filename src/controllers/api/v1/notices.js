@@ -12,13 +12,11 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-var _ = require('lodash')
+const winston = require('../../../logger')
 
-var winston = require('../../../logger')
+const NoticeSchema = require('../../../models/notice')
 
-var NoticeSchema = require('../../../models/notice')
-
-var apiNotices = {}
+const apiNotices = {}
 
 /**
  * @api {post} /api/v1/notices/create Create Notice
@@ -51,9 +49,9 @@ var apiNotices = {}
  */
 apiNotices.create = async function (req, res) {
   try {
-    var postData = req.body
-    var notice = new NoticeSchema(postData)
-    var saved = await notice.save()
+    const postData = req.body
+    const notice = new NoticeSchema(postData)
+    const saved = await notice.save()
     return res.json(saved)
   } catch (err) {
     winston.debug(err)
@@ -95,8 +93,8 @@ apiNotices.create = async function (req, res) {
  */
 apiNotices.updateNotice = async function (req, res) {
   try {
-    var id = req.params.id
-    var notice = await NoticeSchema.getNotice(id)
+    const id = req.params.id
+    const notice = await NoticeSchema.getNotice(id)
     await NoticeSchema.updateOne({ _id: notice._id }, req.body)
     res.json({ success: true })
   } catch (err) {
@@ -126,8 +124,8 @@ apiNotices.updateNotice = async function (req, res) {
  */
 apiNotices.clearActive = async function (req, res) {
   try {
-    var notices = await NoticeSchema.getNotices()
-    for (var notice of notices) {
+    const notices = await NoticeSchema.getNotices()
+    for (const notice of notices) {
       notice.active = false
       await notice.save()
     }
@@ -160,8 +158,8 @@ apiNotices.clearActive = async function (req, res) {
  */
 apiNotices.deleteNotice = async function (req, res) {
   try {
-    var id = req.params.id
-    var notice = await NoticeSchema.getNotice(id)
+    const id = req.params.id
+    const notice = await NoticeSchema.getNotice(id)
     await notice.deleteOne()
     res.json({ success: true })
   } catch (err) {

@@ -75,20 +75,20 @@ const EditStatusPartial = ({ status, fetchSettings }) => {
         <div className='uk-grid uk-grid-collapse uk-clearfix'>
           <div className='uk-width-1-4'>
             <label>Status Name</label>
-            <input name={'name'} type='text' className={'md-input'} defaultValue={status.get('name')} />
+            <input name='name' type='text' className='md-input' defaultValue={status.get('name')} />
           </div>
           <div className='uk-width-1-4 uk-padding-small-sides'>
             <ColorSelector
-              inputName={'htmlColor'}
+              inputName='htmlColor'
               defaultColor={status.get('htmlColor')}
-              hideRevert={true}
-              validationEnabled={true}
+              hideRevert
+              validationEnabled
             />
           </div>
           <div className='uk-width-1-4'>
             <div className='md-btn-group uk-float-right uk-text-right mt-5'>
-              <Button small={true} text={'Cancel'} onClick={() => toggleEditStatus()} />
-              <Button text={'Save'} small={true} style={'success'} type={'submit'} />
+              <Button small text='Cancel' onClick={() => toggleEditStatus()} />
+              <Button text='Save' small style='success' type='submit' />
             </div>
           </div>
         </div>

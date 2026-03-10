@@ -2,9 +2,7 @@ import React, { createRef } from 'react'
 import PropTypes from 'prop-types'
 import { union } from 'lodash'
 import { connect } from 'react-redux'
-import clsx from 'clsx'
 
-import velocity from 'velocity'
 import helpers from 'lib/helpers'
 import 'jquery_steps'
 import 'jquery_actual'
@@ -31,11 +29,11 @@ class StepWizard extends React.Component {
   componentDidMount () {
     this.init()
 
-    this.props.socket.on('$trudesk:accounts:import:onStatusChange', this.onImportStatusChange)
+    if (this.props.socket) this.props.socket.on('$trudesk:accounts:import:onStatusChange', this.onImportStatusChange)
   }
 
   componentWillUnmount () {
-    this.props.socket.removeAllListeners('$trudesk:accounts:import:onStatusChange')
+    if (this.props.socket) this.props.socket.removeAllListeners('$trudesk:accounts:import:onStatusChange')
   }
 
   onImportStatusChange = data => {
@@ -94,7 +92,7 @@ class StepWizard extends React.Component {
 
           setTimeout(() => {
             // Importing...
-            this.props.socket.emit('$trudesk:accounts:importer:send_csv')
+            if (this.props.socket) this.props.socket.emit('$trudesk:accounts:importer:send_csv')
           }, 1000)
         }
 
@@ -289,7 +287,7 @@ class StepWizard extends React.Component {
                     Review Uploaded Data
                     <span className='sub-heading'>Below is the parsed contents of the uploaded csv file.</span>
                   </h2>
-                  <textarea className='review-list' disabled={true} />
+                  <textarea className='review-list' disabled />
                 </section>
                 <h3>Import Accounts</h3>
                 <section>

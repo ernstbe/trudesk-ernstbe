@@ -29,8 +29,7 @@ apiMessages.getConversations = async (req, res) => {
       const userMeta =
         convo.userMeta[_.findIndex(convo.userMeta, item => item.userId.toString() === req.user._id.toString())]
 
-      if (!_.isUndefined(userMeta) && !_.isUndefined(userMeta.deletedAt) && userMeta.deletedAt > convo.updatedAt)
-        continue
+      if (!_.isUndefined(userMeta) && !_.isUndefined(userMeta.deletedAt) && userMeta.deletedAt > convo.updatedAt) { continue }
 
       let recentMessage = await Message.getMostRecentMessage(convoObject._id)
 

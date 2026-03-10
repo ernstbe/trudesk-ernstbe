@@ -12,14 +12,14 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-var _ = require('lodash')
-var path = require('path')
-var sass = require('sass')
-var settingUtil = require('../settings/settingsUtil')
+const _ = require('lodash')
+const path = require('path')
+const sass = require('sass')
+const settingUtil = require('../settings/settingsUtil')
 
-var buildsass = {}
+const buildsass = {}
 
-var sassOptionsDefaults = {
+const sassOptionsDefaults = {
   indentedSyntax: true,
   includePaths: [path.join(__dirname, '../../src/sass')],
   outputStyle: 'compressed'
@@ -43,14 +43,14 @@ function sassImport (path) {
 
 function dynamicSass (entry, vars, success, error) {
   try {
-    var dataString = sassVariables(vars) + sassImport(entry)
-    var sassOptions = _.assign({}, sassOptionsDefaults, {
+    const dataString = sassVariables(vars) + sassImport(entry)
+    const sassOptions = _.assign({}, sassOptionsDefaults, {
       data: dataString,
       indentedSyntax: true
     })
 
     // Use synchronous API from dart-sass
-    var result = sass.compileString(dataString, {
+    const result = sass.compileString(dataString, {
       style: sassOptions.outputStyle === 'compressed' ? 'compressed' : 'expanded',
       loadPaths: sassOptions.includePaths,
       syntax: 'indented',
@@ -64,8 +64,8 @@ function dynamicSass (entry, vars, success, error) {
 }
 
 function save (result) {
-  var fs = require('fs')
-  var themeCss = path.join(__dirname, '../../public/css/app.min.css')
+  const fs = require('fs')
+  const themeCss = path.join(__dirname, '../../public/css/app.min.css')
   fs.writeFileSync(themeCss, result)
 }
 
@@ -82,8 +82,8 @@ buildsass.buildDefault = function (callback) {
 }
 
 buildsass.build = function (callback) {
-  var callbackCalled = false
-  var safeCallback = function (err) {
+  let callbackCalled = false
+  const safeCallback = function (err) {
     if (!callbackCalled) {
       callbackCalled = true
       return callback(err)
@@ -92,7 +92,7 @@ buildsass.build = function (callback) {
 
   settingUtil.getSettings(function (err, s) {
     if (!err && s && s.data && s.data.settings) {
-      var settings = s.data.settings
+      const settings = s.data.settings
 
       dynamicSass(
         'app.sass',

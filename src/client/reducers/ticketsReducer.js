@@ -45,8 +45,6 @@ function hasInView (state, view, statusId, assignee, userId, userGroupIds, group
   let hasView = false
   let hasGroup = false
   const unresolvedStatuses = state.ticketStatuses.filter(i => i.get('isResolved') === false)
-  const status = state.ticketStatuses.find(i => i.get('_id') === statusId)
-
   switch (view) {
     case 'filter':
       hasView = true

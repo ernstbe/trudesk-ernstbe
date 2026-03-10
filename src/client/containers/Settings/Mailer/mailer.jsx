@@ -25,7 +25,7 @@ import Button from 'components/Button'
 import SettingItem from 'components/Settings/SettingItem'
 import EnableSwitch from 'components/Settings/EnableSwitch'
 
-const MailerSettings_Mailer = ({ settings, updateSetting, updateMultipleSettings, t }) => {
+const MailerSettingsMailer = ({ settings, updateSetting, updateMultipleSettings, t }) => {
   const [mailerSSL, setMailerSSL] = useState('')
   const [mailerHost, setMailerHost] = useState('')
   const [mailerPort, setMailerPort] = useState('')
@@ -127,7 +127,7 @@ const MailerSettings_Mailer = ({ settings, updateSetting, updateMultipleSettings
       subtitle={t('settings.mailerHint')}
       component={
         <EnableSwitch
-          stateName={'mailerEnabled'}
+          stateName='mailerEnabled'
           label={t('settings.enabled')}
           onChange={e => onEnableMailerChanged(e)}
           checked={getSetting('mailerEnabled')}
@@ -135,10 +135,10 @@ const MailerSettings_Mailer = ({ settings, updateSetting, updateMultipleSettings
       }
     >
       <form onSubmit={e => onMailerSubmit(e)}>
-        <div className={'uk-margin-medium-bottom'}>
-          <div className={'uk-right'}>
+        <div className='uk-margin-medium-bottom'>
+          <div className='uk-right'>
             <EnableSwitch
-              stateName={'mailerSSL'}
+              stateName='mailerSSL'
               label={t('settings.useSSL')}
               style={{ position: 'absolute', top: '5px', right: '-5px', zIndex: '99', margin: '0' }}
               checked={mailerSSL}
@@ -149,8 +149,8 @@ const MailerSettings_Mailer = ({ settings, updateSetting, updateMultipleSettings
           <label>{t('settings.mailServer')}</label>
           <input
             type='text'
-            className={'md-input md-input-width-medium'}
-            name={'mailerHost'}
+            className='md-input md-input-width-medium'
+            name='mailerHost'
             disabled={!getSetting('mailerEnabled')}
             value={mailerHost}
             onChange={e => onInputValueChanged(e, 'mailerHost')}
@@ -160,8 +160,8 @@ const MailerSettings_Mailer = ({ settings, updateSetting, updateMultipleSettings
           <label>{t('settings.port')}</label>
           <input
             type='text'
-            className={'md-input md-input-width-medium'}
-            name={'mailerPort'}
+            className='md-input md-input-width-medium'
+            name='mailerPort'
             disabled={!getSetting('mailerEnabled')}
             value={mailerPort}
             onChange={e => onInputValueChanged(e, 'mailerPort')}
@@ -171,8 +171,8 @@ const MailerSettings_Mailer = ({ settings, updateSetting, updateMultipleSettings
           <label>{t('settings.authUsername')}</label>
           <input
             type='text'
-            className={'md-input md-input-width-medium'}
-            name={'mailerUsername'}
+            className='md-input md-input-width-medium'
+            name='mailerUsername'
             disabled={!getSetting('mailerEnabled')}
             value={mailerUsername}
             onChange={e => onInputValueChanged(e, 'mailerUsername')}
@@ -182,8 +182,8 @@ const MailerSettings_Mailer = ({ settings, updateSetting, updateMultipleSettings
           <label>{t('settings.authPassword')}</label>
           <input
             type='password'
-            className={'md-input md-input-width-medium'}
-            name={'mailerPassword'}
+            className='md-input md-input-width-medium'
+            name='mailerPassword'
             disabled={!getSetting('mailerEnabled')}
             value={mailerPassword}
             onChange={e => onInputValueChanged(e, 'mailerPassword')}
@@ -193,8 +193,8 @@ const MailerSettings_Mailer = ({ settings, updateSetting, updateMultipleSettings
           <label>{t('settings.fromAddress')}</label>
           <input
             type='text'
-            className={'md-input md-input-width-medium'}
-            name={'mailerFrom'}
+            className='md-input md-input-width-medium'
+            name='mailerFrom'
             disabled={!getSetting('mailerEnabled')}
             value={mailerFrom}
             onChange={e => onInputValueChanged(e, 'mailerFrom')}
@@ -203,22 +203,22 @@ const MailerSettings_Mailer = ({ settings, updateSetting, updateMultipleSettings
         <div className='uk-clearfix'>
           <Button
             text={t('settings.testSettings')}
-            type={'button'}
-            flat={true}
-            waves={true}
-            style={'primary'}
-            extraClass={'uk-float-left'}
+            type='button'
+            flat
+            waves
+            style='primary'
+            extraClass='uk-float-left'
             disabled={!getSetting('mailerEnabled')}
             onClick={e => testMailerSettings(e)}
           />
           <Button
             text={t('settings.apply')}
-            type={'submit'}
-            style={'success'}
-            extraClass={'uk-float-right'}
+            type='submit'
+            style='success'
+            extraClass='uk-float-right'
             disabled={!getSetting('mailerEnabled')}
-            waves={true}
-            flat={true}
+            waves
+            flat
           />
         </div>
       </form>
@@ -226,7 +226,7 @@ const MailerSettings_Mailer = ({ settings, updateSetting, updateMultipleSettings
   )
 }
 
-MailerSettings_Mailer.propTypes = {
+MailerSettingsMailer.propTypes = {
   settings: PropTypes.object.isRequired,
   updateSetting: PropTypes.func.isRequired,
   updateMultipleSettings: PropTypes.func.isRequired,
@@ -240,4 +240,4 @@ const mapStateToProps = state => ({
 export default withTranslation()(connect(
   mapStateToProps,
   { updateSetting, updateMultipleSettings }
-)(MailerSettings_Mailer))
+)(MailerSettingsMailer))

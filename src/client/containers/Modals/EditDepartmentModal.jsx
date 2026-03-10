@@ -72,10 +72,10 @@ function EditDepartmentModal (props) {
 
     const payload = {
       _id: department.get('_id'),
-      name: name,
+      name,
       teams: teamsSelectRef.current.getSelected(),
-      allGroups: allGroups,
-      publicGroups: publicGroups,
+      allGroups,
+      publicGroups,
       groups: allGroups ? [] : groupSelectRef.current.getSelected()
     }
 
@@ -98,23 +98,23 @@ function EditDepartmentModal (props) {
 
   return (
     <BaseModal {...props} options={{ bgclose: false }}>
-      <div className={'mb-25'}>
+      <div className='mb-25'>
         <h2>{t('modals.editDepartment.title')}: {department.get('name')}</h2>
       </div>
-      <form className={'uk-form-stacked'} onSubmit={e => onFormSubmit(e)}>
-        <div className={'uk-margin-medium-bottom'}>
+      <form className='uk-form-stacked' onSubmit={e => onFormSubmit(e)}>
+        <div className='uk-margin-medium-bottom'>
           <label>{t('modals.createDepartment.departmentName')}</label>
           <input
             type='text'
-            className={'md-input'}
+            className='md-input'
             value={name}
             onChange={e => onInputChange(e)}
             data-validation='length'
-            data-validation-length={'min2'}
+            data-validation-length='min2'
             data-validation-error-msg={t('modals.createDepartment.validName')}
           />
         </div>
-        <div className={'uk-margin-medium-bottom'}>
+        <div className='uk-margin-medium-bottom'>
           <label style={{ marginBottom: 5 }}>{t('nav.teams')}</label>
           <MultiSelect
             items={mappedTeams}
@@ -124,7 +124,7 @@ function EditDepartmentModal (props) {
           />
         </div>
         <hr />
-        <div className={'uk-margin-medium-bottom uk-clearfix'}>
+        <div className='uk-margin-medium-bottom uk-clearfix'>
           <div className='uk-float-left'>
             <h4 style={{ paddingLeft: 2 }}>{t('modals.createDepartment.accessAllGroups')}</h4>
           </div>
@@ -142,11 +142,11 @@ function EditDepartmentModal (props) {
                   else groupSelectRef.current.deselectAll()
                 }}
               />
-              <span className={'lever'} />
+              <span className='lever' />
             </label>
           </div>
         </div>
-        <div className={'uk-margin-medium-bottom uk-clearfix'}>
+        <div className='uk-margin-medium-bottom uk-clearfix'>
           <div className='uk-float-left'>
             <h4 style={{ paddingLeft: 2 }}>{t('modals.createDepartment.accessPublicGroups')}</h4>
           </div>
@@ -160,11 +160,11 @@ function EditDepartmentModal (props) {
                   setPublicGroups(e.target.checked)
                 }}
               />
-              <span className={'lever'} />
+              <span className='lever' />
             </label>
           </div>
         </div>
-        <div className={'uk-margin-medium-bottom'}>
+        <div className='uk-margin-medium-bottom'>
           <label style={{ marginBottom: 5 }}>{t('modals.createDepartment.customerGroups')}</label>
           <MultiSelect
             items={mappedGroups}
@@ -175,8 +175,8 @@ function EditDepartmentModal (props) {
           />
         </div>
         <div className='uk-modal-footer uk-text-right'>
-          <Button text={t('common.close')} flat={true} waves={true} extraClass={'uk-modal-close'} />
-          <Button text={t('modals.editDepartment.saveButton')} flat={true} waves={true} style={'primary'} type={'submit'} />
+          <Button text={t('common.close')} flat waves extraClass='uk-modal-close' />
+          <Button text={t('modals.editDepartment.saveButton')} flat waves style='primary' type='submit' />
         </div>
       </form>
     </BaseModal>

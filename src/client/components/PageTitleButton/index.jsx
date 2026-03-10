@@ -17,17 +17,17 @@ import PropTypes from 'prop-types'
 
 const PageTitleButton = ({ href = '#', fontAwesomeIcon, mdIcon, onButtonClick }) => {
   return (
-    <div className={'pagination uk-float-left'}>
+    <div className='pagination uk-float-left'>
       <ul className='button-group uk-float-left'>
         <li className='pagination relative'>
           <a
             href={href}
-            className={'btn no-ajaxy'}
+            className='btn no-ajaxy'
             style={{ borderRadius: 3 }}
             onClick={onButtonClick}
           >
             {fontAwesomeIcon && <i className={`fa fa-large ${fontAwesomeIcon}`} />}
-            {mdIcon && <i className={'material-icons'}>{mdIcon}</i>}
+            {mdIcon && <i className='material-icons'>{mdIcon}</i>}
           </a>
         </li>
       </ul>

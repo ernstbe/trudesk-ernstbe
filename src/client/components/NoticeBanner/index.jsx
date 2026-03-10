@@ -25,7 +25,7 @@ const NoticeBanner = ({ notice }) => {
 
   return (
     <div
-      id={'notice-banner'}
+      id='notice-banner'
       style={{
         width: '100%',
         height: '30px',

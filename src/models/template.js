@@ -12,11 +12,11 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-var mongoose = require('mongoose')
+const mongoose = require('mongoose')
 
-var COLLECTION = 'templates'
+const COLLECTION = 'templates'
 
-var templateSchema = mongoose.Schema({
+const templateSchema = mongoose.Schema({
   name: { type: String, required: true },
   subject: { type: String, required: true },
   displayName: String,
@@ -32,7 +32,7 @@ templateSchema.pre('save', function (next) {
 
 templateSchema.statics.get = async function (name) {
   return this.model(COLLECTION)
-    .findOne({ name: name })
+    .findOne({ name })
     .exec()
 }
 

@@ -189,8 +189,8 @@ const AppearanceSettings = ({ active, settings, updateSetting, updateMultipleSet
         component={
           <UploadButtonWithX
             buttonText={t('settings.uploadLogo')}
-            uploadAction={'/settings/general/uploadlogo'}
-            extAllowed={'*.(jpg|jpeg|gif|png)'}
+            uploadAction='/settings/general/uploadlogo'
+            extAllowed='*.(jpg|jpeg|gif|png)'
             showX={getSettingsValue('hasCustomLogo')}
             onXClick={() => {
               doUpdateSetting('gen:customlogo', false, 'hasCustomLogo')
@@ -212,8 +212,8 @@ const AppearanceSettings = ({ active, settings, updateSetting, updateMultipleSet
         component={
           <UploadButtonWithX
             buttonText={t('settings.uploadLogo')}
-            uploadAction={'/settings/general/uploadpagelogo'}
-            extAllowed={'*.(jpg|jpeg|gif|png)'}
+            uploadAction='/settings/general/uploadpagelogo'
+            extAllowed='*.(jpg|jpeg|gif|png)'
             showX={getSettingsValue('hasCustomPageLogo')}
             onXClick={() => {
               doUpdateSetting('gen:custompagelogo', false, 'hasCustomPageLogo')
@@ -228,8 +228,8 @@ const AppearanceSettings = ({ active, settings, updateSetting, updateMultipleSet
         component={
           <UploadButtonWithX
             buttonText={t('settings.uploadFavicon')}
-            uploadAction={'/settings/general/uploadfavicon'}
-            extAllowed={'*.(jpg|jpeg|gif|png|ico)'}
+            uploadAction='/settings/general/uploadfavicon'
+            extAllowed='*.(jpg|jpeg|gif|png|ico)'
             showX={getSettingsValue('hasCustomFavicon')}
             onXClick={() => {
               doUpdateSetting('gen:customfavicon', false, 'hasCustomFavicon')
@@ -246,9 +246,9 @@ const AppearanceSettings = ({ active, settings, updateSetting, updateMultipleSet
         component={
           <Button
             text={t('common.save')}
-            flat={true}
-            style={'success'}
-            extraClass={'uk-float-right mt-10'}
+            flat
+            style='success'
+            extraClass='uk-float-right mt-10'
             onClick={() => {
               saveColorScheme()
             }}
@@ -290,7 +290,7 @@ const AppearanceSettings = ({ active, settings, updateSetting, updateMultipleSet
                 <ColorSelector
                   ref={headerBGColorSelectRef}
                   defaultColor={getSettingsValue('colorHeaderBG')}
-                  parentClass={'uk-width-2-3 uk-float-right'}
+                  parentClass='uk-width-2-3 uk-float-right'
                 />
               }
             />
@@ -303,7 +303,7 @@ const AppearanceSettings = ({ active, settings, updateSetting, updateMultipleSet
                 <ColorSelector
                   ref={headerPrimaryColorSelectRef}
                   defaultColor={getSettingsValue('colorHeaderPrimary')}
-                  parentClass={'uk-width-2-3 uk-float-right'}
+                  parentClass='uk-width-2-3 uk-float-right'
                 />
               }
             />
@@ -316,7 +316,7 @@ const AppearanceSettings = ({ active, settings, updateSetting, updateMultipleSet
                 <ColorSelector
                   ref={primaryColorSelectRef}
                   defaultColor={getSettingsValue('colorPrimary')}
-                  parentClass={'uk-width-2-3 uk-float-right'}
+                  parentClass='uk-width-2-3 uk-float-right'
                 />
               }
             />
@@ -329,7 +329,7 @@ const AppearanceSettings = ({ active, settings, updateSetting, updateMultipleSet
                 <ColorSelector
                   ref={secondaryColorSelectRef}
                   defaultColor={getSettingsValue('colorSecondary')}
-                  parentClass={'uk-width-2-3 uk-float-right'}
+                  parentClass='uk-width-2-3 uk-float-right'
                 />
               }
             />
@@ -342,7 +342,7 @@ const AppearanceSettings = ({ active, settings, updateSetting, updateMultipleSet
                 <ColorSelector
                   ref={tertiaryColorSelectRef}
                   defaultColor={getSettingsValue('colorTertiary')}
-                  parentClass={'uk-width-2-3 uk-float-right'}
+                  parentClass='uk-width-2-3 uk-float-right'
                 />
               }
             />
@@ -355,7 +355,7 @@ const AppearanceSettings = ({ active, settings, updateSetting, updateMultipleSet
                 <ColorSelector
                   ref={quaternaryColorSelectRef}
                   defaultColor={getSettingsValue('colorQuaternary')}
-                  parentClass={'uk-width-2-3 uk-float-right'}
+                  parentClass='uk-width-2-3 uk-float-right'
                 />
               }
             />

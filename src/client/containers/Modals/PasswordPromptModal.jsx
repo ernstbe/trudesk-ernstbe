@@ -44,17 +44,17 @@ const PasswordPromptModal = ({ user, titleOverride, textOverride, onVerifyComple
         <h2>{titleOverride || t('modals.passwordPrompt.title')}</h2>
         <p>{textOverride || t('modals.passwordPrompt.message')}</p>
       </div>
-      <div className={'uk-margin-medium-bottom'}>
+      <div className='uk-margin-medium-bottom'>
         <label>{t('modals.passwordPrompt.currentPassword')}</label>
-        <Input name={'current-password'} type={'password'} onChange={val => setConfirmPassword(val)} />
+        <Input name='current-password' type='password' onChange={val => setConfirmPassword(val)} />
       </div>
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-        <Button text={t('common.cancel')} small={true} flat={true} waves={false} onClick={() => hideModal()} />
+        <Button text={t('common.cancel')} small flat waves={false} onClick={() => hideModal()} />
         <Button
           text={t('modals.passwordPrompt.verifyPassword')}
-          style={'primary'}
-          small={true}
-          waves={true}
+          style='primary'
+          small
+          waves
           onClick={e => onVerifyPassword(e)}
         />
       </div>

@@ -12,13 +12,13 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-var mongoose = require('mongoose')
+const mongoose = require('mongoose')
 
-var COLLECTION = 'counters'
+const COLLECTION = 'counters'
 
-var countersSchema = mongoose.Schema({
+const countersSchema = mongoose.Schema({
   _id: String,
-  next: { type: Number, default: 0 },
+  next: { type: Number, default: 0 }
 })
 
 countersSchema.statics.increment = async function (counter) {

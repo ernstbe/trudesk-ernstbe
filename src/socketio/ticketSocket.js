@@ -11,21 +11,21 @@
  *  Updated:    1/20/19 4:43 PM
  *  Copyright (c) 2014-2019. All rights reserved.
  */
-var _ = require('lodash')
-var winston = require('../logger')
-var marked = require('marked')
-var sanitizeHtml = require('sanitize-html')
-var utils = require('../helpers/utils')
-var emitter = require('../emitter')
-var socketEvents = require('./socketEventConsts')
-var ticketSchema = require('../models/ticket')
-var prioritySchema = require('../models/ticketpriority')
-var userSchema = require('../models/user')
-var roleSchema = require('../models/role')
-var permissions = require('../permissions')
-var xss = require('xss')
+const _ = require('lodash')
+const winston = require('../logger')
+const marked = require('marked')
+const sanitizeHtml = require('sanitize-html')
+const utils = require('../helpers/utils')
+const emitter = require('../emitter')
+const socketEvents = require('./socketEventConsts')
+const ticketSchema = require('../models/ticket')
+const prioritySchema = require('../models/ticketpriority')
+const userSchema = require('../models/user')
+const roleSchema = require('../models/role')
+const permissions = require('../permissions')
+const xss = require('xss')
 
-var events = {}
+const events = {}
 
 function register (socket) {
   events.onUpdateTicketGrid(socket)
@@ -96,7 +96,7 @@ events.onUpdateAssigneeList = function (socket) {
       const roles = await roleSchema.getAgentRoles()
       const users = await userSchema.find({ role: { $in: roles }, deleted: false })
 
-      var sortedUser = _.sortBy(users, 'fullname')
+      const sortedUser = _.sortBy(users, 'fullname')
 
       utils.sendToSelf(socket, socketEvents.TICKETS_ASSIGNEE_LOAD, sortedUser)
     } catch (err) {
@@ -107,13 +107,14 @@ events.onUpdateAssigneeList = function (socket) {
 
 events.onSetAssignee = function (socket) {
   socket.on(socketEvents.TICKETS_ASSIGNEE_SET, async function (data) {
-    var userId = data._id
-    var ownerId = socket.request.user._id
-    var ticketId = data.ticketId
+    const userId = data._id
+    const ownerId = socket.request.user._id
+    const ticketId = data.ticketId
     try {
       let ticket = await ticketSchema.getTicketById(ticketId)
 
-      const [setAssigneeResult, subscriberResult] = await Promise.all([
+      // eslint-disable-next-line no-unused-vars
+      const [_setAssigneeResult, subscriberResult] = await Promise.all([
         ticket.setAssignee(ownerId, userId),
         ticket.addSubscriber(userId)
       ])
@@ -150,9 +151,9 @@ events.onSetTicketType = function (socket) {
 
     if (_.isUndefined(ticketId) || _.isUndefined(typeId)) return true
     try {
-      let ticket = await ticketSchema.getTicketById(ticketId)
-      let t = await ticket.setTicketType(ownerId, typeId)
-      let tt = await t.save()
+      const ticket = await ticketSchema.getTicketById(ticketId)
+      const t = await ticket.setTicketType(ownerId, typeId)
+      const tt = await t.save()
       await ticketSchema.populate(tt, 'type')
 
       // emitter.emit('ticket:updated', tt)
@@ -225,9 +226,9 @@ events.onSetTicketGroup = function (socket) {
     if (_.isUndefined(ticketId) || _.isUndefined(groupId)) return true
 
     try {
-      let ticket = await ticketSchema.getTicketById(ticketId)
-      let t = await ticket.setTicketGroup(ownerId, groupId)
-      let tt = await t.save()
+      const ticket = await ticketSchema.getTicketById(ticketId)
+      const t = await ticket.setTicketGroup(ownerId, groupId)
+      const tt = await t.save()
       await ticketSchema.populate(tt, 'group')
 
       // emitter.emit('ticket:updated', tt)
@@ -247,9 +248,9 @@ events.onSetTicketDueDate = function (socket) {
     if (_.isUndefined(ticketId)) return true
 
     try {
-      let ticket = await ticketSchema.getTicketById(ticketId)
-      let t = await ticket.setTicketDueDate(ownerId, dueDate)
-      let tt = await t.save()
+      const ticket = await ticketSchema.getTicketById(ticketId)
+      const t = await ticket.setTicketDueDate(ownerId, dueDate)
+      const tt = await t.save()
 
       // emitter.emit('ticket:updated', tt)
       utils.sendToAllConnectedClients(io, socketEvents.TICKETS_UI_DUEDATE_UPDATE, tt)
@@ -358,7 +359,7 @@ events.onAttachmentsUIUpdate = socket => {
 }
 
 module.exports = {
-  events: events,
-  eventLoop: eventLoop,
-  register: register
+  events,
+  eventLoop,
+  register
 }

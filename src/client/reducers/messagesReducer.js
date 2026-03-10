@@ -14,7 +14,6 @@
 
 import { fromJS, Map, List } from 'immutable'
 import { handleActions } from 'redux-actions'
-import { sortBy, map } from 'lodash'
 import {
   FETCH_CONVERSATIONS,
   FETCH_SINGLE_CONVERSATION,

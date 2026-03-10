@@ -24,7 +24,7 @@ services:
     image: mongo:8.0
     restart: always
     ports:
-      - "27017:27017"
+      - "127.0.0.1:27017:27017"
     env_file:
       - .env
     environment:
@@ -52,8 +52,8 @@ services:
         soft: -1
         hard: -1
     ports:
-      - "9200:9200"
-      - "9300:9300"
+      - "127.0.0.1:9200:9200"
+      - "127.0.0.1:9300:9300"
     volumes:
       - elasticsearch:/usr/share/elasticsearch/data
 volumes:

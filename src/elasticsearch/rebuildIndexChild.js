@@ -200,7 +200,8 @@ async function sendAndEmptyQueue (bulk) {
   })
 }
 
-function crawlUsers (callback) {
+// eslint-disable-next-line no-unused-vars
+function _crawlUsers (callback) {
   const Model = require('../models/user')
   let count = 0
   const startTime = new Date().getTime()
@@ -305,7 +306,7 @@ function crawlTickets (callback) {
         ticketType: { _id: doc.type._id, name: doc.type.name },
         status: { _id: doc.status._id, name: doc.status.name, htmlColor: doc.status.htmlColor, uid: doc.status.uid },
         deleted: doc.deleted,
-        comments: comments,
+        comments,
         notes: doc.notes,
         tags: doc.tags
       })

@@ -80,7 +80,10 @@ module.exports = function (app, db, callback) {
     maxAge: 1000 * 60 * 60 * 24 * 365 // 1 year
   }
 
-  const sessionSecret = nconf.get('tokens:secret') ? nconf.get('tokens:secret') : 'trudesk$1234#SessionKeY!2288'
+  const sessionSecret = nconf.get('tokens:secret')
+  if (!sessionSecret) {
+    throw new Error('Session secret not configured. Set tokens:secret in config.yml or TRUDESK_JWTSECRET environment variable.')
+  }
 
   async.waterfall(
     [
@@ -116,10 +119,10 @@ module.exports = function (app, db, callback) {
 
         // Maintenance Mode
         app.use(function (req, res, next) {
-          var settings = require('../settings/settingsUtil')
+          const settings = require('../settings/settingsUtil')
           settings.getSettings(function (err, setting) {
             if (err) return winston.warn(err)
-            var maintenanceMode = setting.data.settings.maintenanceMode
+            const maintenanceMode = setting.data.settings.maintenanceMode
 
             if (req.user) {
               if (maintenanceMode.value === true && !req.user.role.isAdmin) {
@@ -172,11 +175,9 @@ module.exports = function (app, db, callback) {
     ],
     function (err, s) {
       if (err) {
-
         winston.error(err)
         throw new Error(err)
       }
-
 
       callback(middleware, s)
     }
@@ -184,7 +185,20 @@ module.exports = function (app, db, callback) {
 }
 
 function allowCrossDomain (req, res, next) {
-  res.setHeader('Access-Control-Allow-Origin', '*')
+  const originsConfig = nconf.get('ALLOWED_ORIGINS') || nconf.get('allowedOrigins')
+  const allowedOrigins = originsConfig
+    ? originsConfig.split(',').map(s => s.trim())
+    : []
+  const origin = req.headers.origin
+
+  if (allowedOrigins.length > 0 && allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin)
+    res.setHeader('Vary', 'Origin')
+  } else if (allowedOrigins.length === 0) {
+    // Fallback for dev: allow all origins only when no allowedOrigins configured
+    res.setHeader('Access-Control-Allow-Origin', '*')
+  }
+
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS')
   res.setHeader(
     'Access-Control-Allow-Headers',

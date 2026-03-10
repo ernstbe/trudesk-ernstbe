@@ -71,6 +71,7 @@ const Avatar = ({
 
   // Mount: bind socket event if showOnlineBubble and userId are present
   useEffect(() => {
+    if (!socket) return
     if (showOnlineBubble && userId) {
       socket.on(UI_ONLINE_STATUS_UPDATE, onOnlineStatusUpdate)
     }
@@ -87,8 +88,7 @@ const Avatar = ({
   }, [])
 
   const onMouseOut = useCallback(() => {
-    if (overlayRef.current && !overlayRef.current.classList.contains('uk-hidden'))
-      overlayRef.current.classList.add('uk-hidden')
+    if (overlayRef.current && !overlayRef.current.classList.contains('uk-hidden')) { overlayRef.current.classList.add('uk-hidden') }
   }, [])
 
   const onUploadImageClicked = useCallback(e => {
@@ -141,7 +141,7 @@ const Avatar = ({
   if (showLargerBubble) bubbleSize = 25
 
   return (
-    <Fragment>
+    <>
       <div
         className='relative uk-clearfix uk-float-left uk-display-inline-block'
         style={wrapperStyle}
@@ -153,16 +153,16 @@ const Avatar = ({
             <form>
               <input
                 ref={imageUploadInput}
-                className={'uk-hidden'}
+                className='uk-hidden'
                 type='file'
-                hidden={true}
+                hidden
                 accept={'image/*'}
                 onChange={onImageInputChange}
               />
             </form>
             <div
               ref={overlayRef}
-              className={'uk-hidden'}
+              className='uk-hidden'
               style={{
                 position: 'absolute',
                 top: 0,
@@ -182,7 +182,7 @@ const Avatar = ({
               }}
               onClick={onUploadImageClicked}
             >
-              <i className={'material-icons'} style={{ color: '#fff' }}>
+              <i className='material-icons' style={{ color: '#fff' }}>
                 edit
               </i>
             </div>
@@ -207,7 +207,7 @@ const Avatar = ({
           />
         )}
       </div>
-    </Fragment>
+    </>
   )
 }
 

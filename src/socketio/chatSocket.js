@@ -57,7 +57,7 @@ events.onSetUserOnlineStatus = function (socket) {
     let exists = false
 
     if (state === 'idle') {
-      if (sharedVars.idleUsers.hasOwnProperty(user.username.toLowerCase())) exists = true
+      if (Object.prototype.hasOwnProperty.call(sharedVars.idleUsers, user.username.toLowerCase())) exists = true
 
       if (!exists) {
         if (user.username.length !== 0) {
@@ -77,7 +77,7 @@ events.onSetUserOnlineStatus = function (socket) {
         }
       }
     } else if (state === 'active') {
-      if (sharedVars.idleUsers.hasOwnProperty(user.username.toLowerCase())) {
+      if (Object.prototype.hasOwnProperty.call(sharedVars.idleUsers, user.username.toLowerCase())) {
         delete sharedVars.idleUsers[user.username.toLowerCase()]
 
         updateOnlineBubbles()
@@ -493,7 +493,7 @@ events.onChatStopTyping = function (socket) {
 function joinChatServer (socket) {
   const user = socket.request.user
   let exists = false
-  if (sharedVars.usersOnline.hasOwnProperty(user.username.toLowerCase())) {
+  if (Object.prototype.hasOwnProperty.call(sharedVars.usersOnline, user.username.toLowerCase())) {
     exists = true
   }
 
