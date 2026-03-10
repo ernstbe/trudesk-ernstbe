@@ -10,8 +10,8 @@
     "start": "node ./app",
     "build": "grunt build",
     "test": "mocha --recursive",
-    "lint": "standard | snazzy",
-    "format": "standard --fix \"./*.js\" \"src/*.js\" \"src/**/*.js\" \"src/**/*.jsx\"",
+    "lint": "eslint .",
+    "format": "eslint --fix \"./*.js\" \"src/*.js\" \"src/**/*.js\" \"src/**/*.jsx\"",
     "coverage": "nyc --reporter=lcovonly npm run test",
     "codacy": "npm run coverage && bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r ./coverage/lcov.info && rm -rf ./coverage",
     "webpackwatch": "webpack --config webpack.config.js --watch",
@@ -150,21 +150,18 @@
     "@semantic-release/changelog": "6.0.3",
     "@semantic-release/git": "10.0.1",
     "@semantic-release/npm": "13.1.5",
-    "babel-eslint": "10.1.0",
     "babel-loader": "10.1.1",
     "chai": "*",
     "compression-webpack-plugin": "12.0.0",
     "cross-env": "10.1.0",
     "css-loader": "7.1.4",
-    "eslint": "8.19.0",
-    "eslint-config-prettier": "8.5.0",
-    "eslint-config-standard": "17.1.0",
+    "eslint": "9.39.4",
     "eslint-import-resolver-webpack": "0.13.10",
     "eslint-plugin-import": "2.32.0",
-    "eslint-plugin-node": "11.1.0",
-    "eslint-plugin-prettier": "4.2.1",
-    "eslint-plugin-promise": "6.0.0",
+    "eslint-plugin-n": "17.24.0",
+    "eslint-plugin-promise": "7.2.1",
     "eslint-plugin-react": "7.37.5",
+    "neostandard": "0.13.0",
     "exports-loader": "5.0.0",
     "expose-loader": "5.0.1",
     "grunt": "1.6.1",
@@ -187,8 +184,6 @@
     "patch": "0.0.1",
     "sass-loader": "16.0.7",
     "semantic-release": "25.0.3",
-    "snazzy": "9.0.0",
-    "standard": "17.1.2",
     "style-loader": "4.0.0",
     "superagent": "10.3.0",
     "supertest": "7.2.2",
@@ -246,42 +241,13 @@
     }
   },
   "lint-staged": {
-    "*.js": [
-      "standard --fix",
-      "git add"
-    ],
-    "ignore": [
-      "public/js/*.js",
-      "src/public/js/vendor/**/*.min.js"
+    "*.{js,jsx}": [
+      "eslint --fix"
     ]
   },
   "commitlint": {
     "extends": [
       "@commitlint/config-conventional"
-    ]
-  },
-  "standard": {
-    "ignore": [
-      "/public/",
-      "/mobile/",
-      "/src/public/js/plugins/",
-      "/src/public/js/vendor/",
-      "/src/client/components/OffCanvasEditor/"
-    ],
-    "globals": [
-      "define",
-      "MG",
-      "Snackbar",
-      "ROLES",
-      "io",
-      "d3",
-      "History",
-      "localStorage",
-      "location"
-    ],
-    "env": [
-      "mocha",
-      "browser"
     ]
   },
   "prettier": {
