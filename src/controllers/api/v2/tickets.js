@@ -13,6 +13,10 @@
  */
 
 const _ = require('lodash')
+const xss = require('xss')
+const marked = require('marked')
+const sanitizeHtml = require('sanitize-html')
+const emitter = require('../../../emitter')
 const logger = require('../../../logger')
 const apiUtils = require('../apiUtils')
 const Models = require('../../../models')
@@ -480,6 +484,237 @@ ticketsV2.checklist.remove = async function (req, res) {
     logger.warn(err)
     return apiUtils.sendApiError(res, 500, err.message)
   }
+}
+
+// -------------------------------------------------------------------
+// Comments — POST /api/v2/tickets/:uid/comments
+// Port of v1 apiTickets.postComment. Differences:
+//   - uses :uid in the path instead of an _id in the body
+//   - returns the v2-standard { success, data } shape via apiUtils
+// -------------------------------------------------------------------
+ticketsV2.postComment = async function (req, res) {
+  const uid = req.params.uid
+  const body = req.body || {}
+  if (!uid) return apiUtils.sendApiError(res, 400, 'Invalid Parameters')
+  if (_.isUndefined(body.comment)) return apiUtils.sendApiError_InvalidPostData(res)
+
+  try {
+    const ticket = await Models.Ticket.getTicketByUid(uid)
+    if (!ticket) return apiUtils.sendApiError(res, 404, 'Ticket not found')
+
+    marked.setOptions({ breaks: true })
+    const comment = sanitizeHtml(body.comment).trim()
+
+    const commentDoc = {
+      owner: body.ownerId || req.user._id,
+      date: new Date(),
+      comment: xss(marked.parse(comment))
+    }
+
+    ticket.updated = Date.now()
+    ticket.comments.push(commentDoc)
+    ticket.history.push({
+      action: 'ticket:comment:added',
+      description: 'Comment was added',
+      owner: commentDoc.owner
+    })
+
+    const saved = await ticket.save()
+    if (!permissions.canThis(req.user.role, 'tickets:notes')) saved.notes = []
+
+    emitter.emit('ticket:comment:added', saved, commentDoc, req.headers.host)
+    return apiUtils.sendApiSuccess(res, { ticket: saved })
+  } catch (err) {
+    logger.warn(err)
+    return apiUtils.sendApiError(res, 500, err.message)
+  }
+}
+
+// -------------------------------------------------------------------
+// Notes — POST /api/v2/tickets/:uid/notes
+// -------------------------------------------------------------------
+ticketsV2.postNote = async function (req, res) {
+  const uid = req.params.uid
+  const body = req.body || {}
+  if (!uid) return apiUtils.sendApiError(res, 400, 'Invalid Parameters')
+  if (_.isUndefined(body.note)) return apiUtils.sendApiError_InvalidPostData(res)
+
+  try {
+    const ticket = await Models.Ticket.getTicketByUid(uid)
+    if (!ticket) return apiUtils.sendApiError(res, 404, 'Ticket not found')
+
+    const noteDoc = {
+      owner: body.ownerId || req.user._id,
+      date: new Date(),
+      note: xss(marked.parse(body.note))
+    }
+
+    ticket.updated = Date.now()
+    ticket.notes.push(noteDoc)
+    ticket.history.push({
+      action: 'ticket:note:added',
+      description: 'Internal note was added',
+      owner: noteDoc.owner
+    })
+
+    let saved = await ticket.save()
+    try {
+      saved = await Models.Ticket.populate(saved, 'subscribers notes.owner history.owner')
+    } catch (_popErr) {
+      // best effort — return the saved ticket even if populate fails
+    }
+
+    emitter.emit('ticket:note:added', saved, noteDoc)
+    return apiUtils.sendApiSuccess(res, { ticket: saved })
+  } catch (err) {
+    logger.warn(err)
+    return apiUtils.sendApiError(res, 500, err.message)
+  }
+}
+
+// -------------------------------------------------------------------
+// Subscribe — PUT /api/v2/tickets/:uid/subscribe
+// Body: { subscribe: true|false }. The authenticated user is the subscriber.
+// Simpler than v1, which required passing the user id in the body.
+// -------------------------------------------------------------------
+ticketsV2.subscribe = async function (req, res) {
+  const uid = req.params.uid
+  const subscribe = req.body ? req.body.subscribe : undefined
+  if (!uid) return apiUtils.sendApiError(res, 400, 'Invalid Parameters')
+  if (_.isUndefined(subscribe)) return apiUtils.sendApiError_InvalidPostData(res)
+
+  try {
+    const ticket = await Models.Ticket.getTicketByUid(uid)
+    if (!ticket) return apiUtils.sendApiError(res, 404, 'Ticket not found')
+
+    if (subscribe) {
+      await ticket.addSubscriber(req.user._id)
+    } else {
+      await ticket.removeSubscriber(req.user._id)
+    }
+
+    const saved = await ticket.save()
+    emitter.emit('ticket:subscriber:update', saved)
+    return apiUtils.sendApiSuccess(res, { ticket: saved })
+  } catch (err) {
+    logger.warn(err)
+    return apiUtils.sendApiError(res, 500, err.message)
+  }
+}
+
+// -------------------------------------------------------------------
+// Stats — GET /api/v2/tickets/stats(/:timespan)
+// Reads the same global cache keys the v1 endpoint uses.
+// -------------------------------------------------------------------
+ticketsV2.getStats = async function (req, res) {
+  const cache = global.cache
+  if (_.isUndefined(cache)) return apiUtils.sendApiError(res, 503, 'Ticket stats are still loading')
+
+  let timespan = 30
+  if (req.params.timespan) {
+    const parsed = parseInt(req.params.timespan, 10)
+    if (!Number.isNaN(parsed)) timespan = parsed
+  }
+
+  const validSpans = new Set([30, 60, 90, 180, 365])
+  if (!validSpans.has(timespan)) return apiUtils.sendApiError(res, 400, 'Invalid timespan (allowed: 30, 60, 90, 180, 365)')
+
+  const key = `tickets:overview:e${timespan}`
+  const data = {
+    timespan,
+    graphData: cache.get(`${key}:graphData`),
+    ticketCount: cache.get(`${key}:ticketCount`),
+    closedCount: cache.get(`${key}:closedTickets`),
+    ticketAvg: cache.get(`${key}:responseTime`),
+    mostRequester: cache.get('quickstats:mostRequester'),
+    mostCommenter: cache.get('quickstats:mostCommenter'),
+    mostAssignee: cache.get('quickstats:mostAssignee'),
+    mostActiveTicket: cache.get('quickstats:mostActiveTicket'),
+    lastUpdated: cache.get('tickets:overview:lastUpdated')
+  }
+
+  return apiUtils.sendApiSuccess(res, data)
+}
+
+// -------------------------------------------------------------------
+// Stats per group — GET /api/v2/tickets/stats/group/:group
+// -------------------------------------------------------------------
+ticketsV2.getGroupStats = async function (req, res) {
+  const groupId = req.params.group
+  if (!groupId) return apiUtils.sendApiError(res, 400, 'Invalid Group Id')
+
+  try {
+    const tickets = await Models.Ticket.getTicketsWithObject([groupId], { limit: 10000, page: 0 })
+    if (_.isEmpty(tickets)) return apiUtils.sendApiError(res, 404, 'Group has no tickets to report')
+
+    const closed = _.filter(tickets, t => t.status === 3)
+    return apiUtils.sendApiSuccess(res, {
+      ticketCount: _.size(tickets),
+      closedCount: _.size(closed),
+      recentTickets: _.takeRight(_.sortBy(tickets, 'date'), 5)
+    })
+  } catch (err) {
+    logger.warn(err)
+    return apiUtils.sendApiError(res, 500, err.message)
+  }
+}
+
+// -------------------------------------------------------------------
+// Stats per user — GET /api/v2/tickets/stats/user/:user
+// -------------------------------------------------------------------
+ticketsV2.getUserStats = async function (req, res) {
+  const userId = req.params.user
+  if (!userId) return apiUtils.sendApiError(res, 400, 'Invalid User Id')
+
+  try {
+    const tickets = await Models.Ticket.getTicketsByRequester(userId)
+    if (_.isEmpty(tickets)) return apiUtils.sendApiError(res, 404, 'User has no tickets to report')
+
+    const closed = _.filter(tickets, t => t.status === 3)
+    return apiUtils.sendApiSuccess(res, {
+      ticketCount: _.size(tickets),
+      closedCount: _.size(closed),
+      recentTickets: _.takeRight(_.sortBy(tickets, 'date'), 5)
+    })
+  } catch (err) {
+    logger.warn(err)
+    return apiUtils.sendApiError(res, 500, err.message)
+  }
+}
+
+// -------------------------------------------------------------------
+// Batch delete — DELETE /api/v2/tickets/batch
+// Body: { ids: ["<mongo _id>", ...] }. Soft-deletes each; returns a
+// success/failed summary mirroring batchUpdate.
+// -------------------------------------------------------------------
+ticketsV2.batchDelete = async function (req, res) {
+  const ids = req.body ? req.body.ids : undefined
+  if (!_.isArray(ids) || ids.length === 0) return apiUtils.sendApiError_InvalidPostData(res)
+
+  // NB: don't use `success` as the inner counter key — apiUtils.sendApiSuccess
+  // already sets { success: true } at the top level and would collide.
+  const results = { deleted: 0, failed: 0, errors: [] }
+
+  await Promise.allSettled(ids.map(async (id) => {
+    try {
+      const ticket = await Models.Ticket.getTicketById(id)
+      if (!ticket) throw new Error('Ticket not found')
+      ticket.deleted = true
+      ticket.updated = new Date()
+      ticket.history.push({
+        action: 'ticket:deleted',
+        description: 'Ticket batch-deleted',
+        owner: req.user._id
+      })
+      await ticket.save()
+      results.deleted++
+    } catch (err) {
+      results.failed++
+      results.errors.push({ id, error: err.message })
+    }
+  }))
+
+  return apiUtils.sendApiSuccess(res, results)
 }
 
 module.exports = ticketsV2

@@ -60,5 +60,6 @@ apiController.v2.ticketTemplates = require('./api/v2/ticketTemplates')
 apiController.v2.calendar = require('./api/v2/calendar')
 apiController.v2.dashboard = require('./api/v2/dashboard')
 apiController.v2.documents = require('./api/v2/documents')
+apiController.v2.users = require('./api/v2/users')
 
 module.exports = apiController

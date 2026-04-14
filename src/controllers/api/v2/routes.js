@@ -44,17 +44,31 @@ module.exports = function (middleware, router, controllers) {
   router.get('/api/v2/tickets', apiv2Auth, canUser('tickets:view'), apiv2.tickets.get)
   router.post('/api/v2/tickets', apiv2Auth, canUser('tickets:create'), apiv2.tickets.create)
   router.get('/api/v2/tickets/overdue', apiv2Auth, isAgentOrAdmin, apiv2.tickets.overdue)
+  // Stats routes MUST be registered before /tickets/:uid so Express doesn't
+  // match them as a uid. Same reason /batch below precedes /:uid.
+  router.get('/api/v2/tickets/stats', apiv2Auth, canUser('tickets:view'), apiv2.tickets.getStats)
+  router.get('/api/v2/tickets/stats/group/:group', apiv2Auth, canUser('tickets:view'), apiv2.tickets.getGroupStats)
+  router.get('/api/v2/tickets/stats/user/:user', apiv2Auth, canUser('tickets:view'), apiv2.tickets.getUserStats)
+  router.get('/api/v2/tickets/stats/:timespan', apiv2Auth, canUser('tickets:view'), apiv2.tickets.getStats)
   router.post('/api/v2/tickets/transfer/:uid', apiv2Auth, isAdmin, apiv2.tickets.transferToThirdParty)
   router.get('/api/v2/tickets/:uid', apiv2Auth, canUser('tickets:view'), apiv2.tickets.single)
   router.get('/api/v2/tickets/:uid/deadline', apiv2Auth, canUser('tickets:view'), apiv2.tickets.deadline)
   router.put('/api/v2/tickets/batch', apiv2Auth, canUser('tickets:update'), apiv2.tickets.batchUpdate)
+  router.delete('/api/v2/tickets/batch', apiv2Auth, canUser('tickets:delete'), apiv2.tickets.batchDelete)
   router.put('/api/v2/tickets/:uid', apiv2Auth, canUser('tickets:update'), apiv2.tickets.update)
   router.put('/api/v2/tickets/:uid/metadata', apiv2Auth, canUser('tickets:update'), apiv2.tickets.updateMetadata)
+  router.put('/api/v2/tickets/:uid/subscribe', apiv2Auth, canUser('tickets:view'), apiv2.tickets.subscribe)
+  router.post('/api/v2/tickets/:uid/comments', apiv2Auth, canUser('comments:create'), apiv2.tickets.postComment)
+  router.post('/api/v2/tickets/:uid/notes', apiv2Auth, canUser('tickets:notes'), apiv2.tickets.postNote)
   router.post('/api/v2/tickets/:uid/checklist', apiv2Auth, canUser('tickets:update'), apiv2.tickets.checklist.add)
   router.put('/api/v2/tickets/:uid/checklist/:itemId', apiv2Auth, canUser('tickets:update'), apiv2.tickets.checklist.update)
   router.delete('/api/v2/tickets/:uid/checklist/:itemId', apiv2Auth, canUser('tickets:update'), apiv2.tickets.checklist.remove)
   router.delete('/api/v2/tickets/:uid', apiv2Auth, canUser('tickets:delete'), apiv2.tickets.delete)
   router.delete('/api/v2/tickets/deleted/:id', apiv2Auth, isAdmin, apiv2.tickets.permDelete)
+
+  // Users / notifications (v2)
+  router.get('/api/v2/users/notifications', apiv2Auth, apiv2.users.getNotifications)
+  router.get('/api/v2/users/notifications/count', apiv2Auth, apiv2.users.getNotificationCount)
 
   // Groups
   router.get('/api/v2/groups', apiv2Auth, apiv2.groups.get)
