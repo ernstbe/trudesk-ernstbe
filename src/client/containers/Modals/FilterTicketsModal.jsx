@@ -13,7 +13,6 @@
 
 import React, { useEffect, useRef, useCallback } from 'react'
 import PropTypes from 'prop-types'
-import { each } from 'lodash'
 import { connect } from 'react-redux'
 import { withTranslation } from 'react-i18next'
 import { hideModal } from 'actions/common'
@@ -85,23 +84,23 @@ const FilterTicketsModal = ({
 
     if (subject) queryString += `&fs=${subject}`
 
-    each(statuses, i => {
+    statuses.forEach(i => {
       queryString += `&st=${i}`
     })
 
-    each(types, i => {
+    types.forEach(i => {
       queryString += `&tt=${i}`
     })
 
-    each(tags, i => {
+    tags.forEach(i => {
       queryString += `&tag=${i}`
     })
 
-    each(groups, i => {
+    groups.forEach(i => {
       queryString += `&gp=${i}`
     })
 
-    each(assignees, i => {
+    assignees.forEach(i => {
       queryString += `&au=${i}`
     })
 

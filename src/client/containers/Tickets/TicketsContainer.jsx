@@ -15,8 +15,6 @@ import React, { useEffect, useRef, useState, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import { withTranslation } from 'react-i18next'
-import { each, without, uniq } from 'lodash'
-
 import Log from '../../logger'
 import axios from 'axios'
 import {
@@ -163,14 +161,14 @@ function TicketsContainer (props) {
       item.checked = true
     })
 
-    selectedTicketsRef.current = uniq(selectedTicketsRef.current)
+    selectedTicketsRef.current = [...new Set(selectedTicketsRef.current)]
   }, [])
 
   const onTicketCheckChanged = useCallback((e, id) => {
     if (e.target.checked) selectedTicketsRef.current.push(id)
-    else selectedTicketsRef.current = without(selectedTicketsRef.current, id)
+    else selectedTicketsRef.current = selectedTicketsRef.current.filter(x => x !== id)
 
-    selectedTicketsRef.current = uniq(selectedTicketsRef.current)
+    selectedTicketsRef.current = [...new Set(selectedTicketsRef.current)]
   }, [])
 
   const onSetStatus = useCallback(
@@ -199,7 +197,7 @@ function TicketsContainer (props) {
   )
 
   const onDeleteClicked = useCallback(() => {
-    each(selectedTicketsRef.current, id => {
+    selectedTicketsRef.current.forEach(id => {
       propsDeleteTicket({ id })
     })
 

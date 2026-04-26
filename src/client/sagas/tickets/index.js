@@ -13,7 +13,6 @@
  */
 
 import { call, put, takeLatest, takeEvery, select } from 'redux-saga/effects'
-import { isUndefined } from 'lodash'
 import Log from '../../logger'
 
 import api from '../../api'
@@ -252,7 +251,7 @@ function * createTag ({ payload }) {
     const response = yield call(api.tickets.createTag, { name: payload.name })
     yield put({ type: CREATE_TAG.SUCCESS, response })
     yield put({ type: HIDE_MODAL.ACTION })
-    if (!isUndefined(payload.currentPage)) {
+    if (payload.currentPage !== undefined) {
       yield put({ type: GET_TAGS_WITH_PAGE.ACTION, payload: { limit: 16, page: payload.currentPage } })
     }
     helpers.UI.showSnackbar(`Tag ${payload.name} successfully created`)

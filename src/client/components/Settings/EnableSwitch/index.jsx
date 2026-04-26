@@ -14,7 +14,6 @@
 
 import React, { useRef, useCallback } from 'react'
 import PropTypes from 'prop-types'
-import { merge } from 'lodash'
 import clsx from 'clsx'
 
 const EnableSwitch = ({ stateName, label, labelStyle, sublabel, style, leverClass, onChange, checked, disabled }) => {
@@ -27,7 +26,7 @@ const EnableSwitch = ({ stateName, label, labelStyle, sublabel, style, leverClas
     }
   }, [])
 
-  const combinedStyle = merge({ margin: '17px 0 0 0' }, style)
+  const combinedStyle = Object.assign({}, { margin: '17px 0 0 0' }, style)
   return (
     <div className='md-switch-wrapper md-switch md-green uk-float-right uk-clearfix' style={combinedStyle}>
       <label ref={labelRef} htmlFor={stateName} style={labelStyle || {}}>

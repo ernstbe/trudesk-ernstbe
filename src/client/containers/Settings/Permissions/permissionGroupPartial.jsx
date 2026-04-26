@@ -15,8 +15,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import PropTypes from 'prop-types'
 
-import { without, uniq } from 'lodash'
-
 import SettingItem from 'components/Settings/SettingItem'
 import EnableSwitch from 'components/Settings/EnableSwitch'
 import PermSwitchPartial from './permSwitchPartial'
@@ -112,10 +110,10 @@ const PermissionGroupPartial = ({ title, subtitle, role, grants, roleSpecials: r
       if (e.target.checked) {
         arr.push(perm)
       } else {
-        arr = without(arr, perm)
+        arr = arr.filter(x => x !== perm)
       }
 
-      setSpecial(uniq(arr))
+      setSpecial([...new Set(arr)])
     },
     [all, special]
   )

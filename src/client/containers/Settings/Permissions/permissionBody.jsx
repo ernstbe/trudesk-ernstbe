@@ -15,7 +15,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
-import { isEqual } from 'lodash'
 import { updatePermissions } from 'actions/settings'
 import { showModal } from 'actions/common'
 
@@ -99,14 +98,14 @@ const PermissionBody = ({ role, updatePermissions, showModal }) => {
     if (!grantsRef.current) return
     const parsedGrants = helpers.parseRoleGrants(grantsRef.current)
 
-    if (parsedGrants.tickets) setTicketGrants(prev => (isEqual(parsedGrants.tickets, prev) ? prev : parsedGrants.tickets))
-    if (parsedGrants.comments) setCommentGrants(prev => (isEqual(parsedGrants.comments, prev) ? prev : parsedGrants.comments))
-    if (parsedGrants.accounts) setAccountGrants(prev => (isEqual(parsedGrants.accounts, prev) ? prev : parsedGrants.accounts))
-    if (parsedGrants.groups) setGroupGrants(prev => (isEqual(parsedGrants.groups, prev) ? prev : parsedGrants.groups))
-    if (parsedGrants.teams) setTeamGrants(prev => (isEqual(parsedGrants.teams, prev) ? prev : parsedGrants.teams))
-    if (parsedGrants.departments) setDepartmentGrants(prev => (isEqual(parsedGrants.departments, prev) ? prev : parsedGrants.departments))
-    if (parsedGrants.reports) setReportGrants(prev => (isEqual(parsedGrants.reports, prev) ? prev : parsedGrants.reports))
-    if (parsedGrants.notices) setNoticeGrants(prev => (isEqual(parsedGrants.notices, prev) ? prev : parsedGrants.notices))
+    if (parsedGrants.tickets) setTicketGrants(prev => (JSON.stringify(parsedGrants.tickets) === JSON.stringify(prev) ? prev : parsedGrants.tickets))
+    if (parsedGrants.comments) setCommentGrants(prev => (JSON.stringify(parsedGrants.comments) === JSON.stringify(prev) ? prev : parsedGrants.comments))
+    if (parsedGrants.accounts) setAccountGrants(prev => (JSON.stringify(parsedGrants.accounts) === JSON.stringify(prev) ? prev : parsedGrants.accounts))
+    if (parsedGrants.groups) setGroupGrants(prev => (JSON.stringify(parsedGrants.groups) === JSON.stringify(prev) ? prev : parsedGrants.groups))
+    if (parsedGrants.teams) setTeamGrants(prev => (JSON.stringify(parsedGrants.teams) === JSON.stringify(prev) ? prev : parsedGrants.teams))
+    if (parsedGrants.departments) setDepartmentGrants(prev => (JSON.stringify(parsedGrants.departments) === JSON.stringify(prev) ? prev : parsedGrants.departments))
+    if (parsedGrants.reports) setReportGrants(prev => (JSON.stringify(parsedGrants.reports) === JSON.stringify(prev) ? prev : parsedGrants.reports))
+    if (parsedGrants.notices) setNoticeGrants(prev => (JSON.stringify(parsedGrants.notices) === JSON.stringify(prev) ? prev : parsedGrants.notices))
   }, [])
 
   useEffect(() => {

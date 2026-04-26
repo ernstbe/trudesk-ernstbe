@@ -15,8 +15,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import dayjs from 'lib2/dayjs'
-import { isUndefined } from 'lodash'
-
 import { MESSAGES_SPAWN_CHAT_WINDOW } from 'serverSocket/socketEventConsts'
 import { startConversation } from 'lib2/chat'
 
@@ -54,7 +52,7 @@ function OnlineUserListPartial ({ sessionUser, timezone, users, socket }) {
   }, [sessionUser, socket])
 
   const fromNow = useCallback((tz, date) => {
-    if (isUndefined(date)) {
+    if (date === undefined) {
       return 'Never'
     }
     return dayjs

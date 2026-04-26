@@ -16,7 +16,6 @@ import React, { useState, useEffect, useRef, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import { withTranslation } from 'react-i18next'
-import { head, orderBy } from 'lodash'
 import axios from 'axios'
 import Log from '../../logger'
 import { createTicket, fetchTicketTypes, getTagsWithPage } from 'actions/tickets'
@@ -61,9 +60,9 @@ function CreateTicketModal (props) {
   useEffect(() => {
     const defaultTicketType = viewdata.get('defaultTicketType')
     if (defaultTicketType) {
-      const prios = orderBy(viewdata.toJS().defaultTicketType.priorities, ['migrationNum'])
+      const prios = [...viewdata.toJS().defaultTicketType.priorities].sort((a, b) => (a.migrationNum > b.migrationNum ? 1 : a.migrationNum < b.migrationNum ? -1 : 0))
       setPriorities(prios)
-      setSelectedPriority(head(prios) ? head(prios)._id : '')
+      setSelectedPriority(prios[0] ? prios[0]._id : '')
     }
   }, [viewdata])
 
@@ -75,10 +74,10 @@ function CreateTicketModal (props) {
       .then(res => {
         const type = res.data.type
         if (type && type.priorities) {
-          const newPriorities = orderBy(type.priorities, ['migrationNum'])
+          const newPriorities = [...type.priorities].sort((a, b) => (a.migrationNum > b.migrationNum ? 1 : a.migrationNum < b.migrationNum ? -1 : 0))
           setPriorities(newPriorities)
-          setSelectedPriority(head(orderBy(type.priorities, ['migrationNum']))
-            ? head(orderBy(type.priorities, ['migrationNum']))._id
+          setSelectedPriority(newPriorities[0]
+            ? newPriorities[0]._id
             : '')
 
           setTimeout(() => {
@@ -208,7 +207,7 @@ function CreateTicketModal (props) {
               <SingleSelect
                 showTextbox={false}
                 items={mappedGroups}
-                defaultValue={head(mappedGroups) ? head(mappedGroups).value : ''}
+                defaultValue={mappedGroups[0] ? mappedGroups[0].value : ''}
                 onSelectChange={e => onGroupSelectChange(e)}
                 width='100%'
                 ref={i => (groupSelectRef.current = i)}
