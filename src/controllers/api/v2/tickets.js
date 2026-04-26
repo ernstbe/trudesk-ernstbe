@@ -324,6 +324,30 @@ ticketsV2.info.types = async (req, res) => {
   }
 }
 
+ticketsV2.info.statuses = async (req, res) => {
+  try {
+    const statuses = await ticketStatusSchema.find({})
+    statuses.sort((a, b) => (a.order || 0) - (b.order || 0))
+
+    return apiUtils.sendApiSuccess(res, { status: statuses })
+  } catch (err) {
+    logger.warn(err)
+    return apiUtils.sendApiError(res, 500, err.message)
+  }
+}
+
+ticketsV2.info.priorities = async (req, res) => {
+  try {
+    const priorities = await Models.Priority.find({})
+    priorities.sort((a, b) => (a.migrationNum || 0) - (b.migrationNum || 0) || (a.name || '').localeCompare(b.name || ''))
+
+    return apiUtils.sendApiSuccess(res, { priorities })
+  } catch (err) {
+    logger.warn(err)
+    return apiUtils.sendApiError(res, 500, err.message)
+  }
+}
+
 ticketsV2.info.tags = async (req, res) => {
   try {
     const tags = await Models.TicketTags.find({}).sort('normalized')
