@@ -1,7 +1,10 @@
 module.exports = function (grunt) {
-  require('matchdep')
-    .filterAll('grunt-*')
-    .forEach(grunt.loadNpmTasks)
+  grunt.loadNpmTasks('grunt-contrib-cssmin')
+  grunt.loadNpmTasks('grunt-contrib-uglify')
+  grunt.loadNpmTasks('grunt-contrib-watch')
+  grunt.loadNpmTasks('grunt-express-server')
+  grunt.loadNpmTasks('grunt-parallel')
+  grunt.loadNpmTasks('grunt-shell')
 
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
