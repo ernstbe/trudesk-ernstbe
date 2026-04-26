@@ -18,7 +18,6 @@ module.exports = function (middleware, router, controllers) {
   const apiv2 = controllers.api.v2
   const isAdmin = middleware.isAdmin
   const isAgentOrAdmin = middleware.isAgentOrAdmin
-  const csrfCheck = middleware.csrfCheck
   const canUser = middleware.canUser
 
   // Common
