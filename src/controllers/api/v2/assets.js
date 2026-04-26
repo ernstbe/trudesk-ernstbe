@@ -1,4 +1,3 @@
-const _ = require('lodash')
 const Asset = require('../../../models/asset')
 const Ticket = require('../../../models/ticket')
 const apiUtil = require('../apiUtils')
@@ -61,7 +60,7 @@ assetsApi.update = async function (req, res) {
 
     for (let i = 0; i < allowedFields.length; i++) {
       const field = allowedFields[i]
-      if (!_.isUndefined(postData[field])) {
+      if (postData[field] !== undefined) {
         asset[field] = postData[field]
       }
     }

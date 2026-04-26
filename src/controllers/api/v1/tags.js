@@ -12,7 +12,6 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-const _ = require('lodash')
 const apiTags = {}
 
 /**
@@ -39,7 +38,7 @@ const apiTags = {}
 apiTags.createTag = async function (req, res) {
   try {
     const data = req.body
-    if (_.isUndefined(data.tag)) return res.status(400).json({ error: 'Invalid Post Data' })
+    if (data.tag === undefined) return res.status(400).json({ error: 'Invalid Post Data' })
 
     const TagSchema = require('../../../models/tag')
     const Tag = new TagSchema({
@@ -94,7 +93,7 @@ apiTags.getTagsWithLimit = async function (req, res) {
 apiTags.updateTag = async function (req, res) {
   const id = req.params.id
   const data = req.body
-  if (_.isUndefined(id) || _.isNull(id) || _.isNull(data) || _.isUndefined(data)) {
+  if (id === undefined || id === null || data === null || data === undefined) {
     return res.status(400).json({ success: false, error: 'Invalid Put Data' })
   }
 
@@ -127,14 +126,14 @@ apiTags.updateTag = async function (req, res) {
  */
 apiTags.deleteTag = async function (req, res) {
   const id = req.params.id
-  if (_.isUndefined(id) || _.isNull(id)) return res.status(400).json({ success: false, error: 'Invalid Tag Id' })
+  if (id === undefined || id === null) return res.status(400).json({ success: false, error: 'Invalid Tag Id' })
 
   try {
     const ticketModel = require('../../../models/ticket')
     const tickets = await ticketModel.getAllTicketsByTag(id)
     for (const ticket of tickets) {
-      ticket.tags = _.reject(ticket.tags, function (o) {
-        return o._id.toString() === id.toString()
+      ticket.tags = ticket.tags.filter(function (o) {
+        return o._id.toString() !== id.toString()
       })
       await ticket.save()
     }

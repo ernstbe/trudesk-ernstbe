@@ -12,13 +12,12 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-const _ = require('lodash')
 const permissions = require('../permissions')
 const departmentController = {}
 
 departmentController.get = function (req, res) {
   const user = req.user
-  if (_.isUndefined(user) || !permissions.canThis(user.role, 'departments:view')) {
+  if (user === undefined || !permissions.canThis(user.role, 'departments:view')) {
     return res.redirect('/')
   }
 

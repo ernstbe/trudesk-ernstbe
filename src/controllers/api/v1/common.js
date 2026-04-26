@@ -12,7 +12,6 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-const _ = require('lodash')
 const async = require('async')
 const winston = require('../../../logger')
 
@@ -35,7 +34,7 @@ const commonV1 = {}
  *
  * @example
  * //Object Returned has the following properties removed
- * var resUser = _.clone(user._doc);
+ * var resUser = { ...user._doc };
  * delete resUser.resetPassExpire;
  * delete resUser.resetPassHash;
  * delete resUser.password;
@@ -47,7 +46,7 @@ commonV1.login = async function (req, res) {
   const username = req.body.username
   const password = req.body.password
 
-  if (_.isUndefined(username) || _.isUndefined(password)) {
+  if (username === undefined || password === undefined) {
     return res.sendStatus(403)
   }
 
@@ -57,7 +56,7 @@ commonV1.login = async function (req, res) {
 
     if (!userModel.validate(password, user.password)) { return res.status(401).json({ success: false, error: 'Invalid Password' }) }
 
-    const resUser = _.clone(user._doc)
+    const resUser = { ...user._doc }
     delete resUser.resetPassExpire
     delete resUser.resetPassHash
     delete resUser.password
@@ -66,7 +65,7 @@ commonV1.login = async function (req, res) {
     delete resUser.__v
     delete resUser.preferences
 
-    if (_.isUndefined(resUser.accessToken) || _.isNull(resUser.accessToken)) {
+    if (resUser.accessToken === undefined || resUser.accessToken === null) {
       return res.status(200).json({ success: false, error: 'No API Key assigned to this User.' })
     }
 
@@ -87,7 +86,7 @@ commonV1.getLoggedInUser = function (req, res) {
     return res.status(400).json({ success: false, error: 'Invalid Auth' })
   }
 
-  const resUser = _.clone(req.user._doc)
+  const resUser = { ...req.user._doc }
   delete resUser.resetPassExpire
   delete resUser.accessToken
   delete resUser.resetPassHash

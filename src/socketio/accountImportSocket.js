@@ -11,7 +11,6 @@
  *  Updated:    1/20/19 4:43 PM
  *  Copyright (c) 2014-2019. All rights reserved.
  */
-const _ = require('lodash')
 const winston = require('../logger')
 const utils = require('../helpers/utils')
 const UserSchema = require('../models/user')
@@ -164,13 +163,13 @@ events.onImportJSON = function (socket) {
         password: 'Password1!'
       })
 
-      if (!_.isUndefined(cu.role)) {
+      if (cu.role !== undefined) {
         user.role = cu.role
       } else {
         user.role = 'user'
       }
 
-      if (!_.isUndefined(cu.title)) {
+      if (cu.title !== undefined) {
         user.title = cu.title
       }
 
@@ -206,7 +205,7 @@ events.onImportJSON = function (socket) {
         existingUser.fullname = uu.fullname
         existingUser.title = uu.title
         existingUser.email = uu.email
-        if (!_.isUndefined(uu.role)) {
+        if (uu.role !== undefined) {
           existingUser.role = uu.role
         }
 

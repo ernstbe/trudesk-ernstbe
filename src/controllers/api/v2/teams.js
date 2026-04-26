@@ -12,7 +12,6 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-const _ = require('lodash')
 const Team = require('../../../models/team')
 const apiUtils = require('../apiUtils')
 
@@ -20,7 +19,7 @@ const apiTeams = {}
 
 apiTeams.get = async function (req, res) {
   let limit = 10
-  if (!_.isUndefined(req.query.limit)) {
+  if (req.query.limit !== undefined) {
     try {
       limit = parseInt(req.query.limit)
     } catch (err) {

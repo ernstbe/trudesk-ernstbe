@@ -12,7 +12,6 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-const _ = require('lodash')
 const winston = require('../../logger')
 const dayjs = require('../dayjs')
 const settingSchema = require('../../models/setting')
@@ -93,7 +92,7 @@ viewController.getData = function (request, cb) {
 
       // Ticket settings
       viewdata.ticketSettings = {}
-      viewdata.ticketSettings.playNewTicketSound = (playNewTicketSoundSetting && !_.isUndefined(playNewTicketSoundSetting.value)) ? playNewTicketSoundSetting.value : true
+      viewdata.ticketSettings.playNewTicketSound = (playNewTicketSoundSetting && playNewTicketSoundSetting.value !== undefined) ? playNewTicketSoundSetting.value : true
       viewdata.ticketSettings.minSubject = (minSubjectSetting && minSubjectSetting.value) ? minSubjectSetting.value : 10
       viewdata.ticketSettings.minIssue = (minIssueSetting && minIssueSetting.value) ? minIssueSetting.value : 10
       viewdata.ticketSettings.allowAgentUserTickets = (allowAgentUserTicketsSetting && allowAgentUserTicketsSetting.value) ? allowAgentUserTicketsSetting.value : false
@@ -126,7 +125,7 @@ viewController.getData = function (request, cb) {
       } else {
         try {
           const logoFileName = await settingSchema.getSetting('gen:customlogofilename')
-          if (logoFileName && !_.isUndefined(logoFileName.value)) {
+          if (logoFileName && logoFileName.value !== undefined) {
             viewdata.logoImage = '/assets/' + logoFileName.value
           } else {
             viewdata.logoImage = '/img/defaultLogoLight.png'
@@ -143,7 +142,7 @@ viewController.getData = function (request, cb) {
       } else {
         try {
           const pageLogoFileName = await settingSchema.getSetting('gen:custompagelogofilename')
-          if (pageLogoFileName && !_.isUndefined(pageLogoFileName.value)) {
+          if (pageLogoFileName && pageLogoFileName.value !== undefined) {
             viewdata.pageLogoImage = '/assets/' + pageLogoFileName.value
           } else {
             viewdata.pageLogoImage = '/img/defaultLogoDark.png'
@@ -160,7 +159,7 @@ viewController.getData = function (request, cb) {
       } else {
         try {
           const faviconFilename = await settingSchema.getSetting('gen:customfaviconfilename')
-          if (faviconFilename && !_.isUndefined(faviconFilename.value)) {
+          if (faviconFilename && faviconFilename.value !== undefined) {
             viewdata.favicon = '/assets/' + faviconFilename.value
           } else {
             viewdata.favicon = '/img/favicon.png'
@@ -173,7 +172,7 @@ viewController.getData = function (request, cb) {
       // Active notice
       viewdata.notice = activeNotice
       viewdata.noticeCookieName = undefined
-      if (!_.isUndefined(activeNotice) && !_.isNull(activeNotice)) {
+      if (activeNotice !== undefined && activeNotice !== null) {
         viewdata.noticeCookieName = activeNotice.name + '_' + dayjs(activeNotice.activeDate).format('MMMDDYYYY_HHmmss')
       }
 
@@ -232,23 +231,23 @@ viewController.getConversations = async function (request) {
 
     const userMeta =
       convo.userMeta[
-        _.findIndex(convo.userMeta, function (item) {
+        convo.userMeta.findIndex(function (item) {
           return item.userId.toString() === request.user._id.toString()
         })
       ]
-    if (!_.isUndefined(userMeta) && !_.isUndefined(userMeta.deletedAt) && userMeta.deletedAt > convo.updatedAt) {
+    if (userMeta !== undefined && userMeta.deletedAt !== undefined && userMeta.deletedAt > convo.updatedAt) {
       continue
     }
 
     const rm = await messageSchema.getMostRecentMessage(c._id)
-    _.each(c.participants, function (p) {
+    c.participants.forEach(function (p) {
       if (p._id.toString() !== request.user._id.toString()) {
         c.partner = p
       }
     })
 
-    const recentMsg = _.first(rm)
-    if (!_.isUndefined(recentMsg)) {
+    const recentMsg = rm[0]
+    if (recentMsg !== undefined) {
       if (String(c.partner._id) === String(recentMsg.owner._id)) {
         c.recentMessage = c.partner.fullname + ': ' + recentMsg.body
       } else {
@@ -269,8 +268,8 @@ viewController.getUsers = async function (request) {
   if (request.user.role.isAdmin || request.user.role.isAgent) {
     const users = await userSchema.findAll()
 
-    let u = _.reject(users, function (u) {
-      return u.deleted === true
+    let u = users.filter(function (u) {
+      return u.deleted !== true
     })
     u.password = null
     u.role = null
@@ -281,15 +280,15 @@ viewController.getUsers = async function (request) {
     u.preferences = null
     u.tOTPKey = null
 
-    u = _.sortBy(u, 'fullname')
+    u = [...u].sort((a, b) => (a.fullname || '').localeCompare(b.fullname || ''))
 
     return u
   } else {
     const groupSchema = require('../../models/group')
     const groups = await groupSchema.getAllGroupsOfUser(request.user._id)
 
-    let users = _.map(groups, function (g) {
-      return _.map(g.members, function (m) {
+    let users = groups.map(function (g) {
+      return g.members.map(function (m) {
         const mFiltered = m
         m.password = null
         m.role = null
@@ -304,13 +303,14 @@ viewController.getUsers = async function (request) {
       })
     })
 
-    users = _.chain(users)
-      .flattenDeep()
-      .uniqBy(function (i) {
-        return i._id
-      })
-      .sortBy('fullname')
-      .value()
+    const flatUsers = users.flat(Infinity)
+    const seenIds = new Set()
+    users = flatUsers.filter(function (i) {
+      const id = i._id.toString()
+      if (seenIds.has(id)) return false
+      seenIds.add(id)
+      return true
+    }).sort((a, b) => (a.fullname || '').localeCompare(b.fullname || ''))
 
     return users
   }
@@ -363,7 +363,7 @@ viewController.getDefaultTicketType = async function (request) {
 viewController.getPriorities = async function (request) {
   const ticketPrioritySchema = require('../../models/ticketpriority')
   let priorities = await ticketPrioritySchema.getPriorities()
-  priorities = _.sortBy(priorities, ['migrationNum', 'name'])
+  priorities = [...priorities].sort((a, b) => (a.migrationNum || 0) - (b.migrationNum || 0) || (a.name || '').localeCompare(b.name || ''))
   return priorities
 }
 
@@ -376,7 +376,7 @@ viewController.getTags = async function (request) {
 viewController.getOverdueSetting = async function (request) {
   try {
     const data = await settingSchema.getSettingByName('showOverdueTickets:enable')
-    if (_.isNull(data)) return true
+    if (data === null) return true
     return data.value
   } catch (err) {
     winston.debug(err)
@@ -390,7 +390,7 @@ viewController.getShowTourSetting = async function (request) {
   try {
     const data = await settingSchema.getSettingByName('showTour:enable')
 
-    if (!_.isNull(data) && !_.isUndefined(data) && data === false) {
+    if (data !== null && data !== undefined && data === false) {
       return true
     }
 
@@ -404,7 +404,7 @@ viewController.getShowTourSetting = async function (request) {
 
     if (hasTourCompleted) return false
 
-    if (_.isNull(data)) return true
+    if (data === null) return true
 
     return data.value
   } catch (err) {
@@ -432,7 +432,7 @@ viewController.getPluginsInfo = async function (request) {
         pluginsList.push(pluginPackage)
       },
       function () {
-        resolve(_.sortBy(pluginsList, 'name'))
+        resolve([...pluginsList].sort((a, b) => (a.name || '').localeCompare(b.name || '')))
       }
     )
   })

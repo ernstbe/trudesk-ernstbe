@@ -12,7 +12,6 @@
 
  **/
 
-const _ = require('lodash')
 const mongoose = require('mongoose')
 
 const COLLECTION = 'role_order'
@@ -40,16 +39,16 @@ roleOrder.methods.updateOrder = async function (order) {
 }
 
 roleOrder.methods.getHierarchy = function (checkRoleId) {
-  const idx = _.findIndex(this.order, function (i) {
+  const idx = this.order.findIndex(function (i) {
     return i.toString() === checkRoleId.toString()
   })
   if (idx === -1) return []
   if (idx === 0) return this.order
-  return _.drop(this.order, idx)
+  return this.order.slice(idx)
 }
 
 roleOrder.methods.removeFromOrder = async function (_id) {
-  this.order = _.filter(this.order, function (o) {
+  this.order = this.order.filter(function (o) {
     return o.toString() !== _id.toString()
   })
 

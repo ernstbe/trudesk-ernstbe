@@ -16,7 +16,6 @@ const NodeCache = require('node-cache')
 const async = require('async')
 const path = require('path')
 const nconf = require('nconf')
-const _ = require('lodash')
 const winston = require('../logger')
 const dayjs = require('../helpers/dayjs')
 
@@ -208,7 +207,7 @@ truCache.refreshCache = function (callback) {
 
       cache.flushAll()
 
-      if (_.isFunction(callback)) {
+      if (typeof callback === 'function') {
         return callback(err)
       }
     }

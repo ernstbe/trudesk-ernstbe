@@ -11,7 +11,6 @@
  *  Updated:    1/20/19 4:43 PM
  *  Copyright (c) 2014-2019. All rights reserved.
  */
-const _ = require('lodash')
 const winston = require('../logger')
 const marked = require('marked')
 const sanitizeHtml = require('sanitize-html')
@@ -96,7 +95,7 @@ events.onUpdateAssigneeList = function (socket) {
       const roles = await roleSchema.getAgentRoles()
       const users = await userSchema.find({ role: { $in: roles }, deleted: false })
 
-      const sortedUser = _.sortBy(users, 'fullname')
+      const sortedUser = [...users].sort((a, b) => (a.fullname || '').localeCompare(b.fullname || ''))
 
       utils.sendToSelf(socket, socketEvents.TICKETS_ASSIGNEE_LOAD, sortedUser)
     } catch (err) {
@@ -149,7 +148,7 @@ events.onSetTicketType = function (socket) {
     const typeId = data.value
     const ownerId = socket.request.user._id
 
-    if (_.isUndefined(ticketId) || _.isUndefined(typeId)) return true
+    if (ticketId === undefined || typeId === undefined) return true
     try {
       const ticket = await ticketSchema.getTicketById(ticketId)
       const t = await ticket.setTicketType(ownerId, typeId)
@@ -167,7 +166,7 @@ events.onSetTicketType = function (socket) {
 events.onUpdateTicketTags = socket => {
   socket.on(socketEvents.TICKETS_UI_TAGS_UPDATE, async data => {
     const ticketId = data.ticketId
-    if (_.isUndefined(ticketId)) return true
+    if (ticketId === undefined) return true
 
     try {
       const ticket = await ticketSchema.findOne({ _id: ticketId }).populate('tags')
@@ -185,7 +184,7 @@ events.onSetTicketPriority = function (socket) {
     const priority = data.value
     const ownerId = socket.request.user._id
 
-    if (_.isUndefined(ticketId) || _.isUndefined(priority)) return true
+    if (ticketId === undefined || priority === undefined) return true
     try {
       const ticket = await ticketSchema.getTicketById(ticketId)
       const p = await prioritySchema.getPriority(priority)
@@ -223,7 +222,7 @@ events.onSetTicketGroup = function (socket) {
     const groupId = data.value
     const ownerId = socket.request.user._id
 
-    if (_.isUndefined(ticketId) || _.isUndefined(groupId)) return true
+    if (ticketId === undefined || groupId === undefined) return true
 
     try {
       const ticket = await ticketSchema.getTicketById(ticketId)
@@ -245,7 +244,7 @@ events.onSetTicketDueDate = function (socket) {
     const dueDate = data.value
     const ownerId = socket.request.user._id
 
-    if (_.isUndefined(ticketId)) return true
+    if (ticketId === undefined) return true
 
     try {
       const ticket = await ticketSchema.getTicketById(ticketId)
@@ -266,7 +265,7 @@ events.onSetTicketIssue = socket => {
     const issue = data.value
     const subject = data.subject
     const ownerId = socket.request.user._id
-    if (_.isUndefined(ticketId) || _.isUndefined(issue)) return true
+    if (ticketId === undefined || issue === undefined) return true
 
     try {
       let ticket = await ticketSchema.getTicketById(ticketId)
@@ -290,7 +289,7 @@ events.onCommentNoteSet = socket => {
     let text = data.value
     const isNote = data.isNote
 
-    if (_.isUndefined(ticketId) || _.isUndefined(itemId) || _.isUndefined(text)) return true
+    if (ticketId === undefined || itemId === undefined || text === undefined) return true
 
     marked.setOptions({
       breaks: true
@@ -337,12 +336,12 @@ events.onAttachmentsUIUpdate = socket => {
   socket.on(socketEvents.TICKETS_UI_ATTACHMENTS_UPDATE, async data => {
     const ticketId = data._id
 
-    if (_.isUndefined(ticketId)) return true
+    if (ticketId === undefined) return true
 
     try {
       const ticket = await ticketSchema.getTicketById(ticketId)
       const user = socket.request.user
-      if (_.isUndefined(user)) return true
+      if (user === undefined) return true
 
       const canRemoveAttachments = permissions.canThis(user.role, 'tickets:removeAttachment')
 

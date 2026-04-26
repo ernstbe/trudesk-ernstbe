@@ -12,7 +12,6 @@
 
  **/
 
-const _ = require('lodash')
 const fs = require('fs-extra')
 const path = require('path')
 const winston = require('../logger')
@@ -98,9 +97,9 @@ async function rolesDefault () {
   if (!roleOrder) {
     const roles = await roleSchema.getRoles()
     const order = []
-    order.push(_.find(roles, { name: 'Admin' })._id)
-    order.push(_.find(roles, { name: 'Support' })._id)
-    order.push(_.find(roles, { name: 'User' })._id)
+    order.push(roles.find(r => r.name === 'Admin')._id)
+    order.push(roles.find(r => r.name === 'Support')._id)
+    order.push(roles.find(r => r.name === 'User')._id)
 
     await roleOrderSchema.create({
       order
@@ -116,7 +115,7 @@ async function defaultUserRole () {
   const roleDefault = await SettingsSchema.getSetting('role:user:default')
   if (roleDefault) return
 
-  const lastId = _.last(roleOrder.order)
+  const lastId = roleOrder.order[roleOrder.order.length - 1]
   await SettingsSchema.create({
     name: 'role:user:default',
     value: lastId
@@ -238,9 +237,9 @@ async function ticketTypeSettingDefault () {
     const ticketTypeSchema = require('../models/tickettype')
     const types = await ticketTypeSchema.getTypes()
 
-    const type = _.first(types)
+    const type = types[0]
     if (!type) throw new Error('No Types Defined!')
-    if (!_.isObject(type) || _.isUndefined(type._id)) throw new Error('Invalid Type. Skipping.')
+    if (!(typeof type === 'object' && type !== null) || type._id === undefined) throw new Error('Invalid Type. Skipping.')
 
     // Save default ticket type
     const defaultTicketType = new SettingsSchema({
@@ -264,12 +263,12 @@ async function ticketStatusSettingDefault () {
   const ticketStatusSchema = require('../models/ticketStatus')
   const statuses = await ticketStatusSchema.getStatus()
 
-  const status = _.first(statuses)
+  const status = statuses[0]
   if (!status) {
     throw new Error('No Statuses Defined!')
   }
 
-  if (!_.isObject(status) || _.isUndefined(status._id)) {
+  if (!(typeof status === 'object' && status !== null) || status._id === undefined) {
     throw new Error('Invalid Status. Skipping.')
   }
 
@@ -389,7 +388,7 @@ async function checkPriorities () {
 
 async function addedDefaultPrioritiesToTicketTypes () {
   let priorities = await PrioritySchema.find({ default: true })
-  priorities = _.sortBy(priorities, 'migrationNum')
+  priorities = [...priorities].sort((a, b) => (a.migrationNum || 0) - (b.migrationNum || 0))
 
   const ticketTypeSchema = require('../models/tickettype')
   const types = await ticketTypeSchema.getTypes()
@@ -398,14 +397,14 @@ async function addedDefaultPrioritiesToTicketTypes () {
     let prioritiesToAdd = []
     if (!type.priorities || type.priorities.length < 1) {
       type.priorities = []
-      prioritiesToAdd = _.map(priorities, '_id')
+      prioritiesToAdd = priorities.map(p => p._id)
     }
 
     if (prioritiesToAdd.length < 1) {
       return
     }
 
-    type.priorities = _.concat(type.priorities, prioritiesToAdd)
+    type.priorities = [].concat(type.priorities, prioritiesToAdd)
     await type.save()
   }))
 }
@@ -542,7 +541,7 @@ settingsDefaults.init = async function (callback) {
   } catch (err) {
     winston.warn(err)
   }
-  if (_.isFunction(callback)) return callback()
+  if (typeof callback === 'function') return callback()
 }
 
 module.exports = settingsDefaults

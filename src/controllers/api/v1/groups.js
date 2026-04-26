@@ -12,7 +12,6 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-const _ = require('lodash')
 const GroupSchema = require('../../../models/group')
 const ticketSchema = require('../../../models/ticket')
 
@@ -46,7 +45,7 @@ apiGroups.get = async function (req, res) {
     if (user.role.isAgent || user.role.isAdmin) {
       groups = await GroupSchema.getAllGroups()
       if (!hasPublic) {
-        groups = _.filter(groups, function (g) {
+        groups = groups.filter(function (g) {
           return !g.public
         })
       }
@@ -113,7 +112,7 @@ apiGroups.getAll = async function (req, res) {
  */
 apiGroups.getSingleGroup = async function (req, res) {
   const id = req.params.id
-  if (_.isUndefined(id)) return res.status(400).json({ error: 'Invalid Request' })
+  if (id === undefined) return res.status(400).json({ error: 'Invalid Request' })
 
   try {
     const group = await GroupSchema.getGroupById(id)
@@ -206,20 +205,20 @@ apiGroups.create = async function (req, res) {
 apiGroups.updateGroup = async function (req, res) {
   const id = req.params.id
   const data = req.body
-  if (_.isUndefined(id) || _.isUndefined(data) || !_.isObject(data)) { return res.status(400).json({ error: 'Invalid Post Data' }) }
+  if (id === undefined || data === undefined || !(typeof data === 'object' && data !== null)) { return res.status(400).json({ error: 'Invalid Post Data' }) }
 
-  if (!_.isArray(data.members)) {
+  if (!Array.isArray(data.members)) {
     data.members = [data.members]
   }
-  if (!_.isArray(data.sendMailTo)) {
+  if (!Array.isArray(data.sendMailTo)) {
     data.sendMailTo = [data.sendMailTo]
   }
 
   try {
     const group = await GroupSchema.getGroupById(id)
 
-    const members = _.compact(data.members)
-    const sendMailTo = _.compact(data.sendMailTo)
+    const members = data.members.filter(Boolean)
+    const sendMailTo = data.sendMailTo.filter(Boolean)
 
     group.name = data.name
     group.members = members
@@ -255,12 +254,12 @@ apiGroups.updateGroup = async function (req, res) {
  */
 apiGroups.deleteGroup = async function (req, res) {
   const id = req.params.id
-  if (_.isUndefined(id)) return res.status(400).json({ success: false, error: 'Error: Invalid Group Id.' })
+  if (id === undefined) return res.status(400).json({ success: false, error: 'Error: Invalid Group Id.' })
 
   try {
     const grps = [id]
     const tickets = await ticketSchema.getTickets(grps)
-    if (_.size(tickets) > 0) {
+    if (tickets.length > 0) {
       throw new Error('Cannot delete a group with tickets.')
     }
 

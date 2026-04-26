@@ -1,5 +1,4 @@
 const winston = require('../logger')
-const _ = require('lodash')
 
 const seeder = {}
 
@@ -82,7 +81,7 @@ seeder.init = async function (callback) {
     winston.warn('Seeder: Error during seeding — ' + err.message)
   }
 
-  if (_.isFunction(callback)) return callback()
+  if (typeof callback === 'function') return callback()
 }
 
 async function seedTicketTypes () {

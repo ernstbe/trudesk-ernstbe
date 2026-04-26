@@ -12,7 +12,6 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-const _ = require('lodash')
 const redis = require('redis')
 const winston = require('winston')
 
@@ -28,10 +27,10 @@ client.on('error', function (err) {
 const redisCache = {}
 
 redisCache.setCache = function (key, value, callback, ttl) {
-  if (!_.isArray(value)) {
+  if (!Array.isArray(value)) {
     value = [value]
   }
-  if (!_.isUndefined(ttl)) {
+  if (ttl !== undefined) {
     const importMulti = client.multi()
     const v = JSON.stringify(value)
     importMulti.hmset(rake('$trudesk', key), { data: v })

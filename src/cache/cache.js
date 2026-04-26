@@ -12,7 +12,6 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-const _ = require('lodash')
 const NodeCache = require('node-cache')
 const path = require('path')
 const cache = {}
@@ -21,7 +20,7 @@ cache.init = function () {
   global.cache = new NodeCache({ checkperiod: 0 })
   cache.memLimit = process.env.CACHE_MEMLIMIT || '2048'
   const env = { FORK: 1, NODE_ENV: global.env, TIMEZONE: global.timezone }
-  cache.env = _.merge(cache.env, env)
+  cache.env = Object.assign({}, cache.env, env)
 
   spawnCache()
   setInterval(spawnCache, 55 * 60 * 1000)
@@ -50,8 +49,8 @@ function spawnCache () {
   })
 
   n.on('close', function () {
-    _.remove(global.forks, function (i) {
-      return i.name === 'cache'
+    global.forks = global.forks.filter(function (i) {
+      return i.name !== 'cache'
     })
   })
 }

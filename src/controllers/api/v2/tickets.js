@@ -12,7 +12,6 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-const _ = require('lodash')
 const xss = require('xss')
 const marked = require('marked')
 const sanitizeHtml = require('sanitize-html')
@@ -169,7 +168,7 @@ ticketsV2.update = async function (req, res) {
 
 ticketsV2.batchUpdate = async function (req, res) {
   const batch = req.body.batch
-  if (!_.isArray(batch)) return apiUtils.sendApiError_InvalidPostData(res)
+  if (!Array.isArray(batch)) return apiUtils.sendApiError_InvalidPostData(res)
 
   const results = { success: 0, failed: 0, errors: [] }
 
@@ -177,7 +176,7 @@ ticketsV2.batchUpdate = async function (req, res) {
     try {
       const ticket = await Models.Ticket.getTicketById(batchTicket.id)
 
-      if (!_.isUndefined(batchTicket.status)) {
+      if (batchTicket.status !== undefined) {
         ticket.status = batchTicket.status
         ticket.history.push({
           action: 'ticket:set:status',
@@ -186,7 +185,7 @@ ticketsV2.batchUpdate = async function (req, res) {
         })
       }
 
-      if (!_.isUndefined(batchTicket.assignee)) {
+      if (batchTicket.assignee !== undefined) {
         ticket.assignee = batchTicket.assignee || undefined
         ticket.history.push({
           action: 'ticket:set:assignee',
@@ -195,7 +194,7 @@ ticketsV2.batchUpdate = async function (req, res) {
         })
       }
 
-      if (!_.isUndefined(batchTicket.priority)) {
+      if (batchTicket.priority !== undefined) {
         ticket.priority = batchTicket.priority
         ticket.history.push({
           action: 'ticket:set:priority',
@@ -218,7 +217,7 @@ ticketsV2.batchUpdate = async function (req, res) {
 ticketsV2.updateMetadata = async function (req, res) {
   const uid = req.params.uid
   const metadata = req.body.metadata
-  if (!uid || !metadata || !_.isObject(metadata)) return apiUtils.sendApiError(res, 400, 'Invalid Parameters')
+  if (!uid || !metadata || !(typeof metadata === 'object' && metadata !== null)) return apiUtils.sendApiError(res, 400, 'Invalid Parameters')
 
   const allowedFields = ['estimatedCost', 'actualCost', 'vendor', 'orderNumber', 'approvedBy', 'approvalDate']
 
@@ -230,7 +229,7 @@ ticketsV2.updateMetadata = async function (req, res) {
 
     for (let i = 0; i < allowedFields.length; i++) {
       const field = allowedFields[i]
-      if (!_.isUndefined(metadata[field])) {
+      if (metadata[field] !== undefined) {
         ticket.metadata[field] = metadata[field]
       }
     }
@@ -422,11 +421,11 @@ ticketsV2.checklist.update = async function (req, res) {
     const item = ticket.checklist.id(itemId)
     if (!item) return apiUtils.sendApiError(res, 404, 'Checklist item not found')
 
-    if (!_.isUndefined(req.body.title)) {
+    if (req.body.title !== undefined) {
       item.title = req.body.title
     }
 
-    if (!_.isUndefined(req.body.completed)) {
+    if (req.body.completed !== undefined) {
       item.completed = req.body.completed
       if (req.body.completed) {
         item.completedBy = req.user._id
@@ -496,7 +495,7 @@ ticketsV2.postComment = async function (req, res) {
   const uid = req.params.uid
   const body = req.body || {}
   if (!uid) return apiUtils.sendApiError(res, 400, 'Invalid Parameters')
-  if (_.isUndefined(body.comment)) return apiUtils.sendApiError_InvalidPostData(res)
+  if (body.comment === undefined) return apiUtils.sendApiError_InvalidPostData(res)
 
   try {
     const ticket = await Models.Ticket.getTicketByUid(uid)
@@ -537,7 +536,7 @@ ticketsV2.postNote = async function (req, res) {
   const uid = req.params.uid
   const body = req.body || {}
   if (!uid) return apiUtils.sendApiError(res, 400, 'Invalid Parameters')
-  if (_.isUndefined(body.note)) return apiUtils.sendApiError_InvalidPostData(res)
+  if (body.note === undefined) return apiUtils.sendApiError_InvalidPostData(res)
 
   try {
     const ticket = await Models.Ticket.getTicketByUid(uid)
@@ -581,7 +580,7 @@ ticketsV2.subscribe = async function (req, res) {
   const uid = req.params.uid
   const subscribe = req.body ? req.body.subscribe : undefined
   if (!uid) return apiUtils.sendApiError(res, 400, 'Invalid Parameters')
-  if (_.isUndefined(subscribe)) return apiUtils.sendApiError_InvalidPostData(res)
+  if (subscribe === undefined) return apiUtils.sendApiError_InvalidPostData(res)
 
   try {
     const ticket = await Models.Ticket.getTicketByUid(uid)
@@ -608,7 +607,7 @@ ticketsV2.subscribe = async function (req, res) {
 // -------------------------------------------------------------------
 ticketsV2.getStats = async function (req, res) {
   const cache = global.cache
-  if (_.isUndefined(cache)) return apiUtils.sendApiError(res, 503, 'Ticket stats are still loading')
+  if (cache === undefined) return apiUtils.sendApiError(res, 503, 'Ticket stats are still loading')
 
   let timespan = 30
   if (req.params.timespan) {
@@ -645,13 +644,13 @@ ticketsV2.getGroupStats = async function (req, res) {
 
   try {
     const tickets = await Models.Ticket.getTicketsWithObject([groupId], { limit: 10000, page: 0 })
-    if (_.isEmpty(tickets)) return apiUtils.sendApiError(res, 404, 'Group has no tickets to report')
+    if (!tickets || tickets.length === 0) return apiUtils.sendApiError(res, 404, 'Group has no tickets to report')
 
-    const closed = _.filter(tickets, t => t.status === 3)
+    const closed = tickets.filter(t => t.status === 3)
     return apiUtils.sendApiSuccess(res, {
-      ticketCount: _.size(tickets),
-      closedCount: _.size(closed),
-      recentTickets: _.takeRight(_.sortBy(tickets, 'date'), 5)
+      ticketCount: tickets.length,
+      closedCount: closed.length,
+      recentTickets: [...tickets].sort((a, b) => new Date(a.date) - new Date(b.date)).slice(-5)
     })
   } catch (err) {
     logger.warn(err)
@@ -668,13 +667,13 @@ ticketsV2.getUserStats = async function (req, res) {
 
   try {
     const tickets = await Models.Ticket.getTicketsByRequester(userId)
-    if (_.isEmpty(tickets)) return apiUtils.sendApiError(res, 404, 'User has no tickets to report')
+    if (!tickets || tickets.length === 0) return apiUtils.sendApiError(res, 404, 'User has no tickets to report')
 
-    const closed = _.filter(tickets, t => t.status === 3)
+    const closed = tickets.filter(t => t.status === 3)
     return apiUtils.sendApiSuccess(res, {
-      ticketCount: _.size(tickets),
-      closedCount: _.size(closed),
-      recentTickets: _.takeRight(_.sortBy(tickets, 'date'), 5)
+      ticketCount: tickets.length,
+      closedCount: closed.length,
+      recentTickets: [...tickets].sort((a, b) => new Date(a.date) - new Date(b.date)).slice(-5)
     })
   } catch (err) {
     logger.warn(err)
@@ -689,7 +688,7 @@ ticketsV2.getUserStats = async function (req, res) {
 // -------------------------------------------------------------------
 ticketsV2.batchDelete = async function (req, res) {
   const ids = req.body ? req.body.ids : undefined
-  if (!_.isArray(ids) || ids.length === 0) return apiUtils.sendApiError_InvalidPostData(res)
+  if (!Array.isArray(ids) || ids.length === 0) return apiUtils.sendApiError_InvalidPostData(res)
 
   // NB: don't use `success` as the inner counter key — apiUtils.sendApiSuccess
   // already sets { success: true } at the top level and would collide.

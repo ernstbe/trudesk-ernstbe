@@ -12,7 +12,6 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-const _ = require('lodash')
 const path = require('path')
 const passport = require('passport')
 const winston = require('winston')
@@ -81,7 +80,7 @@ mainController.about = async function (req, res) {
     content.data.common = req.viewdata
 
     content.data.version = pkg.version
-    if (privacyPolicy === null || _.isUndefined(privacyPolicy.value)) {
+    if (privacyPolicy === null || privacyPolicy.value === undefined) {
       content.data.privacyPolicy = 'No Privacy Policy has been set.'
     } else {
       content.data.privacyPolicy = xss(marked.parse(privacyPolicy.value))
@@ -209,7 +208,7 @@ mainController.logout = function (req, res) {
 
 mainController.forgotL2Auth = async function (req, res) {
   const data = req.body
-  if (_.isUndefined(data['forgotl2auth-email'])) {
+  if (data['forgotl2auth-email'] === undefined) {
     return res.status(400).send('No Form Data')
   }
 
@@ -276,7 +275,7 @@ mainController.forgotL2Auth = async function (req, res) {
 
 mainController.forgotPass = async function (req, res) {
   const data = req.body
-  if (_.isUndefined(data['forgotPass-email'])) {
+  if (data['forgotPass-email'] === undefined) {
     return res.status(400).send('No Form Data')
   }
 
@@ -286,7 +285,7 @@ mainController.forgotPass = async function (req, res) {
   try {
     const user = await userSchema.getUserByEmail(emailAddr)
 
-    if (_.isUndefined(user) || _.isEmpty(user)) {
+    if (user === undefined || (typeof user === 'object' && user !== null && Object.keys(user).length === 0)) {
       req.flash('Invalid Email: Account not found!')
       return res.status(400).send('Invalid Email: Account not found!')
     }
@@ -383,7 +382,7 @@ mainController.forgotPass = async function (req, res) {
 
 mainController.resetl2auth = async function (req, res) {
   const hash = req.params.hash
-  if (_.isUndefined(hash)) {
+  if (hash === undefined) {
     return res.status(400).send('Invalid Link!')
   }
 
@@ -392,7 +391,7 @@ mainController.resetl2auth = async function (req, res) {
   try {
     const user = await userSchema.getUserByL2ResetHash(hash)
 
-    if (_.isUndefined(user) || _.isEmpty(user)) {
+    if (user === undefined || (typeof user === 'object' && user !== null && Object.keys(user).length === 0)) {
       return res.status(400).send('Invalid Link!')
     }
 
@@ -450,7 +449,7 @@ mainController.resetl2auth = async function (req, res) {
 mainController.resetPass = async function (req, res) {
   const hash = req.params.hash
 
-  if (_.isUndefined(hash)) {
+  if (hash === undefined) {
     return res.status(400).send('Invalid Link!')
   }
 
@@ -459,7 +458,7 @@ mainController.resetPass = async function (req, res) {
   try {
     const user = await userSchema.getUserByResetHash(hash)
 
-    if (_.isUndefined(user) || _.isEmpty(user)) {
+    if (user === undefined || (typeof user === 'object' && user !== null && Object.keys(user).length === 0)) {
       return res.status(400).send('Invalid Link!')
     }
 
@@ -537,7 +536,7 @@ mainController.l2authget = async function (req, res) {
     const settingsFull = await settingsUtil.getSettings()
     const settings = settingsFull.data?.settings
 
-    if (!_.isNull(settings) && !_.isNull(settings.mailerEnabled)) {
+    if (settings !== null && settings.mailerEnabled !== null) {
       content.mailerEnabled = settings.mailerEnabled.value
     }
     content.pageLogo = '/img/defaultLogoDark.png'
@@ -604,7 +603,7 @@ mainController.uploadFavicon = function (req, res) {
       return res.status(error.status || 500).send(error.message)
     }
 
-    if (_.isUndefined(object.filePath) || _.isUndefined(object.filename)) {
+    if (object.filePath === undefined || object.filename === undefined) {
       return res.status(400).send('Invalid image data')
     }
 
@@ -677,7 +676,7 @@ mainController.uploadLogo = function (req, res) {
       return res.status(error.status || 500).send(error.message)
     }
 
-    if (_.isUndefined(object.filePath) || _.isUndefined(object.filename)) {
+    if (object.filePath === undefined || object.filename === undefined) {
       return res.status(400).send('Invalid image data')
     }
 
@@ -751,7 +750,7 @@ mainController.uploadPageLogo = function (req, res) {
       return res.status(error.status || 500).send(error.message)
     }
 
-    if (_.isUndefined(object.filePath) || _.isUndefined(object.filename)) {
+    if (object.filePath === undefined || object.filename === undefined) {
       return res.status(400).send('Invalid image data')
     }
 

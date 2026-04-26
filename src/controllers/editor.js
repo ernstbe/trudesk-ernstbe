@@ -12,7 +12,6 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-const _ = require('lodash')
 const path = require('path')
 const fs = require('fs-extra')
 const Busboy = require('busboy')
@@ -42,10 +41,10 @@ editor.getAssets = function (req, res) {
     if (err) return res.status(400).json({ success: false, error: err })
 
     files = files.filter(function (file) {
-      return _.indexOf(imageExts, path.extname(file).toLowerCase() !== -1)
+      return imageExts.indexOf(path.extname(file).toLowerCase()) !== -1
     })
 
-    files = _.map(files, function (i) {
+    files = files.map(function (i) {
       return { src: '/uploads/assets/upload/' + i }
     })
 
@@ -122,7 +121,7 @@ editor.assetsUpload = function (req, res) {
   busboy.on('finish', function () {
     if (error) return res.status(error.status || 500).json({ success: false, error })
 
-    if (_.isUndefined(object.filename) || _.isUndefined(object.filePath)) {
+    if (object.filename === undefined || object.filePath === undefined) {
       return res.status(400).json({ success: false, error: { message: 'Invalid Form Data' } })
     }
 

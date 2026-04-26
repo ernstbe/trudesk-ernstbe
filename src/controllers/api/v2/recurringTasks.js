@@ -1,4 +1,3 @@
-const _ = require('lodash')
 const RecurringTask = require('../../../models/recurringTask')
 const apiUtil = require('../apiUtils')
 
@@ -73,7 +72,7 @@ recurringTasksApi.update = async function (req, res) {
 
     for (let i = 0; i < allowedFields.length; i++) {
       const field = allowedFields[i]
-      if (!_.isUndefined(postData[field])) {
+      if (postData[field] !== undefined) {
         task[field] = postData[field]
       }
     }

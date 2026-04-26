@@ -12,7 +12,6 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-const _ = require('lodash')
 const mongoose = require('mongoose')
 const utils = require('../helpers/utils')
 
@@ -50,7 +49,7 @@ groupSchema.pre('save', function () {
 
 groupSchema.methods.addMember = async function (memberId) {
   const self = this
-  if (_.isUndefined(memberId)) {
+  if (memberId === undefined) {
     throw new Error('Invalid MemberId - $Group.AddMember()')
   }
 
@@ -60,14 +59,14 @@ groupSchema.methods.addMember = async function (memberId) {
   }
 
   self.members.push(memberId)
-  self.members = _.uniq(self.members)
+  self.members = [...new Set(self.members)]
 
   return true
 }
 
 groupSchema.methods.removeMember = async function (memberId) {
   const self = this
-  if (_.isUndefined(memberId)) {
+  if (memberId === undefined) {
     throw new Error('Invalid MemberId - $Group.RemoveMember()')
   }
 
@@ -75,8 +74,9 @@ groupSchema.methods.removeMember = async function (memberId) {
     return false
   }
 
-  self.members.splice(_.indexOf(self.members, _.find(self.members, { _id: memberId })), 1)
-  self.members = _.uniq(self.members)
+  const memberToRemove = self.members.find(m => m._id.toString() === memberId.toString())
+  self.members.splice(self.members.indexOf(memberToRemove), 1)
+  self.members = [...new Set(self.members)]
 
   return true
 }
@@ -86,30 +86,31 @@ groupSchema.methods.isMember = function (memberId) {
 }
 
 groupSchema.methods.addSendMailTo = async function (memberId) {
-  if (_.isUndefined(memberId)) throw new Error('Invalid MemberId - $Group.AddSendMailTo()')
+  if (memberId === undefined) throw new Error('Invalid MemberId - $Group.AddSendMailTo()')
 
   if (this.sendMailTo === null) this.sendMailTo = []
 
   if (isMember(this.sendMailTo, memberId)) return false
 
   this.sendMailTo.push(memberId)
-  this.sendMailTo = _.uniq(this.sendMailTo)
+  this.sendMailTo = [...new Set(this.sendMailTo)]
 
   return true
 }
 
 groupSchema.methods.removeSendMailTo = async function (memberId) {
-  if (_.isUndefined(memberId)) throw new Error('Invalid MemberId - $Group.RemoveSendMailTo()')
+  if (memberId === undefined) throw new Error('Invalid MemberId - $Group.RemoveSendMailTo()')
 
   if (!isMember(this.sendMailTo, memberId)) return false
 
-  this.sendMailTo.splice(_.indexOf(this.sendMailTo, _.find(this.sendMailTo, { _id: memberId })), 1)
+  const mailMemberToRemove = this.sendMailTo.find(m => m._id.toString() === memberId.toString())
+  this.sendMailTo.splice(this.sendMailTo.indexOf(mailMemberToRemove), 1)
 
   return true
 }
 
 groupSchema.statics.getGroupByName = async function (name) {
-  if (_.isUndefined(name) || name.length < 1) throw new Error('Invalid Group Name - GroupSchema.GetGroupByName()')
+  if (name === undefined || name.length < 1) throw new Error('Invalid Group Name - GroupSchema.GetGroupByName()')
 
   const q = this.model(COLLECTION)
     .findOne({ name })
@@ -172,7 +173,7 @@ groupSchema.statics.getAllPublicGroups = async function () {
 }
 
 groupSchema.statics.getGroups = async function (groupIds) {
-  if (_.isUndefined(groupIds)) {
+  if (groupIds === undefined) {
     throw new Error('Invalid Array of Group IDs - GroupSchema.GetGroups()')
   }
 
@@ -184,7 +185,7 @@ groupSchema.statics.getGroups = async function (groupIds) {
 }
 
 groupSchema.statics.getAllGroupsOfUser = async function (userId) {
-  if (_.isUndefined(userId)) {
+  if (userId === undefined) {
     throw new Error('Invalid UserId - GroupSchema.GetAllGroupsOfUser()')
   }
 
@@ -198,7 +199,7 @@ groupSchema.statics.getAllGroupsOfUser = async function (userId) {
 }
 
 groupSchema.statics.getAllGroupsOfUserNoPopulate = async function (userId) {
-  if (_.isUndefined(userId)) throw new Error('Invalid UserId - GroupSchema.GetAllGroupsOfUserNoPopulate()')
+  if (userId === undefined) throw new Error('Invalid UserId - GroupSchema.GetAllGroupsOfUserNoPopulate()')
 
   const q = this.model(COLLECTION)
     .find({ members: userId })
@@ -208,7 +209,7 @@ groupSchema.statics.getAllGroupsOfUserNoPopulate = async function (userId) {
 }
 
 groupSchema.statics.getGroupById = async function (gId) {
-  if (_.isUndefined(gId)) throw new Error('Invalid GroupId - GroupSchema.GetGroupById()')
+  if (gId === undefined) throw new Error('Invalid GroupId - GroupSchema.GetGroupById()')
 
   const q = this.model(COLLECTION)
     .findOne({ _id: gId })
@@ -219,10 +220,8 @@ groupSchema.statics.getGroupById = async function (gId) {
 }
 
 function isMember (arr, id) {
-  const matches = _.filter(arr, function (value) {
-    if (value._id.toString() === id.toString()) {
-      return value
-    }
+  const matches = arr.filter(function (value) {
+    return value._id.toString() === id.toString()
   })
 
   return matches.length > 0

@@ -12,7 +12,6 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-const _ = require('lodash')
 const nconf = require('nconf')
   .argv()
   .env()
@@ -44,7 +43,7 @@ let port = nconf.get('port') || 8118
   }
 
   module.exports.listen = (callback, p) => {
-    if (!_.isUndefined(p)) port = p
+    if (p !== undefined) port = p
 
     server.on('error', err => {
       if (err.code === 'EADDRINUSE') {
@@ -59,7 +58,7 @@ let port = nconf.get('port') || 8118
     server.listen(port, '0.0.0.0', () => {
       winston.info('Trudesk is now listening on port: ' + port)
 
-      if (_.isFunction(callback)) return callback()
+      if (typeof callback === 'function') return callback()
     })
   }
 

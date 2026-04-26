@@ -20,13 +20,12 @@
 'use strict'
 
 // node_modules
-const _ = require('lodash')
 const dayjs = require('../dayjs')
 
 // The module to be exported
 const helpers = {
   concat: function (a, b, space, comma) {
-    if (space && (comma === false || _.isObject(comma))) {
+    if (space && (comma === false || (typeof comma === 'object' && comma !== null))) {
       return a.toString() + ' ' + b.toString()
     }
 
@@ -186,7 +185,7 @@ const helpers = {
       throw new Error('Handlebars Helper "compare" needs 2 parameters')
     }
 
-    if (_.isUndefined(options)) {
+    if (options === undefined) {
       options = right
       right = operator
       operator = '==='
@@ -562,7 +561,7 @@ const helpers = {
   },
 
   fromNow: function (date) {
-    if (_.isUndefined(date)) {
+    if (date === undefined) {
       return 'Never'
     }
 
@@ -573,7 +572,7 @@ const helpers = {
   },
 
   firstCap: function (str) {
-    if (_.isUndefined(str)) return ''
+    if (str === undefined) return ''
     if (str.length > 0) {
       if (str[0] === str[0].toUpperCase()) {
         return str
@@ -597,7 +596,7 @@ const helpers = {
   },
 
   isNotNull: function (obj, options) {
-    if (!(_.isUndefined(obj) || _.isNull(obj))) {
+    if (!(obj === undefined || obj === null)) {
       return options.fn(this)
     }
 
@@ -612,7 +611,7 @@ const helpers = {
 
   split: function (arr, sep) {
     let str = ''
-    _.each(arr, function (obj) {
+    arr.forEach(function (obj) {
       str += obj + ' ' + sep + ' '
     })
 
@@ -620,14 +619,14 @@ const helpers = {
   },
 
   trim: function (string) {
-    if (_.isUndefined(string) || _.isNull(string) || string.length < 1 || typeof string === 'object') {
+    if (string === undefined || string === null || string.length < 1 || typeof string === 'object') {
       return ''
     }
     return string.trim()
   },
 
   isNull: function (obj, options) {
-    if (_.isUndefined(obj) || _.isNull(obj)) {
+    if (obj === undefined || obj === null) {
       return options.fn(this)
     }
 
@@ -641,12 +640,12 @@ const helpers = {
   },
 
   hasPermOverRole: function (ownerRole, userRole, perm, options) {
-    if (_.isUndefined(ownerRole) || _.isUndefined(userRole) || _.isUndefined(perm)) return options.inverse(this)
+    if (ownerRole === undefined || userRole === undefined || perm === undefined) return options.inverse(this)
     if (
       typeof ownerRole !== 'object' ||
       typeof userRole !== 'object' ||
-      _.isUndefined(ownerRole._id) ||
-      _.isUndefined(userRole._id)
+      ownerRole._id === undefined ||
+      userRole._id === undefined
     ) {
       throw new Error('Invalid Type sent to hasPermOverRole. Should be role object')
     }
@@ -665,7 +664,7 @@ const helpers = {
 
   checkPerm: function (user, perm, options) {
     const P = require('../../permissions')
-    if (_.isUndefined(user)) return options.inverse(this)
+    if (user === undefined) return options.inverse(this)
 
     if (P.canThis(user.role, perm)) {
       return options.fn(this)
@@ -675,7 +674,7 @@ const helpers = {
   },
 
   checkPermOrAdmin: function (user, perm, options) {
-    if (_.isUndefined(user)) return options.inverse(this)
+    if (user === undefined) return options.inverse(this)
     if (user.role.isAdmin) return options.fn(this)
 
     const p = require('../../permissions')
@@ -694,7 +693,7 @@ const helpers = {
   },
 
   checkPlugin: function (user, permissions, options) {
-    if (_.isUndefined(user) || _.isUndefined(permissions)) {
+    if (user === undefined || permissions === undefined) {
       return options.inverse(this)
     }
     const pluginPermissions = permissions.split(' ')
@@ -726,8 +725,8 @@ const helpers = {
   },
 
   hasGroup: function (arr, value, options) {
-    const result = _.some(arr, function (i) {
-      if (_.isUndefined(i) || _.isUndefined(value)) return false
+    const result = arr.some(function (i) {
+      if (i === undefined || value === undefined) return false
       return i._id.toString() === value.toString()
     })
     if (result) {
@@ -738,8 +737,8 @@ const helpers = {
   },
 
   isSubscribed: function (arr, value) {
-    return _.some(arr, function (i) {
-      if (_.isUndefined(i) || _.isUndefined(value)) return false
+    return arr.some(function (i) {
+      if (i === undefined || value === undefined) return false
       return i._id.toString() === value.toString()
     })
   },
@@ -758,7 +757,9 @@ const helpers = {
   },
 
   size: function (arr) {
-    return _.size(arr)
+    if (Array.isArray(arr) || typeof arr === 'string') return arr.length
+    if (typeof arr === 'object' && arr !== null) return Object.keys(arr).length
+    return 0
   },
 
   add: function (num1, num2) {

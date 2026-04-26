@@ -12,23 +12,7 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-const _ = require('lodash')
 const ticketSchema = require('../models/ticket')
-
-_.mixin({
-  sortKeysBy: function (obj, comparator) {
-    const keys = _.sortBy(_.keys(obj), function (key) {
-      return comparator ? comparator(obj[key], key) : key
-    })
-
-    return _.zipObject(
-      keys,
-      _.map(keys, function (key) {
-        return obj[key]
-      })
-    )
-  }
-})
 
 const init = async function (tickets, callback) {
   const obj = {}
@@ -42,10 +26,10 @@ const init = async function (tickets, callback) {
       $tickets = await ticketSchema.populate(fetchedTickets, { path: 'owner comments.owner assignee' })
     }
 
-    obj.mostRequester = _.first(buildMostRequester($tickets))
-    obj.mostCommenter = _.first(buildMostComments($tickets))
-    obj.mostAssignee = _.first(buildMostAssignee($tickets))
-    obj.mostActiveTicket = _.first(buildMostActiveTicket($tickets))
+    obj.mostRequester = buildMostRequester($tickets)[0]
+    obj.mostCommenter = buildMostComments($tickets)[0]
+    obj.mostAssignee = buildMostAssignee($tickets)[0]
+    obj.mostActiveTicket = buildMostActiveTicket($tickets)[0]
 
     $tickets = null // clear it
 
@@ -56,7 +40,7 @@ const init = async function (tickets, callback) {
 }
 
 function buildMostRequester (ticketArray) {
-  let requesters = _.map(ticketArray, function (m) {
+  let requesters = ticketArray.map(function (m) {
     if (m.owner) {
       return m.owner.fullname
     }
@@ -64,19 +48,16 @@ function buildMostRequester (ticketArray) {
     return null
   })
 
-  requesters = _.compact(requesters)
+  requesters = requesters.filter(Boolean)
 
-  let r = _.countBy(requesters, function (k) {
-    return k
-  })
-  r = _(r).value()
+  let r = requesters.reduce((acc, k) => { acc[k] = (acc[k] || 0) + 1; return acc }, {})
 
-  r = _.map(r, function (v, k) {
+  r = Object.entries(r).map(function ([k, v]) {
     return { name: k, value: v }
   })
 
-  r = _.sortBy(r, function (o) {
-    return -o.value
+  r = [...r].sort(function (a, b) {
+    return b.value - a.value
   })
 
   return r
@@ -89,63 +70,55 @@ function flatten (arr) {
 }
 
 function buildMostComments (ticketArray) {
-  let commenters = _.map(ticketArray, function (m) {
-    return _.map(m.comments, function (i) {
+  let commenters = ticketArray.map(function (m) {
+    return m.comments.map(function (i) {
       return i.owner.fullname
     })
   })
 
   commenters = flatten(commenters)
 
-  let c = _.countBy(commenters, function (k) {
-    return k
-  })
+  let c = commenters.reduce((acc, k) => { acc[k] = (acc[k] || 0) + 1; return acc }, {})
 
-  c = _(c).value()
-
-  c = _.map(c, function (v, k) {
+  c = Object.entries(c).map(function ([k, v]) {
     return { name: k, value: v }
   })
 
-  c = _.sortBy(c, function (o) {
-    return -o.value
+  c = [...c].sort(function (a, b) {
+    return b.value - a.value
   })
 
   return c
 }
 
 function buildMostAssignee (ticketArray) {
-  ticketArray = _.reject(ticketArray, function (v) {
-    return _.isUndefined(v.assignee) || _.isNull(v.assignee)
+  ticketArray = ticketArray.filter(function (v) {
+    return v.assignee !== undefined && v.assignee !== null
   })
 
-  const assignees = _.map(ticketArray, function (m) {
+  const assignees = ticketArray.map(function (m) {
     return m.assignee.fullname
   })
 
-  let a = _.countBy(assignees, function (k) {
-    return k
-  })
+  let a = assignees.reduce((acc, k) => { acc[k] = (acc[k] || 0) + 1; return acc }, {})
 
-  a = _(a).value()
-
-  a = _.map(a, function (v, k) {
+  a = Object.entries(a).map(function ([k, v]) {
     return { name: k, value: v }
   })
 
-  a = _.sortBy(a, function (o) {
-    return -o.value
+  a = [...a].sort(function (a, b) {
+    return b.value - a.value
   })
 
   return a
 }
 
 function buildMostActiveTicket (ticketArray) {
-  let tickets = _.map(ticketArray, function (m) {
-    return { uid: m.uid, cSize: _.size(m.history) }
+  let tickets = ticketArray.map(function (m) {
+    return { uid: m.uid, cSize: m.history.length }
   })
 
-  tickets = _.sortBy(tickets, 'cSize').reverse()
+  tickets = [...tickets].sort((a, b) => b.cSize - a.cSize)
 
   return tickets
 }

@@ -12,7 +12,6 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-const _ = require('lodash')
 const winston = require('../logger')
 const userSchema = require('../models/user')
 const permissions = require('../permissions')
@@ -47,7 +46,7 @@ accountsController.signup = async function (req, res) {
       content.layout = false
       content.data = {}
 
-      if (privacyPolicy === null || _.isUndefined(privacyPolicy.value)) {
+      if (privacyPolicy === null || privacyPolicy.value === undefined) {
         content.data.privacyPolicy = 'No Privacy Policy has been set.'
       } else {
         content.data.privacyPolicy = xss(marked.parse(privacyPolicy.value))
@@ -64,7 +63,7 @@ accountsController.signup = async function (req, res) {
 
 accountsController.get = function (req, res) {
   const user = req.user
-  if (_.isUndefined(user) || !permissions.canThis(user.role, 'accounts:view')) {
+  if (user === undefined || !permissions.canThis(user.role, 'accounts:view')) {
     return res.redirect('/')
   }
 
@@ -81,7 +80,7 @@ accountsController.get = function (req, res) {
 
 accountsController.getCustomers = function (req, res) {
   const user = req.user
-  if (_.isUndefined(user) || !permissions.canThis(user.role, 'accounts:view')) {
+  if (user === undefined || !permissions.canThis(user.role, 'accounts:view')) {
     return res.redirect('/')
   }
 
@@ -100,7 +99,7 @@ accountsController.getCustomers = function (req, res) {
 
 accountsController.getAgents = function (req, res) {
   const user = req.user
-  if (_.isUndefined(user) || !permissions.canThis(user.role, 'accounts:view')) {
+  if (user === undefined || !permissions.canThis(user.role, 'accounts:view')) {
     return res.redirect('/')
   }
 
@@ -119,7 +118,7 @@ accountsController.getAgents = function (req, res) {
 
 accountsController.getAdmins = function (req, res) {
   const user = req.user
-  if (_.isUndefined(user) || !permissions.canThis(user.role, 'accounts:view')) {
+  if (user === undefined || !permissions.canThis(user.role, 'accounts:view')) {
     return res.redirect('/')
   }
 
@@ -138,7 +137,7 @@ accountsController.getAdmins = function (req, res) {
 
 accountsController.importPage = function (req, res) {
   const user = req.user
-  if (_.isUndefined(user) || !permissions.canThis(user.role, 'accounts:import')) {
+  if (user === undefined || !permissions.canThis(user.role, 'accounts:import')) {
     return res.redirect('/')
   }
 
@@ -156,7 +155,7 @@ accountsController.importPage = function (req, res) {
 accountsController.profile = async function (req, res) {
   const user = req.user
   const backUrl = req.header('Referer') || '/'
-  if (_.isUndefined(user)) {
+  if (user === undefined) {
     req.flash('message', 'Permission Denied.')
     winston.warn('Undefined User - /Profile')
     return res.redirect(backUrl)
@@ -185,7 +184,7 @@ accountsController.profile = async function (req, res) {
 accountsController.bindLdap = function (req, res) {
   const ldap = require('../ldap')
   const postData = req.body
-  if (_.isUndefined(postData)) return res.status(400).json({ success: false, error: 'Invalid Post Data.' })
+  if (postData === undefined) return res.status(400).json({ success: false, error: 'Invalid Post Data.' })
 
   const server = postData['ldap-server']
   const dn = postData['ldap-bind-dn']
@@ -198,44 +197,44 @@ accountsController.bindLdap = function (req, res) {
 
     ldap.search(searchBase, filter, function (err, results) {
       if (err && !res.headersSent) return res.status(400).json({ success: false, error: err })
-      if (_.isUndefined(results)) return res.status(400).json({ success: false, error: 'Undefined Results' })
+      if (results === undefined) return res.status(400).json({ success: false, error: 'Undefined Results' })
 
       const entries = results.entries
       let foundUsers = null
       ldap.unbind(function (err) {
         if (err && !res.headersSent) return res.status(400).json({ success: false, error: err })
 
-        let mappedUsernames = _.map(entries, 'sAMAccountName')
+        let mappedUsernames = entries.map(e => e.sAMAccountName)
 
         userSchema.find({ username: mappedUsernames }).then(function (users) {
           foundUsers = users
 
-          mappedUsernames = _.map(foundUsers, 'username')
+          mappedUsernames = foundUsers.map(u => u.username)
 
-          _.each(mappedUsernames, function (mappedUsername) {
-            const u = _.find(entries, function (f) {
+          mappedUsernames.forEach(function (mappedUsername) {
+            const u = entries.find(function (f) {
               return f.sAMAccountName.toLowerCase() === mappedUsername.toLowerCase()
             })
 
             if (u) {
-              let clonedUser = _.find(foundUsers, function (g) {
+              let clonedUser = foundUsers.find(function (g) {
                 return g.username.toLowerCase() === u.sAMAccountName.toLowerCase()
               })
               if (clonedUser) {
-                clonedUser = _.clone(clonedUser)
+                clonedUser = { ...clonedUser }
                 clonedUser.fullname = u.displayName
                 clonedUser.email = u.mail
                 clonedUser.title = u.title
               }
             }
 
-            _.remove(entries, function (k) {
-              return k.sAMAccountName.toLowerCase() === mappedUsername.toLowerCase()
+            entries = entries.filter(function (k) {
+              return k.sAMAccountName.toLowerCase() !== mappedUsername.toLowerCase()
             })
           })
 
-          _.remove(entries, function (e) {
-            return _.isUndefined(e.mail)
+          entries = entries.filter(function (e) {
+            return e.mail !== undefined
           })
 
           return res.json({
@@ -304,27 +303,27 @@ accountsController.uploadCSV = function (req, res) {
       }
 
       const titleRow = object.csv[0]
-      const usernameIdx = _.findIndex(titleRow, function (i) {
+      const usernameIdx = titleRow.findIndex(function (i) {
         return i.toLowerCase() === 'username'
       })
-      const fullnameIdx = _.findIndex(titleRow, function (i) {
+      const fullnameIdx = titleRow.findIndex(function (i) {
         return i.toLowerCase() === 'name'
       })
-      const emailIdx = _.findIndex(titleRow, function (i) {
+      const emailIdx = titleRow.findIndex(function (i) {
         return i.toLowerCase() === 'email'
       })
-      const titleIdx = _.findIndex(titleRow, function (i) {
+      const titleIdx = titleRow.findIndex(function (i) {
         return i.toLowerCase() === 'title'
       })
-      const roleIdx = _.findIndex(titleRow, function (i) {
+      const roleIdx = titleRow.findIndex(function (i) {
         return i.toLowerCase() === 'role'
       })
 
       object.csv.splice(0, 1)
 
       // Left with just the data for the import; Lets map that to an array of usable objects.
-      object.csv = _.map(object.csv, function (item) {
-        return _.assign(
+      object.csv = object.csv.map(function (item) {
+        return Object.assign(
           { username: item[usernameIdx] },
           { fullname: item[fullnameIdx] },
           { email: item[emailIdx] },
@@ -389,7 +388,7 @@ accountsController.uploadJSON = function (req, res) {
       .on('end', async function () {
         object.json = JSON.parse(buffer)
         const accounts = object.json.accounts
-        if (_.isUndefined(accounts)) {
+        if (accounts === undefined) {
           return res.status(400).json({
             success: false,
             error: 'No accounts defined in JSON file.'
@@ -490,10 +489,10 @@ accountsController.uploadImage = function (req, res) {
     }
 
     if (
-      _.isUndefined(object._id) ||
-      _.isUndefined(object.username) ||
-      _.isUndefined(object.filePath) ||
-      _.isUndefined(object.filename)
+      object._id === undefined ||
+      object.username === undefined ||
+      object.filePath === undefined ||
+      object.filename === undefined
     ) {
       return res.status(400).send('Invalid Form Data')
     }

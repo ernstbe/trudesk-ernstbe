@@ -12,7 +12,6 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-const _ = require('lodash')
 const async = require('async')
 const Imap = require('imap')
 const winston = require('../logger')
@@ -31,37 +30,37 @@ mailCheck.inbox = []
 
 mailCheck.init = function (settings) {
   const s = {}
-  s.mailerCheckEnabled = _.find(settings, function (x) {
+  s.mailerCheckEnabled = settings.find(function (x) {
     return x.name === 'mailer:check:enable'
   })
-  s.mailerCheckHost = _.find(settings, function (x) {
+  s.mailerCheckHost = settings.find(function (x) {
     return x.name === 'mailer:check:host'
   })
-  s.mailerCheckPort = _.find(settings, function (x) {
+  s.mailerCheckPort = settings.find(function (x) {
     return x.name === 'mailer:check:port'
   })
-  s.mailerCheckUsername = _.find(settings, function (x) {
+  s.mailerCheckUsername = settings.find(function (x) {
     return x.name === 'mailer:check:username'
   })
-  s.mailerCheckPassword = _.find(settings, function (x) {
+  s.mailerCheckPassword = settings.find(function (x) {
     return x.name === 'mailer:check:password'
   })
-  s.mailerCheckSelfSign = _.find(settings, function (x) {
+  s.mailerCheckSelfSign = settings.find(function (x) {
     return x.name === 'mailer:check:selfsign'
   })
-  s.mailerCheckPolling = _.find(settings, function (x) {
+  s.mailerCheckPolling = settings.find(function (x) {
     return x.name === 'mailer:check:polling'
   })
-  s.mailerCheckTicketType = _.find(settings, function (x) {
+  s.mailerCheckTicketType = settings.find(function (x) {
     return x.name === 'mailer:check:ticketype'
   })
-  s.mailerCheckTicketPriority = _.find(settings, function (x) {
+  s.mailerCheckTicketPriority = settings.find(function (x) {
     return x.name === 'mailer:check:ticketpriority'
   })
-  s.mailerCheckCreateAccount = _.find(settings, function (x) {
+  s.mailerCheckCreateAccount = settings.find(function (x) {
     return x.name === 'mailer:check:createaccount'
   })
-  s.mailerCheckDeleteMessage = _.find(settings, function (x) {
+  s.mailerCheckDeleteMessage = settings.find(function (x) {
     return x.name === 'mailer:check:deletemessage'
   })
 
@@ -119,7 +118,7 @@ mailCheck.init = function (settings) {
 }
 
 mailCheck.refetch = function () {
-  if (_.isUndefined(mailCheck.fetchMailOptions)) {
+  if (mailCheck.fetchMailOptions === undefined) {
     winston.warn('Mailcheck.refetch() running before Mailcheck.init(); please run Mailcheck.init() prior')
     return
   }
@@ -147,12 +146,12 @@ function bindImapReady () {
                 mailCheck.Imap.search(['UNSEEN'], next)
               },
               function (results, next) {
-                if (_.size(results) < 1) {
+                if (results.length < 1) {
                   winston.debug('MailCheck: Nothing to Fetch.')
                   return next()
                 }
 
-                winston.debug('Processing %s Mail', _.size(results))
+                winston.debug('Processing %s Mail', results.length)
 
                 let flag = '\\Seen'
                 if (mailCheck.fetchMailOptions.deleteMessage) {
@@ -185,7 +184,7 @@ function bindImapReady () {
                           message.subject = message.from
                         }
 
-                        if (_.isUndefined(mail.textAsHtml)) {
+                        if (mail.textAsHtml === undefined) {
                           const $ = cheerio.load(mail.html)
                           const $body = $('body')
                           message.body = $body.length > 0 ? $body.html() : mail.html
@@ -239,12 +238,12 @@ function handleMessages (messages, done) {
   let count = 0
   messages.forEach(function (message) {
     if (
-      !_.isUndefined(message.from) &&
-      !_.isEmpty(message.from) &&
-      !_.isUndefined(message.subject) &&
-      !_.isEmpty(message.subject) &&
-      !_.isUndefined(message.body) &&
-      !_.isEmpty(message.body)
+      message.from !== undefined &&
+      message.from.length > 0 &&
+      message.subject !== undefined &&
+      message.subject.length > 0 &&
+      message.body !== undefined &&
+      message.body.length > 0
     ) {
       async.auto(
         {
@@ -274,7 +273,7 @@ function handleMessages (messages, done) {
           handleGroup: [
             'handleUser',
             function (results, callback) {
-              if (!_.isUndefined(message.group)) {
+              if (message.group !== undefined) {
                 return callback()
               }
 
@@ -282,8 +281,8 @@ function handleMessages (messages, done) {
                 if (err) return callback(err)
                 if (!group) return callback(new Error('Unknown group for user: ' + message.owner.email))
 
-                if (_.isArray(group)) {
-                  message.group = _.first(group)
+                if (Array.isArray(group)) {
+                  message.group = group[0]
                 } else {
                   message.group = group
                 }
@@ -337,8 +336,8 @@ function handleMessages (messages, done) {
                 return callback(null, mailCheck.fetchMailOptions.defaultPriority)
               }
 
-              const firstPriority = _.first(type.priorities)
-              if (!_.isUndefined(firstPriority)) {
+              const firstPriority = type.priorities[0]
+              if (firstPriority !== undefined) {
                 mailCheck.fetchMailOptions.defaultPriority = firstPriority._id
               } else {
                 return callback(new Error('Invalid default priority'))
@@ -351,7 +350,7 @@ function handleMessages (messages, done) {
             statusSchema.getStatus(function (err, statuses) {
               if (err) return callback(err)
 
-              const status = _.first(statuses)
+              const status = statuses[0]
 
               if (!status) return callback(new Error('Invalid status'))
 

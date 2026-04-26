@@ -12,7 +12,6 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-const _ = require('lodash')
 const path = require('path')
 const winston = require('../logger')
 const emitter = require('../emitter')
@@ -65,21 +64,21 @@ const eventTicketCreated = require('./events/event_ticket_created')
       case 1:
         title = 'Ticket #' + ticket.uid + ' Created'
         content = ticket.owner.fullname + ' submitted a ticket'
-        users = _.map(ticket.group.sendMailTo, function (o) {
+        users = ticket.group.sendMailTo.map(function (o) {
           return o._id
         })
         break
       case 2:
         title = 'Ticket #' + ticket.uid + ' Updated'
-        content = _.last(ticket.history).description
-        comment = _.last(ticket.comments)
-        users = _.compact(
-          _.map(ticket.subscribers, function (o) {
+        content = ticket.history[ticket.history.length - 1].description
+        comment = ticket.comments[ticket.comments.length - 1]
+        users = ticket.subscribers
+          .map(function (o) {
             if (comment.owner._id.toString() !== o._id.toString()) {
               return o._id
             }
           })
-        )
+          .filter(Boolean)
         break
       case 3:
         title = message.owner.fullname + ' sent you a message'
@@ -98,8 +97,8 @@ const eventTicketCreated = require('./events/event_ticket_created')
         title = ''
     }
 
-    if (_.size(users) < 1) {
-      winston.debug('No users to push too | UserSize: ' + _.size(users))
+    if (users.length < 1) {
+      winston.debug('No users to push too | UserSize: ' + users.length)
       return
     }
 
@@ -145,10 +144,10 @@ const eventTicketCreated = require('./events/event_ticket_created')
         'mailer:enable'
       ])
 
-      let tpsEnabled = _.head(_.filter(tpsSettings, ['name', 'tps:enable']))
-      let tpsUsername = _.head(_.filter(tpsSettings, ['name', 'tps:username']))
-      let tpsApiKey = _.head(_.filter(tpsSettings), ['name', 'tps:apikey'])
-      let mailerEnabled = _.head(_.filter(tpsSettings), ['name', 'mailer:enable'])
+      let tpsEnabled = tpsSettings.find(s => s.name === 'tps:enable')
+      let tpsUsername = tpsSettings.find(s => s.name === 'tps:username')
+      let tpsApiKey = tpsSettings.find(s => s.name === 'tps:apikey')
+      let mailerEnabled = tpsSettings.find(s => s.name === 'mailer:enable')
       mailerEnabled = !mailerEnabled ? false : mailerEnabled.value
 
       if (!tpsEnabled || !tpsUsername || !tpsApiKey) {
@@ -164,7 +163,7 @@ const eventTicketCreated = require('./events/event_ticket_created')
 
       // Notification for ticket owner
       if (ticket.owner._id.toString() !== comment.owner.toString()) {
-        if (_.isUndefined(ticket.assignee) || ticket.assignee._id.toString() !== comment.owner.toString()) {
+        if (ticket.assignee === undefined || ticket.assignee._id.toString() !== comment.owner.toString()) {
           const notification = new NotificationSchema({
             owner: ticket.owner,
             title: 'Comment Added to Ticket#' + ticket.uid,
@@ -179,7 +178,7 @@ const eventTicketCreated = require('./events/event_ticket_created')
       }
 
       // Notification for assignee
-      if (!_.isUndefined(ticket.assignee)) {
+      if (ticket.assignee !== undefined) {
         if (ticket.assignee._id.toString() !== comment.owner.toString()) {
           if (ticket.owner._id.toString() !== ticket.assignee._id.toString()) {
             const notification = new NotificationSchema({
@@ -208,7 +207,7 @@ const eventTicketCreated = require('./events/event_ticket_created')
           // Skip if already getting a notification (owner or assignee)
           const alreadyNotified =
             (ticket.owner._id.toString() === mentionedUser._id.toString()) ||
-            (!_.isUndefined(ticket.assignee) && ticket.assignee._id.toString() === mentionedUser._id.toString())
+            (ticket.assignee !== undefined && ticket.assignee._id.toString() === mentionedUser._id.toString())
           if (alreadyNotified) continue
 
           const mentionNotification = new NotificationSchema({
@@ -245,16 +244,16 @@ const eventTicketCreated = require('./events/event_ticket_created')
         let emails = []
 
         for (const member of ticket.subscribers) {
-          if (_.isUndefined(member) || _.isUndefined(member.email)) continue
+          if (member === undefined || member.email === undefined) continue
           if (member._id.toString() === comment.owner.toString()) continue
           if (member.deleted) continue
 
           emails.push(member.email)
         }
 
-        emails = _.uniq(emails)
+        emails = [...new Set(emails)]
 
-        if (_.size(emails) >= 1) {
+        if (emails.length >= 1) {
           const email = new Email({
             views: {
               root: templateDir,

@@ -12,13 +12,11 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-const _ = require('lodash')
-
 const apiUtils = {}
 
 apiUtils.sendApiSuccess = function (res, object) {
   const sendObject = { success: true }
-  const resObject = _.merge(sendObject, object)
+  const resObject = Object.assign(sendObject, object)
 
   return res.json(resObject)
 }
@@ -34,7 +32,7 @@ apiUtils.generateJWTToken = function (dbUser, callback) {
   const nconf = require('nconf')
   const jwt = require('jsonwebtoken')
 
-  const resUser = _.clone(dbUser._doc)
+  const resUser = JSON.parse(JSON.stringify(dbUser._doc))
   const refreshToken = resUser.accessToken
   delete resUser.resetPassExpire
   delete resUser.resetPassHash

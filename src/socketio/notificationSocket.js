@@ -11,7 +11,6 @@
  *  Updated:    1/20/19 4:43 PM
  *  Copyright (c) 2014-2019. All rights reserved.
  */
-const _ = require('lodash')
 const winston = require('../logger')
 const utils = require('../helpers/utils')
 const socketEvents = require('./socketEventConsts')
@@ -80,7 +79,7 @@ events.updateAllNotifications = function (socket) {
 
 events.markNotificationRead = function (socket) {
   socket.on(socketEvents.NOTIFICATIONS_MARK_READ, async function (_id) {
-    if (_.isUndefined(_id)) return true
+    if (_id === undefined) return true
     const notificationSchema = require('../models/notification')
     try {
       const notification = await notificationSchema.getNotification(_id)
@@ -96,7 +95,7 @@ events.markNotificationRead = function (socket) {
 events.clearNotifications = function (socket) {
   socket.on(socketEvents.NOTIFICATIONS_CLEAR, async function () {
     const userId = socket.request.user._id
-    if (_.isUndefined(userId)) return true
+    if (userId === undefined) return true
     const notifications = {}
     notifications.items = []
     notifications.count = 0

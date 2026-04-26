@@ -1,4 +1,3 @@
-const _ = require('lodash')
 const TicketTemplate = require('../../../models/ticketTemplate')
 const apiUtil = require('../apiUtils')
 
@@ -62,7 +61,7 @@ ticketTemplatesApi.update = async function (req, res) {
 
     for (let i = 0; i < allowedFields.length; i++) {
       const field = allowedFields[i]
-      if (!_.isUndefined(postData[field])) {
+      if (postData[field] !== undefined) {
         template[field] = postData[field]
       }
     }

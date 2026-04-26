@@ -12,7 +12,6 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-const _ = require('lodash')
 const path = require('path')
 const sass = require('sass')
 const settingUtil = require('../settings/settingsUtil')
@@ -44,7 +43,7 @@ function sassImport (path) {
 function dynamicSass (entry, vars, success, error) {
   try {
     const dataString = sassVariables(vars) + sassImport(entry)
-    const sassOptions = _.assign({}, sassOptionsDefaults, {
+    const sassOptions = Object.assign({}, sassOptionsDefaults, {
       data: dataString,
       indentedSyntax: true
     })

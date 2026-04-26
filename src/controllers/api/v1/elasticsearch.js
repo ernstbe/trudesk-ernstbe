@@ -12,7 +12,6 @@
 
  **/
 
-const _ = require('lodash')
 const async = require('async')
 const es = require('../../../elasticsearch')
 const ticketSchema = require('../../../models/ticket')
@@ -35,7 +34,7 @@ apiElasticSearch.status = function (req, res) {
     function (done) {
       es.getIndexCount(function (err, data) {
         if (err) return done(err)
-        response.indexCount = (!_.isUndefined(data.count) ? data.count : 0)
+        response.indexCount = (data.count !== undefined ? data.count : 0)
         return done()
       })
     },
@@ -56,7 +55,7 @@ apiElasticSearch.status = function (req, res) {
 }
 
 apiElasticSearch.search = function (req, res) {
-  let limit = (!_.isUndefined(req.query.limit) ? req.query.limit : 100)
+  let limit = (req.query.limit !== undefined ? req.query.limit : 100)
   try {
     limit = parseInt(limit)
   } catch (e) {
@@ -66,7 +65,7 @@ apiElasticSearch.search = function (req, res) {
   groupSchema.getAllGroupsOfUserNoPopulate(req.user._id, function (err, groups) {
     if (err) return res.status(400).json({ success: false, error: err })
 
-    const g = _.map(groups, function (i) { return i._id })
+    const g = groups.map(function (i) { return i._id })
 
     const obj = {
       index: 'trudesk',

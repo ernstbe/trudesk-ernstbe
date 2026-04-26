@@ -12,7 +12,6 @@
 
  **/
 
-const _ = require('lodash')
 const path = require('path')
 const nconf = require('nconf')
 const winston = require('../logger')
@@ -101,7 +100,7 @@ ES.setupHooks = () => {
   const ticketSchema = require('../models/ticket')
 
   emitter.on('ticket:deleted', async _id => {
-    if (_.isUndefined(_id)) return false
+    if (_id === undefined) return false
 
     try {
       await ES.esclient.delete({
@@ -115,7 +114,7 @@ ES.setupHooks = () => {
   })
 
   emitter.on('ticket:updated', async data => {
-    if (_.isUndefined(data._id)) return
+    if (data._id === undefined) return
 
     try {
       const ticket = await ticketSchema.getTicketById(data._id.toString())
@@ -264,7 +263,7 @@ ES.rebuildIndex = async () => {
     esFork.on('exit', function () {
       winston.debug('Rebuilding Process Closed: ' + esFork.pid)
       global.esRebuilding = false
-      global.forks = _.filter(global.forks, function (i) {
+      global.forks = global.forks.filter(function (i) {
         return i.name !== 'elasticsearchRebuild'
       })
     })
@@ -276,7 +275,7 @@ ES.rebuildIndex = async () => {
 
 ES.getIndexCount = async callback => {
   return new Promise((resolve, reject) => {
-    if (_.isUndefined(ES.esclient)) {
+    if (ES.esclient === undefined) {
       const error = 'Elasticsearch has not initialized'
 
       if (typeof callback === 'function') callback(error)

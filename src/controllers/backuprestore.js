@@ -12,7 +12,6 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-const _ = require('lodash')
 const fs = require('fs-extra')
 const path = require('path')
 const async = require('async')
@@ -57,9 +56,7 @@ backupRestore.getBackups = function (req, res) {
       },
       function (err) {
         if (err) return res.status(400).json({ success: false, error: err })
-        fileWithStats = _.sortBy(fileWithStats, function (o) {
-          return dayjs(o.time).valueOf()
-        }).reverse()
+        fileWithStats = [...fileWithStats].sort((a, b) => dayjs(a.time).valueOf() - dayjs(b.time).valueOf()).reverse()
         return res.json({ success: true, files: fileWithStats })
       }
     )
@@ -77,7 +74,7 @@ backupRestore.runBackup = function (req, res) {
 
   child.on('message', function (data) {
     child.kill('SIGINT')
-    global.forks = _.remove(global.forks, function (f) {
+    global.forks = global.forks.filter(function (f) {
       return f.fork !== child
     })
 
@@ -107,7 +104,7 @@ backupRestore.runBackup = function (req, res) {
 
 backupRestore.deleteBackup = function (req, res) {
   const filename = req.params.backup
-  if (_.isUndefined(filename) || !fs.existsSync(path.join(__dirname, '../../backups/', filename))) {
+  if (filename === undefined || !fs.existsSync(path.join(__dirname, '../../backups/', filename))) {
     return res.status(400).json({ success: false, error: 'Invalid Filename' })
   }
 
@@ -149,7 +146,7 @@ backupRestore.restoreBackup = function (req, res) {
 
   child.on('message', function (data) {
     child.kill('SIGINT')
-    global.forks = _.remove(global.forks, function (f) {
+    global.forks = global.forks.filter(function (f) {
       return f.fork !== child
     })
 
@@ -159,7 +156,7 @@ backupRestore.restoreBackup = function (req, res) {
     }
 
     if (data.success) {
-      const cache = _.find(global.forks, function (f) {
+      const cache = global.forks.find(function (f) {
         return f.name === 'cache'
       })
 
@@ -256,7 +253,7 @@ backupRestore.uploadBackup = function (req, res) {
   busboy.on('finish', function () {
     if (error) return res.status(error.status || 500).json({ success: false, error: error.message })
 
-    if (_.isUndefined(object.filePath) || _.isUndefined(object.filename)) {
+    if (object.filePath === undefined || object.filename === undefined) {
       return res.status(400).json({ success: false, error: 'Invalid Form Data' })
     }
 

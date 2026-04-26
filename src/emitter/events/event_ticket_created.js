@@ -13,7 +13,7 @@
  */
 
 const path = require('path')
-const { head, filter, flattenDeep, concat, uniq, uniqBy, map, chain } = require('lodash')
+
 const logger = require('../../logger')
 const Ticket = require('../../models/ticket')
 const User = require('../../models/user')
@@ -45,15 +45,13 @@ const sendSocketUpdateToUser = (user, ticket) => {
 const getTeamMembers = async group => {
   const departments = await Department.getDepartmentsByGroup(group._id)
   if (!departments) throw new Error('Group is not assigned to any departments. Exiting...')
-  return flattenDeep(
-    departments.map(department => {
-      return department.teams.map(team => {
-        return team.members.map(member => {
-          return member
-        })
+  return departments.map(department => {
+    return department.teams.map(team => {
+      return team.members.map(member => {
+        return member
       })
     })
-  )
+  }).flat(Infinity)
 }
 
 const parseMemberEmails = async ticket => {
@@ -61,18 +59,22 @@ const parseMemberEmails = async ticket => {
 
   const teamMembers = await getTeamMembers(ticket.group)
 
-  let members = concat(teamMembers, ticket.group.members)
-  let emailTo = concat(teamMembers, ticket.group.sendMailTo)
+  let members = [...teamMembers, ...ticket.group.members]
+  let emailTo = [...teamMembers, ...ticket.group.sendMailTo]
 
-  emailTo = chain(emailTo)
-    .filter(i => {
-      return i.email !== ticket.owner.email
-    })
-    .map(i => i.email)
-    .uniq()
-    .value()
+  emailTo = [...new Set(
+    emailTo
+      .filter(i => i.email !== ticket.owner.email)
+      .map(i => i.email)
+  )]
 
-  members = uniqBy(members, i => i._id)
+  const seenIds = new Set()
+  members = members.filter(i => {
+    const id = String(i._id)
+    if (seenIds.has(id)) return false
+    seenIds.add(id)
+    return true
+  })
 
   for (const member of members) {
     if (member.deleted) continue
@@ -84,7 +86,7 @@ const parseMemberEmails = async ticket => {
     emails.push(member.email)
   }
 
-  return uniq(emails)
+  return [...new Set(emails)]
 }
 
 const sendMail = async (ticket, emails, baseUrl, betaEnabled) => {
@@ -153,8 +155,14 @@ const sendMail = async (ticket, emails, baseUrl, betaEnabled) => {
 const createNotification = async ticket => {
   let members = await getTeamMembers(ticket.group)
 
-  members = concat(members, ticket.group.members)
-  members = uniqBy(members, i => i._id)
+  members = [...members, ...ticket.group.members]
+  const seenIds = new Set()
+  members = members.filter(i => {
+    const id = String(i._id)
+    if (seenIds.has(id)) return false
+    seenIds.add(id)
+    return true
+  })
 
   for (const member of members) {
     if (!member) continue
@@ -164,7 +172,7 @@ const createNotification = async ticket => {
 
 const createPublicNotification = async ticket => {
   let rolesWithPublic = permissions.getRoles('ticket:public')
-  rolesWithPublic = map(rolesWithPublic, 'id')
+  rolesWithPublic = rolesWithPublic.map(r => r.id)
   const users = await User.getUsersByRoles(rolesWithPublic)
 
   for (const user of users) {
@@ -194,10 +202,10 @@ module.exports = async data => {
     const ticket = await Ticket.getTicketById(ticketObject._id)
     const settings = await Setting.getSettingsByName(['gen:siteurl', 'mailer:enable', 'beta:email'])
 
-    const baseUrl = head(filter(settings, ['name', 'gen:siteurl'])).value
-    let mailerEnabled = head(filter(settings, ['name', 'mailer:enable']))
+    const baseUrl = settings.find(s => s.name === 'gen:siteurl').value
+    let mailerEnabled = settings.find(s => s.name === 'mailer:enable')
     mailerEnabled = !mailerEnabled ? false : mailerEnabled.value
-    let betaEnabled = head(filter(settings, ['name', 'beta:email']))
+    let betaEnabled = settings.find(s => s.name === 'beta:email')
     betaEnabled = !betaEnabled ? false : betaEnabled.value
 
     const [emails] = await Promise.all([parseMemberEmails(ticket)])

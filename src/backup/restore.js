@@ -12,7 +12,6 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-const _ = require('lodash')
 const fs = require('fs-extra')
 const path = require('path')
 const spawn = require('child_process').spawn
@@ -70,7 +69,7 @@ function extractArchive (file, callback) {
   const zip = new AdmZip(path.join(__dirname, '../../backups/', file))
   zip.extractAllTo(path.join(__dirname, '../../restores/restore_' + file + '/'), true)
 
-  if (_.isFunction(callback)) {
+  if (typeof callback === 'function') {
     return callback()
   }
 }

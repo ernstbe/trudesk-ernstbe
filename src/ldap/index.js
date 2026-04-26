@@ -12,7 +12,6 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-const _ = require('lodash')
 const ldap = require('ldapjs')
 
 const ldapClient = {}
@@ -26,7 +25,7 @@ ldapClient.bind = function (url, userDN, password, callback) {
   ldapClient.client.bind(userDN, password, callback)
 
   ldapClient.client.on('error', function (err) {
-    if (_.isFunction(callback)) {
+    if (typeof callback === 'function') {
       return callback(err)
     }
 
@@ -40,7 +39,7 @@ ldapClient.search = function (base, filter, callback) {
   const entries = []
 
   ldapClient.client.on('error', function (err) {
-    if (_.isFunction(callback)) {
+    if (typeof callback === 'function') {
       return callback(err)
     }
 

@@ -13,7 +13,6 @@
  */
 
 const mongoose = require('mongoose')
-const _ = require('lodash')
 const utils = require('../../helpers/utils')
 
 const COLLECTION = 'messages'
@@ -66,7 +65,7 @@ messageSchema.statics.getConversation = async function (convoId) {
 }
 
 messageSchema.statics.getConversationWithObject = async function (object) {
-  if (!_.isObject(object)) {
+  if (!(typeof object === 'object' && object !== null)) {
     throw new Error('Invalid Object (Must by of type Object) - MessageSchema.GetUserWithObject()')
   }
 
@@ -76,7 +75,7 @@ messageSchema.statics.getConversationWithObject = async function (object) {
   let deletedAt = null
 
   if (object.requestingUser) {
-    const userMetaIdx = _.findIndex(object.userMeta, item => {
+    const userMetaIdx = object.userMeta.findIndex(item => {
       return item.userId.toString() === object.requestingUser._id.toString()
     })
     if (userMetaIdx !== -1 && object.userMeta[userMetaIdx].deletedAt) { deletedAt = new Date(object.userMeta[userMetaIdx].deletedAt) }

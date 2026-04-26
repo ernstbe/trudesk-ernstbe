@@ -12,7 +12,6 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-const _ = require('lodash')
 const nconf = require('nconf')
 const jsStringEscape = require('js-string-escape')
 const settingSchema = require('../models/setting')
@@ -24,10 +23,10 @@ const statusSchema = require('../models/ticketStatus')
 const util = {}
 
 function parseSetting (settings, name, defaultValue) {
-  let s = _.find(settings, function (x) {
+  let s = settings.find(function (x) {
     return x.name === name
   })
-  s = _.isUndefined(s) ? { value: defaultValue } : s
+  s = s === undefined ? { value: defaultValue } : s
 
   return s
 }
@@ -114,7 +113,7 @@ util.getSettings = async callback => {
         s.elasticSearchHost = parseSetting(settings, 'es:host', '')
         s.elasticSearchPort = parseSetting(settings, 'es:port', 9200)
         s.elasticSearchConfigured = {
-          value: s.elasticSearchEnabled.value === true && !_.isEmpty(s.elasticSearchHost.value)
+          value: s.elasticSearchEnabled.value === true && s.elasticSearchHost.value !== ''
         }
 
         s.tpsEnabled = parseSetting(settings, 'tps:enable', false)
@@ -134,22 +133,22 @@ util.getSettings = async callback => {
         s.accountsPasswordComplexity = parseSetting(settings, 'accountsPasswordComplexity:enable', true)
 
         const types = await ticketTypeSchema.getTypes()
-        content.data.ticketTypes = _.sortBy(types, o => o.name)
+        content.data.ticketTypes = [...types].sort((a, b) => (a.name || '').localeCompare(b.name || ''))
 
-        _.each(content.data.ticketTypes, type => {
-          type.priorities = _.sortBy(type.priorities, ['migrationNum', 'name'])
+        content.data.ticketTypes.forEach(type => {
+          type.priorities = [...type.priorities].sort((a, b) => (a.migrationNum || 0) - (b.migrationNum || 0) || (a.name || '').localeCompare(b.name || ''))
         })
 
         const ticketPrioritySchema = require('../models/ticketpriority')
         const priorities = await ticketPrioritySchema.getPriorities()
-        content.data.priorities = _.sortBy(priorities, ['migrationNum', 'name'])
+        content.data.priorities = [...priorities].sort((a, b) => (a.migrationNum || 0) - (b.migrationNum || 0) || (a.name || '').localeCompare(b.name || ''))
 
         const status = await statusSchema.getStatus()
-        content.data.status = _.sortBy(status, 'order')
+        content.data.status = [...status].sort((a, b) => (a.order || 0) - (b.order || 0))
 
         const templateSchema = require('../models/template')
         const templates = await templateSchema.find({})
-        content.data.mailTemplates = _.sortBy(templates, 'name')
+        content.data.mailTemplates = [...templates].sort((a, b) => (a.name || '').localeCompare(b.name || ''))
 
         const tagSchema = require('../models/tag')
         const tagCount = await tagSchema.getTagCount()
@@ -160,8 +159,8 @@ util.getSettings = async callback => {
         roleOrder = roleOrder.order
 
         if (roleOrder.length > 0) {
-          content.data.roles = _.map(roleOrder, roID => {
-            return _.find(roles, { _id: roID })
+          content.data.roles = roleOrder.map(roID => {
+            return roles.find(r => r._id.toString() === roID.toString())
           })
         } else content.data.roles = roles
 

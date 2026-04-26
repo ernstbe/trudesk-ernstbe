@@ -12,13 +12,11 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-const _ = require('lodash')
-
 function sortByKeys (obj) {
   const keys = Object.keys(obj)
-  const sortedKeys = _.sortBy(keys)
-  return _.fromPairs(
-    _.map(sortedKeys, function (key) {
+  const sortedKeys = [...keys].sort()
+  return Object.fromEntries(
+    sortedKeys.map(function (key) {
       return [key, obj[key]]
     })
   )
