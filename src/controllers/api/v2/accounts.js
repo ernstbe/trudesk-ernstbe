@@ -12,7 +12,6 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-const _ = require('lodash')
 const winston = require('../../../logger')
 const Chance = require('chance')
 const apiUtil = require('../apiUtils')
@@ -39,7 +38,7 @@ accountsApi.sessionUser = async (req, res) => {
       return g._id
     })
 
-    const clonedUser = _.clone(dbUser._doc)
+    const clonedUser = { ...dbUser._doc }
     delete clonedUser.__v
     delete clonedUser.iOSDeviceTokens
     delete clonedUser.deleted
@@ -219,10 +218,10 @@ accountsApi.update = async function (req, res) {
 
     postData._id = user._id.toString()
     if (
-      !_.isUndefined(postData.password) &&
-      !_.isEmpty(postData.password) &&
-      !_.isUndefined(postData.passwordConfirm) &&
-      !_.isEmpty(postData.passwordConfirm)
+      postData.password !== undefined &&
+      postData.password !== '' &&
+      postData.passwordConfirm !== undefined &&
+      postData.passwordConfirm !== ''
     ) {
       if (postData.password.length < 4 || postData.passwordConfirm.length < 4) throw new Error('Password length is too short.')
       if (postData.password === postData.passwordConfirm) {
@@ -235,12 +234,12 @@ accountsApi.update = async function (req, res) {
       } else throw new Error('Password and Confirm Password do not match.')
     }
 
-    if (!_.isUndefined(postData.fullname) && postData.fullname.length > 0) user.fullname = postData.fullname
-    if (!_.isUndefined(postData.email) && postData.email.length > 0) user.email = postData.email
-    if (!_.isUndefined(postData.title) && postData.title.length > 0) user.title = postData.title
-    if (!_.isUndefined(postData.role) && postData.role.length > 0) user.role = postData.role
+    if (postData.fullname !== undefined && postData.fullname.length > 0) user.fullname = postData.fullname
+    if (postData.email !== undefined && postData.email.length > 0) user.email = postData.email
+    if (postData.title !== undefined && postData.title.length > 0) user.title = postData.title
+    if (postData.role !== undefined && postData.role.length > 0) user.role = postData.role
 
-    if (!_.isUndefined(postData.preferences)) user.preferences = { ...user.preferences, ...postData.preferences }
+    if (postData.preferences !== undefined) user.preferences = { ...user.preferences, ...postData.preferences }
 
     user = await user.save()
     const populatedUser = await user.populate('role')
@@ -252,7 +251,7 @@ accountsApi.update = async function (req, res) {
     else {
       const allGroups = await Group.getAllGroups()
       for (const g of allGroups) {
-        if (_.includes(postData.groups, g._id.toString())) {
+        if (postData.groups.includes(g._id.toString())) {
           if (g.isMember(postData._id)) {
             groups.push(g)
           } else {
@@ -276,7 +275,7 @@ accountsApi.update = async function (req, res) {
     } else {
       const allTeams = await Team.getTeams()
       for (const t of allTeams) {
-        if (_.includes(postData.teams, t._id.toString())) {
+        if (postData.teams.includes(t._id.toString())) {
           if (t.isMember(postData._id)) teams.push(t)
           else {
             const result = await t.addMember(postData._id)
@@ -332,13 +331,13 @@ accountsApi.saveProfile = async (req, res) => {
     let dbUser = await User.findOne({ _id: payload._id })
     if (!dbUser) return apiUtil.sendApiError(res, 404, 'Invalid User Account')
 
-    if (!_.isUndefined(payload.fullname) && !_.isNull(payload.fullname)) dbUser.fullname = payload.fullname
-    if (!_.isUndefined(payload.title) && !_.isNull(payload.title)) dbUser.title = payload.title
-    if (!_.isUndefined(payload.workNumber) && !_.isNull(payload.workNumber)) dbUser.workNumber = payload.workNumber
-    if (!_.isUndefined(payload.mobileNumber) && !_.isNull(payload.mobileNumber)) { dbUser.mobileNumber = payload.mobileNumber }
+    if (payload.fullname !== undefined && payload.fullname !== null) dbUser.fullname = payload.fullname
+    if (payload.title !== undefined && payload.title !== null) dbUser.title = payload.title
+    if (payload.workNumber !== undefined && payload.workNumber !== null) dbUser.workNumber = payload.workNumber
+    if (payload.mobileNumber !== undefined && payload.mobileNumber !== null) { dbUser.mobileNumber = payload.mobileNumber }
 
     // User Preferences
-    if (!_.isUndefined(payload.preferences) && !_.isNull(payload.preferences)) {
+    if (payload.preferences !== undefined && payload.preferences !== null) {
       if (payload.preferences.timezone) dbUser.preferences.timezone = payload.preferences.timezone
     }
 

@@ -12,7 +12,6 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-const _ = require('lodash')
 const winston = require('../logger')
 const conversationSchema = require('../models/chat/conversation')
 const messageSchema = require('../models/chat/message')
@@ -50,24 +49,24 @@ messagesController.get = async function (req, res) {
 
       const userMeta =
         convo.userMeta[
-          _.findIndex(convo.userMeta, function (item) {
+          convo.userMeta.findIndex(function (item) {
             return item.userId.toString() === req.user._id.toString()
           })
         ]
-      if (!_.isUndefined(userMeta) && !_.isUndefined(userMeta.deletedAt) && userMeta.deletedAt > convo.updatedAt) {
+      if (userMeta !== undefined && userMeta.deletedAt !== undefined && userMeta.deletedAt > convo.updatedAt) {
         continue
       }
 
       const rm = await messageSchema.getMostRecentMessage(c._id)
-      const recentMsg = _.first(rm)
+      const recentMsg = rm[0]
 
-      _.each(c.participants, function (p) {
+      c.participants.forEach(function (p) {
         if (p._id.toString() !== req.user._id.toString()) {
           c.partner = p
         }
       })
 
-      if (!_.isUndefined(recentMsg)) {
+      if (recentMsg !== undefined) {
         if (String(c.partner._id) === String(recentMsg.owner._id)) {
           c.recentMessage = c.partner.fullname + ': ' + recentMsg.body
         } else {
@@ -89,7 +88,7 @@ messagesController.get = async function (req, res) {
 
 messagesController.getConversation = async function (req, res) {
   const cid = req.params.convoid
-  if (_.isUndefined(cid)) {
+  if (cid === undefined) {
     return res.status(400).render('error', { layout: false, error: 'Invalid Conversation ID!', message: 'Invalid Conversation ID!' })
   }
 
@@ -108,13 +107,13 @@ messagesController.getConversation = async function (req, res) {
       const convo = convos[i]
       const userMeta =
         convo.userMeta[
-          _.findIndex(convo.userMeta, function (item) {
+          convo.userMeta.findIndex(function (item) {
             return item.userId.toString() === req.user._id.toString()
           })
         ]
       if (
-        !_.isUndefined(userMeta) &&
-        !_.isUndefined(userMeta.deletedAt) &&
+        userMeta !== undefined &&
+        userMeta.deletedAt !== undefined &&
         userMeta.deletedAt > convo.updatedAt &&
         req.params.convoid.toString() !== convo._id.toString()
       ) {
@@ -123,15 +122,15 @@ messagesController.getConversation = async function (req, res) {
 
       const c = convo.toObject()
       const rm = await messageSchema.getMostRecentMessage(c._id)
-      const recentMsg = _.first(rm)
+      const recentMsg = rm[0]
 
-      _.each(c.participants, function (p) {
+      c.participants.forEach(function (p) {
         if (p._id.toString() !== req.user._id.toString()) {
           c.partner = p
         }
       })
 
-      if (!_.isUndefined(recentMsg)) {
+      if (recentMsg !== undefined) {
         if (String(c.partner._id) === String(recentMsg.owner._id)) {
           c.recentMessage = c.partner.fullname + ': ' + recentMsg.body
         } else {
@@ -142,9 +141,9 @@ messagesController.getConversation = async function (req, res) {
       }
 
       if (
-        !_.isUndefined(userMeta) &&
-        !_.isUndefined(userMeta.deletedAt) &&
-        !_.isUndefined(recentMsg) &&
+        userMeta !== undefined &&
+        userMeta.deletedAt !== undefined &&
+        recentMsg !== undefined &&
         recentMsg.createdAt < userMeta.deletedAt
       ) {
         c.recentMessage = 'Neue Unterhaltung'
@@ -161,7 +160,7 @@ messagesController.getConversation = async function (req, res) {
     const c = convo.toObject()
 
     let isPart = false
-    _.each(c.participants, function (p) {
+    c.participants.forEach(function (p) {
       if (p._id.toString() === req.user._id.toString()) isPart = true
     })
 
@@ -175,7 +174,7 @@ messagesController.getConversation = async function (req, res) {
       requestingUser: req.user
     })
 
-    _.each(c.participants, function (p) {
+    c.participants.forEach(function (p) {
       if (p._id.toString() !== req.user._id.toString()) {
         c.partner = p
       }
@@ -183,7 +182,7 @@ messagesController.getConversation = async function (req, res) {
 
     c.requestingUserMeta =
       convo.userMeta[
-        _.findIndex(convo.userMeta, function (item) {
+        convo.userMeta.findIndex(function (item) {
           return item.userId.toString() === req.user._id.toString()
         })
       ]

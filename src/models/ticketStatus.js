@@ -12,10 +12,8 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-// var _               = require('lodash');
 const mongoose = require('mongoose')
 const utils = require('../helpers/utils')
-const _ = require('lodash')
 
 const COLLECTION = 'statuses'
 
@@ -39,7 +37,7 @@ const statusSchema = mongoose.Schema(
 statusSchema.pre('save', async function () {
   this.name = utils.sanitizeFieldPlainText(this.name.trim())
 
-  if (!_.isUndefined(this.uid) || this.uid) {
+  if (this.uid !== undefined || this.uid) {
     return
   }
 
@@ -48,7 +46,7 @@ statusSchema.pre('save', async function () {
 
   this.uid = res.next
 
-  if (_.isUndefined(this.uid)) {
+  if (this.uid === undefined) {
     throw new Error('Invalid UID.')
   }
 })

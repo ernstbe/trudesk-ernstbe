@@ -12,7 +12,6 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-const _ = require('lodash')
 const winston = require('../logger')
 const roleSchema = require('../models/role')
 const roleOrder = require('../models/roleorder')
@@ -37,61 +36,63 @@ const register = async function (callback) {
  */
 
 const canThis = function (role, a, adminOverride = false) {
-  if (_.isUndefined(role)) return false
+  if (role === undefined) return false
   if (adminOverride === true && role.isAdmin) return true
 
   const roles = global.roles
-  if (_.isUndefined(roles)) return false
-  if (_.hasIn(role, '_id')) role = role._id
-  const rolePerm = _.find(roles, { _id: role })
-  if (_.isUndefined(rolePerm)) return false
-  if (_.indexOf(rolePerm.grants, '*') !== -1) return true
+  if (roles === undefined) return false
+  if (role != null && typeof role === 'object' && '_id' in role) role = role._id
+  const rolePerm = roles.find(r => r._id.toString() === role.toString())
+  if (rolePerm === undefined) return false
+  if (rolePerm.grants.indexOf('*') !== -1) return true
 
   const actionType = a.split(':')[0]
   const action = a.split(':')[1]
 
-  if (_.isUndefined(actionType) || _.isUndefined(action)) return false
+  if (actionType === undefined || action === undefined) return false
 
-  const result = _.filter(rolePerm.grants, function (value) {
-    if (_.startsWith(value, actionType + ':')) return value
+  const result = rolePerm.grants.filter(function (value) {
+    if (value.startsWith(actionType + ':')) return true
+    return false
   })
 
-  if (_.isUndefined(result) || _.size(result) < 1) return false
-  if (_.size(result) === 1) {
+  if (result === undefined || result.length < 1) return false
+  if (result.length === 1) {
     if (result[0] === '*') return true
   }
 
   let typePerm = result[0].split(':')[1].split(' ')
-  typePerm = _.uniq(typePerm)
+  typePerm = [...new Set(typePerm)]
 
-  if (_.indexOf(typePerm, '*') !== -1) return true
+  if (typePerm.indexOf('*') !== -1) return true
 
-  return _.indexOf(typePerm, action) !== -1
+  return typePerm.indexOf(action) !== -1
 }
 
 const getRoles = function (action) {
-  if (_.isUndefined(action)) return false
+  if (action === undefined) return false
 
   let rolesWithAction = []
   const roles = global.roles
-  if (_.isUndefined(roles)) return []
+  if (roles === undefined) return []
 
-  _.each(roles, function (role) {
+  roles.forEach(function (role) {
     const actionType = action.split(':')[0]
     const theAction = action.split(':')[1]
 
-    if (_.isUndefined(actionType) || _.isUndefined(theAction)) return
-    if (_.indexOf(role.grants, '*') !== -1) {
+    if (actionType === undefined || theAction === undefined) return
+    if (role.grants.indexOf('*') !== -1) {
       rolesWithAction.push(role)
       return
     }
 
-    const result = _.filter(role.grants, function (value) {
-      if (_.startsWith(value, actionType + ':')) return value
+    const result = role.grants.filter(function (value) {
+      if (value.startsWith(actionType + ':')) return true
+      return false
     })
 
-    if (_.isUndefined(result) || _.size(result) < 1) return
-    if (_.size(result) === 1) {
+    if (result === undefined || result.length < 1) return
+    if (result.length === 1) {
       if (result[0] === '*') {
         rolesWithAction.push(role)
         return
@@ -99,50 +100,50 @@ const getRoles = function (action) {
     }
 
     let typePerm = result[0].split(':')[1].split(' ')
-    typePerm = _.uniq(typePerm)
+    typePerm = [...new Set(typePerm)]
 
-    if (_.indexOf(typePerm, '*') !== -1) {
+    if (typePerm.indexOf('*') !== -1) {
       rolesWithAction.push(role)
       return
     }
 
-    if (_.indexOf(typePerm, theAction) !== -1) {
+    if (typePerm.indexOf(theAction) !== -1) {
       rolesWithAction.push(role)
     }
   })
 
-  rolesWithAction = _.uniq(rolesWithAction)
+  rolesWithAction = [...new Set(rolesWithAction)]
 
   return rolesWithAction
 }
 
 function hasHierarchyEnabled (roleId) {
-  const role = _.find(global.roles, function (o) {
+  const role = global.roles.find(function (o) {
     return o._id.toString() === roleId.toString()
   })
-  if (_.isUndefined(role) || _.isUndefined(role.hierarchy)) return true
+  if (role === undefined || role.hierarchy === undefined) return true
   return role.hierarchy
 }
 
 function parseRoleHierarchy (roleId) {
   const roleOrder = global.roleOrder.order
 
-  const idx = _.findIndex(roleOrder, function (i) {
+  const idx = roleOrder.findIndex(function (i) {
     return i.toString() === roleId.toString()
   })
   if (idx === -1) return []
 
-  return _.slice(roleOrder, idx)
+  return roleOrder.slice(idx)
 }
 
 function hasPermOverRole (ownRole, extRole) {
   const roles = parseRoleHierarchy(extRole)
 
-  const i = _.find(roles, function (o) {
+  const i = roles.find(function (o) {
     return o.toString() === ownRole.toString()
   })
 
-  return !_.isUndefined(i)
+  return i !== undefined
 }
 
 async function isAdmin (roleId, callback) {
@@ -157,7 +158,7 @@ async function isAdmin (roleId, callback) {
 function isAdminSync (roleId) {
   const roles = global.roles
   if (!roles) return false
-  const role = _.find(roles, function (r) {
+  const role = roles.find(function (r) {
     return r._id.toString() === roleId.toString()
   })
 
@@ -167,8 +168,8 @@ function isAdminSync (roleId) {
 }
 
 function buildGrants (obj) {
-  return _.map(obj, function (v, k) {
-    return k + ':' + _.join(v, ' ')
+  return Object.keys(obj).map(function (k) {
+    return k + ':' + obj[k].join(' ')
   })
 }
 

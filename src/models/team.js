@@ -12,7 +12,6 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-const _ = require('lodash')
 const mongoose = require('mongoose')
 const utils = require('../helpers/utils')
 
@@ -44,28 +43,29 @@ teamSchema.pre('save', function () {
 })
 
 teamSchema.methods.addMember = async function (memberId) {
-  if (_.isUndefined(memberId)) {
+  if (memberId === undefined) {
     throw new Error('Invalid MemberId - TeamSchema.AddMember()')
   }
 
   if (this.members === null) this.members = []
 
   this.members.push(memberId)
-  this.members = _.uniq(this.members)
+  this.members = [...new Set(this.members)]
 
   return true
 }
 
 teamSchema.methods.removeMember = async function (memberId) {
-  if (_.isUndefined(memberId)) {
+  if (memberId === undefined) {
     throw new Error('Invalid MemberId - TeamSchema.RemoveMember()')
   }
 
   if (!isMember(this.members, memberId)) {
     return false
   }
-  this.members.splice(_.indexOf(this.members, _.find(this.members, { _id: memberId })), 1)
-  this.members = _.uniq(this.members)
+  const memberToRemove = this.members.find(m => m._id.toString() === memberId.toString())
+  this.members.splice(this.members.indexOf(memberToRemove), 1)
+  this.members = [...new Set(this.members)]
 
   return true
 }
@@ -87,7 +87,7 @@ teamSchema.statics.getWithObject = async function (obj) {
 }
 
 teamSchema.statics.getTeamByName = async function (name) {
-  if (_.isUndefined(name) || name.length < 1) throw new Error('Invalid Team Name - TeamSchema.GetTeamByName()')
+  if (name === undefined || name.length < 1) throw new Error('Invalid Team Name - TeamSchema.GetTeamByName()')
 
   const q = this.model(COLLECTION).findOne({ normalized: name })
 
@@ -118,7 +118,7 @@ teamSchema.statics.getTeamsNoPopulate = async function () {
 }
 
 teamSchema.statics.getTeamsOfUser = async function (userId) {
-  if (_.isUndefined(userId)) {
+  if (userId === undefined) {
     throw new Error('Invalid UserId - TeamSchema.GetTeamsOfUser()')
   }
 
@@ -130,7 +130,7 @@ teamSchema.statics.getTeamsOfUser = async function (userId) {
 }
 
 teamSchema.statics.getTeamsOfUserNoPopulate = async function (userId) {
-  if (_.isUndefined(userId)) throw new Error('Invalid UserId - TeamSchema.GetTeamsOfUserNoPopulate()')
+  if (userId === undefined) throw new Error('Invalid UserId - TeamSchema.GetTeamsOfUserNoPopulate()')
 
   const q = this.model(COLLECTION)
     .find({ members: userId })
@@ -140,7 +140,7 @@ teamSchema.statics.getTeamsOfUserNoPopulate = async function (userId) {
 }
 
 teamSchema.statics.getTeam = async function (id) {
-  if (_.isUndefined(id)) throw new Error('Invalid TeamId - TeamSchema.GetTeam()')
+  if (id === undefined) throw new Error('Invalid TeamId - TeamSchema.GetTeam()')
 
   const q = this.model(COLLECTION).findOne({ _id: id })
 
@@ -148,8 +148,9 @@ teamSchema.statics.getTeam = async function (id) {
 }
 
 function isMember (arr, id) {
-  const matches = _.filter(arr, function (value) {
-    if (value._id.toString() === id.toString()) return value
+  const matches = arr.filter(function (value) {
+    if (value._id.toString() === id.toString()) return true
+    return false
   })
 
   return matches.length > 0

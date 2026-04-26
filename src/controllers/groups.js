@@ -12,7 +12,6 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-const _ = require('lodash')
 const userSchema = require('../models/user')
 const groupSchema = require('../models/group')
 const permissions = require('../permissions')
@@ -23,7 +22,7 @@ groupsController.content = {}
 
 groupsController.get = async function (req, res) {
   const user = req.user
-  if (_.isUndefined(user) || !permissions.canThis(user.role, 'groups:view')) {
+  if (user === undefined || !permissions.canThis(user.role, 'groups:view')) {
     req.flash('message', 'Permission Denied.')
     return res.redirect('/')
   }
@@ -40,10 +39,10 @@ groupsController.get = async function (req, res) {
 
   try {
     const groups = await groupSchema.getAllGroups()
-    content.data.groups = _.sortBy(groups, 'name')
+    content.data.groups = [...groups].sort((a, b) => a.name.localeCompare(b.name))
 
     const users = await userSchema.findAll()
-    content.data.users = _.sortBy(users, 'fullname')
+    content.data.users = [...users].sort((a, b) => (a.fullname || '').localeCompare(b.fullname || ''))
 
     return res.render('groups', content)
   } catch (err) {
@@ -53,7 +52,7 @@ groupsController.get = async function (req, res) {
 
 groupsController.getCreate = async function (req, res) {
   const user = req.user
-  if (_.isUndefined(user) || !permissions.canThis(user.role, 'groups:create')) {
+  if (user === undefined || !permissions.canThis(user.role, 'groups:create')) {
     req.flash('message', 'Permission Denied.')
     return res.redirect('/')
   }
@@ -70,7 +69,7 @@ groupsController.getCreate = async function (req, res) {
 
   try {
     const users = await userSchema.findAll()
-    content.data.users = _.sortBy(users, 'fullname')
+    content.data.users = [...users].sort((a, b) => (a.fullname || '').localeCompare(b.fullname || ''))
 
     return res.render('subviews/createGroup', content)
   } catch (err) {
@@ -80,7 +79,7 @@ groupsController.getCreate = async function (req, res) {
 
 groupsController.edit = async function (req, res) {
   const user = req.user
-  if (_.isUndefined(user) || !permissions.canThis(user.role, 'groups:edit')) {
+  if (user === undefined || !permissions.canThis(user.role, 'groups:edit')) {
     req.flash('message', 'Permission Denied.')
     return res.redirect('/')
   }
@@ -94,13 +93,13 @@ groupsController.edit = async function (req, res) {
   content.data.common = req.viewdata
   content.data.users = []
   const groupId = req.params.id
-  if (_.isUndefined(groupId)) return res.redirect('/groups/')
+  if (groupId === undefined) return res.redirect('/groups/')
 
   try {
     const users = await userSchema.findAll()
     const group = await groupSchema.getGroupById(groupId)
 
-    content.data.users = _.sortBy(users, 'fullname')
+    content.data.users = [...users].sort((a, b) => (a.fullname || '').localeCompare(b.fullname || ''))
     content.data.group = group
 
     return res.render('subviews/editGroup', content)

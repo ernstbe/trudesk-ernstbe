@@ -13,7 +13,6 @@
  */
 
 const path = require('path')
-const _ = require('lodash')
 const winston = require('../logger')
 const pkg = require('../../package')
 const Chance = require('chance')
@@ -71,7 +70,7 @@ installController.mongotest = function (req, res) {
   })
 
   child.on('close', function () {
-    global.forks = _.without(global.forks, { name: 'mongotest' })
+    global.forks = global.forks.filter(f => f.name !== 'mongotest')
     winston.debug('MongoTest process terminated')
   })
 }
@@ -280,7 +279,7 @@ installController.install = async function (req, res) {
     // Step 12: Create admin user
     const admin = await UserSchema.getUserByUsername(user.username)
 
-    if (!_.isNull(admin) && !_.isUndefined(admin) && !_.isEmpty(admin)) {
+    if (admin !== null && admin !== undefined && (typeof admin === 'object' ? Object.keys(admin).length > 0 : true)) {
       throw new Error('Username: ' + user.username + ' already exists.')
     }
 

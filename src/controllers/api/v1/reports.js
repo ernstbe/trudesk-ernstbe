@@ -12,7 +12,6 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-const _ = require('lodash')
 const async = require('async')
 const ticketSchema = require('../../../models/ticket')
 const groupSchema = require('../../../models/group')
@@ -151,7 +150,7 @@ apiReports.generate.ticketsByPriority = function (req, res) {
   async.waterfall(
     [
       function (done) {
-        if (_.includes(postData.groups, 'all')) {
+        if (postData.groups.includes('all')) {
           if (req.user.role.isAdmin || req.user.role.isAgent) {
             groupSchema.getAllGroupsNoPopulate(function (err, grps) {
               if (err) return done(err)
@@ -236,7 +235,7 @@ apiReports.generate.ticketsByStatus = function (req, res) {
   async.waterfall(
     [
       function (done) {
-        if (_.includes(postData.groups, 'all')) {
+        if (postData.groups.includes('all')) {
           if (req.user.role.isAdmin || req.user.role.isAgent) {
             groupSchema.getAllGroupsNoPopulate(function (err, grps) {
               if (err) return done(err)
@@ -325,7 +324,7 @@ apiReports.generate.ticketsByTags = function (req, res) {
   async.waterfall(
     [
       function (done) {
-        if (_.includes(postData.groups, 'all')) {
+        if (postData.groups.includes('all')) {
           if (req.user.role.isAdmin || req.user.role.isAgent) {
             groupSchema.getAllGroupsNoPopulate(function (err, grps) {
               if (err) return done(err)
@@ -413,7 +412,7 @@ apiReports.generate.ticketsByType = function (req, res) {
   async.waterfall(
     [
       function (done) {
-        if (_.includes(postData.groups, 'all')) {
+        if (postData.groups.includes('all')) {
           if (req.user.role.isAdmin || req.user.role.isAgent) {
             groupSchema.getAllGroupsNoPopulate(function (err, grps) {
               if (err) return done(err)
@@ -501,7 +500,7 @@ apiReports.generate.ticketsByUser = function (req, res) {
   async.waterfall(
     [
       function (done) {
-        if (_.includes(postData.groups, 'all')) {
+        if (postData.groups.includes('all')) {
           if (req.user.role.isAdmin || req.user.role.isAgent) {
             groupSchema.getAllGroupsNoPopulate(function (err, grps) {
               if (err) return done(err)
@@ -558,7 +557,7 @@ apiReports.generate.ticketsByAssignee = function (req, res) {
   async.waterfall(
     [
       function (done) {
-        if (_.includes(postData.groups, 'all')) {
+        if (postData.groups.includes('all')) {
           if (req.user.role.isAdmin || req.user.role.isAgent) {
             groupSchema.getAllGroupsNoPopulate(function (err, grps) {
               if (err) return done(err)

@@ -11,7 +11,6 @@
  *  Updated:    1/20/19 4:43 PM
  *  Copyright (c) 2014-2019. All rights reserved.
  */
-const _ = require('lodash')
 const async = require('async')
 const winston = require('../logger')
 const utils = require('../helpers/utils')
@@ -70,7 +69,7 @@ events.onSetUserOnlineStatus = function (socket) {
         }
       } else {
         const idleUser = sharedVars.idleUsers[user.username.toLowerCase()]
-        if (!_.isUndefined(idleUser)) {
+        if (idleUser !== undefined) {
           idleUser.sockets.push(socket.id)
 
           updateOnlineBubbles()
@@ -88,12 +87,12 @@ events.onSetUserOnlineStatus = function (socket) {
 
 function updateUsers () {
   const sortedUserList = sharedUtils.sortByKeys(sharedVars.usersOnline)
-  _.forEach(sortedUserList, function (v) {
+  Object.values(sortedUserList).forEach(function (v) {
     const user = v.user
     const sockets = v.sockets
     if (user && sockets.length > 0) {
-      _.forEach(sockets, function (sock) {
-        const socket = _.find(sharedVars.sockets, function (s) {
+      sockets.forEach(function (sock) {
+        const socket = sharedVars.sockets.find(function (s) {
           return s.id === sock
         })
 
@@ -104,52 +103,43 @@ function updateUsers () {
             const groupSchema = require('../models/group')
             groupSchema.getAllGroupsOfUser(user._id, function (err, groups) {
               if (!err) {
-                let usersOfGroups = _.map(groups, function (g) {
-                  return _.map(g.members, function (m) {
+                let usersOfGroups = groups.map(function (g) {
+                  return g.members.map(function (m) {
                     return { user: m }
                   })
                 })
 
-                const agentsAndAdmins = _.chain(sortedUserList)
-                  .filter(function (u) {
+                const agentsAndAdmins = Object.values(sortedUserList).filter(function (u) {
                     return u.user.role.isAdmin || u.user.role.isAgent
                   })
-                  .map(function (u) {
-                    return u
-                  })
-                  .value()
 
-                usersOfGroups = _.concat(usersOfGroups, agentsAndAdmins)
+                usersOfGroups = [].concat(usersOfGroups, agentsAndAdmins)
 
-                let onlineUsernames = _.map(sortedUserList, function (u) {
+                let onlineUsernames = Object.values(sortedUserList).map(function (u) {
                   return u.user.username
                 })
-                onlineUsernames = _.flattenDeep(onlineUsernames)
+                onlineUsernames = onlineUsernames.flat(Infinity)
 
-                const sortedUsernames = _.chain(usersOfGroups)
-                  .flattenDeep()
-                  .map(function (u) {
+                const sortedUsernames = usersOfGroups.flat(Infinity).map(function (u) {
                     return u.user.username
                   })
-                  .value()
 
-                const actual = _.intersection(onlineUsernames, sortedUsernames)
+                const actual = onlineUsernames.filter(u => sortedUsernames.includes(u))
 
-                usersOfGroups = _.chain(usersOfGroups)
-                  .flattenDeep()
-                  .filter(function (i) {
-                    return actual.indexOf(i.user.username) !== -1
+                const seenIds = new Set()
+                usersOfGroups = usersOfGroups.flat(Infinity).filter(function (i) {
+                    if (actual.indexOf(i.user.username) === -1) return false
+                    const id = i.user._id.toString()
+                    if (seenIds.has(id)) return false
+                    seenIds.add(id)
+                    return true
                   })
-                  .uniqBy(function (i) {
-                    return i.user._id
-                  })
-                  .value()
 
-                const sortedKeys = _.map(usersOfGroups, function (m) {
+                const sortedKeys = usersOfGroups.map(function (m) {
                   return m.user.username
                 })
 
-                const obj = _.zipObject(sortedKeys, usersOfGroups)
+                const obj = Object.fromEntries(sortedKeys.map((k, idx) => [k, usersOfGroups[idx]]))
 
                 socket.emit('updateUsers', obj)
               }
@@ -163,14 +153,14 @@ function updateUsers () {
 }
 
 function updateOnlineBubbles () {
-  const sortedUserList = _.fromPairs(
-    _.sortBy(_.toPairs(sharedVars.usersOnline), function (o) {
-      return o[0]
+  const sortedUserList = Object.fromEntries(
+    Object.entries(sharedVars.usersOnline).sort(function (a, b) {
+      return a[0].localeCompare(b[0])
     })
   )
-  const sortedIdleList = _.fromPairs(
-    _.sortBy(_.toPairs(sharedVars.idleUsers), function (o) {
-      return o[0]
+  const sortedIdleList = Object.fromEntries(
+    Object.entries(sharedVars.idleUsers).sort(function (a, b) {
+      return a[0].localeCompare(b[0])
     })
   )
 
@@ -205,23 +195,23 @@ async function updateConversationsNotifications (socket) {
         (convo, done) => {
           const c = convo.toObject()
 
-          const userMeta = convo.userMeta[_.findIndex(convo.userMeta, i => i.userId.toString() === user._id.toString())]
-          if (!_.isUndefined(userMeta) && !_.isUndefined(userMeta.deletedAt) && userMeta.deletedAt > convo.updatedAt) {
+          const userMeta = convo.userMeta[convo.userMeta.findIndex(i => i.userId.toString() === user._id.toString())]
+          if (userMeta !== undefined && userMeta.deletedAt !== undefined && userMeta.deletedAt > convo.updatedAt) {
             return done()
           }
 
           Message.getMostRecentMessage(c._id, (err, rm) => {
             if (err) return done(err)
 
-            _.each(c.participants, p => {
+            c.participants.forEach(p => {
               if (p._id.toString() !== user._id.toString()) {
                 c.partner = p
               }
             })
 
-            rm = _.first(rm)
+            rm = rm[0]
 
-            if (!_.isUndefined(rm)) {
+            if (rm !== undefined) {
               if (!c.partner || !rm.owner) return done()
 
               if (c.partner._id.toString() === rm.owner._id.toString()) {
@@ -267,7 +257,7 @@ function spawnOpenChatWindows (socket) {
       let partner = null
       conversationSchema.getConversation(convoId, function (err, conversation) {
         if (err || !conversation) return done()
-        _.each(conversation.participants, function (i) {
+        conversation.participants.forEach(function (i) {
           if (i._id.toString() !== loggedInAccountId.toString()) {
             partner = i.toObject()
             return partner
@@ -436,7 +426,7 @@ events.onChatTyping = function (socket) {
     let user = null
     let fromUser = null
 
-    _.find(sharedVars.usersOnline, function (v) {
+    Object.values(sharedVars.usersOnline).forEach(function (v) {
       if (String(v.user._id) === String(to)) {
         user = v.user
       }
@@ -446,7 +436,7 @@ events.onChatTyping = function (socket) {
       }
     })
 
-    if (_.isNull(user) || _.isNull(fromUser)) {
+    if (user === null || fromUser === null) {
       return
     }
 
@@ -468,13 +458,13 @@ events.onChatStopTyping = function (socket) {
     const to = data.to
     let user = null
 
-    _.find(sharedVars.usersOnline, function (v) {
+    Object.values(sharedVars.usersOnline).forEach(function (v) {
       if (String(v.user._id) === String(to)) {
         user = v.user
       }
     })
 
-    if (_.isNull(user)) {
+    if (user === null) {
       return
     }
 
@@ -529,30 +519,30 @@ events.onDisconnect = function (socket) {
   socket.on('disconnect', function (reason) {
     const user = socket.request.user
 
-    if (!_.isUndefined(sharedVars.usersOnline[user.username])) {
+    if (sharedVars.usersOnline[user.username] !== undefined) {
       const userSockets = sharedVars.usersOnline[user.username].sockets
 
-      if (_.size(userSockets) < 2) {
+      if (userSockets.length < 2) {
         delete sharedVars.usersOnline[user.username]
       } else {
-        sharedVars.usersOnline[user.username].sockets = _.without(userSockets, socket.id)
+        sharedVars.usersOnline[user.username].sockets = userSockets.filter(s => s !== socket.id)
       }
 
-      const o = _.findKey(sharedVars.sockets, { id: socket.id })
-      sharedVars.sockets = _.without(sharedVars.sockets, o)
+      const o = sharedVars.sockets.findIndex(s => s && s.id === socket.id)
+      if (o !== -1) sharedVars.sockets.splice(o, 1)
     }
 
-    if (!_.isUndefined(sharedVars.idleUsers[user.username])) {
+    if (sharedVars.idleUsers[user.username] !== undefined) {
       const idleSockets = sharedVars.idleUsers[user.username].sockets
 
-      if (_.size(idleSockets) < 2) {
+      if (idleSockets.length < 2) {
         delete sharedVars.idleUsers[user.username]
       } else {
-        sharedVars.idleUsers[user.username].sockets = _.without(idleSockets, socket.id)
+        sharedVars.idleUsers[user.username].sockets = idleSockets.filter(s => s !== socket.id)
       }
 
-      const i = _.findKey(sharedVars.sockets, { id: socket.id })
-      sharedVars.sockets = _.without(sharedVars.sockets, i)
+      const i = sharedVars.sockets.findIndex(s => s && s.id === socket.id)
+      if (i !== -1) sharedVars.sockets.splice(i, 1)
     }
 
     // Save lastOnline Time

@@ -12,7 +12,6 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-const _ = require('lodash')
 const permissions = require('../permissions')
 
 const reportsController = {}
@@ -21,7 +20,7 @@ reportsController.content = {}
 
 reportsController.overview = function (req, res) {
   const user = req.user
-  if (_.isUndefined(user) || !permissions.canThis(user.role, 'reports:view')) {
+  if (user === undefined || !permissions.canThis(user.role, 'reports:view')) {
     req.flash('message', 'Permission Denied.')
     return res.redirect('/')
   }
@@ -43,7 +42,7 @@ reportsController.overview = function (req, res) {
 
 reportsController.generate = async function (req, res) {
   const user = req.user
-  if (_.isUndefined(user) || !permissions.canThis(user.role, 'reports:create')) {
+  if (user === undefined || !permissions.canThis(user.role, 'reports:create')) {
     req.flash('message', 'Permission Denied.')
     return res.redirect('/')
   }
@@ -70,7 +69,7 @@ reportsController.generate = async function (req, res) {
 
 reportsController.breakdownGroup = function (req, res) {
   const user = req.user
-  if (_.isUndefined(user) || !permissions.canThis(user.role, 'reports:view')) {
+  if (user === undefined || !permissions.canThis(user.role, 'reports:view')) {
     req.flash('message', 'Permission Denied.')
     return res.redirect('/')
   }
@@ -92,7 +91,7 @@ reportsController.breakdownGroup = function (req, res) {
 
 reportsController.breakdownUser = function (req, res) {
   const user = req.user
-  if (_.isUndefined(user) || !permissions.canThis(user.role, 'reports:view')) {
+  if (user === undefined || !permissions.canThis(user.role, 'reports:view')) {
     req.flash('message', 'Permission Denied.')
     return res.redirect('/')
   }

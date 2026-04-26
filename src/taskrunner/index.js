@@ -9,7 +9,6 @@
  ========================================================================
 */
 
-const _ = require('lodash')
 const async = require('async')
 const axios = require('axios')
 const cron = require('node-cron')
@@ -105,22 +104,22 @@ taskRunner.sendStats = function (callback) {
     if (err) return callback(err)
     if (!settings || settings.length < 1) return callback()
 
-    let versionSetting = _.find(settings, function (x) {
+    let versionSetting = settings.find(function (x) {
       return x.name === 'gen:version'
     })
-    const installIdSetting = _.find(settings, function (x) {
+    const installIdSetting = settings.find(function (x) {
       return x.name === 'gen:installid'
     })
 
-    let hostnameSetting = _.find(settings, function (x) {
+    let hostnameSetting = settings.find(function (x) {
       return x.name === 'gen:siteurl'
     })
 
     if (!installIdSetting) return callback()
 
-    versionSetting = _.isUndefined(versionSetting) ? { value: '--' } : versionSetting
+    versionSetting = versionSetting === undefined ? { value: '--' } : versionSetting
 
-    hostnameSetting = _.isUndefined(hostnameSetting) ? { value: '--' } : hostnameSetting
+    hostnameSetting = hostnameSetting === undefined ? { value: '--' } : hostnameSetting
 
     const result = {
       ticketCount: 0,

@@ -12,7 +12,6 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-const _ = require('lodash')
 const winston = require('../../../logger')
 const permissions = require('../../../permissions')
 const UserSchema = require('../../../models/user')
@@ -46,7 +45,7 @@ const apiUsers = {}
 apiUsers.getWithLimit = async function (req, res) {
   try {
     let limit = 10
-    if (!_.isUndefined(req.query.limit)) {
+    if (ISDEF(req.query.limit)) {
       limit = parseInt(req.query.limit)
     }
     const page = parseInt(req.query.page)
@@ -78,7 +77,7 @@ apiUsers.getWithLimit = async function (req, res) {
       result.push(stripUserFields(user))
     }
 
-    return res.json({ success: true, count: _.size(result), users: result })
+    return res.json({ success: true, count: result.length, users: result })
   } catch (err) {
     return res.status(400).json({ error: 'Error: ' + err.message })
   }
@@ -121,21 +120,21 @@ apiUsers.create = async function (req, res) {
 
   const postData = req.body
 
-  if (_.isUndefined(postData) || !_.isObject(postData)) {
+  if (postData === undefined || NOTOBJ__(postData)) {
     return res.status(400).json({ success: false, error: 'Invalid Post Data' })
   }
 
   const propCheck = ['aUsername', 'aPass', 'aPassConfirm', 'aFullname', 'aEmail', 'aRole']
 
   if (
-    !_.every(propCheck, function (x) {
+    !EVERY__(propCheck, function (x) {
       return x in postData
     })
   ) {
     return res.status(400).json({ success: false, error: 'Invalid Post Data' })
   }
 
-  if (_.isUndefined(postData.aGrps) || _.isNull(postData.aGrps) || !_.isArray(postData.aGrps)) {
+  if (postData.aGrps === undefined || postData.aGrps === null || !Array.isArray(postData.aGrps)) {
     return res.status(400).json({ success: false, error: 'Invalid Group Array' })
   }
 
@@ -172,7 +171,7 @@ apiUsers.create = async function (req, res) {
 
     const groups = []
     for (const id of postData.aGrps) {
-      if (_.isUndefined(id)) continue
+      if (id === undefined) continue
       const grp = await groupSchema.getGroupById(id)
       if (!grp) throw new Error(`Invalid Group (${id}) - Group not found. Check Group ID.`)
 
@@ -224,7 +223,7 @@ apiUsers.createPublicAccount = async function (req, res) {
   const response = {}
   response.success = true
   const postData = req.body
-  if (!_.isObject(postData)) return res.status(400).json({ success: false, error: 'Invalid Post Data' })
+  if (NOTOBJ__(postData)) return res.status(400).json({ success: false, error: 'Invalid Post Data' })
 
   try {
     const allowUserRegistration = await SettingSchema.getSetting('allowUserRegistration:enable')
@@ -282,7 +281,7 @@ apiUsers.createPublicAccount = async function (req, res) {
 apiUsers.profileUpdate = async function (req, res) {
   if (!req.user) return res.status(400).json({ success: false, error: 'Invalid Post Data' })
   const username = req.user.username
-  if (_.isNull(username) || _.isUndefined(username)) { return res.status(400).json({ success: false, error: 'Invalid Post Data' }) }
+  if (username === null || username === undefined) { return res.status(400).json({ success: false, error: 'Invalid Post Data' }) }
 
   const data = req.body
   let passwordUpdated = false
@@ -306,10 +305,10 @@ apiUsers.profileUpdate = async function (req, res) {
     obj._id = user._id
 
     if (
-      !_.isUndefined(obj.password) &&
-      !_.isEmpty(obj.password) &&
-      !_.isUndefined(obj.passconfirm) &&
-      !_.isEmpty(obj.passconfirm)
+      ISDEF(obj.password) &&
+      NOTEMPTY__(obj.password) &&
+      ISDEF(obj.passconfirm) &&
+      NOTEMPTY__(obj.passconfirm)
     ) {
       if (obj.password === obj.passconfirm) {
         if (passwordComplexityEnabled) {
@@ -322,9 +321,9 @@ apiUsers.profileUpdate = async function (req, res) {
       }
     }
 
-    if (!_.isUndefined(obj.fullname) && obj.fullname.length > 0) user.fullname = obj.fullname
-    if (!_.isUndefined(obj.email) && obj.email.length > 0) user.email = obj.email
-    if (!_.isUndefined(obj.title) && obj.title.length > 0) user.title = obj.title
+    if (ISDEF(obj.fullname) && obj.fullname.length > 0) user.fullname = obj.fullname
+    if (ISDEF(obj.email) && obj.email.length > 0) user.email = obj.email
+    if (ISDEF(obj.title) && obj.title.length > 0) user.title = obj.title
 
     const nUser = await user.save()
     const populatedUser = await nUser.populate('role')
@@ -380,11 +379,11 @@ apiUsers.profileUpdate = async function (req, res) {
  */
 apiUsers.update = async function (req, res) {
   const username = req.params.username
-  if (_.isNull(username) || _.isUndefined(username)) { return res.status(400).json({ success: false, error: 'Invalid Post Data' }) }
+  if (username === null || username === undefined) { return res.status(400).json({ success: false, error: 'Invalid Post Data' }) }
 
   const data = req.body
   // saveGroups - Profile saving where groups are not sent
-  const saveGroups = !_.isUndefined(data.saveGroups) ? data.saveGroups : true
+  const saveGroups = ISDEF(data.saveGroups) ? data.saveGroups : true
   let passwordUpdated = false
 
   const obj = {
@@ -397,9 +396,9 @@ apiUsers.update = async function (req, res) {
     groups: data.aGrps
   }
 
-  if (_.isNull(obj.groups) || _.isUndefined(obj.groups)) {
+  if (obj.groups === null || obj.groups === undefined) {
     obj.groups = []
-  } else if (!_.isArray(obj.groups)) {
+  } else if (!Array.isArray(obj.groups)) {
     obj.groups = [obj.groups]
   }
 
@@ -414,10 +413,10 @@ apiUsers.update = async function (req, res) {
     obj._id = user._id
 
     if (
-      !_.isUndefined(obj.password) &&
-      !_.isEmpty(obj.password) &&
-      !_.isUndefined(obj.passconfirm) &&
-      !_.isEmpty(obj.passconfirm)
+      ISDEF(obj.password) &&
+      NOTEMPTY__(obj.password) &&
+      ISDEF(obj.passconfirm) &&
+      NOTEMPTY__(obj.passconfirm)
     ) {
       if (obj.password === obj.passconfirm) {
         if (passwordComplexityEnabled) {
@@ -430,10 +429,10 @@ apiUsers.update = async function (req, res) {
       }
     }
 
-    if (!_.isUndefined(obj.fullname) && obj.fullname.length > 0) user.fullname = obj.fullname
-    if (!_.isUndefined(obj.email) && obj.email.length > 0) user.email = obj.email
-    if (!_.isUndefined(obj.title) && obj.title.length > 0) user.title = obj.title
-    if (!_.isUndefined(obj.role) && obj.role.length > 0) user.role = obj.role
+    if (ISDEF(obj.fullname) && obj.fullname.length > 0) user.fullname = obj.fullname
+    if (ISDEF(obj.email) && obj.email.length > 0) user.email = obj.email
+    if (ISDEF(obj.title) && obj.title.length > 0) user.title = obj.title
+    if (ISDEF(obj.role) && obj.role.length > 0) user.role = obj.role
 
     const nUser = await user.save()
     const populatedUser = await nUser.populate('role')
@@ -446,7 +445,7 @@ apiUsers.update = async function (req, res) {
       userGroups = []
       const allGroups = await groupSchema.getAllGroups()
       for (const grp of allGroups) {
-        if (_.includes(obj.groups, grp._id.toString())) {
+        if (INCLUDES__(obj.groups, grp._id.toString())) {
           if (grp.isMember(obj._id)) {
             userGroups.push(grp)
           } else {
@@ -521,7 +520,7 @@ apiUsers.updatePreferences = async function (req, res) {
 
     const user = await UserSchema.getUserByUsername(username)
 
-    if (_.isNull(user.preferences)) {
+    if (user.preferences === null) {
       user.preferences = {}
     }
 
@@ -560,11 +559,11 @@ apiUsers.updatePreferences = async function (req, res) {
 apiUsers.deleteUser = async function (req, res) {
   const username = req.params.username
 
-  if (_.isUndefined(username) || _.isNull(username)) return res.status(400).json({ error: 'Invalid Request' })
+  if (username === undefined || username === null) return res.status(400).json({ error: 'Invalid Request' })
 
   try {
     const user = await UserSchema.getUserByUsername(username)
-    if (_.isNull(user)) {
+    if (user === null) {
       throw new Error('Invalid User')
     }
 
@@ -576,14 +575,14 @@ apiUsers.deleteUser = async function (req, res) {
 
     const ticketSchema = require('../../../models/ticket')
     const tickets = await ticketSchema.find({ owner: user._id })
-    const hasTickets = _.size(tickets) > 0
+    const hasTickets = tickets.length > 0
 
     const conversationSchema = require('../../../models/chat/conversation')
     const conversations = await conversationSchema.getConversationsWithLimit(user._id, 10)
-    const hasConversations = _.size(conversations) > 0
+    const hasConversations = conversations.length > 0
 
     const assignedTickets = await ticketSchema.find({ assignee: user._id })
-    const isAssignee = _.size(assignedTickets) > 0
+    const isAssignee = assignedTickets.length > 0
 
     let disabled
     if (hasTickets || hasConversations || isAssignee) {
@@ -623,12 +622,12 @@ apiUsers.deleteUser = async function (req, res) {
  */
 apiUsers.enableUser = async function (req, res) {
   const username = req.params.username
-  if (_.isUndefined(username)) return res.status(400).json({ error: 'Invalid Request' })
+  if (username === undefined) return res.status(400).json({ error: 'Invalid Request' })
 
   try {
     const user = await UserSchema.getUserByUsername(username)
 
-    if (_.isUndefined(user) || _.isNull(user)) return res.status(400).json({ error: 'Invalid Request' })
+    if (user === undefined || user === null) return res.status(400).json({ error: 'Invalid Request' })
 
     if (!permissions.canThis(req.user.role, 'accounts:delete')) { return res.status(401).json({ error: 'Invalid Permissions' }) }
 
@@ -671,7 +670,7 @@ apiUsers.enableUser = async function (req, res) {
  */
 apiUsers.single = async function (req, res) {
   const username = req.params.username
-  if (_.isUndefined(username)) return res.status(400).json({ error: 'Invalid Request.' })
+  if (username === undefined) return res.status(400).json({ error: 'Invalid Request.' })
 
   try {
     const response = {
@@ -680,13 +679,13 @@ apiUsers.single = async function (req, res) {
     }
 
     let user = await UserSchema.getUserByUsername(username)
-    if (_.isUndefined(user) || _.isNull(user)) throw new Error('Invalid Request')
+    if (user === undefined || user === null) throw new Error('Invalid Request')
 
     user = stripUserFields(user)
     response.user = user
 
     const grps = await groupSchema.getAllGroupsOfUserNoPopulate(user._id)
-    response.groups = _.map(grps, function (o) {
+    response.groups = MAP__(grps, function (o) {
       return o._id
     })
 
@@ -754,7 +753,7 @@ apiUsers.getNotifications = async function (req, res) {
  */
 apiUsers.generateApiKey = async function (req, res) {
   const id = req.params.id
-  if (_.isUndefined(id) || _.isNull(id)) return res.status(400).json({ error: 'Invalid Request' })
+  if (id === undefined || id === null) return res.status(400).json({ error: 'Invalid Request' })
   if (!req.user.role.isAdmin && req.user._id.toString() !== id) { return res.status(401).json({ success: false, error: 'Unauthorized' }) }
 
   try {
@@ -789,7 +788,7 @@ apiUsers.generateApiKey = async function (req, res) {
  */
 apiUsers.removeApiKey = async function (req, res) {
   const id = req.params.id
-  if (_.isUndefined(id) || _.isNull(id)) return res.status(400).json({ error: 'Invalid Request' })
+  if (id === undefined || id === null) return res.status(400).json({ error: 'Invalid Request' })
 
   if (!req.user.isAdmin && req.user._id.toString() !== id) return res.status(401).json({ success: 'Unauthorized' })
 
@@ -896,14 +895,14 @@ apiUsers.removeL2Auth = async function (req, res) {
 apiUsers.checkEmail = async function (req, res) {
   const email = req.body.email
 
-  if (_.isUndefined(email) || _.isNull(email)) {
+  if (email === undefined || email === null) {
     return res.status(400).json({ success: false, error: 'Invalid Post Data' })
   }
 
   try {
     const users = await UserSchema.getUserByEmail(email)
 
-    if (!_.isNull(users)) {
+    if (NOTNULL(users)) {
       return res.json({ success: true, exist: true })
     }
 

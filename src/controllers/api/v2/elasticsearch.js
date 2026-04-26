@@ -12,7 +12,6 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-const _ = require('lodash')
 const winston = require('../../../logger')
 const es = require('../../../elasticsearch')
 const ticketSchema = require('../../../models/ticket')
@@ -36,7 +35,7 @@ apiElasticSearch.status = async (req, res) => {
         ;(async () => {
           try {
             const data = await es.getIndexCount()
-            const indexCount = !_.isUndefined(data.count) ? data.count : 0
+            const indexCount = data.count !== undefined ? data.count : 0
 
             resolve(indexCount)
           } catch (e) {
@@ -73,7 +72,7 @@ apiElasticSearch.status = async (req, res) => {
 }
 
 apiElasticSearch.search = async function (req, res) {
-  let limit = !_.isUndefined(req.query.limit) ? req.query.limit : 100
+  let limit = req.query.limit !== undefined ? req.query.limit : 100
   try {
     limit = parseInt(limit)
   } catch (e) {
@@ -89,7 +88,7 @@ apiElasticSearch.search = async function (req, res) {
       grps = await groupSchema.getAllGroupsOfUserNoPopulate(req.user._id)
     }
 
-    const g = _.map(grps, function (i) {
+    const g = grps.map(function (i) {
       return i._id
     })
 
@@ -101,9 +100,9 @@ apiElasticSearch.search = async function (req, res) {
       const results = await ticketSchema.getTicketsWithSearchString(g, searchQuery)
       return res.json({
         success: true,
-        count: _.size(results),
-        totalCount: _.size(results),
-        tickets: _.sortBy(results, 'uid').reverse()
+        count: results.length,
+        totalCount: results.length,
+        tickets: [...results].sort((a, b) => b.uid - a.uid)
       })
     }
 

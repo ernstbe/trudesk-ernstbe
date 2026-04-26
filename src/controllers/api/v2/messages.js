@@ -12,7 +12,6 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-const _ = require('lodash')
 const apiUtils = require('../apiUtils')
 const Conversation = require('../../../models/chat/conversation')
 const Message = require('../../../models/chat/message')
@@ -27,9 +26,9 @@ apiMessages.getConversations = async (req, res) => {
       const convoObject = convo.toObject()
 
       const userMeta =
-        convo.userMeta[_.findIndex(convo.userMeta, item => item.userId.toString() === req.user._id.toString())]
+        convo.userMeta[convo.userMeta.findIndex(item => item.userId.toString() === req.user._id.toString())]
 
-      if (!_.isUndefined(userMeta) && !_.isUndefined(userMeta.deletedAt) && userMeta.deletedAt > convo.updatedAt) { continue }
+      if (userMeta !== undefined && userMeta.deletedAt !== undefined && userMeta.deletedAt > convo.updatedAt) { continue }
 
       let recentMessage = await Message.getMostRecentMessage(convoObject._id)
 
@@ -41,9 +40,9 @@ apiMessages.getConversations = async (req, res) => {
         delete participant.role
       }
 
-      recentMessage = _.first(recentMessage)
+      recentMessage = recentMessage[0]
 
-      if (!_.isUndefined(recentMessage)) {
+      if (recentMessage !== undefined) {
         if (convoObject.partner._id.toString() === recentMessage.owner._id.toString()) {
           convoObject.recentMessage = `${convoObject.partner.fullname}: ${recentMessage.body}`
         } else {
@@ -97,7 +96,7 @@ apiMessages.single = async (req, res) => {
 
     conversation.requestingUserMeta =
       conversation.userMeta[
-        _.findIndex(conversation.userMeta, item => item.userId.toString() === req.user._id.toString())
+        conversation.userMeta.findIndex(item => item.userId.toString() === req.user._id.toString())
       ]
 
     conversation.messages = convoMessages.reverse()

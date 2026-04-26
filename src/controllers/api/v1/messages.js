@@ -12,7 +12,6 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-const _ = require('lodash')
 const winston = require('../../../logger')
 const ConversationSchema = require('../../../models/chat/conversation')
 const MessageSchema = require('../../../models/chat/message')
@@ -58,7 +57,7 @@ apiMessages.getRecentConversations = async function (req, res) {
 
     const result = []
     for (const item of conversations) {
-      const idx = _.findIndex(item.userMeta, function (mItem) {
+      const idx = item.userMeta.findIndex(function (mItem) {
         return mItem.userId.toString() === req.user._id.toString()
       })
       if (idx === -1) {
@@ -68,16 +67,16 @@ apiMessages.getRecentConversations = async function (req, res) {
       const m = await MessageSchema.getMostRecentMessage(item._id)
       const r = item.toObject()
 
-      if (_.first(m) === undefined) {
+      if (m[0] === undefined) {
         continue
       }
 
-      if (item.userMeta[idx].deletedAt && item.userMeta[idx].deletedAt > _.first(m).createdAt) {
+      if (item.userMeta[idx].deletedAt && item.userMeta[idx].deletedAt > m[0].createdAt) {
         continue
       }
 
-      r.recentMessage = _.first(m)
-      if (!_.isUndefined(r.recentMessage)) {
+      r.recentMessage = m[0]
+      if (r.recentMessage !== undefined) {
         r.recentMessage.__v = undefined
         result.push(r)
       }
@@ -121,9 +120,9 @@ apiMessages.startConversation = async function (req, res) {
     const convo = await ConversationSchema.getConversations(participants)
 
     if (convo.length > 0) {
-      const conversation = _.first(convo)
+      const conversation = convo[0]
       const userMeta =
-        conversation.userMeta[_.findIndex(conversation.userMeta, i => i.userId.toString() === requester.toString())]
+        conversation.userMeta[conversation.userMeta.findIndex(i => i.userId.toString() === requester.toString())]
       if (userMeta) {
         userMeta.updatedAt = Date.now()
         const updatedConvo = await conversation.save()
@@ -133,7 +132,7 @@ apiMessages.startConversation = async function (req, res) {
 
     if (convo.length < 1) {
       const userMeta = []
-      _.each(participants, function (item) {
+      participants.forEach(function (item) {
         const meta = {
           userId: item,
           joinedAt: new Date()
@@ -169,8 +168,8 @@ apiMessages.send = async function (req, res) {
     let message = payload.body
     const matches = message.match(/^[Tt]#[0-9]*$/g)
 
-    if (!_.isNull(matches) && matches.length > 0) {
-      _.each(matches, function (m) {
+    if (matches !== null && matches.length > 0) {
+      matches.forEach(function (m) {
         message = message.replace(
           m,
           '<a href="/tickets/' +
@@ -210,7 +209,7 @@ apiMessages.getMessagesForConversation = async function (req, res) {
   const conversation = req.params.id
   const page = req.query.page === undefined ? 0 : req.query.page
   const limit = req.query.limit === undefined ? 10 : req.query.limit
-  if (_.isUndefined(conversation) || _.isNull(conversation)) {
+  if (conversation === undefined || conversation === null) {
     return res.status(400).json({ success: false, error: 'Invalid Conversation' })
   }
 
@@ -240,14 +239,14 @@ apiMessages.getMessagesForConversation = async function (req, res) {
 apiMessages.deleteConversation = async function (req, res) {
   const conversation = req.params.id
 
-  if (_.isUndefined(conversation) || _.isNull(conversation)) {
+  if (conversation === undefined || conversation === null) {
     return res.status(400).json({ success: false, error: 'Invalid Conversation' })
   }
 
   try {
     const convo = await ConversationSchema.getConversation(conversation)
     const user = req.user
-    const idx = _.findIndex(convo.userMeta, function (item) {
+    const idx = convo.userMeta.findIndex(function (item) {
       return item.userId.toString() === user._id.toString()
     })
     if (idx === -1) {

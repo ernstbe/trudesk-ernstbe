@@ -12,7 +12,6 @@
 
  **/
 
-const _ = require('lodash')
 const emitter = require('../../../emitter')
 const winston = require('winston')
 const sanitizeHtml = require('sanitize-html')
@@ -106,16 +105,16 @@ apiSettings.getSingleSetting = async function (req, res) {
  */
 apiSettings.updateSetting = async function (req, res) {
   let postData = req.body
-  if (_.isUndefined(postData)) return res.status(400).json({ success: false, error: 'Invalid Post Data' })
+  if (postData === undefined) return res.status(400).json({ success: false, error: 'Invalid Post Data' })
 
-  if (!_.isArray(postData)) postData = [postData]
+  if (!Array.isArray(postData)) postData = [postData]
 
   try {
     const updatedSettings = []
 
     for (const item of postData) {
       let s = await SettingsSchema.getSettingByName(item.name)
-      if (_.isNull(s) || _.isUndefined(s)) {
+      if (s === null || s === undefined) {
         s = new SettingsSchema({
           name: item.name
         })

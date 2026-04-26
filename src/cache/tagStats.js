@@ -12,7 +12,6 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-const _ = require('lodash')
 const dayjs = require('../helpers/dayjs')
 
 const ticketSchema = require('../models/ticket')
@@ -20,7 +19,7 @@ const ticketSchema = require('../models/ticket')
 const init = async function (tickets, timespan, callback) {
   let tags = []
   let $tickets = []
-  if (_.isUndefined(timespan) || _.isNaN(timespan) || timespan === 0) timespan = 365
+  if (timespan === undefined || Number.isNaN(timespan) || timespan === 0) timespan = 365
 
   let today = dayjs()
     .hour(23)
@@ -42,34 +41,30 @@ const init = async function (tickets, timespan, callback) {
 
     let t = []
 
-    $tickets = _.filter($tickets, function (v) {
+    $tickets = $tickets.filter(function (v) {
       return v.date < today && v.date > tsDate
     })
 
     for (let i = 0; i < $tickets.length; i++) {
-      _.each(tickets[i].tags, function (tag) {
+      tickets[i].tags.forEach(function (tag) {
         t.push(tag.name)
       })
     }
 
-    tags = _.reduce(
-      t,
+    const initCounts = {}
+    t.forEach(function (key) { initCounts[key] = 0 })
+    tags = t.reduce(
       function (counts, key) {
         counts[key]++
         return counts
       },
-      _.fromPairs(
-        _.map(t, function (key) {
-          return [key, 0]
-        })
-      )
+      initCounts
     )
 
-    tags = _.fromPairs(
-      _.sortBy(_.toPairs(tags), function (a) {
-        return a[1]
-      }).reverse()
-    )
+    const sortedPairs = Object.entries(tags).sort(function (a, b) {
+      return b[1] - a[1]
+    })
+    tags = Object.fromEntries(sortedPairs)
 
     t = null
     $tickets = null // clear it

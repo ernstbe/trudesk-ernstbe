@@ -13,7 +13,6 @@
  */
 
 const mongoose = require('mongoose')
-const _ = require('lodash')
 
 const COLLECTION = 'conversations'
 
@@ -57,7 +56,7 @@ conversationSchema.methods.isGroup = function () {
 }
 
 conversationSchema.statics.getConversations = async function (userId) {
-  if (!_.isArray(userId)) userId = [userId]
+  if (!Array.isArray(userId)) userId = [userId]
   return this.model(COLLECTION)
     .find({ participants: { $size: 2, $all: userId } })
     .sort('-updatedAt')

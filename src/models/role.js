@@ -14,7 +14,6 @@
 
 const mongoose = require('mongoose')
 const mongooseLeanVirtuals = require('mongoose-lean-virtuals')
-const _ = require('lodash')
 const utils = require('../helpers/utils')
 
 const COLLECTION = 'roles'
@@ -34,19 +33,19 @@ const roleSchema = mongoose.Schema(
 )
 
 roleSchema.virtual('isAdmin').get(function () {
-  if (_.isUndefined(global.roles)) return false
-  const role = _.find(global.roles, { normalized: this.normalized })
+  if (global.roles === undefined) return false
+  const role = global.roles.find(r => r.normalized === this.normalized)
   if (!role) return false
 
-  return _.indexOf(role.grants, 'admin:*') !== -1
+  return role.grants.indexOf('admin:*') !== -1
 })
 
 roleSchema.virtual('isAgent').get(function () {
-  if (_.isUndefined(global.roles)) return false
-  const role = _.find(global.roles, { normalized: this.normalized })
+  if (global.roles === undefined) return false
+  const role = global.roles.find(r => r.normalized === this.normalized)
   if (!role) return false
 
-  return _.indexOf(role.grants, 'agent:*') !== -1
+  return role.grants.indexOf('agent:*') !== -1
 })
 
 roleSchema.plugin(mongooseLeanVirtuals)
@@ -95,8 +94,8 @@ roleSchema.statics.getRoleByName = async function (name) {
 roleSchema.statics.getAgentRoles = async function () {
   const roles = await this.model(COLLECTION).find({}).exec()
 
-  const rolesWithAgent = _.filter(roles, function (role) {
-    return _.indexOf(role.grants, 'agent:*') !== -1
+  const rolesWithAgent = roles.filter(function (role) {
+    return role.grants.indexOf('agent:*') !== -1
   })
 
   return rolesWithAgent

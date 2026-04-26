@@ -12,7 +12,6 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-const _ = require('lodash')
 const Ticket = require('../../../models/ticket')
 const StatusSchema = require('../../../models/ticketStatus')
 const GroupSchema = require('../../../models/group')
@@ -116,12 +115,16 @@ reportsApi.sitzung = async function (req, res) {
       .sort({ closedDate: -1 })
       .exec()
 
-    const openedByGroup = _.groupBy(openedTickets, function (t) {
-      return t.group ? t.group.name : 'Ohne Gruppe'
-    })
-    const closedByGroup = _.groupBy(closedTickets, function (t) {
-      return t.group ? t.group.name : 'Ohne Gruppe'
-    })
+    const openedByGroup = openedTickets.reduce((acc, t) => {
+      const k = t.group ? t.group.name : 'Ohne Gruppe'
+      ;(acc[k] = acc[k] || []).push(t)
+      return acc
+    }, {})
+    const closedByGroup = closedTickets.reduce((acc, t) => {
+      const k = t.group ? t.group.name : 'Ohne Gruppe'
+      ;(acc[k] = acc[k] || []).push(t)
+      return acc
+    }, {})
 
     function ticketToSummary (t) {
       return {

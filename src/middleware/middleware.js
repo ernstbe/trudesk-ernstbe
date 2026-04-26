@@ -14,7 +14,6 @@
 
 'use strict'
 
-const _ = require('lodash')
 const db = require('../database')
 const mongoose = require('mongoose')
 const winston = require('../logger')
@@ -56,7 +55,7 @@ middleware.redirectToDashboardIfLoggedIn = function (req, res, next) {
 
 middleware.redirectToLogin = function (req, res, next) {
   if (!req.user) {
-    if (!_.isUndefined(req.session)) {
+    if (req.session !== undefined) {
       req.session.redirectUrl = req.url
     }
 
@@ -83,7 +82,7 @@ middleware.redirectToLogin = function (req, res, next) {
 
 middleware.redirectIfUser = function (req, res, next) {
   if (!req.user) {
-    if (!_.isUndefined(req.session)) {
+    if (req.session !== undefined) {
       res.session.redirectUrl = req.url
     }
 
@@ -194,9 +193,9 @@ middleware.api = async function (req, res, next) {
 
   const userSchema = require('../models/user')
 
-  if (_.isUndefined(accessToken) || _.isNull(accessToken)) {
+  if (accessToken === undefined || accessToken === null) {
     const user = req.user
-    if (_.isUndefined(user) || _.isNull(user)) return res.status(401).json({ error: 'Invalid Access Token' })
+    if (user === undefined || user === null) return res.status(401).json({ error: 'Invalid Access Token' })
 
     return next()
   }
@@ -244,7 +243,7 @@ middleware.canUser = function (action) {
 
 middleware.isAdmin = function (req, res, next) {
   const roles = global.roles
-  const role = _.find(roles, { _id: req.user.role._id })
+  const role = roles.find(r => r._id.toString() === req.user.role._id.toString())
   role.isAdmin = role.grants.indexOf('admin:*') !== -1
 
   if (role.isAdmin) return next()
@@ -253,7 +252,7 @@ middleware.isAdmin = function (req, res, next) {
 }
 
 middleware.isAgentOrAdmin = function (req, res, next) {
-  const role = _.find(global.roles, { _id: req.user.role._id })
+  const role = global.roles.find(r => r._id.toString() === req.user.role._id.toString())
   role.isAdmin = role.grants.indexOf('admin:*') !== -1
   role.isAgent = role.grants.indexOf('agent:*') !== -1
 
@@ -263,7 +262,7 @@ middleware.isAgentOrAdmin = function (req, res, next) {
 }
 
 middleware.isAgent = function (req, res, next) {
-  const role = _.find(global.roles, { _id: req.user.role._id })
+  const role = global.roles.find(r => r._id.toString() === req.user.role._id.toString())
   role.isAgent = role.grants.indexOf('agent:*') !== -1
 
   if (role.isAgent) return next()

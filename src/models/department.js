@@ -12,7 +12,6 @@
 
  **/
 
-const _ = require('lodash')
 const mongoose = require('mongoose')
 const utils = require('../helpers/utils')
 
@@ -54,8 +53,8 @@ departmentSchema.statics.getDepartmentGroupsOfUser = async function (userId) {
   const teams = await Teams.getTeamsOfUser(userId)
   const departments = await this.model(COLLECTION).find({ teams: { $in: teams } })
 
-  const hasAllGroups = _.some(departments, { allGroups: true })
-  const hasPublicGroups = _.some(departments, { publicGroups: true })
+  const hasAllGroups = departments.some(d => d.allGroups === true)
+  const hasPublicGroups = departments.some(d => d.publicGroups === true)
   if (hasAllGroups) {
     return Groups.getAllGroups()
   } else if (hasPublicGroups) {
@@ -64,19 +63,21 @@ departmentSchema.statics.getDepartmentGroupsOfUser = async function (userId) {
       return department.groups
     })
 
-    let merged = _.concat(publicGroups, mapped)
-    merged = _.flattenDeep(merged)
-    merged = _.uniqBy(merged, i => {
-      return i._id
+    let merged = [].concat(publicGroups, mapped)
+    merged = merged.flat(Infinity)
+    const seenIds = new Set()
+    merged = merged.filter(i => {
+      const id = i._id.toString()
+      if (seenIds.has(id)) return false
+      seenIds.add(id)
+      return true
     })
 
     return merged
   } else {
-    const groups = _.flattenDeep(
-      departments.map(function (department) {
+    const groups = departments.map(function (department) {
         return department.groups
-      })
-    )
+      }).flat(Infinity)
 
     return groups
   }

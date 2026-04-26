@@ -12,7 +12,6 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-const _ = require('lodash')
 const dayjs = require('../../../helpers/dayjs')
 const winston = require('../../../logger')
 const permissions = require('../../../permissions')
@@ -33,12 +32,12 @@ function buildGraphData (arr, days, callback) {
     timespanArray.push(i)
   }
 
-  _.each(timespanArray, function (day) {
+  timespanArray.forEach(function (day) {
     const obj = {}
     const d = today.clone().subtract(day, 'd')
     obj.date = d.format('YYYY-MM-DD')
 
-    let $dateCount = _.filter(arr, function (v) {
+    let $dateCount = arr.filter(function (v) {
       return (
         v.date <= d.toDate() &&
         v.date >=
@@ -49,12 +48,12 @@ function buildGraphData (arr, days, callback) {
       )
     })
 
-    $dateCount = _.size($dateCount)
+    $dateCount = $dateCount.length
     obj.value = $dateCount
     graphData.push(obj)
   })
 
-  if (_.isFunction(callback)) {
+  if (typeof callback === 'function') {
     return callback(graphData)
   }
 
@@ -64,8 +63,8 @@ function buildGraphData (arr, days, callback) {
 function buildAvgResponse (ticketArray, callback) {
   const cbObj = {}
   const $ticketAvg = []
-  _.each(ticketArray, function (ticket) {
-    if (_.isUndefined(ticket.comments) || _.size(ticket.comments) < 1) return
+  ticketArray.forEach(function (ticket) {
+    if (ticket.comments === undefined || ticket.comments.length < 1) return
 
     const ticketDate = dayjs(ticket.date)
     const firstCommentDate = dayjs(ticket.comments[0].date)
@@ -74,14 +73,14 @@ function buildAvgResponse (ticketArray, callback) {
     $ticketAvg.push(diff)
   })
 
-  const ticketAvgTotal = _($ticketAvg).reduce(function (m, x) {
+  const ticketAvgTotal = $ticketAvg.reduce(function (m, x) {
     return m + x
   }, 0)
 
-  const tvt = dayjs.duration(Math.round(ticketAvgTotal / _.size($ticketAvg)), 'seconds').asHours()
+  const tvt = dayjs.duration(Math.round(ticketAvgTotal / $ticketAvg.length), 'seconds').asHours()
   cbObj.avgResponse = Math.floor(tvt)
 
-  if (_.isFunction(callback)) {
+  if (typeof callback === 'function') {
     return callback(cbObj)
   }
 
@@ -172,30 +171,30 @@ apiTickets.get = async function (req, res) {
     const results = await ticketModel.getTicketsWithObject(grps, object)
 
     if (!permissions.canThis(user.role, 'comments:view')) {
-      _.each(results, function (ticket) {
+      results.forEach(function (ticket) {
         ticket.comments = []
       })
     }
 
     if (!permissions.canThis(user.role, 'tickets:notes')) {
-      _.each(results, function (ticket) {
+      results.forEach(function (ticket) {
         ticket.notes = []
       })
     }
 
     // sanitize
-    _.each(results, function (ticket) {
-      ticket.subscribers = _.map(ticket.subscribers, function (s) {
+    results.forEach(function (ticket) {
+      ticket.subscribers = ticket.subscribers.map(function (s) {
         return s._id
       })
 
-      ticket.history = _.map(ticket.history, function (h) {
+      ticket.history = ticket.history.map(function (h) {
         const obj = {
           date: h.date,
           _id: h._id,
           action: h.action,
           description: h.description,
-          owner: _.clone(h.owner)
+          owner: { ...h.owner }
         }
         obj.owner.role = h.owner.role._id
         return obj
@@ -234,7 +233,7 @@ apiTickets.getByGroup = async function (req, res) {
 apiTickets.getCountByGroup = async function (req, res) {
   const groupId = req.params.id
   if (!groupId) return res.status(400).json({ success: false, error: 'Invalid Group Id' })
-  if (_.isUndefined(req.query.type) || _.isUndefined(req.query.value)) { return res.status(400).json({ success: false, error: 'Invalid QueryString' }) }
+  if (req.query.type === undefined || req.query.value === undefined) { return res.status(400).json({ success: false, error: 'Invalid QueryString' }) }
 
   const type = req.query.type
   const value = req.query.value
@@ -308,7 +307,7 @@ apiTickets.search = async function (req, res) {
     const results = await ticketModel.getTicketsWithSearchString(grps, searchString)
 
     if (!permissions.canThis(req.user.role.role, 'tickets:notes')) {
-      _.each(results, function (ticket) {
+      results.forEach(function (ticket) {
         ticket.notes = []
       })
     }
@@ -316,9 +315,9 @@ apiTickets.search = async function (req, res) {
     return res.json({
       success: true,
       error: null,
-      count: _.size(results),
-      totalCount: _.size(results),
-      tickets: _.sortBy(results, 'uid').reverse()
+      count: results.length,
+      totalCount: results.length,
+      tickets: [...results].sort((a, b) => a.uid - b.uid).reverse()
     })
   } catch (err) {
     return res.status(400).json({ success: false, error: 'Error - ' + err.message })
@@ -368,13 +367,13 @@ apiTickets.create = async function (req, res) {
   response.success = true
 
   const postData = req.body
-  if (!_.isObject(postData) || !postData.subject || !postData.issue) { return res.status(400).json({ success: false, error: 'Invalid Post Data' }) }
+  if (!(typeof postData === 'object' && postData !== null) || !postData.subject || !postData.issue) { return res.status(400).json({ success: false, error: 'Invalid Post Data' }) }
 
-  const socketId = _.isUndefined(postData.socketId) ? '' : postData.socketId
+  const socketId = postData.socketId === undefined ? '' : postData.socketId
 
-  if (_.isUndefined(postData.tags) || _.isNull(postData.tags)) {
+  if (postData.tags === undefined || postData.tags === null) {
     postData.tags = []
-  } else if (!_.isArray(postData.tags)) {
+  } else if (!Array.isArray(postData.tags)) {
     postData.tags = [postData.tags]
   }
 
@@ -402,7 +401,7 @@ apiTickets.create = async function (req, res) {
 
     ticket.status = status._id
 
-    if (!_.isUndefined(postData.owner)) {
+    if (postData.owner !== undefined) {
       ticket.owner = postData.owner
     } else {
       ticket.owner = req.user._id
@@ -476,7 +475,7 @@ apiTickets.createPublicTicket = async function (req, res) {
   const response = {}
   response.success = true
   const postData = req.body
-  if (!_.isObject(postData)) {
+  if (!(typeof postData === 'object' && postData !== null)) {
     return res.status(400).json({ success: false, error: 'Invalid Post Data' })
   }
   let plainTextPass
@@ -555,7 +554,7 @@ apiTickets.createPublicTicket = async function (req, res) {
       group: savedGroup._id,
       type: ticketType._id,
       status: ticketStatus._id,
-      priority: _.first(ticketType.priorities)._id,
+      priority: ticketType.priorities[0]._id,
       subject: xss(sanitizeHtml(postData.ticket.subject).trim()),
       issue: xss(sanitizeHtml(postData.ticket.issue).trim()),
       history: [HistoryItem],
@@ -615,17 +614,17 @@ apiTickets.createPublicTicket = async function (req, res) {
  */
 apiTickets.single = async function (req, res) {
   const uid = req.params.uid
-  if (_.isUndefined(uid)) return res.status(200).json({ success: false, error: 'Invalid Ticket' })
+  if (uid === undefined) return res.status(200).json({ success: false, error: 'Invalid Ticket' })
 
   try {
     const ticketModel = require('../../../models/ticket')
     let ticket = await ticketModel.getTicketByUid(uid)
 
-    if (_.isUndefined(ticket) || _.isNull(ticket)) {
+    if (ticket === undefined || ticket === null) {
       return res.status(200).json({ success: false, error: 'Invalid Ticket' })
     }
 
-    ticket = _.clone(ticket._doc)
+    ticket = { ...ticket._doc }
     if (!permissions.canThis(req.user.role, 'tickets:notes')) {
       delete ticket.notes
     }
@@ -663,51 +662,51 @@ apiTickets.single = async function (req, res) {
  */
 apiTickets.update = async function (req, res) {
   const user = req.user
-  if (!_.isUndefined(user) && !_.isNull(user)) {
+  if (user !== undefined && user !== null) {
     const permissions = require('../../../permissions')
     if (!permissions.canThis(user.role, 'tickets:update')) {
       return res.status(401).json({ success: false, error: 'Invalid Permissions' })
     }
     const oId = req.params.id
     const reqTicket = req.body
-    if (_.isUndefined(oId)) return res.status(400).json({ success: false, error: 'Invalid Ticket ObjectID.' })
+    if (oId === undefined) return res.status(400).json({ success: false, error: 'Invalid Ticket ObjectID.' })
 
     try {
       const ticketModel = require('../../../models/ticket')
       const ticket = await ticketModel.getTicketById(oId)
       if (!ticket) return res.status(400).json({ success: false, error: 'Unable to locate ticket. Aborting...' })
 
-      if (!_.isUndefined(reqTicket.status)) {
+      if (reqTicket.status !== undefined) {
         ticket.status = reqTicket.status
       }
 
-      if (!_.isUndefined(reqTicket.subject)) {
+      if (reqTicket.subject !== undefined) {
         ticket.subject = sanitizeHtml(reqTicket.subject).trim()
       }
 
-      if (!_.isUndefined(reqTicket.group)) {
+      if (reqTicket.group !== undefined) {
         ticket.group = reqTicket.group._id || reqTicket.group
         await ticket.populate('group')
       }
 
-      if (!_.isUndefined(reqTicket.priority)) {
+      if (reqTicket.priority !== undefined) {
         ticket.priority = reqTicket.priority._id || reqTicket.priority
         await ticket.populate('priority')
       }
 
-      if (!_.isUndefined(reqTicket.closedDate)) {
+      if (reqTicket.closedDate !== undefined) {
         ticket.closedDate = reqTicket.closedDate
       }
 
-      if (!_.isUndefined(reqTicket.tags) && !_.isNull(reqTicket.tags)) {
+      if (reqTicket.tags !== undefined && reqTicket.tags !== null) {
         ticket.tags = reqTicket.tags
       }
 
-      if (!_.isUndefined(reqTicket.issue) && !_.isNull(reqTicket.issue)) {
+      if (reqTicket.issue !== undefined && reqTicket.issue !== null) {
         ticket.issue = sanitizeHtml(reqTicket.issue).trim()
       }
 
-      if (!_.isUndefined(reqTicket.assignee) && !_.isNull(reqTicket.assignee)) {
+      if (reqTicket.assignee !== undefined && reqTicket.assignee !== null) {
         ticket.assignee = reqTicket.assignee
         const t = await ticket.populate('assignee')
 
@@ -749,13 +748,13 @@ apiTickets.update = async function (req, res) {
  */
 apiTickets.setAssignee = async function (req, res) {
   const user = req.user
-  if (_.isUndefined(user) || _.isNull(user)) return res.status(401).json({ success: false, error: 'Invalid Access Token' })
+  if (user === undefined || user === null) return res.status(401).json({ success: false, error: 'Invalid Access Token' })
 
   const oId = req.params.id
   const assigneeId = req.body.assignee
 
-  if (_.isUndefined(oId)) return res.status(400).json({ success: false, error: 'Invalid Ticket ObjectID.' })
-  if (_.isUndefined(assigneeId) || _.isNull(assigneeId) || assigneeId === '') { return res.status(400).json({ success: false, error: 'Invalid Assignee Id' }) }
+  if (oId === undefined) return res.status(400).json({ success: false, error: 'Invalid Ticket ObjectID.' })
+  if (assigneeId === undefined || assigneeId === null || assigneeId === '') { return res.status(400).json({ success: false, error: 'Invalid Assignee Id' }) }
 
   try {
     const ticketModel = require('../../../models/ticket')
@@ -785,10 +784,10 @@ apiTickets.setAssignee = async function (req, res) {
  */
 apiTickets.clearAssignee = async function (req, res) {
   const user = req.user
-  if (_.isUndefined(user) || _.isNull(user)) return res.status(401).json({ success: false, error: 'Invalid Access Token' })
+  if (user === undefined || user === null) return res.status(401).json({ success: false, error: 'Invalid Access Token' })
 
   const oId = req.params.id
-  if (_.isUndefined(oId)) return res.status(400).json({ success: false, error: 'Invalid Ticket ObjectID.' })
+  if (oId === undefined) return res.status(400).json({ success: false, error: 'Invalid Ticket ObjectID.' })
 
   try {
     const ticketModel = require('../../../models/ticket')
@@ -833,7 +832,7 @@ apiTickets.delete = async function (req, res) {
   const oId = req.params.id
   const user = req.user
 
-  if (_.isUndefined(oId) || _.isUndefined(user)) { return res.status(400).json({ success: false, error: 'Invalid Post Data' }) }
+  if (oId === undefined || user === undefined) { return res.status(400).json({ success: false, error: 'Invalid Post Data' }) }
 
   try {
     const ticketModel = require('../../../models/ticket')
@@ -883,13 +882,13 @@ apiTickets.postComment = async function (req, res) {
   const owner = commentJson.ownerId || req.user._id
   const ticketId = commentJson._id
 
-  if (_.isUndefined(ticketId)) return res.status(400).json({ success: false, error: 'Invalid Post Data' })
+  if (ticketId === undefined) return res.status(400).json({ success: false, error: 'Invalid Post Data' })
 
   try {
     const ticketModel = require('../../../models/ticket')
     const t = await ticketModel.getTicketById(ticketId)
 
-    if (_.isUndefined(comment)) return res.status(400).json({ success: false, error: 'Invalid Post Data' })
+    if (comment === undefined) return res.status(400).json({ success: false, error: 'Invalid Post Data' })
 
     const marked = require('marked')
     marked.setOptions({
@@ -961,13 +960,13 @@ apiTickets.postComment = async function (req, res) {
  */
 apiTickets.postInternalNote = async function (req, res) {
   const payload = req.body
-  if (_.isUndefined(payload.ticketid)) return res.status(400).json({ success: false, error: 'Invalid Post Data' })
+  if (payload.ticketid === undefined) return res.status(400).json({ success: false, error: 'Invalid Post Data' })
 
   try {
     const ticketModel = require('../../../models/ticket')
     const ticket = await ticketModel.getTicketById(payload.ticketid)
 
-    if (_.isUndefined(payload.note)) return res.status(400).json({ success: false, error: 'Invalid Post Data' })
+    if (payload.note === undefined) return res.status(400).json({ success: false, error: 'Invalid Post Data' })
 
     const marked = require('marked')
     const Note = {
@@ -1061,11 +1060,11 @@ apiTickets.createType = async function (req, res) {
   const ticketTypeSchema = require('../../../models/tickettype')
   const ticketPrioritiesSchema = require('../../../models/ticketpriority')
 
-  if (_.isUndefined(typeName) || typeName.length < 3) { return res.status(400).json({ success: false, error: 'Invalid Type Name!' }) }
+  if (typeName === undefined || typeName.length < 3) { return res.status(400).json({ success: false, error: 'Invalid Type Name!' }) }
 
   try {
     let priorities = await ticketPrioritiesSchema.find({ default: true })
-    priorities = _.sortBy(priorities, 'migrationNum')
+    priorities = [...priorities].sort((a, b) => (a.migrationNum || 0) - (b.migrationNum || 0))
 
     const ticketType = await ticketTypeSchema.create({ name: typeName, priorities })
     return res.json({ success: true, tickettype: ticketType })
@@ -1096,7 +1095,7 @@ apiTickets.updateType = async function (req, res) {
 
   const ticketTypeSchema = require('../../../models/tickettype')
 
-  if (_.isUndefined(id) || _.isNull(id) || _.isNull(data) || _.isUndefined(data)) {
+  if (id === undefined || id === null || data === null || data === undefined) {
     return res.status(400).json({ success: false, error: 'Invalid Put Data' })
   }
 
@@ -1176,7 +1175,7 @@ apiTickets.deleteType = async function (req, res) {
   const newTypeId = req.body.newTypeId
   const delTypeId = req.params.id
 
-  if (_.isUndefined(newTypeId) || _.isUndefined(delTypeId)) {
+  if (newTypeId === undefined || delTypeId === undefined) {
     return res.status(400).json({ success: false, error: 'Invalid POST data.' })
   }
 
@@ -1234,7 +1233,7 @@ apiTickets.getPriorities = async function (req, res) {
   try {
     const ticketPrioritySchema = require('../../../models/ticketpriority')
     let priorities = await ticketPrioritySchema.find({})
-    priorities = _.sortBy(priorities, ['migrationNum', 'name'])
+    priorities = [...priorities].sort((a, b) => (a.migrationNum || 0) - (b.migrationNum || 0) || (a.name || '').localeCompare(b.name || ''))
     return res.json({ success: true, priorities })
   } catch (err) {
     return res.status(400).json({ success: false, error: err.message })
@@ -1246,7 +1245,7 @@ apiTickets.updatePriority = async function (req, res) {
 
   const data = req.body
 
-  if (_.isUndefined(id) || _.isNull(id) || _.isNull(data) || _.isUndefined(data)) {
+  if (id === undefined || id === null || data === null || data === undefined) {
     return res.status(400).json({ success: false, error: 'Invalid Request Data' })
   }
 
@@ -1300,7 +1299,7 @@ apiTickets.getStatus = async function (req, res) {
   try {
     const ticketStatusSchema = require('../../../models/ticketStatus')
     let status = await ticketStatusSchema.find({})
-    status = _.sortBy(status, 'order')
+    status = [...status].sort((a, b) => (a.order || 0) - (b.order || 0))
     return res.json({ success: true, status })
   } catch (err) {
     return res.status(400).json({ success: false, error: err.message })
@@ -1311,7 +1310,7 @@ apiTickets.updateStatus = async function (req, res) {
   const id = req.params.id
   const data = req.body
 
-  if (_.isUndefined(id) || _.isNull(id) || _.isNull(data) || _.isUndefined(data)) {
+  if (id === undefined || id === null || data === null || data === undefined) {
     return res.status(400).json({ success: false, error: 'Invalid Request Data' })
   }
 
@@ -1342,7 +1341,7 @@ apiTickets.updateStatusOrder = async function (req, res) {
     const statuses = await ticketStatusSchema.find({})
 
     for (const item of statuses) {
-      const idx = _.findIndex(order, id => item._id.toString() === id)
+      const idx = order.findIndex(id => item._id.toString() === id)
       item.order = idx
       await item.save()
     }
@@ -1427,7 +1426,7 @@ apiTickets.getTicketStats = async function (req, res) {
 
   const cache = global.cache
 
-  if (_.isUndefined(cache)) {
+  if (cache === undefined) {
     return res.status(400).send('Ticket stats are still loading...')
   }
 
@@ -1489,46 +1488,30 @@ apiTickets.getTicketStats = async function (req, res) {
 }
 
 function parseTicketStats (role, tickets, callback) {
-  if (_.isEmpty(tickets)) return callback({ tickets, tags: {} }) // eslint-disable-line n/no-callback-literal
+  if (tickets.length === 0) return callback({ tickets, tags: {} }) // eslint-disable-line n/no-callback-literal
   let t = []
   let tags = {}
   if (!permissions.canThis(role, 'tickets:notes')) {
-    _.each(tickets, function (ticket) {
+    tickets.forEach(function (ticket) {
       ticket.notes = []
     })
   }
 
-  _.each(tickets, function (ticket) {
-    _.each(ticket.tags, function (tag) {
+  tickets.forEach(function (ticket) {
+    ticket.tags.forEach(function (tag) {
       t.push(tag.name)
     })
 
-    t = _.take(t, 10)
+    t = t.slice(0, 10)
   })
 
-  _.mixin({
-    sortKeysBy: function (obj, comparator) {
-      const keys = _.sortBy(_.keys(obj), function (key) {
-        return comparator ? comparator(obj[key], key) : key
-      })
-
-      return _.zipObject(
-        keys,
-        _.map(keys, function (key) {
-          return obj[key]
-        })
-      )
-    }
-  })
-
-  tags = _.countBy(t, function (k) {
-    return k
-  })
-  tags = _(tags)
-    .toPairs()
-    .sortBy(0)
-    .fromPairs()
-    .value()
+  tags = t.reduce(function (acc, k) {
+    acc[k] = (acc[k] || 0) + 1
+    return acc
+  }, {})
+  tags = Object.fromEntries(
+    Object.entries(tags).sort(([a], [b]) => a.localeCompare(b))
+  )
 
   return callback({ tickets, tags }) // eslint-disable-line n/no-callback-literal
 }
@@ -1550,7 +1533,7 @@ function parseTicketStats (role, tickets, callback) {
 apiTickets.getTicketStatsForGroup = async function (req, res) {
   const groupId = req.params.group
   if (groupId === 0) return res.status(200).json({ success: false, error: 'Please Select Group.' })
-  if (_.isUndefined(groupId)) return res.status(400).json({ success: false, error: 'Invalid Group Id.' })
+  if (groupId === undefined) return res.status(400).json({ success: false, error: 'Invalid Group Id.' })
 
   try {
     const ticketModel = require('../../../models/ticket')
@@ -1564,33 +1547,33 @@ apiTickets.getTicketStatsForGroup = async function (req, res) {
       tags = d.tags
     })
 
-    if (_.isEmpty(tickets)) throw new Error('Group has no tickets to report.')
+    if (tickets.length === 0) throw new Error('Group has no tickets to report.')
 
     const today = dayjs()
       .hour(23)
       .minute(59)
       .second(59)
     const r = {}
-    r.ticketCount = _.size(tickets)
-    tickets = _.sortBy(tickets, 'date')
-    r.recentTickets = _.takeRight(tickets, 5)
-    r.closedTickets = _.filter(tickets, function (v) {
+    r.ticketCount = tickets.length
+    tickets = [...tickets].sort((a, b) => new Date(a.date) - new Date(b.date))
+    r.recentTickets = tickets.slice(-5)
+    r.closedTickets = tickets.filter(function (v) {
       return v.status === 3
     })
 
-    const firstDate = dayjs(_.first(tickets).date).subtract(30, 'd')
+    const firstDate = dayjs(tickets[0].date).subtract(30, 'd')
     const diffDays = today.diff(firstDate, 'days')
 
     r.graphData = buildGraphData(tickets, diffDays)
 
     const avgObj = buildAvgResponse(tickets)
-    if (!_.isUndefined(avgObj)) {
+    if (avgObj !== undefined) {
       r.avgResponse = avgObj.avgResponse
     }
 
     data.ticketCount = r.ticketCount
     data.recentTickets = r.recentTickets
-    data.closedCount = _.size(r.closedTickets)
+    data.closedCount = r.closedTickets.length
     data.graphData = r.graphData
     data.avgResponse = r.avgResponse
     data.tags = tags
@@ -1618,7 +1601,7 @@ apiTickets.getTicketStatsForGroup = async function (req, res) {
 apiTickets.getTicketStatsForUser = async function (req, res) {
   const userId = req.params.user
   if (userId === 0) return res.status(200).json({ success: false, error: 'Please Select User.' })
-  if (_.isUndefined(userId)) return res.status(400).json({ success: false, error: 'Invalid User Id.' })
+  if (userId === undefined) return res.status(400).json({ success: false, error: 'Invalid User Id.' })
 
   try {
     const ticketModel = require('../../../models/ticket')
@@ -1631,33 +1614,33 @@ apiTickets.getTicketStatsForUser = async function (req, res) {
       tags = d.tags
     })
 
-    if (_.isEmpty(tickets)) throw new Error('User has no tickets to report.')
+    if (tickets.length === 0) throw new Error('User has no tickets to report.')
 
     const today = dayjs()
       .hour(23)
       .minute(59)
       .second(59)
     const r = {}
-    r.ticketCount = _.size(tickets)
-    tickets = _.sortBy(tickets, 'date')
-    r.recentTickets = _.takeRight(tickets, 5)
-    r.closedTickets = _.filter(tickets, function (v) {
+    r.ticketCount = tickets.length
+    tickets = [...tickets].sort((a, b) => new Date(a.date) - new Date(b.date))
+    r.recentTickets = tickets.slice(-5)
+    r.closedTickets = tickets.filter(function (v) {
       return v.status === 3
     })
 
-    const firstDate = dayjs(_.first(tickets).date).subtract(30, 'd')
+    const firstDate = dayjs(tickets[0].date).subtract(30, 'd')
     const diffDays = today.diff(firstDate, 'days')
 
     r.graphData = buildGraphData(tickets, diffDays)
 
     const avgObj = buildAvgResponse(tickets)
-    if (!_.isUndefined(avgObj)) {
+    if (avgObj !== undefined) {
       r.avgResponse = avgObj.avgResponse
     }
 
     data.ticketCount = r.ticketCount
     data.recentTickets = r.recentTickets
-    data.closedCount = _.size(r.closedTickets)
+    data.closedCount = r.closedTickets.length
     data.graphData = r.graphData
     data.avgResponse = r.avgResponse
     data.tags = tags
@@ -1685,9 +1668,9 @@ apiTickets.getTicketStatsForUser = async function (req, res) {
 apiTickets.getTagCount = function (req, res) {
   const cache = global.cache
   let timespan = req.params.timespan
-  if (_.isUndefined(timespan) || _.isNaN(timespan)) timespan = 0
+  if (timespan === undefined || Number.isNaN(timespan)) timespan = 0
 
-  if (_.isUndefined(cache)) {
+  if (cache === undefined) {
     return res.status(400).send('Tag stats are still loading...')
   }
 
@@ -1749,11 +1732,11 @@ apiTickets.getTopTicketGroups = async function (req, res) {
 apiTickets.removeAttachment = async function (req, res) {
   const ticketId = req.params.tid
   const attachmentId = req.params.aid
-  if (_.isUndefined(ticketId) || _.isUndefined(attachmentId)) { return res.status(400).json({ error: 'Invalid Attachment' }) }
+  if (ticketId === undefined || attachmentId === undefined) { return res.status(400).json({ error: 'Invalid Attachment' }) }
 
   // Check user perm
   const user = req.user
-  if (_.isUndefined(user)) return res.status(400).json({ error: 'Invalid User Auth.' })
+  if (user === undefined) return res.status(400).json({ error: 'Invalid User Auth.' })
 
   const permissions = require('../../../permissions')
   if (!permissions.canThis(user.role, 'tickets:removeAttachment')) { return res.status(401).json({ error: 'Invalid Permissions' }) }
@@ -1801,7 +1784,7 @@ apiTickets.removeAttachment = async function (req, res) {
 apiTickets.subscribe = async function (req, res) {
   const ticketId = req.params.id
   const data = req.body
-  if (_.isUndefined(data.user) || _.isUndefined(data.subscribe)) { return res.status(400).json({ error: 'Invalid Post Data.' }) }
+  if (data.user === undefined || data.subscribe === undefined) { return res.status(400).json({ error: 'Invalid Post Data.' }) }
 
   if (data.user.toString() !== req.user._id.toString()) return res.status(401).json({ error: 'Unauthorized!' })
 
@@ -1847,7 +1830,7 @@ apiTickets.getTags = async function (req, res) {
     const tagSchema = require('../../../models/tag')
     const tags = await tagSchema.getTags()
 
-    _.each(tags, function (item) {
+    tags.forEach(function (item) {
       item.__v = undefined
     })
 
@@ -1899,7 +1882,7 @@ apiTickets.getOverdue = async function (req, res) {
     })
 
     const tickets = await ticketSchema.getOverdue(groupIds)
-    const sorted = _.sortBy(tickets, 'uid').reverse()
+    const sorted = [...tickets].sort((a, b) => a.uid - b.uid).reverse()
 
     return res.json({ success: true, tickets: sorted })
   } catch (err) {

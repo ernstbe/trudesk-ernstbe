@@ -12,7 +12,6 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-const _ = require('lodash')
 const permissions = require('../permissions')
 const settingsUtil = require('../settings/settingsUtil')
 
@@ -35,7 +34,7 @@ function initViewContent (view, req) {
 
 function checkPerms (req, role) {
   const user = req.user
-  if (_.isUndefined(user) || !permissions.canThis(user.role, role)) {
+  if (user === undefined || !permissions.canThis(user.role, role)) {
     req.flash('message', 'Permission Denied.')
 
     return false

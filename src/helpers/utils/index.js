@@ -12,7 +12,6 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-const _ = require('lodash')
 const xss = require('xss')
 const fs = require('fs')
 const winston = require('../../logger')
@@ -57,7 +56,7 @@ module.exports.sendToSelf = function (socket, method, data) {
 }
 
 module.exports._sendToSelf = function (io, socketId, method, data) {
-  _.each(io.sockets.sockets, function (socket) {
+  io.sockets.sockets.forEach(function (socket) {
     if (socket.id === socketId) {
       socket.emit(method, data)
     }
@@ -74,25 +73,25 @@ module.exports.sendToAllClientsInRoom = function (io, room, method, data) {
 
 module.exports.sendToUser = function (socketList, userList, username, method, data) {
   let userOnline = null
-  _.forEach(userList, function (v, k) {
+  Object.keys(userList).forEach(function (k) {
+    const v = userList[k]
     if (k.toLowerCase() === username.toLowerCase()) {
       userOnline = v
-      return true
     }
   })
 
-  if (_.isNull(userOnline)) return true
+  if (userOnline === null) return true
 
-  _.forEach(userOnline.sockets, function (socket) {
-    const o = _.findKey(socketList, { id: socket })
+  userOnline.sockets.forEach(function (socket) {
+    const o = Object.keys(socketList).find(k => socketList[k] && socketList[k].id === socket)
     const i = socketList[o]
-    if (_.isUndefined(i)) return true
+    if (i === undefined) return true
     i.emit(method, data)
   })
 }
 
 module.exports.sendToAllExcept = function (io, exceptSocketId, method, data) {
-  _.each(io.sockets.sockets, function (socket) {
+  io.sockets.sockets.forEach(function (socket) {
     if (socket.id !== exceptSocketId) {
       socket.emit(method, data)
     }

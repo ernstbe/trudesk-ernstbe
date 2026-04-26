@@ -12,7 +12,6 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-const _ = require('lodash')
 const path = require('path')
 const winston = require('../logger')
 
@@ -315,7 +314,7 @@ debugController.populatedatabase = async function (req, res) {
   try {
     // Step 1: Create users
     const roles = global.roles
-    const userRole = _.find(roles, { normalized: 'user' })
+    const userRole = roles.find(r => r.normalized === 'user')
 
     users = []
     for (let i = 0; i < 11; i++) {
@@ -349,14 +348,14 @@ debugController.populatedatabase = async function (req, res) {
     const groups = []
     for (let i = 0; i < 11; i++) {
       let name = chance.company()
-      while (_.find(groups, { name })) {
+      while (groups.find(g => g.name === name)) {
         name = chance.company()
       }
 
       const group = {
         name,
         __v: 0,
-        members: _.map(users, function (o) {
+        members: users.map(function (o) {
           return o._id
         })
       }
@@ -371,8 +370,8 @@ debugController.populatedatabase = async function (req, res) {
     const usedTags = []
     const savedTags = []
     for (let i = 0; i < 1001; i++) {
-      const tag = _.sample(sampleTags)
-      if (_.includes(usedTags, tag)) {
+      const tag = sampleTags[Math.floor(Math.random() * sampleTags.length)]
+      if (usedTags.includes(tag)) {
         continue
       }
 
@@ -402,7 +401,7 @@ debugController.populatedatabase = async function (req, res) {
       const ticketTags = []
       for (let k = 0; k < tagCount; k++) {
         const t = tags[Math.floor(Math.random() * tags.length)]
-        if (!_.includes(ticketTags, t._id)) {
+        if (!ticketTags.includes(t._id)) {
           ticketTags.push(t._id)
         }
       }
@@ -417,7 +416,7 @@ debugController.populatedatabase = async function (req, res) {
         tags: ticketTags,
         status: Math.floor(Math.random() * 4),
         priority: randomPriority._id,
-        subject: _.sample(subjects),
+        subject: subjects[Math.floor(Math.random() * subjects.length)],
         issue: loremIpsum({ count: 3, units: 'paragraph' }),
         deleted: false
       }
@@ -554,7 +553,7 @@ debugController.uploadPlugin = function (req, res) {
   busboy.on('finish', function () {
     if (error) return res.status(error.status || 500).send(error.message)
 
-    if (_.isUndefined(object.plugin) || _.isUndefined(object.filePath)) {
+    if (object.plugin === undefined || object.filePath === undefined) {
       return res.status(500).send('Invalid Form Data')
     }
 

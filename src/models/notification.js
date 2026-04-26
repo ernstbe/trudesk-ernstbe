@@ -13,7 +13,6 @@
  */
 
 const mongoose = require('mongoose')
-const _ = require('lodash')
 
 const COLLECTION = 'notification'
 
@@ -39,7 +38,7 @@ notificationSchema.methods.markRead = async function () {
 }
 
 notificationSchema.statics.getNotification = async function (id) {
-  if (_.isUndefined(id)) {
+  if (id === undefined) {
     throw new Error('Invalid ObjectId - NotificationSchema.GetNotification()')
   }
 
@@ -47,7 +46,7 @@ notificationSchema.statics.getNotification = async function (id) {
 }
 
 notificationSchema.statics.findAllForUser = async function (oId) {
-  if (_.isUndefined(oId)) {
+  if (oId === undefined) {
     throw new Error('Invalid ObjectId - NotificationSchema.FindAllForUser()')
   }
 
@@ -60,7 +59,7 @@ notificationSchema.statics.findAllForUser = async function (oId) {
 }
 
 notificationSchema.statics.getForUserWithLimit = async function (oId) {
-  if (_.isUndefined(oId)) throw new Error('Invalid ObjectId - NotificationSchema.GetForUserWithLimit()')
+  if (oId === undefined) throw new Error('Invalid ObjectId - NotificationSchema.GetForUserWithLimit()')
 
   return this.model(COLLECTION)
     .find({ owner: oId })
@@ -70,7 +69,7 @@ notificationSchema.statics.getForUserWithLimit = async function (oId) {
 }
 
 notificationSchema.statics.getCount = async function (oId) {
-  if (_.isUndefined(oId)) {
+  if (oId === undefined) {
     throw new Error('Invalid ObjectId - NotificationSchema.GetCount()')
   }
 
@@ -78,7 +77,7 @@ notificationSchema.statics.getCount = async function (oId) {
 }
 
 notificationSchema.statics.getUnreadCount = async function (oId) {
-  if (_.isUndefined(oId)) {
+  if (oId === undefined) {
     throw new Error('Invalid ObjectId - NotificationSchema.GetUnreadCount()')
   }
 
@@ -86,7 +85,7 @@ notificationSchema.statics.getUnreadCount = async function (oId) {
 }
 
 notificationSchema.statics.clearNotifications = async function (oId) {
-  if (_.isUndefined(oId)) {
+  if (oId === undefined) {
     throw new Error('Invalid UserId - NotificationSchema.ClearNotifications()')
   }
 

@@ -12,7 +12,6 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-const _ = require('lodash')
 const nodeMailer = require('nodemailer')
 
 const settings = require('../models/setting')
@@ -60,25 +59,25 @@ function createTransporter (callback) {
     if (err) return callback(err)
 
     const mailSettings = {}
-    mailSettings.enabled = _.find(s, function (x) {
+    mailSettings.enabled = s.find(function (x) {
       return x.name === 'mailer:enable'
     })
-    mailSettings.host = _.find(s, function (x) {
+    mailSettings.host = s.find(function (x) {
       return x.name === 'mailer:host'
     })
-    mailSettings.ssl = _.find(s, function (x) {
+    mailSettings.ssl = s.find(function (x) {
       return x.name === 'mailer:ssl'
     })
-    mailSettings.port = _.find(s, function (x) {
+    mailSettings.port = s.find(function (x) {
       return x.name === 'mailer:port'
     })
-    mailSettings.username = _.find(s, function (x) {
+    mailSettings.username = s.find(function (x) {
       return x.name === 'mailer:username'
     })
-    mailSettings.password = _.find(s, function (x) {
+    mailSettings.password = s.find(function (x) {
       return x.name === 'mailer:password'
     })
-    mailSettings.from = _.find(s, function (x) {
+    mailSettings.from = s.find(function (x) {
       return x.name === 'mailer:from'
     })
 

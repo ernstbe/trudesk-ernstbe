@@ -15,7 +15,6 @@
 const mongoose = require('mongoose')
 const winston = require('winston')
 const bcrypt = require('bcrypt')
-const _ = require('lodash')
 const Chance = require('chance')
 const utils = require('../helpers/utils')
 
@@ -133,7 +132,7 @@ userSchema.methods.removeAccessToken = async function () {
 
 userSchema.methods.generateL2Auth = async function () {
   const user = this
-  if (_.isUndefined(user.tOTPKey) || _.isNull(user.tOTPKey)) {
+  if (user.tOTPKey === undefined || user.tOTPKey === null) {
     const chance = new Chance()
     const base32 = require('thirty-two')
 
@@ -167,7 +166,7 @@ userSchema.methods.addOpenChatWindow = async function (convoId) {
   }
   const user = this
   const hasChatWindow =
-    _.filter(user.preferences.openChatWindows, function (value) {
+    user.preferences.openChatWindows.filter(function (value) {
       return value.toString() === convoId.toString()
     }).length > 0
 
@@ -185,7 +184,7 @@ userSchema.methods.removeOpenChatWindow = async function (convoId) {
   }
   const user = this
   const hasChatWindow =
-    _.filter(user.preferences.openChatWindows, function (value) {
+    user.preferences.openChatWindows.filter(function (value) {
       return value.toString() === convoId.toString()
     }).length > 0
 
@@ -193,7 +192,7 @@ userSchema.methods.removeOpenChatWindow = async function (convoId) {
     return
   }
   user.preferences.openChatWindows.splice(
-    _.findIndex(user.preferences.openChatWindows, function (item) {
+    user.preferences.openChatWindows.findIndex(function (item) {
       return item.toString() === convoId.toString()
     }),
     1
@@ -240,7 +239,7 @@ userSchema.statics.findAll = async function () {
  * @param {QueryCallback} callback MongoDB Query Callback
  */
 userSchema.statics.getUser = async function (oId) {
-  if (_.isUndefined(oId)) {
+  if (oId === undefined) {
     throw new Error('Invalid ObjectId - UserSchema.GetUser()')
   }
 
@@ -258,7 +257,7 @@ userSchema.statics.getUser = async function (oId) {
  * @param {QueryCallback} callback MongoDB Query Callback
  */
 userSchema.statics.getUserByUsername = async function (user) {
-  if (_.isUndefined(user)) {
+  if (user === undefined) {
     throw new Error('Invalid Username - UserSchema.GetUserByUsername()')
   }
 
@@ -281,7 +280,7 @@ userSchema.statics.getByUsername = userSchema.statics.getUserByUsername
  * @param {QueryCallback} callback MongoDB Query Callback
  */
 userSchema.statics.getUserByEmail = async function (email) {
-  if (_.isUndefined(email)) {
+  if (email === undefined) {
     throw new Error('Invalid Email - UserSchema.GetUserByEmail()')
   }
 
@@ -299,7 +298,7 @@ userSchema.statics.getUserByEmail = async function (email) {
  * @param {QueryCallback} callback MongoDB Query Callback
  */
 userSchema.statics.getUserByResetHash = async function (hash) {
-  if (_.isUndefined(hash)) {
+  if (hash === undefined) {
     throw new Error('Invalid Hash - UserSchema.GetUserByResetHash()')
   }
 
@@ -310,7 +309,7 @@ userSchema.statics.getUserByResetHash = async function (hash) {
 }
 
 userSchema.statics.getUserByL2ResetHash = async function (hash) {
-  if (_.isUndefined(hash)) {
+  if (hash === undefined) {
     throw new Error('Invalid Hash - UserSchema.GetUserByL2ResetHash()')
   }
 
@@ -331,7 +330,7 @@ userSchema.statics.getUserByL2ResetHash = async function (hash) {
  * @param {QueryCallback} callback MongoDB Query Callback
  */
 userSchema.statics.getUserByAccessToken = async function (token) {
-  if (_.isUndefined(token)) {
+  if (token === undefined) {
     throw new Error('Invalid Token - UserSchema.GetUserByAccessToken()')
   }
 
@@ -339,7 +338,7 @@ userSchema.statics.getUserByAccessToken = async function (token) {
 }
 
 userSchema.statics.getUserWithObject = async function (object) {
-  if (!_.isObject(object)) {
+  if (!(typeof object === 'object' && object !== null)) {
     throw new Error('Invalid Object (Must be of type Object) - UserSchema.GetUserWithObject()')
   }
 
@@ -360,7 +359,7 @@ userSchema.statics.getUserWithObject = async function (object) {
 
   if (!object.showDeleted) q.where({ deleted: false })
 
-  if (!_.isEmpty(search)) {
+  if (search) {
     q.where({ fullname: new RegExp('^' + search.toLowerCase(), 'i') })
   }
 
@@ -378,16 +377,16 @@ userSchema.statics.getUserWithObject = async function (object) {
  */
 userSchema.statics.getAssigneeUsers = async function () {
   const roles = global.roles
-  if (_.isUndefined(roles)) return []
+  if (roles === undefined) return []
 
   let assigneeRoles = []
   roles.forEach(function (role) {
     if (role.isAgent) assigneeRoles.push(role._id)
   })
 
-  assigneeRoles = _.uniq(assigneeRoles)
+  assigneeRoles = [...new Set(assigneeRoles)]
   const users = await this.model(COLLECTION).find({ role: { $in: assigneeRoles }, deleted: false })
-  return _.sortBy(users, 'fullname')
+  return [...users].sort((a, b) => (a.fullname || '').localeCompare(b.fullname || ''))
 }
 
 /**
@@ -401,8 +400,8 @@ userSchema.statics.getAssigneeUsers = async function () {
  * @param {QueryCallback} callback MongoDB Query Callback
  */
 userSchema.statics.getUsersByRoles = async function (roles) {
-  if (_.isUndefined(roles)) throw new Error('Invalid roles array')
-  if (!_.isArray(roles)) {
+  if (roles === undefined) throw new Error('Invalid roles array')
+  if (!Array.isArray(roles)) {
     roles = [roles]
   }
 
@@ -422,14 +421,14 @@ userSchema.statics.getUsersByRoles = async function (roles) {
  * @param {QueryCallback} callback MongoDB Query Callback
  */
 userSchema.statics.createUser = async function (data) {
-  if (_.isUndefined(data) || _.isUndefined(data.username)) {
+  if (data === undefined || data.username === undefined) {
     throw new Error('Invalid User Data - UserSchema.CreateUser()')
   }
 
   const self = this
 
   const items = await self.model(COLLECTION).find({ username: data.username })
-  if (_.size(items) > 0) {
+  if (items.length > 0) {
     throw new Error('Username Already Exists')
   }
 
@@ -442,7 +441,7 @@ userSchema.statics.createUser = async function (data) {
  * @param email
  */
 userSchema.statics.createUserFromEmail = async function (email) {
-  if (_.isUndefined(email)) {
+  if (email === undefined) {
     throw new Error('Invalid User Data - UserSchema.CreatePublicUser()')
   }
 
@@ -471,7 +470,7 @@ userSchema.statics.createUserFromEmail = async function (email) {
   })
 
   const items = await self.model(COLLECTION).find({ username: user.username })
-  if (_.size(items) > 0) throw new Error('Username already exists')
+  if (items.length > 0) throw new Error('Username already exists')
 
   const savedUser = await user.save()
 
@@ -545,7 +544,7 @@ userSchema.statics.getCustomers = async function (obj) {
     .find({}, '-password -resetPassHash -resetPassExpire')
     .exec()
 
-  const customerRoleIds = _.filter(accounts, function (a) {
+  const customerRoleIds = accounts.filter(function (a) {
     return !a.role.isAdmin && !a.role.isAgent
   }).map(function (a) {
     return a.role._id
@@ -572,7 +571,7 @@ userSchema.statics.getAgents = async function (obj) {
     .find({})
     .exec()
 
-  const agentRoleIds = _.filter(accounts, function (a) {
+  const agentRoleIds = accounts.filter(function (a) {
     return a.role.isAgent
   }).map(function (a) {
     return a.role._id
@@ -600,7 +599,7 @@ userSchema.statics.getAdmins = async function (obj) {
     .find({})
     .exec()
 
-  const adminRoleIds = _.filter(accounts, function (a) {
+  const adminRoleIds = accounts.filter(function (a) {
     return a.role.isAdmin
   }).map(function (a) {
     return a.role._id

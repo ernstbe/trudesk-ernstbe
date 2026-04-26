@@ -12,7 +12,6 @@
 const ticketSchema = require('../models/ticket')
 const async = require('async')
 const path = require('path')
-const _ = require('lodash')
 const winston = require('../logger')
 const groupSchema = require('../models/group')
 const departmentSchema = require('../models/department')
@@ -55,7 +54,7 @@ ticketsController.pubNewIssue = async function (req, res) {
       content.title = 'Neuer Vorgang'
       content.layout = false
       content.data = {}
-      if (privacyPolicy === null || _.isUndefined(privacyPolicy.value)) {
+      if (privacyPolicy === null || privacyPolicy.value === undefined) {
         content.data.privacyPolicy = 'No Privacy Policy has been set.'
       } else {
         content.data.privacyPolicy = xss(marked.parse(privacyPolicy.value))
@@ -80,7 +79,7 @@ ticketsController.pubNewIssue = async function (req, res) {
 ticketsController.getByStatus = function (req, res, next) {
   const url = require('url')
   let page = req.params.page
-  if (_.isUndefined(page)) page = 0
+  if (page === undefined) page = 0
 
   const processor = {}
   processor.title = 'Tickets'
@@ -104,7 +103,7 @@ ticketsController.getByStatus = function (req, res, next) {
   const arr = pathname.split('/')
   let tType = 'new'
   let s = 0
-  if (_.size(arr) > 2) tType = arr[2]
+  if (arr.length > 2) tType = arr[2]
 
   switch (tType) {
     case 'open':
@@ -135,7 +134,7 @@ ticketsController.getByStatus = function (req, res, next) {
  */
 ticketsController.getActive = function (req, res, next) {
   let page = req.params.page
-  if (_.isUndefined(page)) page = 0
+  if (page === undefined) page = 0
 
   const processor = {}
   processor.title = 'Tickets'
@@ -164,7 +163,7 @@ ticketsController.getActive = function (req, res, next) {
  */
 ticketsController.getAssigned = function (req, res, next) {
   let page = req.params.page
-  if (_.isUndefined(page)) page = 0
+  if (page === undefined) page = 0
 
   const processor = {}
   processor.title = 'Tickets'
@@ -195,7 +194,7 @@ ticketsController.getAssigned = function (req, res, next) {
  */
 ticketsController.getUnassigned = function (req, res, next) {
   let page = req.params.page
-  if (_.isUndefined(page)) page = 0
+  if (page === undefined) page = 0
 
   const processor = {}
   processor.title = 'Tickets'
@@ -218,7 +217,7 @@ ticketsController.getUnassigned = function (req, res, next) {
 
 ticketsController.filter = function (req, res, next) {
   let page = req.query.page
-  if (_.isUndefined(page)) page = 0
+  if (page === undefined) page = 0
 
   const queryString = req.query
   const uid = queryString.uid
@@ -235,18 +234,18 @@ ticketsController.filter = function (req, res, next) {
 
   const rawNoPage = req.originalUrl.replace(/[?&]page=[^&#]*(#.*)?$/, '$1').replace(/([?&])page=[^&]*&/, '$1')
 
-  if (!_.isUndefined(status)) status = xss(status)
-  if (!_.isUndefined(status) && !_.isArray(status)) status = [status]
-  if (!_.isUndefined(priority)) priority = xss(priority)
-  if (!_.isUndefined(priority) && !_.isArray(priority)) priority = [priority]
-  if (!_.isUndefined(groups)) groups = xss(groups)
-  if (!_.isUndefined(groups) && !_.isArray(groups)) groups = [groups]
-  if (!_.isUndefined(types)) types = xss(types)
-  if (!_.isUndefined(types) && !_.isArray(types)) types = [types]
-  if (!_.isUndefined(tags)) tags = xss(tags)
-  if (!_.isUndefined(tags) && !_.isArray(tags)) tags = [tags]
-  if (!_.isUndefined(assignee)) assignee = xss(assignee)
-  if (!_.isUndefined(assignee) && !_.isArray(assignee)) assignee = [assignee]
+  if (status !== undefined) status = xss(status)
+  if (status !== undefined && !Array.isArray(status)) status = [status]
+  if (priority !== undefined) priority = xss(priority)
+  if (priority !== undefined && !Array.isArray(priority)) priority = [priority]
+  if (groups !== undefined) groups = xss(groups)
+  if (groups !== undefined && !Array.isArray(groups)) groups = [groups]
+  if (types !== undefined) types = xss(types)
+  if (types !== undefined && !Array.isArray(types)) types = [types]
+  if (tags !== undefined) tags = xss(tags)
+  if (tags !== undefined && !Array.isArray(tags)) tags = [tags]
+  if (assignee !== undefined) assignee = xss(assignee)
+  if (assignee !== undefined && !Array.isArray(assignee)) assignee = [assignee]
 
   const filter = {
     uid,
@@ -293,7 +292,7 @@ ticketsController.filter = function (req, res, next) {
  */
 ticketsController.processor = function (req, res) {
   const processor = req.processor
-  if (_.isUndefined(processor)) return res.redirect('/')
+  if (processor === undefined) return res.redirect('/')
 
   const content = {}
   content.title = processor.title
@@ -363,7 +362,7 @@ ticketsController.print = async function (req, res) {
 
   try {
     const ticket = await ticketSchema.getTicketByUid(uid)
-    if (_.isNull(ticket) || _.isUndefined(ticket)) return res.redirect('/tickets')
+    if (ticket === null || ticket === undefined) return res.redirect('/tickets')
 
     const hasPublic = permissions.canThis(user.role, 'tickets:public')
     let hasAccess = false
@@ -375,7 +374,7 @@ ticketsController.print = async function (req, res) {
         return g._id
       })
 
-      if (_.some(gIds, ticket.group._id)) {
+      if (gIds.some(id => id.toString() === ticket.group._id.toString())) {
         if (!permissions.canThis(user.role, 'tickets:notes')) {
           ticket.notes = []
         }
@@ -414,7 +413,7 @@ ticketsController.print = async function (req, res) {
     content.data.ticket = ticket
     content.data.ticket.priorityname = ticket.priority.name
     content.data.ticket.tagsArray = ticket.tags
-    content.data.ticket.commentCount = _.size(ticket.comments)
+    content.data.ticket.commentCount = ticket.comments.length
     content.layout = 'layout/print'
 
     return res.render('subviews/printticket', content)
@@ -465,7 +464,7 @@ ticketsController.single = async function (req, res) {
 
   try {
     const ticket = await ticketSchema.getTicketByUid(uid)
-    if (_.isNull(ticket) || _.isUndefined(ticket)) return res.redirect('/tickets')
+    if (ticket === null || ticket === undefined) return res.redirect('/tickets')
 
     const departmentSchema = require('../models/department')
 
@@ -475,14 +474,12 @@ ticketsController.single = async function (req, res) {
       userGroups = await groupSchema.getAllGroupsOfUserNoPopulate(req.user._id)
     } else {
       const departments = await departmentSchema.getUserDepartments(req.user._id)
-      if (_.some(departments, { allGroups: true })) {
+      if (departments.some(d => d.allGroups === true)) {
         userGroups = await groupSchema.find({})
       } else {
-        userGroups = _.flattenDeep(
-          departments.map(function (d) {
+        userGroups = departments.map(function (d) {
             return d.groups
-          })
-        )
+          }).flat(Infinity)
       }
     }
 
@@ -617,7 +614,7 @@ ticketsController.uploadImageMDE = function (req, res) {
   busboy.on('finish', function () {
     if (error) return res.status(error.status || 500).send(error.message)
 
-    if (_.isUndefined(object.ticketId) || _.isUndefined(object.filename) || _.isUndefined(object.filePath)) {
+    if (object.ticketId === undefined || object.filename === undefined || object.filePath === undefined) {
       return res.status(400).send('Invalid Form Data')
     }
 
@@ -767,7 +764,7 @@ ticketsController.uploadAttachment = function (req, res) {
     async.series(events, async function () {
       if (error) return res.status(error.status || 500).send(error.message)
 
-      if (_.isUndefined(object.ticketId) || _.isUndefined(object.ownerId) || _.isUndefined(object.filePath)) {
+      if (object.ticketId === undefined || object.ownerId === undefined || object.filePath === undefined) {
         fs.unlinkSync(object.filePath)
         return res.status(400).send('Invalid Form Data')
       }

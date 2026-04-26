@@ -12,7 +12,6 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-const _ = require('lodash')
 const mongoose = require('mongoose')
 const utils = require('../helpers/utils')
 
@@ -92,7 +91,7 @@ ticketTypeSchema.methods.addPriority = function (priorityId) {
 
   const self = this
 
-  if (!_.isArray(self.priorities)) {
+  if (!Array.isArray(self.priorities)) {
     self.priorities = []
   }
 
@@ -106,8 +105,8 @@ ticketTypeSchema.methods.removePriority = function (priorityId) {
 
   const self = this
 
-  self.priorities = _.reject(self.priorities, function (p) {
-    return p._id.toString() === priorityId.toString()
+  self.priorities = self.priorities.filter(function (p) {
+    return p._id.toString() !== priorityId.toString()
   })
 
   return self

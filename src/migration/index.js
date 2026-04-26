@@ -12,7 +12,6 @@
 
  **/
 
-const _ = require('lodash')
 const async = require('async')
 const winston = require('../logger')
 const semver = require('semver')
@@ -43,7 +42,7 @@ function performBackup (dbVersion, callback) {
 
   child.on('message', function (data) {
     child.kill('SIGINT')
-    global.forks = _.remove(global.forks, function (f) {
+    global.forks = global.forks.filter(function (f) {
       return f.fork !== child
     })
 
@@ -85,10 +84,10 @@ async function saveVersion (callback) {
       if (setting.value) setting.value = require('../../package').version
       await setting.save()
     }
-    if (_.isFunction(callback)) return callback()
+    if (typeof callback === 'function') return callback()
   } catch (err) {
     winston.warn(err)
-    if (_.isFunction(callback)) return callback(err)
+    if (typeof callback === 'function') return callback(err)
   }
 }
 
@@ -117,7 +116,7 @@ function _migrateUserRoles (callback) {
         roleSchema.getRoles(next)
       },
       function (roles, next) {
-        const adminRole = _.find(roles, { normalized: 'admin' })
+        const adminRole = roles.find(r => r.normalized === 'admin')
         userSchema.collection
           .updateMany({ role: 'admin' }, { $set: { role: adminRole._id } })
           .then(function (res) {
@@ -136,7 +135,7 @@ function _migrateUserRoles (callback) {
           })
       },
       function (roles, next) {
-        const supportRole = _.find(roles, { normalized: 'support' })
+        const supportRole = roles.find(r => r.normalized === 'support')
         userSchema.collection
           .updateMany({ $or: [{ role: 'support' }, { role: 'mod' }] }, { $set: { role: supportRole._id } })
           .then(function (res) {
@@ -155,7 +154,7 @@ function _migrateUserRoles (callback) {
           })
       },
       function (roles, next) {
-        const userRole = _.find(roles, { normalized: 'user' })
+        const userRole = roles.find(r => r.normalized === 'user')
         userSchema.collection
           .updateMany({ role: 'user' }, { $set: { role: userRole._id } })
           .then(function (res) {
@@ -225,7 +224,7 @@ function removeAgentsFromGroups (callback) {
     async.eachSeries(
       groups,
       function (group, next) {
-        group.members = _.filter(group.members, function (member) {
+        group.members = group.members.filter(function (member) {
           return !member.role.isAdmin && !member.role.isAgent
         })
 

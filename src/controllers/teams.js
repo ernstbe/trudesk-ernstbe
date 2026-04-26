@@ -12,13 +12,12 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-const _ = require('lodash')
 const permissions = require('../permissions')
 const teamController = {}
 
 teamController.get = function (req, res) {
   const user = req.user
-  if (_.isUndefined(user) || !permissions.canThis(user.role, 'teams:view')) {
+  if (user === undefined || !permissions.canThis(user.role, 'teams:view')) {
     return res.redirect('/')
   }
 

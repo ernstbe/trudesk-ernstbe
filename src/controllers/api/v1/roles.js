@@ -12,7 +12,6 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-const _ = require('lodash')
 const userSchema = require('../../../models/user')
 const permissions = require('../../../permissions')
 const socketEventConsts = require('../../../socketio/socketEventConsts')
@@ -62,12 +61,12 @@ rolesV1.create = async function (req, res) {
 rolesV1.update = async function (req, res) {
   const _id = req.params.id
   const data = req.body
-  if (_.isUndefined(_id) || _.isUndefined(data)) { return res.status(400).json({ success: false, error: 'Invalid Post Data' }) }
+  if (_id === undefined || data === undefined) { return res.status(400).json({ success: false, error: 'Invalid Post Data' }) }
 
   try {
     const emitter = require('../../../emitter')
     const hierarchy = data.hierarchy ? data.hierarchy : false
-    const cleaned = _.omit(data, ['_id', 'hierarchy'])
+    const cleaned = Object.fromEntries(Object.entries(data).filter(([k]) => !['_id', 'hierarchy'].includes(k)))
     const k = permissions.buildGrants(cleaned)
     const roleSchema = require('../../../models/role')
     const role = await roleSchema.get(data._id)
