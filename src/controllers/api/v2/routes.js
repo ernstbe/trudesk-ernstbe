@@ -38,6 +38,8 @@ module.exports = function (middleware, router, controllers) {
 
   // Ticket Info
   router.get('/api/v2/tickets/info/types', apiv2Auth, apiv2.tickets.info.types)
+  router.get('/api/v2/tickets/status', apiv2Auth, apiv2.tickets.info.statuses)
+  router.get('/api/v2/tickets/priorities', apiv2Auth, apiv2.tickets.info.priorities)
 
   // Tickets
   router.get('/api/v2/tickets', apiv2Auth, canUser('tickets:view'), apiv2.tickets.get)
