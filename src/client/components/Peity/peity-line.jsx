@@ -31,4 +31,3 @@ PeityLine.propTypes = {
   fill: PropTypes.string,
   stroke: PropTypes.string
 }
-

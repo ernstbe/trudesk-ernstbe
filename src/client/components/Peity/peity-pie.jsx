@@ -39,4 +39,3 @@ PeityPie.propTypes = {
   width: PropTypes.number,
   fill: PropTypes.arrayOf(PropTypes.string)
 }
-
