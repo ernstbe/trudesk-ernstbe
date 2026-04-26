@@ -28,7 +28,7 @@ apiUtils.sendApiError_InvalidPostData = function (res) {
   return apiUtils.sendApiError(res, 400, 'Invalid Post Data')
 }
 
-apiUtils.generateJWTToken = function (dbUser, callback) {
+apiUtils.generateJWTToken = async function (dbUser) {
   const nconf = require('nconf')
   const jwt = require('jsonwebtoken')
 
@@ -47,18 +47,16 @@ apiUtils.generateJWTToken = function (dbUser, callback) {
 
   const secret = nconf.get('tokens') ? nconf.get('tokens').secret : false
   const expires = nconf.get('tokens') ? nconf.get('tokens').expires : 3600
-  if (!secret || !expires) return callback(new Error('Invalid Server Configuration'))
+  if (!secret || !expires) throw new Error('Invalid Server Configuration')
 
-  require('../../models/group').getAllGroupsOfUserNoPopulate(dbUser._id, function (err, grps) {
-    if (err) return callback(err)
-    resUser.groups = grps.map(function (g) {
-      return g._id
-    })
-
-    const token = jwt.sign({ user: resUser }, secret, { expiresIn: expires })
-
-    return callback(null, { token, refreshToken })
+  const grps = await require('../../models/group').getAllGroupsOfUserNoPopulate(dbUser._id)
+  resUser.groups = grps.map(function (g) {
+    return g._id
   })
+
+  const token = jwt.sign({ user: resUser }, secret, { expiresIn: expires })
+
+  return { token, refreshToken }
 }
 
 apiUtils.stripUserFields = function (user) {
