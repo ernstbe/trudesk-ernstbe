@@ -1,7 +1,5 @@
 import React, { useRef, useEffect } from 'react'
 import PropTypes from 'prop-types'
-import { shuffle, map, zipObject } from 'lodash'
-
 import * as d3 from 'vendor/d3/d3.min'
 import 'd3pie'
 import * as c3 from 'c3'
@@ -37,11 +35,8 @@ export default function D3Pie ({
 
   useEffect(() => {
     if (pieChart.current && data.length > 0) {
-      mappedColors = shuffle(colors)
-      mappedColors = zipObject(
-        map(data, v => v[0]),
-        mappedColors
-      )
+      mappedColors = [...colors].sort(() => Math.random() - 0.5)
+      mappedColors = Object.fromEntries(data.map((v, i) => [v[0], mappedColors[i]]))
 
       c3.generate({
         bindto: d3.select(pieChart.current),

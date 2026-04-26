@@ -1,6 +1,5 @@
 import React, { createRef } from 'react'
 import PropTypes from 'prop-types'
-import { union } from 'lodash'
 import { connect } from 'react-redux'
 
 import helpers from 'lib/helpers'
@@ -237,7 +236,7 @@ class StepWizard extends React.Component {
       sep.push('----------------')
     }
 
-    return union(addedUsersTemplate, sep, updatedUsersTemplate).join('\r')
+    return [...new Set([...addedUsersTemplate, ...sep, ...updatedUsersTemplate])].join('\r')
   }
 
   render () {

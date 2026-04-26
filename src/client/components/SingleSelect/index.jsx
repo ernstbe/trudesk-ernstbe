@@ -14,7 +14,6 @@
 
 import React, { useRef, useEffect, useCallback } from 'react'
 import PropTypes from 'prop-types'
-import { each, isArray, findIndex } from 'lodash'
 import $ from 'jquery'
 
 import helpers from 'lib/helpers'
@@ -35,8 +34,8 @@ const SingleSelect = ({
     if (selectRef.current && selectRef.current.selectize) {
       const selectize = selectRef.current.selectize
       // Remove any options that were removed from Items array
-      each(selectize.options, function (i) {
-        const indexOfOption = findIndex(items, o => {
+      Object.values(selectize.options).forEach(function (i) {
+        const indexOfOption = items.findIndex(o => {
           return i.value === o.value
         })
         if (indexOfOption === -1) {
@@ -50,7 +49,7 @@ const SingleSelect = ({
       selectize.addItem(valueRef.current, true)
 
       // Force an update of each item from items prop
-      each(items, function (i) {
+      items.forEach(function (i) {
         selectize.updateOption(i.value, i)
       })
 
@@ -94,7 +93,7 @@ const SingleSelect = ({
   let displayWidth = '100%'
   if (width) displayWidth = width
 
-  const value = multiple && !isArray(valueRef.current) ? [valueRef.current] : valueRef.current
+  const value = multiple && !Array.isArray(valueRef.current) ? [valueRef.current] : valueRef.current
 
   return (
     <div className='uk-clearfix'>

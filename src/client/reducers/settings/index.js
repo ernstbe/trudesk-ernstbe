@@ -12,7 +12,6 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-import { find } from 'lodash'
 import { fromJS, Map, List } from 'immutable'
 import { handleActions } from 'redux-actions'
 import {
@@ -50,7 +49,7 @@ const settingsReducer = handleActions(
     }),
 
     [UPDATE_SETTING.SUCCESS]: (state, action) => {
-      const updatedSetting = find(action.response.updatedSettings, { name: action.payload.name })
+      const updatedSetting = action.response.updatedSettings.find(s => s.name === action.payload.name)
       return {
         ...state,
         loaded: state.loaded,

@@ -14,7 +14,6 @@
 import React, { Fragment, useEffect, useRef, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
-import { some } from 'lodash'
 import clsx from 'clsx'
 
 import axios from 'axios'
@@ -52,8 +51,8 @@ const Avatar = ({
         const onlineUserList = data.sortedUserList
         const idleUserList = data.sortedIdleList
 
-        const isOnline = some(onlineUserList, val => val.user._id.toString() === userId.toString())
-        const isIdle = some(idleUserList, val => val.user._id.toString() === userId.toString())
+        const isOnline = onlineUserList.some(val => val.user._id.toString() === userId.toString())
+        const isIdle = idleUserList.some(val => val.user._id.toString() === userId.toString())
 
         if (isIdle) {
           bubble.classList.remove('user-offline')

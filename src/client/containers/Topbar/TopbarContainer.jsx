@@ -16,8 +16,6 @@ import React, { useRef, useState, useEffect, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import { withTranslation } from 'react-i18next'
-import { size } from 'lodash'
-
 import { fetchViewData, showModal, hideModal, showNotice, clearNotice } from 'actions/common'
 
 import Avatar from 'components/Avatar/Avatar'
@@ -79,7 +77,7 @@ function TopbarContainer ({
     if (sessionUser) {
       delete data[sessionUser.username]
     }
-    const count = size(data)
+    const count = Object.keys(data).length
     setActiveUserCount(prev => count !== prev ? count : prev)
   }, [sessionUser])
 

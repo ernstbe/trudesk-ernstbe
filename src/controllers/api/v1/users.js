@@ -45,7 +45,7 @@ const apiUsers = {}
 apiUsers.getWithLimit = async function (req, res) {
   try {
     let limit = 10
-    if (ISDEF(req.query.limit)) {
+    if (req.query.limit !== undefined) {
       limit = parseInt(req.query.limit)
     }
     const page = parseInt(req.query.page)
@@ -120,14 +120,14 @@ apiUsers.create = async function (req, res) {
 
   const postData = req.body
 
-  if (postData === undefined || NOTOBJ__(postData)) {
+  if (postData === undefined || !(typeof postData === 'object' && postData !== null)) {
     return res.status(400).json({ success: false, error: 'Invalid Post Data' })
   }
 
   const propCheck = ['aUsername', 'aPass', 'aPassConfirm', 'aFullname', 'aEmail', 'aRole']
 
   if (
-    !EVERY__(propCheck, function (x) {
+    !propCheck.every(function (x) {
       return x in postData
     })
   ) {
@@ -223,7 +223,7 @@ apiUsers.createPublicAccount = async function (req, res) {
   const response = {}
   response.success = true
   const postData = req.body
-  if (NOTOBJ__(postData)) return res.status(400).json({ success: false, error: 'Invalid Post Data' })
+  if (!(typeof postData === 'object' && postData !== null)) return res.status(400).json({ success: false, error: 'Invalid Post Data' })
 
   try {
     const allowUserRegistration = await SettingSchema.getSetting('allowUserRegistration:enable')
@@ -305,10 +305,10 @@ apiUsers.profileUpdate = async function (req, res) {
     obj._id = user._id
 
     if (
-      ISDEF(obj.password) &&
-      NOTEMPTY__(obj.password) &&
-      ISDEF(obj.passconfirm) &&
-      NOTEMPTY__(obj.passconfirm)
+      obj.password !== undefined &&
+      obj.password && obj.password.length > 0 &&
+      obj.passconfirm !== undefined &&
+      obj.passconfirm && obj.passconfirm.length > 0
     ) {
       if (obj.password === obj.passconfirm) {
         if (passwordComplexityEnabled) {
@@ -321,9 +321,9 @@ apiUsers.profileUpdate = async function (req, res) {
       }
     }
 
-    if (ISDEF(obj.fullname) && obj.fullname.length > 0) user.fullname = obj.fullname
-    if (ISDEF(obj.email) && obj.email.length > 0) user.email = obj.email
-    if (ISDEF(obj.title) && obj.title.length > 0) user.title = obj.title
+    if (obj.fullname !== undefined && obj.fullname.length > 0) user.fullname = obj.fullname
+    if (obj.email !== undefined && obj.email.length > 0) user.email = obj.email
+    if (obj.title !== undefined && obj.title.length > 0) user.title = obj.title
 
     const nUser = await user.save()
     const populatedUser = await nUser.populate('role')
@@ -383,7 +383,7 @@ apiUsers.update = async function (req, res) {
 
   const data = req.body
   // saveGroups - Profile saving where groups are not sent
-  const saveGroups = ISDEF(data.saveGroups) ? data.saveGroups : true
+  const saveGroups = data.saveGroups !== undefined ? data.saveGroups : true
   let passwordUpdated = false
 
   const obj = {
@@ -413,10 +413,10 @@ apiUsers.update = async function (req, res) {
     obj._id = user._id
 
     if (
-      ISDEF(obj.password) &&
-      NOTEMPTY__(obj.password) &&
-      ISDEF(obj.passconfirm) &&
-      NOTEMPTY__(obj.passconfirm)
+      obj.password !== undefined &&
+      obj.password && obj.password.length > 0 &&
+      obj.passconfirm !== undefined &&
+      obj.passconfirm && obj.passconfirm.length > 0
     ) {
       if (obj.password === obj.passconfirm) {
         if (passwordComplexityEnabled) {
@@ -429,10 +429,10 @@ apiUsers.update = async function (req, res) {
       }
     }
 
-    if (ISDEF(obj.fullname) && obj.fullname.length > 0) user.fullname = obj.fullname
-    if (ISDEF(obj.email) && obj.email.length > 0) user.email = obj.email
-    if (ISDEF(obj.title) && obj.title.length > 0) user.title = obj.title
-    if (ISDEF(obj.role) && obj.role.length > 0) user.role = obj.role
+    if (obj.fullname !== undefined && obj.fullname.length > 0) user.fullname = obj.fullname
+    if (obj.email !== undefined && obj.email.length > 0) user.email = obj.email
+    if (obj.title !== undefined && obj.title.length > 0) user.title = obj.title
+    if (obj.role !== undefined && obj.role.length > 0) user.role = obj.role
 
     const nUser = await user.save()
     const populatedUser = await nUser.populate('role')
@@ -445,7 +445,7 @@ apiUsers.update = async function (req, res) {
       userGroups = []
       const allGroups = await groupSchema.getAllGroups()
       for (const grp of allGroups) {
-        if (INCLUDES__(obj.groups, grp._id.toString())) {
+        if (obj.groups.includes(grp._id.toString())) {
           if (grp.isMember(obj._id)) {
             userGroups.push(grp)
           } else {
@@ -685,7 +685,7 @@ apiUsers.single = async function (req, res) {
     response.user = user
 
     const grps = await groupSchema.getAllGroupsOfUserNoPopulate(user._id)
-    response.groups = MAP__(grps, function (o) {
+    response.groups = grps.map(function (o) {
       return o._id
     })
 

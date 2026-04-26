@@ -14,7 +14,6 @@
 
 import React, { useEffect, useRef } from 'react'
 import PropTypes from 'prop-types'
-import { merge } from 'lodash'
 import helpers from 'lib/helpers'
 
 const Button = ({
@@ -47,10 +46,10 @@ const Button = ({
     extraClass
   let renderStyleOverride = styleOverride
   if (small) {
-    if (renderStyleOverride) merge(renderStyleOverride, { maxHeight: '27px' })
+    if (renderStyleOverride) Object.assign(renderStyleOverride, { maxHeight: '27px' })
     else renderStyleOverride = { maxHeight: '27px' }
-    if (hasDropdown) merge(renderStyleOverride, { paddingRight: '12px' })
-    if (icon) merge(renderStyleOverride, { padding: '0 10px' })
+    if (hasDropdown) Object.assign(renderStyleOverride, { paddingRight: '12px' })
+    if (icon) Object.assign(renderStyleOverride, { padding: '0 10px' })
   }
   return (
     <button

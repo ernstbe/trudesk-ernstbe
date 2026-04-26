@@ -14,7 +14,6 @@
 
 import { fromJS, List } from 'immutable'
 import { handleActions } from 'redux-actions'
-import { sortBy, map } from 'lodash'
 import {
   FETCH_DASHBOARD_DATA,
   FETCH_DASHBOARD_OVERDUE_TICKETS,
@@ -79,11 +78,10 @@ const reducer = handleActions(
 
     [FETCH_DASHBOARD_TOP_GROUPS.SUCCESS]: (state, action) => {
       const items = action.response && action.response.items ? action.response.items : []
-      let top5 = sortBy(items, i => i.count)
-        .reverse()
+      let top5 = [...items].sort((a, b) => b.count - a.count)
         .slice(0, 5)
 
-      top5 = map(top5, v => [v.name, v.count])
+      top5 = top5.map(v => [v.name, v.count])
 
       return {
         ...state,
@@ -101,7 +99,7 @@ const reducer = handleActions(
 
     [FETCH_DASHBOARD_TOP_TAGS.SUCCESS]: (state, action) => {
       const items = action.response && action.response.tags ? action.response.tags : {}
-      const topTags = map(items, (v, k) => [k, v])
+      const topTags = Object.entries(items).map(([k, v]) => [k, v])
       return {
         ...state,
         loadingTopTags: false,

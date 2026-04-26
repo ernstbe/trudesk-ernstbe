@@ -14,8 +14,6 @@
 
 import React, { useRef, useEffect, useCallback, useImperativeHandle } from 'react'
 import PropTypes from 'prop-types'
-import { each } from 'lodash'
-
 import $ from 'jquery'
 import helpers from 'lib/helpers'
 
@@ -58,7 +56,7 @@ const MultiSelect = ({
     const $select = $(selectRef.current)
     if (!helpers.arrayIsEqual(prevItems, items)) {
       $select.empty().multiSelect('refresh')
-      each(items, i => {
+      items.forEach(i => {
         $select.append(`<option value='${i.value}'>${i.text}</option>`)
       })
 
