@@ -115,23 +115,20 @@ commonV1.logout = function (req, res) {
   const deviceToken = req.headers.devicetoken
   const user = req.user
 
-  async.series(
-    [
-      function (callback) {
-        if (!deviceToken) return callback()
-        user.removeDeviceToken(deviceToken, 1, function (err) {
-          if (err) return callback(err)
-
-          callback()
-        })
-      }
-    ],
-    function (err) {
-      if (err) return res.status(400).json({ success: false, error: err.message })
-
-      return res.status(200).json({ success: true })
+  // Gracefully handle the device-token cleanup. The previous implementation
+  // called `user.removeDeviceToken(...)` but the User schema doesn't define
+  // that method (and there are no device-token fields), so any mobile client
+  // that sent a `devicetoken` header got a 400 instead of a clean logout.
+  // Until push-notification support is actually implemented we just no-op.
+  if (deviceToken && typeof user?.removeDeviceToken === 'function') {
+    try {
+      user.removeDeviceToken(deviceToken, 1, function () { /* fire-and-forget */ })
+    } catch (e) {
+      // Fall through — the session destruction by Passport happens elsewhere.
     }
-  )
+  }
+
+  return res.status(200).json({ success: true })
 }
 
 commonV1.privacyPolicy = async (req, res) => {

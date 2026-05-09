@@ -21,10 +21,20 @@ const apiGroups = {}
 
 apiGroups.create = async function (req, res) {
   const postGroup = req.body
-  if (!postGroup) return apiUtils.sendApiError_InvalidPostData(res)
+  if (!postGroup || !postGroup.name) return apiUtils.sendApiError_InvalidPostData(res)
 
   try {
-    let group = await Group.create(postGroup)
+    // Whitelist the fields we actually accept from the client. Forwarding the
+    // entire request body to Mongoose was a defence-in-depth gap — today the
+    // Group schema has no privileged fields, but any future addition would
+    // become silently writable by every caller with `groups:create`.
+    const allowed = {
+      name: postGroup.name,
+      members: Array.isArray(postGroup.members) ? postGroup.members : [],
+      sendMailTo: Array.isArray(postGroup.sendMailTo) ? postGroup.sendMailTo : [],
+      public: postGroup.public === true
+    }
+    let group = await Group.create(allowed)
     group = await group.populate('members sendMailTo')
     return apiUtils.sendApiSuccess(res, { group })
   } catch (err) {

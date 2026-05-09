@@ -287,7 +287,7 @@ mainController.forgotPass = async function (req, res) {
   try {
     const user = await userSchema.getUserByEmail(emailAddr)
 
-    if (user === undefined || (typeof user === 'object' && user !== null && Object.keys(user).length === 0)) {
+    if (!user) {
       req.flash('Invalid Email: Account not found!')
       return res.status(400).send('Invalid Email: Account not found!')
     }
@@ -393,7 +393,7 @@ mainController.resetl2auth = async function (req, res) {
   try {
     const user = await userSchema.getUserByL2ResetHash(hash)
 
-    if (user === undefined || (typeof user === 'object' && user !== null && Object.keys(user).length === 0)) {
+    if (!user) {
       return res.status(400).send('Invalid Link!')
     }
 
@@ -460,7 +460,7 @@ mainController.resetPass = async function (req, res) {
   try {
     const user = await userSchema.getUserByResetHash(hash)
 
-    if (user === undefined || (typeof user === 'object' && user !== null && Object.keys(user).length === 0)) {
+    if (!user) {
       return res.status(400).send('Invalid Link!')
     }
 

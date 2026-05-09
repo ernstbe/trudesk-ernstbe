@@ -163,17 +163,22 @@ events.onImportJSON = function (socket) {
         password: 'Password1!'
       })
 
-      if (cu.role !== undefined) {
-        user.role = cu.role
-      } else {
-        user.role = 'user'
-      }
-
       if (cu.title !== undefined) {
         user.title = cu.title
       }
 
       try {
+        // Role is an ObjectId ref — resolve the supplied name (or default 'user')
+        // against the roles collection. The previous code assigned the literal
+        // string to user.role which threw a CastError on save and aborted every
+        // JSON-imported account without an explicit role _id.
+        const normalizedRole = (cu.role !== undefined && cu.role !== null && cu.role !== '')
+          ? String(cu.role).toLowerCase()
+          : 'user'
+        const role = await Role.findOne({ normalized: normalizedRole })
+        if (!role) throw new Error('Invalid Role: ' + normalizedRole)
+        user.role = role._id
+
         await user.save()
         completedCount++
         // Send update

@@ -412,7 +412,7 @@ accountsApi.disableMFA = async (req, res) => {
   if (!payload.confirmPassword) return apiUtil.sendApiError(res, 400, 'Invalid Credentials')
 
   try {
-    let user = await User.findOne({ _id: req.user }, '+password')
+    let user = await User.findOne({ _id: req.user._id }, '+password')
     if (!user) return apiUtil.sendApiError(res, 400, 'Invalid Account')
 
     if (!User.validate(payload.confirmPassword, user.password)) { return apiUtil.sendApiError(res, 400, 'Invalid Credentials') }

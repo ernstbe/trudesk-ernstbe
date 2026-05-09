@@ -217,14 +217,22 @@ accountsController.bindLdap = function (req, res) {
             })
 
             if (u) {
-              let clonedUser = foundUsers.find(function (g) {
+              // Mutate the entry in foundUsers in place. The previous code did
+              // `clonedUser = { ...clonedUser }` which only rebound a local
+              // variable — the array entry was never updated, so AD changes
+              // (renames, email updates) silently never reached the import step.
+              const idx = foundUsers.findIndex(function (g) {
                 return g.username.toLowerCase() === u.sAMAccountName.toLowerCase()
               })
-              if (clonedUser) {
-                clonedUser = { ...clonedUser }
-                clonedUser.fullname = u.displayName
-                clonedUser.email = u.mail
-                clonedUser.title = u.title
+              if (idx !== -1) {
+                const existing = foundUsers[idx]
+                const base = typeof existing.toObject === 'function' ? existing.toObject() : existing
+                foundUsers[idx] = {
+                  ...base,
+                  fullname: u.displayName,
+                  email: u.mail,
+                  title: u.title
+                }
               }
             }
 
