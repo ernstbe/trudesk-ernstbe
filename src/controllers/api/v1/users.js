@@ -902,7 +902,7 @@ apiUsers.checkEmail = async function (req, res) {
   try {
     const users = await UserSchema.getUserByEmail(email)
 
-    if (NOTNULL(users)) {
+    if (users) {
       return res.json({ success: true, exist: true })
     }
 
