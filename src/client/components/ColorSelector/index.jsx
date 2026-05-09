@@ -12,7 +12,7 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef, useCallback, forwardRef, useImperativeHandle } from 'react'
 import PropTypes from 'prop-types'
 import $ from 'jquery'
 import helpers from 'lib/helpers'
@@ -38,7 +38,7 @@ function getContrast (hexcolor) {
   return yiq >= 128 ? '#444' : '#f7f8fa'
 }
 
-const ColorSelector = ({
+const ColorSelector = forwardRef(({
   inputName,
   defaultColor = '#878982',
   showLabel = true,
@@ -46,7 +46,7 @@ const ColorSelector = ({
   parentClass,
   onChange,
   validationEnabled = false
-}) => {
+}, ref) => {
   const [selectedColor, setSelectedColor] = useState('')
   const colorButtonRef = useRef(null)
 
@@ -56,6 +56,30 @@ const ColorSelector = ({
       $(colorButtonRef.current).css({ background: color, color: fgColor })
     }
   }, [])
+
+  // Expose a class-component-shaped imperative handle so the existing parent
+  // (Settings/Appearance) which still calls `ref.current.setState({...}, ref.current.updateColorButton)`
+  // and reads `ref.current.state.selectedColor` keeps working without having to
+  // refactor the parent. The class API was removed when this file was migrated
+  // to hooks; the parent's calls silently failed (TypeError on setState), which
+  // is why the built-in colour-scheme dropdown had no visible effect.
+  useImperativeHandle(ref, () => ({
+    get state () {
+      return { selectedColor }
+    },
+    setState (update /* cb intentionally ignored — see note */) {
+      if (update && update.selectedColor !== undefined) {
+        setSelectedColor(update.selectedColor)
+        // Drive the colour-button visual update directly with the new value.
+        // We deliberately do NOT call the second-arg callback the parent passes
+        // (ref.current.updateColorButton): that handle was captured *before* this
+        // setState, so its closure still sees the old selectedColor and would
+        // overwrite the update we just performed with the previous colour.
+        updateColorButton(update.selectedColor)
+      }
+    },
+    updateColorButton: () => updateColorButton(selectedColor)
+  }), [selectedColor, updateColorButton])
 
   useEffect(() => {
     helpers.UI.inputs()
@@ -146,7 +170,9 @@ const ColorSelector = ({
       )}
     </div>
   )
-}
+})
+
+ColorSelector.displayName = 'ColorSelector'
 
 ColorSelector.propTypes = {
   inputName: PropTypes.string,

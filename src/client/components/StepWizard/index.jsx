@@ -342,4 +342,8 @@ const mapStateToProps = state => ({
   socket: state.shared.socket
 })
 
-export default connect(mapStateToProps, {})(StepWizard)
+// `forwardRef: true` lets parents (e.g. AccountsImport) call `ref.current.show()`
+// and `.hide()` on the underlying class instance through the connect HOC.
+// Without this, ref.current would point at the connect wrapper, breaking the
+// click handlers that select the import wizard.
+export default connect(mapStateToProps, {}, null, { forwardRef: true })(StepWizard)
