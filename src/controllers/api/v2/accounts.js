@@ -325,7 +325,10 @@ accountsApi.saveProfile = async (req, res) => {
   const payload = req.body
   const user = req.user
 
-  if (payload.username !== user.username || payload._id.toString() !== user._id.toString()) { return apiUtil.sendApiError(res, 400, 'Invalid User Account') }
+  if (
+    (payload.username || '').toLowerCase() !== (user.username || '').toLowerCase() ||
+    payload._id.toString() !== user._id.toString()
+  ) { return apiUtil.sendApiError(res, 400, 'Invalid User Account') }
 
   try {
     let dbUser = await User.findOne({ _id: payload._id })
@@ -352,7 +355,10 @@ accountsApi.generateMFA = async (req, res) => {
   const payload = req.body
   const user = req.user
 
-  if (payload.username !== user.username || payload._id.toString() !== user._id.toString()) { return apiUtil.sendApiError(res, 400, 'Invalid User Account') }
+  if (
+    (payload.username || '').toLowerCase() !== (user.username || '').toLowerCase() ||
+    payload._id.toString() !== user._id.toString()
+  ) { return apiUtil.sendApiError(res, 400, 'Invalid User Account') }
 
   try {
     const dbUser = await User.findOne({ _id: payload._id })
