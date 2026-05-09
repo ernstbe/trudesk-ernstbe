@@ -226,8 +226,11 @@ apiUsers.createPublicAccount = async function (req, res) {
   if (!(typeof postData === 'object' && postData !== null)) return res.status(400).json({ success: false, error: 'Invalid Post Data' })
 
   try {
+    // Same pitfall as allowPublicTickets: the previous `!doc` check only blocked the
+    // first-ever attempt. Once an admin had touched the toggle in the UI, the doc
+    // existed with value=false and this check silently passed.
     const allowUserRegistration = await SettingSchema.getSetting('allowUserRegistration:enable')
-    if (!allowUserRegistration) {
+    if (!allowUserRegistration || allowUserRegistration.value !== true) {
       winston.warn('Public account creation was attempted while disabled!')
       throw new Error('Public account creation is disabled.')
     }

@@ -483,8 +483,12 @@ apiTickets.createPublicTicket = async function (req, res) {
   const settingSchema = require('../../../models/setting')
 
   try {
+    // getSetting returns the Setting document (or null when never configured).
+    // The previous `!doc` check only blocked when the toggle had never been touched —
+    // an admin disabling it via the UI saves a doc with value=false, which would still
+    // be truthy and let public-ticket creation through.
     const allowPublicTickets = await settingSchema.getSetting('allowPublicTickets:enable')
-    if (!allowPublicTickets) {
+    if (!allowPublicTickets || allowPublicTickets.value !== true) {
       winston.warn('Public ticket creation attempted while disabled!')
       throw new Error('Public ticket creation is disabled!')
     }
