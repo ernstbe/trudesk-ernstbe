@@ -12,16 +12,12 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-import React, { useRef, useEffect, useCallback, useImperativeHandle } from 'react'
+import React, { useRef, useEffect, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import $ from 'jquery'
 
 import helpers from 'lib/helpers'
 
-// Shim note: callers from the pre-hooks era (CreateTicketModal, FilterTicketsModal)
-// read `selectRef.current.value` directly as if this were a native <select>. After
-// the class-to-hooks migration ref forwarding was lost, so we re-expose the current
-// value via useImperativeHandle to keep those parents working without rewriting them.
 const SingleSelect = ({
   width,
   items,
@@ -29,8 +25,7 @@ const SingleSelect = ({
   showTextbox = true,
   defaultValue,
   disabled = false,
-  onSelectChange,
-  ref
+  onSelectChange
 }) => {
   const selectRef = useRef(null)
   const valueRef = useRef(defaultValue || '')
@@ -95,18 +90,6 @@ const SingleSelect = ({
     updateSelectizeItems()
   }, [defaultValue, items, disabled, updateSelectizeItems])
 
-  // Expose the current selection to parents via ref. Mirrors the legacy class API
-  // where `ref.current.value` returned the selected option(s).
-  useImperativeHandle(ref, () => ({
-    get value () {
-      // For multi-select, prefer selectize's authoritative items list; fall back to valueRef.
-      if (multiple && selectRef.current && selectRef.current.selectize) {
-        return selectRef.current.selectize.items || []
-      }
-      return valueRef.current
-    }
-  }), [multiple])
-
   let displayWidth = '100%'
   if (width) displayWidth = width
 
@@ -131,8 +114,6 @@ const SingleSelect = ({
     </div>
   )
 }
-
-SingleSelect.displayName = 'SingleSelect'
 
 SingleSelect.propTypes = {
   width: PropTypes.string,
