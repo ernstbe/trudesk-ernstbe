@@ -113,7 +113,10 @@ apiMessages.get = async function (req, res) {
 apiMessages.startConversation = async function (req, res) {
   try {
     const payload = req.body
-    const requester = payload.owner
+    // requester is always the authenticated session user — never accept it from the
+    // request body (otherwise any authenticated caller could start a conversation
+    // attributed to another user).
+    const requester = req.user._id
     const participants = payload.participants
 
     // Check if Conversation with these participants exist
@@ -164,7 +167,9 @@ apiMessages.send = async function (req, res) {
   try {
     const payload = req.body
     const cId = payload.cId
-    const owner = payload.owner
+    // Owner is always the authenticated user — payload.owner used to be trusted, which
+    // allowed authenticated callers to send chat messages attributed to anyone.
+    const owner = req.user._id
     let message = payload.body
     const matches = message.match(/^[Tt]#[0-9]*$/g)
 

@@ -883,7 +883,10 @@ apiTickets.delete = async function (req, res) {
 apiTickets.postComment = async function (req, res) {
   const commentJson = req.body
   let comment = commentJson.comment
-  const owner = commentJson.ownerId || req.user._id
+  // Always derive ownership from the authenticated session — never trust client-supplied ownerId.
+  // Previously a `commentJson.ownerId || req.user._id` fallback let any authenticated caller
+  // post a comment (and matching history entry) attributed to an arbitrary user.
+  const owner = req.user._id
   const ticketId = commentJson._id
 
   if (ticketId === undefined) return res.status(400).json({ success: false, error: 'Invalid Post Data' })

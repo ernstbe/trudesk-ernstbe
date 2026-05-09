@@ -234,179 +234,106 @@ mailCheck.fetchMail = function () {
   }
 }
 
-function handleMessages (messages, done) {
-  let count = 0
-  messages.forEach(function (message) {
-    if (
-      message.from !== undefined &&
-      message.from.length > 0 &&
-      message.subject !== undefined &&
-      message.subject.length > 0 &&
-      message.body !== undefined &&
-      message.body.length > 0
-    ) {
-      async.auto(
-        {
-          handleUser: function (callback) {
-            userSchema.getUserByEmail(message.from, function (err, user) {
-              if (err) winston.warn(err)
-              if (!err && user) {
-                message.owner = user
-                return callback(null, user)
-              }
-
-              // User doesn't exist. Lets create public user... If we want too
-              if (mailCheck.fetchMailOptions.createAccount) {
-                userSchema.createUserFromEmail(message.from, function (err, response) {
-                  if (err) return callback(err)
-
-                  message.owner = response.user
-                  message.group = response.group
-
-                  return callback(null, response)
-                })
-              } else {
-                return callback(new Error('No User found.'))
-              }
-            })
-          },
-          handleGroup: [
-            'handleUser',
-            function (results, callback) {
-              if (message.group !== undefined) {
-                return callback()
-              }
-
-              groupSchema.getAllGroupsOfUser(message.owner._id, function (err, group) {
-                if (err) return callback(err)
-                if (!group) return callback(new Error('Unknown group for user: ' + message.owner.email))
-
-                if (Array.isArray(group)) {
-                  message.group = group[0]
-                } else {
-                  message.group = group
-                }
-
-                if (!message.group) {
-                  groupSchema.create(
-                    {
-                      name: message.owner.email,
-                      members: [message.owner._id],
-                      sendMailTo: [message.owner._id],
-                      public: true
-                    },
-                    function (err, group) {
-                      if (err) return callback(err)
-                      message.group = group
-                      return callback(null, group)
-                    }
-                  )
-                } else {
-                  return callback(null, group)
-                }
-              })
-            }
-          ],
-          handleTicketType: function (callback) {
-            if (mailCheck.fetchMailOptions.defaultTicketType === 'Issue') {
-              ticketTypeSchema.getTypeByName('Issue', function (err, type) {
-                if (err) return callback(err)
-
-                mailCheck.fetchMailOptions.defaultTicketType = type._id
-                message.type = type
-
-                return callback(null, type)
-              })
-            } else {
-              ticketTypeSchema.getType(mailCheck.fetchMailOptions.defaultTicketType, function (err, type) {
-                if (err) return callback(err)
-
-                message.type = type
-
-                return callback(null, type)
-              })
-            }
-          },
-          handlePriority: [
-            'handleTicketType',
-            function (result, callback) {
-              const type = result.handleTicketType
-
-              if (mailCheck.fetchMailOptions.defaultPriority !== '') {
-                return callback(null, mailCheck.fetchMailOptions.defaultPriority)
-              }
-
-              const firstPriority = type.priorities[0]
-              if (firstPriority !== undefined) {
-                mailCheck.fetchMailOptions.defaultPriority = firstPriority._id
-              } else {
-                return callback(new Error('Invalid default priority'))
-              }
-
-              return callback(null, firstPriority._id)
-            }
-          ],
-          handleStatus: function (callback) {
-            statusSchema.getStatus(function (err, statuses) {
-              if (err) return callback(err)
-
-              const status = statuses[0]
-
-              if (!status) return callback(new Error('Invalid status'))
-
-              message.status = status._id
-
-              return callback(null, status._id)
-            })
-          },
-          handleCreateTicket: [
-            'handleGroup',
-            'handlePriority',
-            'handleStatus',
-            function (results, callback) {
-              const HistoryItem = {
-                action: 'ticket:created',
-                description: 'Ticket was created.',
-                owner: message.owner._id
-              }
-
-              Ticket.create(
-                {
-                  owner: message.owner._id,
-                  group: message.group._id,
-                  type: message.type._id,
-                  status: results.handleStatus,
-                  priority: results.handlePriority,
-                  subject: message.subject,
-                  issue: message.body,
-                  history: [HistoryItem]
-                },
-                function (err, ticket) {
-                  if (err) {
-                    winston.warn('Failed to create ticket from email: ' + err)
-                    return callback(err)
-                  }
-
-                  emitter.emit('ticket:created', {
-                    socketId: '',
-                    ticket
-                  })
-
-                  count++
-                  return callback()
-                }
-              )
-            }
-          ]
-        },
-        function (err) {
-          winston.debug('Created %s tickets from mail', count)
-          if (err) winston.warn(err)
-          return done(err)
-        }
-      )
+async function processMessage (message) {
+  // Resolve owner: existing user or auto-create one if configured.
+  let user = await userSchema.getUserByEmail(message.from)
+  if (!user) {
+    if (!mailCheck.fetchMailOptions.createAccount) {
+      throw new Error('No User found.')
     }
+    const response = await userSchema.createUserFromEmail(message.from)
+    user = response.user
+    message.group = response.group
+  }
+  message.owner = user
+
+  // Resolve group: use the user's first group, or auto-create a personal one.
+  if (!message.group) {
+    const groups = await groupSchema.getAllGroupsOfUser(message.owner._id)
+    let group = Array.isArray(groups) ? groups[0] : groups
+    if (!group) {
+      group = await groupSchema.create({
+        name: message.owner.email,
+        members: [message.owner._id],
+        sendMailTo: [message.owner._id],
+        public: true
+      })
+    }
+    message.group = group
+  }
+
+  // Resolve ticket type: lazy-resolve "Issue" name to its _id, then cache the _id on options.
+  let type
+  if (mailCheck.fetchMailOptions.defaultTicketType === 'Issue') {
+    type = await ticketTypeSchema.getTypeByName('Issue')
+    if (!type) throw new Error('Invalid default ticket type: Issue')
+    mailCheck.fetchMailOptions.defaultTicketType = type._id
+  } else {
+    type = await ticketTypeSchema.getType(mailCheck.fetchMailOptions.defaultTicketType)
+    if (!type) throw new Error('Invalid default ticket type')
+  }
+  message.type = type
+
+  // Resolve priority: use configured default, otherwise first priority of the type.
+  let priorityId = mailCheck.fetchMailOptions.defaultPriority
+  if (!priorityId) {
+    const firstPriority = type.priorities && type.priorities[0]
+    if (!firstPriority) throw new Error('Invalid default priority')
+    priorityId = firstPriority._id
+    mailCheck.fetchMailOptions.defaultPriority = priorityId
+  }
+
+  // Resolve status: first status by sort order.
+  const statuses = await statusSchema.getStatus()
+  const status = statuses && statuses[0]
+  if (!status) throw new Error('Invalid status')
+  message.status = status._id
+
+  // Create the ticket.
+  const HistoryItem = {
+    action: 'ticket:created',
+    description: 'Ticket was created.',
+    owner: message.owner._id
+  }
+
+  const ticket = await Ticket.create({
+    owner: message.owner._id,
+    group: message.group._id,
+    type: message.type._id,
+    status: message.status,
+    priority: priorityId,
+    subject: message.subject,
+    issue: message.body,
+    history: [HistoryItem]
   })
+
+  emitter.emit('ticket:created', { socketId: '', ticket })
+  return ticket
+}
+
+async function handleMessages (messages, done) {
+  let count = 0
+  let firstErr = null
+
+  for (const message of messages) {
+    if (
+      !message.from || !message.from.length ||
+      !message.subject || !message.subject.length ||
+      !message.body || !message.body.length
+    ) continue
+
+    try {
+      await processMessage(message)
+      count++
+    } catch (err) {
+      // Don't let one bad message abort the whole batch.
+      winston.warn('Failed to create ticket from email: ' + (err && err.message ? err.message : err))
+      if (!firstErr) firstErr = err
+    }
+  }
+
+  winston.debug('Created %s tickets from mail', count)
+  if (typeof done === 'function') return done(firstErr)
 }
 
 function openInbox (cb) {
