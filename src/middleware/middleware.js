@@ -99,7 +99,8 @@ middleware.redirectIfUser = function (req, res, next) {
 middleware.ensurel2Auth = function (req, res, next) {
   if (req.session.l2auth === 'totp') {
     if (req.user) {
-      if (req.user.role !== 'user') {
+      // role is a populated Role document with virtuals — string compare against 'user' never matches.
+      if (req.user.role && (req.user.role.isAdmin || req.user.role.isAgent)) {
         return res.redirect('/dashboard')
       }
 

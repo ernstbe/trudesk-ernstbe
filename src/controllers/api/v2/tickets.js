@@ -26,8 +26,9 @@ const { getDeadlineStatus } = require('../../../helpers/deadlineHelper')
 const ticketsV2 = {}
 
 ticketsV2.create = function (req, res) {
-  const postTicket = req.body
-  if (!postTicket) return apiUtils.sendApiError_InvalidPostData(res)
+  // TODO: implement v2 ticket creation; mirror v1 createTicket flow.
+  // Until then return 501 instead of letting the request hang forever.
+  return apiUtils.sendApiError(res, 501, 'Not Implemented: use POST /api/v1/tickets/create')
 }
 
 ticketsV2.get = async (req, res) => {

@@ -958,7 +958,7 @@ apiUsers.getGroups = async function (req, res) {
 
       return res.json({ success: true, groups: mappedGroups })
     } else {
-      if (req.user.username !== req.params.username) { return res.status(400).json({ success: false, error: 'Invalid API Call' }) }
+      if ((req.user.username || '').toLowerCase() !== (req.params.username || '').toLowerCase()) { return res.status(400).json({ success: false, error: 'Invalid API Call' }) }
 
       const groups = await groupSchema.getAllGroupsOfUserNoPopulate(req.user._id)
 

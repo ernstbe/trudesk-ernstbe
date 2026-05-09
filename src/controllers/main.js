@@ -153,7 +153,9 @@ mainController.loginPost = async function (req, res, next) {
           req.session.redirectUrl = null
         }
 
-        if (req.user.role === 'user') {
+        // Non-admin/non-agent users land on the ticket list; agents and admins go to the dashboard.
+        // role is a populated Role document with virtuals — string compare against 'user' never matches.
+        if (req.user.role && !req.user.role.isAdmin && !req.user.role.isAgent) {
           redirectUrl = '/tickets'
         }
 

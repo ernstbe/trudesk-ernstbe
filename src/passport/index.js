@@ -45,7 +45,9 @@ module.exports = function () {
       },
       async function (req, username, password, done) {
         try {
-          const user = await User.findOne({ username: new RegExp('^' + username.trim() + '$', 'i') })
+          // Schema enforces lowercase usernames on save, so a plain lowercased exact match is correct.
+          // Avoid building a RegExp from user input — that allowed `.*` style enumeration / ReDoS.
+          const user = await User.findOne({ username: username.trim().toLowerCase() })
             .select('+password +tOTPKey +tOTPPeriod')
 
           if (!user || user.deleted || !User.validate(password, user.password)) {

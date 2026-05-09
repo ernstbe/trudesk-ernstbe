@@ -261,8 +261,9 @@ userSchema.statics.getUserByUsername = async function (user) {
     throw new Error('Invalid Username - UserSchema.GetUserByUsername()')
   }
 
+  // username is stored lowercase via schema option — exact match is correct and avoids regex injection.
   return this.model(COLLECTION)
-    .findOne({ username: new RegExp('^' + user + '$', 'i') })
+    .findOne({ username: String(user).toLowerCase() })
     .select('+password +accessToken')
     .exec()
 }

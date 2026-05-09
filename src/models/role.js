@@ -86,7 +86,8 @@ roleSchema.statics.getRole = async function (id) {
 }
 
 roleSchema.statics.getRoleByName = async function (name) {
-  const q = this.model(COLLECTION).findOne({ normalized: new RegExp('^' + name.trim() + '$', 'i') })
+  // normalized is stored lowercase — exact match avoids regex injection.
+  const q = this.model(COLLECTION).findOne({ normalized: String(name).trim().toLowerCase() })
 
   return q.exec()
 }
