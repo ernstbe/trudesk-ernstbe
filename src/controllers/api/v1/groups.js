@@ -207,22 +207,24 @@ apiGroups.updateGroup = async function (req, res) {
   const data = req.body
   if (id === undefined || data === undefined || !(typeof data === 'object' && data !== null)) { return res.status(400).json({ error: 'Invalid Post Data' }) }
 
-  if (!Array.isArray(data.members)) {
-    data.members = [data.members]
-  }
-  if (!Array.isArray(data.sendMailTo)) {
-    data.sendMailTo = [data.sendMailTo]
-  }
-
   try {
     const group = await GroupSchema.getGroupById(id)
 
-    const members = data.members.filter(Boolean)
-    const sendMailTo = data.sendMailTo.filter(Boolean)
+    // Only update fields that are explicitly provided. Previously members and
+    // sendMailTo were ALWAYS overwritten — even when the client only sent a
+    // name change. Undefined fields became [undefined], filtered to [], wiping
+    // all group membership.
+    if (data.name !== undefined) group.name = data.name
 
-    group.name = data.name
-    group.members = members
-    group.sendMailTo = sendMailTo
+    if (data.members !== undefined) {
+      const members = Array.isArray(data.members) ? data.members : [data.members]
+      group.members = members.filter(Boolean)
+    }
+
+    if (data.sendMailTo !== undefined) {
+      const sendMailTo = Array.isArray(data.sendMailTo) ? data.sendMailTo : [data.sendMailTo]
+      group.sendMailTo = sendMailTo.filter(Boolean)
+    }
 
     const savedGroup = await group.save()
     return res.json({ success: true, group: savedGroup })
