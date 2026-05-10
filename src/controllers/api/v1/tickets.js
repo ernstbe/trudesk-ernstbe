@@ -711,12 +711,15 @@ apiTickets.update = async function (req, res) {
       }
 
       if (reqTicket.assignee !== undefined && reqTicket.assignee !== null) {
-        ticket.assignee = reqTicket.assignee
-        const t = await ticket.populate('assignee')
+        ticket.assignee = reqTicket.assignee._id || reqTicket.assignee
+        await ticket.populate('assignee')
 
+        const assigneeName = ticket.assignee && ticket.assignee.fullname
+          ? ticket.assignee.fullname
+          : 'Unknown'
         const HistoryItem = {
           action: 'ticket:set:assignee',
-          description: t.assignee.fullname + ' was set as assignee',
+          description: assigneeName + ' was set as assignee',
           owner: req.user._id
         }
 
