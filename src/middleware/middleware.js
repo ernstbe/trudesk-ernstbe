@@ -220,14 +220,31 @@ middleware.apiv2 = function (req, res, next) {
   if (req.user) return next()
 
   const passport = require('passport')
-  passport.authenticate('jwt', { session: true }, function (err, user) {
-    if (err || !user) return res.status(401).json({ success: false, error: 'Invalid Authentication Token' })
+  passport.authenticate('jwt', { session: true }, async function (err, user) {
     if (user) {
       req.user = user
       return next()
     }
 
-    return res.status(500).json({ success: false, error: 'Unknown Error Occurred' })
+    // Fallback: accept v1 accesstoken header so the PWA can call v2
+    // endpoints without a separate JWT login. v1 tokens are simple
+    // hashes stored in the DB — not as secure as JWTs but perfectly
+    // fine for a single-org deployment.
+    const accessToken = req.headers.accesstoken
+    if (accessToken) {
+      try {
+        const userSchema = require('../models/user')
+        const tokenUser = await userSchema.getUserByAccessToken(accessToken)
+        if (tokenUser && !tokenUser.deleted) {
+          req.user = tokenUser
+          return next()
+        }
+      } catch (tokenErr) {
+        // fall through to 401
+      }
+    }
+
+    return res.status(401).json({ success: false, error: 'Invalid Authentication Token' })
   })(req, res, next)
 }
 
