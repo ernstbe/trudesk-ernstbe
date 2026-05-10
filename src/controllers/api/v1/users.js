@@ -284,6 +284,11 @@ apiUsers.createPublicAccount = async function (req, res) {
 
     const savedUser = await user.save()
 
+    // Generate an API access token so the user can immediately log in via
+    // the API (PWA, mobile). Without this, POST /api/v1/login returns
+    // "No API Key assigned to this User." even though credentials are valid.
+    await savedUser.addAccessToken()
+
     const GroupSchema = require('../../../models/group')
     const group = new GroupSchema({
       name: savedUser.email,
