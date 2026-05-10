@@ -25,10 +25,61 @@ const { getDeadlineStatus } = require('../../../helpers/deadlineHelper')
 
 const ticketsV2 = {}
 
-ticketsV2.create = function (req, res) {
-  // TODO: implement v2 ticket creation; mirror v1 createTicket flow.
-  // Until then return 501 instead of letting the request hang forever.
-  return apiUtils.sendApiError(res, 501, 'Not Implemented: use POST /api/v1/tickets/create')
+ticketsV2.create = async function (req, res) {
+  const postData = req.body && req.body.ticket ? req.body.ticket : req.body
+  if (!postData || !postData.subject) {
+    return apiUtils.sendApiError(res, 400, 'Invalid Post Data: subject is required')
+  }
+
+  try {
+    const user = await Models.User.findOne({ _id: req.user._id })
+    if (!user || user.deleted) return apiUtils.sendApiError(res, 400, 'Invalid User')
+
+    const status = await ticketStatusSchema.findOne({ order: 0 })
+    if (!status) return apiUtils.sendApiError(res, 500, 'No default ticket status configured')
+
+    if (postData.tags !== undefined && postData.tags !== null && !Array.isArray(postData.tags)) {
+      postData.tags = [postData.tags]
+    }
+
+    const TicketSchema = Models.Ticket.schema ? Models.Ticket : require('../../../models/ticket')
+    const ticket = new TicketSchema(postData)
+
+    // Always use the authenticated user as owner (prevent IDOR)
+    ticket.owner = req.user._id
+    ticket.status = status._id
+
+    ticket.subject = sanitizeHtml(ticket.subject).trim()
+    if (ticket.issue) {
+      let tIssue = ticket.issue
+      tIssue = tIssue.replace(/(\r\n|\n\r|\r|\n)/g, '<br>')
+      tIssue = sanitizeHtml(tIssue).trim()
+      ticket.issue = xss(marked.parse(tIssue))
+    }
+
+    ticket.history = [
+      {
+        action: 'ticket:created',
+        description: 'Ticket was created.',
+        owner: req.user._id
+      }
+    ]
+    ticket.subscribers = [user._id]
+
+    const saved = await ticket.save()
+    const populated = await saved.populate('group owner priority')
+
+    emitter.emit('ticket:created', {
+      hostname: req.headers.host,
+      socketId: postData.socketId || '',
+      ticket: populated
+    })
+
+    return apiUtils.sendApiSuccess(res, { ticket: populated })
+  } catch (err) {
+    logger.warn(err)
+    return apiUtils.sendApiError(res, 500, err.message || err)
+  }
 }
 
 ticketsV2.get = async (req, res) => {
