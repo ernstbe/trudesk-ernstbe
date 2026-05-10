@@ -112,9 +112,9 @@ module.exports = function (middleware, router, controllers) {
   // Ticket Templates
   router.get('/api/v2/ticket-templates', apiv2Auth, isAgentOrAdmin, apiv2.ticketTemplates.get)
   router.get('/api/v2/ticket-templates/:id', apiv2Auth, isAgentOrAdmin, apiv2.ticketTemplates.single)
-  router.post('/api/v2/ticket-templates', apiv2Auth, isAdmin, apiv2.ticketTemplates.create)
-  router.put('/api/v2/ticket-templates/:id', apiv2Auth, isAdmin, apiv2.ticketTemplates.update)
-  router.delete('/api/v2/ticket-templates/:id', apiv2Auth, isAdmin, apiv2.ticketTemplates.delete)
+  router.post('/api/v2/ticket-templates', apiv2Auth, isAgentOrAdmin, apiv2.ticketTemplates.create)
+  router.put('/api/v2/ticket-templates/:id', apiv2Auth, isAgentOrAdmin, apiv2.ticketTemplates.update)
+  router.delete('/api/v2/ticket-templates/:id', apiv2Auth, isAgentOrAdmin, apiv2.ticketTemplates.delete)
 
   // Assets
   router.get('/api/v2/assets', apiv2Auth, isAgentOrAdmin, apiv2.assets.get)
