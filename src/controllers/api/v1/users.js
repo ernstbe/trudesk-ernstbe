@@ -248,8 +248,34 @@ apiUsers.createPublicAccount = async function (req, res) {
     }
 
     const LocalUserSchema = require('../../../models/user')
+
+    // Accept an explicit username from the form (preferred), fall back to email
+    // for clients that haven't been updated to ask for one. Validate format
+    // strictly so we don't end up with junk in the unique index.
+    const rawUsername = (postData.user.username || postData.user.email || '').toString().trim()
+    if (!rawUsername) throw new Error('Username is required.')
+    if (rawUsername.length < 3 || rawUsername.length > 50) {
+      throw new Error('Username must be 3–50 characters long.')
+    }
+    if (!/^[A-Za-z0-9._-]+$/.test(rawUsername) && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(rawUsername)) {
+      throw new Error('Username may only contain letters, digits, dot, dash, or underscore (or be a valid email).')
+    }
+    const normalizedUsername = rawUsername.toLowerCase()
+
+    // Pre-flight uniqueness check so we return a clean error before Mongoose throws an opaque E11000.
+    const existing = await LocalUserSchema.findOne({
+      $or: [{ username: normalizedUsername }, { email: postData.user.email.toLowerCase() }]
+    })
+    if (existing) {
+      throw new Error(
+        existing.username === normalizedUsername
+          ? 'Username already exists.'
+          : 'Email already exists.'
+      )
+    }
+
     const user = new LocalUserSchema({
-      username: postData.user.email,
+      username: normalizedUsername,
       password: postData.user.password,
       fullname: postData.user.fullname,
       email: postData.user.email,

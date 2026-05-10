@@ -415,6 +415,15 @@
         </div>
 
         <div class="field">
+            <label for="user-username">Benutzername</label>
+            <div class="input-wrap">
+                <input id="user-username" name="user-username" class="input" type="text" autocomplete="username"
+                       minlength="3" maxlength="50" pattern="[A-Za-z0-9._-]+" required />
+            </div>
+            <div class="hint" id="hint-username">3–50 Zeichen, nur Buchstaben, Zahlen, Punkt, Bindestrich oder Unterstrich.</div>
+        </div>
+
+        <div class="field">
             <label for="user-email">E-Mail-Adresse</label>
             <div class="input-wrap">
                 <input id="user-email" name="user-email" class="input" type="email" autocomplete="email" required />
@@ -572,6 +581,23 @@
                     ok ? '' : 'Mindestens 5 Zeichen.');
             });
 
+            $('#user-username').on('blur input', function () {
+                var v = ($(this).val() || '').trim();
+                if (v.length === 0) {
+                    setFieldState('#user-username', '#hint-username', null,
+                        '3–50 Zeichen, nur Buchstaben, Zahlen, Punkt, Bindestrich oder Unterstrich.');
+                    return;
+                }
+                var validLength = v.length >= 3 && v.length <= 50;
+                var validChars = /^[A-Za-z0-9._-]+$/.test(v);
+                var ok = validLength && validChars;
+                var msg;
+                if (!validLength) msg = 'Benutzername muss zwischen 3 und 50 Zeichen lang sein.';
+                else if (!validChars) msg = 'Nur Buchstaben, Zahlen, Punkt, Bindestrich oder Unterstrich erlaubt.';
+                else msg = 'Benutzername sieht gut aus.';
+                setFieldState('#user-username', '#hint-username', ok, msg);
+            });
+
             $('#user-email').on('blur input', function () {
                 var v = ($(this).val() || '').trim();
                 var ok = isValidEmail(v);
@@ -679,17 +705,21 @@
                 hideAlert();
 
                 var name = ($('#user-fullname').val() || '').trim();
+                var username = ($('#user-username').val() || '').trim();
                 var email = ($('#user-email').val() || '').trim();
                 var pw = $('#user-password').val() || '';
                 var cpw = $('#user-cPassword').val() || '';
                 var captcha = ($('#captcha').val() || '').trim();
 
                 // Trigger blur to show field errors
-                $('#user-fullname,#user-email,#user-password,#user-cPassword').trigger('blur').trigger('input');
+                $('#user-fullname,#user-username,#user-email,#user-password,#user-cPassword').trigger('blur').trigger('input');
 
                 var s = passwordStrength(pw);
                 var problems = [];
                 if (name.length < 5) problems.push('Name zu kurz');
+                if (username.length < 3 || username.length > 50 || !/^[A-Za-z0-9._-]+$/.test(username)) {
+                    problems.push('Benutzername ungültig');
+                }
                 if (!isValidEmail(email)) problems.push('E-Mail ungültig');
                 if (!s.meetsMin) problems.push('Passwort entspricht nicht den Anforderungen');
                 if (pw !== cpw) problems.push('Passwörter stimmen nicht überein');
@@ -721,7 +751,7 @@
                             return;
                         }
                         // Step 2: Create account
-                        createAccount(name, email, pw, captcha);
+                        createAccount(name, username, email, pw, captcha);
                     },
                     error: function (xhr) {
                         setLoading(false);
@@ -732,12 +762,12 @@
             });
         }
 
-        function createAccount(name, email, pw, captcha) {
+        function createAccount(name, username, email, pw, captcha) {
             $.ajax({
                 method: 'POST',
                 url: '/api/v1/public/account/create',
                 data: JSON.stringify({
-                    user: { fullname: name, email: email, password: pw },
+                    user: { fullname: name, username: username, email: email, password: pw },
                     captcha: captcha
                 }),
                 contentType: 'application/json',
@@ -792,10 +822,18 @@
                 'Invalid Origin!': 'Ungültiger Anfrage-Ursprung.',
                 'Invalid Post Data': 'Ungültige Daten gesendet.',
                 'Password does not meet minimum requirements.': 'Passwort entspricht nicht den Sicherheitsanforderungen.',
-                'Password does not minimum requirements.': 'Passwort entspricht nicht den Sicherheitsanforderungen.'
+                'Password does not minimum requirements.': 'Passwort entspricht nicht den Sicherheitsanforderungen.',
+                'Username is required.': 'Benutzername ist erforderlich.',
+                'Username must be 3–50 characters long.': 'Benutzername muss zwischen 3 und 50 Zeichen lang sein.',
+                'Username may only contain letters, digits, dot, dash, or underscore (or be a valid email).': 'Benutzername darf nur Buchstaben, Zahlen, Punkt, Bindestrich oder Unterstrich enthalten.',
+                'Username already exists.': 'Dieser Benutzername ist bereits vergeben.',
+                'Email already exists.': 'Diese E-Mail-Adresse wird bereits verwendet.'
             };
             if (map[err]) return map[err];
             // Heuristics for common patterns
+            if (/username/i.test(err) && /exist/i.test(err)) {
+                return 'Dieser Benutzername ist bereits vergeben.';
+            }
             if (/email/i.test(err) && /exist/i.test(err)) {
                 return 'Diese E-Mail-Adresse wird bereits verwendet.';
             }
