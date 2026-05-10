@@ -12,13 +12,17 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-import React, { useRef, useEffect, useCallback } from 'react'
+import React, { useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react'
 import PropTypes from 'prop-types'
 import $ from 'jquery'
 
 import helpers from 'lib/helpers'
 
-const SingleSelect = ({
+// Wrapped in forwardRef so parents (CreateTicketModal, FilterTicketsModal) can
+// read the current selection via `ref.current.value`. Pre-class-to-hooks the
+// underlying <select> ref was effectively the public API; after the migration
+// the ref pointed at nothing useful, breaking ticket creation entirely.
+const SingleSelect = forwardRef(({
   width,
   items,
   multiple = false,
@@ -26,7 +30,7 @@ const SingleSelect = ({
   defaultValue,
   disabled = false,
   onSelectChange
-}) => {
+}, ref) => {
   const selectRef = useRef(null)
   const valueRef = useRef(defaultValue || '')
 
@@ -90,6 +94,17 @@ const SingleSelect = ({
     updateSelectizeItems()
   }, [defaultValue, items, disabled, updateSelectizeItems])
 
+  // Expose `value` like a native <select>. For multi-select the authoritative
+  // current selection is selectize's internal items list.
+  useImperativeHandle(ref, () => ({
+    get value () {
+      if (multiple && selectRef.current && selectRef.current.selectize) {
+        return selectRef.current.selectize.items || []
+      }
+      return valueRef.current
+    }
+  }), [multiple])
+
   let displayWidth = '100%'
   if (width) displayWidth = width
 
@@ -113,7 +128,9 @@ const SingleSelect = ({
       </div>
     </div>
   )
-}
+})
+
+SingleSelect.displayName = 'SingleSelect'
 
 SingleSelect.propTypes = {
   width: PropTypes.string,

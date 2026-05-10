@@ -12,7 +12,7 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef, useCallback, forwardRef, useImperativeHandle } from 'react'
 import PropTypes from 'prop-types'
 import $ from 'jquery'
 import helpers from 'lib/helpers'
@@ -38,7 +38,7 @@ function getContrast (hexcolor) {
   return yiq >= 128 ? '#444' : '#f7f8fa'
 }
 
-const ColorSelector = ({
+const ColorSelector = forwardRef(({
   inputName,
   defaultColor = '#878982',
   showLabel = true,
@@ -46,7 +46,7 @@ const ColorSelector = ({
   parentClass,
   onChange,
   validationEnabled = false
-}) => {
+}, ref) => {
   const [selectedColor, setSelectedColor] = useState('')
   const colorButtonRef = useRef(null)
 
@@ -56,6 +56,28 @@ const ColorSelector = ({
       $(colorButtonRef.current).css({ background: color, color: fgColor })
     }
   }, [])
+
+  // Settings/Appearance still calls the legacy class API on this ref:
+  //   ref.current.setState({ selectedColor: ... }, ref.current.updateColorButton)
+  //   ref.current.state.selectedColor
+  // After the class-to-hooks migration those properties were lost, so the
+  // built-in colour-scheme dropdown silently failed. Expose a minimal shim
+  // via useImperativeHandle so the existing parent keeps working.
+  useImperativeHandle(ref, () => ({
+    get state () {
+      return { selectedColor }
+    },
+    setState (update /* the parent's second-arg callback is intentionally ignored */) {
+      if (update && update.selectedColor !== undefined) {
+        setSelectedColor(update.selectedColor)
+        // Drive the colour-button visual update directly with the new value;
+        // we cannot rely on the parent's callback because its closure still
+        // sees the old selectedColor.
+        updateColorButton(update.selectedColor)
+      }
+    },
+    updateColorButton: () => updateColorButton(selectedColor)
+  }), [selectedColor, updateColorButton])
 
   useEffect(() => {
     helpers.UI.inputs()
@@ -146,7 +168,9 @@ const ColorSelector = ({
       )}
     </div>
   )
-}
+})
+
+ColorSelector.displayName = 'ColorSelector'
 
 ColorSelector.propTypes = {
   inputName: PropTypes.string,
