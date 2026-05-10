@@ -153,16 +153,17 @@ function updateUsers () {
 }
 
 function updateOnlineBubbles () {
-  const sortedUserList = Object.fromEntries(
-    Object.entries(sharedVars.usersOnline).sort(function (a, b) {
-      return a[0].localeCompare(b[0])
-    })
-  )
-  const sortedIdleList = Object.fromEntries(
-    Object.entries(sharedVars.idleUsers).sort(function (a, b) {
-      return a[0].localeCompare(b[0])
-    })
-  )
+  // Send arrays, not objects. The React Avatar component calls `.some(...)`
+  // on these lists; objects don't have `.some` and threw a runtime TypeError
+  // for every connected client every time someone went online/offline.
+  // Legacy chat.js uses `_.each(list, fn)` which works on both arrays and
+  // objects, so flipping to arrays is safe for both consumers.
+  const sortedUserList = Object.entries(sharedVars.usersOnline)
+    .sort(function (a, b) { return a[0].localeCompare(b[0]) })
+    .map(function (entry) { return entry[1] })
+  const sortedIdleList = Object.entries(sharedVars.idleUsers)
+    .sort(function (a, b) { return a[0].localeCompare(b[0]) })
+    .map(function (entry) { return entry[1] })
 
   utils.sendToAllConnectedClients(io, socketEventConst.UI_ONLINE_STATUS_UPDATE, {
     sortedUserList,
