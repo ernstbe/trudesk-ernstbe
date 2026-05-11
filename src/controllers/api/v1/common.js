@@ -111,7 +111,7 @@ commonV1.getLoggedInUser = function (req, res) {
  * var token = req.headers.token;
  * var deviceToken = req.headers.devicetoken;
  */
-commonV1.logout = function (req, res) {
+commonV1.logout = async function (req, res) {
   const deviceToken = req.headers.devicetoken
   const user = req.user
 
@@ -126,6 +126,25 @@ commonV1.logout = function (req, res) {
     } catch (e) {
       // Fall through — the session destruction by Passport happens elsewhere.
     }
+  }
+
+  // Rotate the user's accessToken on explicit logout. Until this fix,
+  // `accessToken` never expired and was never invalidated — meaning a
+  // leaked localStorage entry granted permanent access. Now hitting the
+  // logout endpoint actually does what it implies: kills the current
+  // device's token.
+  //
+  // This DOES kick other devices that share the same token (since v1
+  // stores a single token per user). Clients that want to keep the token
+  // alive (e.g. the PWA's biometric-lock flow) must skip this call —
+  // see THW-Ticket-App-PWA/Services/TrueDeskApiService.cs LogoutAsync.
+  try {
+    if (user && typeof user.addAccessToken === 'function' && user.accessToken) {
+      await user.addAccessToken()
+    }
+  } catch (e) {
+    // Don't fail the logout response over a token-rotation error;
+    // the worst case is the old token stays valid.
   }
 
   return res.status(200).json({ success: true })
