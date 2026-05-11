@@ -136,4 +136,7 @@ const mapStateToProps = state => ({
   socket: state.shared.socket
 })
 
-export default connect(mapStateToProps, {})(NotificationsDropdownPartial)
+// forwardRef: true so PDropdown's useImperativeHandle receives the ref —
+// same fix as profileDropdown.jsx. Without it the bell icon click would
+// do nothing (PDropdownTrigger calls .show() which would be undefined).
+export default connect(mapStateToProps, {}, null, { forwardRef: true })(NotificationsDropdownPartial)
