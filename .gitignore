@@ -73,6 +73,9 @@ dist/
 
 .claude/*
 
+# Local curl/test artifacts
+cookies.txt
+
 # Environment files (keep .env.example only)
 .env
 

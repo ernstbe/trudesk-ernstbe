@@ -13,6 +13,7 @@
  */
 
 const packagejson = require('../../../../package')
+const rateLimits = require('../../../middleware/rateLimits')
 
 module.exports = function (middleware, router, controllers) {
   // Shorten consts
@@ -27,7 +28,7 @@ module.exports = function (middleware, router, controllers) {
   router.get('/api/v1/version', (req, res) => {
     return res.json({ version: packagejson.version })
   })
-  router.post('/api/v1/login', apiCtrl.common.login)
+  router.post('/api/v1/login', rateLimits.apiLogin, apiCtrl.common.login)
   router.get('/api/v1/login', apiv1, apiCtrl.common.getLoggedInUser)
   router.get('/api/v1/logout', apiv1, apiCtrl.common.logout)
   router.get('/api/v1/privacypolicy', apiCtrl.common.privacyPolicy)
@@ -118,9 +119,9 @@ module.exports = function (middleware, router, controllers) {
   const checkCaptcha = middleware.checkCaptcha
   const checkOrigin = middleware.checkOrigin
 
-  router.post('/api/v1/public/users/checkemail', checkCaptcha, checkOrigin, apiCtrl.users.checkEmail)
-  router.post('/api/v1/public/tickets/create', checkCaptcha, checkOrigin, apiCtrl.tickets.createPublicTicket)
-  router.post('/api/v1/public/account/create', checkCaptcha, checkOrigin, apiCtrl.users.createPublicAccount)
+  router.post('/api/v1/public/users/checkemail', rateLimits.publicRegister, checkCaptcha, checkOrigin, apiCtrl.users.checkEmail)
+  router.post('/api/v1/public/tickets/create', rateLimits.publicRegister, checkCaptcha, checkOrigin, apiCtrl.tickets.createPublicTicket)
+  router.post('/api/v1/public/account/create', rateLimits.publicRegister, checkCaptcha, checkOrigin, apiCtrl.users.createPublicAccount)
 
   // Groups
   router.get('/api/v1/groups', apiv1, apiCtrl.groups.get)

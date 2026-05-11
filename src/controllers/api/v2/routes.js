@@ -12,6 +12,8 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
+const rateLimits = require('../../../middleware/rateLimits')
+
 module.exports = function (middleware, router, controllers) {
   // Shorten Vars
   const apiv2Auth = middleware.apiv2
@@ -22,8 +24,8 @@ module.exports = function (middleware, router, controllers) {
 
   // Common
   router.get('/api/v2/login', apiv2Auth, apiv2.accounts.sessionUser)
-  router.post('/api/v2/login', controllers.api.v2.common.login)
-  router.post('/api/v2/token', controllers.api.v2.common.token)
+  router.post('/api/v2/login', rateLimits.apiLogin, controllers.api.v2.common.login)
+  router.post('/api/v2/token', rateLimits.apiLogin, controllers.api.v2.common.token)
   router.get('/api/v2/viewdata', middleware.loadCommonData, controllers.api.v2.common.viewData)
 
   // Accounts
