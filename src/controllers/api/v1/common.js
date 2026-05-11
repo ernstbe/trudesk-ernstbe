@@ -138,8 +138,14 @@ commonV1.logout = async function (req, res) {
   // stores a single token per user). Clients that want to keep the token
   // alive (e.g. the PWA's biometric-lock flow) must skip this call —
   // see THW-Ticket-App-PWA/Services/TrueDeskApiService.cs LogoutAsync.
+  // NOTE: we deliberately do NOT check user.accessToken here.
+  // getUserByAccessToken loads the User without the accessToken field
+  // (Schema declares { select: false }), so the in-memory value is
+  // always undefined — the guard would silently skip the rotation.
+  // The auth middleware already proved the token is valid before we
+  // got here.
   try {
-    if (user && typeof user.addAccessToken === 'function' && user.accessToken) {
+    if (user && typeof user.addAccessToken === 'function') {
       await user.addAccessToken()
     }
   } catch (e) {
