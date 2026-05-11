@@ -787,6 +787,47 @@ apiUsers.getNotifications = async function (req, res) {
 }
 
 /**
+ * Mark a single notification as read. The notification must belong to the
+ * authenticated user — we don't trust the id alone, otherwise any user
+ * could mark anyone's notifications read just by guessing ObjectIds.
+ */
+apiUsers.markNotificationRead = async function (req, res) {
+  try {
+    const id = req.params.id
+    if (!id) return res.status(400).json({ success: false, error: 'Missing notification id' })
+
+    const note = await notificationSchema.getNotification(id)
+    if (!note) return res.status(404).json({ success: false, error: 'Not found' })
+    if (String(note.owner) !== String(req.user._id)) return res.status(403).json({ success: false, error: 'Forbidden' })
+
+    // The model's markRead() helper doesn't persist — set the field and
+    // save explicitly. (Previously the helper set this.unread = false in
+    // memory and returned — never wrote to MongoDB. Same root cause as
+    // the PWA's mark-as-read symptom.)
+    note.unread = false
+    await note.save()
+    return res.json({ success: true })
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message })
+  }
+}
+
+/**
+ * Mark every notification belonging to the authenticated user as read.
+ */
+apiUsers.markAllNotificationsRead = async function (req, res) {
+  try {
+    const result = await notificationSchema.updateMany(
+      { owner: req.user._id, unread: true },
+      { $set: { unread: false } }
+    )
+    return res.json({ success: true, updated: result.modifiedCount ?? result.nModified ?? 0 })
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message })
+  }
+}
+
+/**
  * @api {post} /api/v1/users/:id/generateapikey Generate API Key
  * @apiName generateApiKey
  * @apiDescription Generates an API key for the given user id

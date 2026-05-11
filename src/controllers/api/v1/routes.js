@@ -137,6 +137,8 @@ module.exports = function (middleware, router, controllers) {
   router.post('/api/v1/users/create', apiv1, canUser('accounts:create'), apiCtrl.users.create)
   router.get('/api/v1/users/notifications', apiv1, apiCtrl.users.getNotifications)
   router.get('/api/v1/users/notificationCount', apiv1, apiCtrl.users.notificationCount)
+  router.post('/api/v1/users/notifications/:id/markRead', apiv1, apiCtrl.users.markNotificationRead)
+  router.post('/api/v1/users/notifications/markAllRead', apiv1, apiCtrl.users.markAllNotificationsRead)
   router.get('/api/v1/users/getassignees', apiv1, isAgentOrAdmin, apiCtrl.users.getAssingees)
   router.get('/api/v1/users/:username', apiv1, canUser('accounts:view'), apiCtrl.users.single)
   router.put('/api/v1/users/:username', apiv1, canUser('accounts:update'), apiCtrl.users.update)
