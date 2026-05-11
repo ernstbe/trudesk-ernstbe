@@ -33,6 +33,13 @@ module.exports = function (middleware, router, controllers) {
   router.get('/api/v1/logout', apiv1, apiCtrl.common.logout)
   router.get('/api/v1/privacypolicy', apiCtrl.common.privacyPolicy)
 
+  // Multi-device session management (companion to PR #51 token model).
+  // List/revoke endpoints operate on the authenticated user's own
+  // accessTokens array — no admin access to other users' sessions.
+  router.get('/api/v1/account/sessions', apiv1, apiCtrl.sessions.list)
+  router.delete('/api/v1/account/sessions', apiv1, apiCtrl.sessions.revokeOthers)
+  router.delete('/api/v1/account/sessions/:deviceId', apiv1, apiCtrl.sessions.revoke)
+
   // Roles
   router.get('/api/v1/roles', apiv1, apiCtrl.roles.get)
   router.post('/api/v1/roles', apiv1, isAdmin, apiCtrl.roles.create)
