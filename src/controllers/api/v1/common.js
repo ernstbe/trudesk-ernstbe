@@ -45,6 +45,13 @@ commonV1.login = async function (req, res) {
   const userModel = require('../../../models/user')
   const username = req.body.username
   const password = req.body.password
+  // Optional: PWA / mobile clients generate a stable UUID per install
+  // and send it here so each device gets its own slot in `accessTokens`
+  // instead of stomping on the others. Legacy clients without deviceId
+  // still work — they just get a no-deviceId entry that the next login
+  // appends to rather than replaces.
+  const deviceId = req.body.deviceId
+  const userAgent = req.headers['user-agent']
 
   if (username === undefined || password === undefined) {
     return res.sendStatus(403)
@@ -56,6 +63,13 @@ commonV1.login = async function (req, res) {
 
     if (!userModel.validate(password, user.password)) { return res.status(401).json({ success: false, error: 'Invalid Password' }) }
 
+    // Mint a fresh per-device token. This rotates the device's previous
+    // token (if any) — old token immediately invalid — while leaving
+    // other devices' sessions intact. Pre-multi-device behavior was to
+    // return whatever single token already lived on the account, which
+    // is what made leaked localStorage tokens permanent.
+    const newToken = await user.addAccessToken(deviceId, userAgent)
+
     const resUser = { ...user._doc }
     delete resUser.resetPassExpire
     delete resUser.resetPassHash
@@ -64,16 +78,14 @@ commonV1.login = async function (req, res) {
     delete resUser.tOTPKey
     delete resUser.__v
     delete resUser.preferences
-
-    if (resUser.accessToken === undefined || resUser.accessToken === null) {
-      return res.status(200).json({ success: false, error: 'No API Key assigned to this User.' })
-    }
+    delete resUser.accessToken
+    delete resUser.accessTokens
 
     req.user = resUser
-    res.header('X-Subject-Token', resUser.accessToken)
+    res.header('X-Subject-Token', newToken)
     return res.json({
       success: true,
-      accessToken: resUser.accessToken,
+      accessToken: newToken,
       user: resUser
     })
   } catch (err) {
@@ -128,28 +140,22 @@ commonV1.logout = async function (req, res) {
     }
   }
 
-  // Rotate the user's accessToken on explicit logout. Until this fix,
-  // `accessToken` never expired and was never invalidated — meaning a
-  // leaked localStorage entry granted permanent access. Now hitting the
-  // logout endpoint actually does what it implies: kills the current
-  // device's token.
+  // Remove ONLY this device's token. The previous implementation rotated
+  // the single legacy token, which invalidated every device the user was
+  // signed in on. Now each device owns its own entry in `accessTokens`,
+  // so logging out on the phone leaves the desktop session intact.
   //
-  // This DOES kick other devices that share the same token (since v1
-  // stores a single token per user). Clients that want to keep the token
-  // alive (e.g. the PWA's biometric-lock flow) must skip this call —
-  // see THW-Ticket-App-PWA/Services/TrueDeskApiService.cs LogoutAsync.
-  // NOTE: we deliberately do NOT check user.accessToken here.
-  // getUserByAccessToken loads the User without the accessToken field
-  // (Schema declares { select: false }), so the in-memory value is
-  // always undefined — the guard would silently skip the rotation.
-  // The auth middleware already proved the token is valid before we
-  // got here.
+  // The token to remove is the one the request authenticated with —
+  // pulled straight from the auth header rather than from the user
+  // document (which is loaded without `accessTokens` for select-false
+  // reasons unless the model getter loads it).
+  const currentToken = req.headers.accesstoken
   try {
-    if (user && typeof user.addAccessToken === 'function') {
-      await user.addAccessToken()
+    if (user && typeof user.removeAccessToken === 'function' && currentToken) {
+      await user.removeAccessToken(currentToken)
     }
   } catch (e) {
-    // Don't fail the logout response over a token-rotation error;
+    // Don't fail the logout response over a token-removal error;
     // the worst case is the old token stays valid.
   }
 
