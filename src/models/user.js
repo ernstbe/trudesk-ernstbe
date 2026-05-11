@@ -71,7 +71,36 @@ const userSchema = mongoose.Schema({
   resetL2AuthHash: { type: String, select: false },
   resetL2AuthExpire: { type: Date, select: false },
   hasL2Auth: { type: Boolean, required: true, default: false },
+  // Legacy single-token field. New code reads/writes the `accessTokens`
+  // array below; this field is kept as a fallback for accounts that
+  // haven't logged in since the multi-device migration. `addAccessToken`
+  // clears it once a per-device entry exists, and `getUserByAccessToken`
+  // accepts either source. Eventually (Phase 4) we drop this field.
   accessToken: { type: String, sparse: true, select: false },
+  // Multi-device session tokens. One entry per logged-in device, keyed
+  // by a client-supplied `deviceId` (the PWA generates and persists a
+  // UUID per install). Logging in on the same device replaces that
+  // entry's `token` so an old token gets invalidated; logging in on a
+  // new device adds a new entry without touching existing sessions.
+  // `lastUsedAt` is updated opportunistically by the auth middleware so
+  // a future Settings UI can show "Browser X, last seen 2h ago" and
+  // expire idle entries.
+  accessTokens: {
+    type: [
+      new mongoose.Schema(
+        {
+          token: { type: String, required: true },
+          deviceId: { type: String },
+          userAgent: { type: String },
+          createdAt: { type: Date, default: Date.now },
+          lastUsedAt: { type: Date, default: Date.now }
+        },
+        { _id: false }
+      )
+    ],
+    select: false,
+    default: []
+  },
 
   preferences: {
     tourCompleted: { type: Boolean, default: false },
@@ -112,22 +141,92 @@ userSchema.pre('save', async function () {
   user.password = hash
 })
 
-userSchema.methods.addAccessToken = async function () {
+/**
+ * Mint or rotate a per-device access token.
+ *
+ * Behavior:
+ *   - With `deviceId`: if an entry for that device already exists, its
+ *     `token` is replaced (old token becomes invalid). Otherwise a new
+ *     entry is pushed. This is the multi-device-safe path used by login.
+ *   - Without `deviceId`: a fresh entry is appended with no device key.
+ *     Used by signup (no device yet) and the admin "Generate API Key"
+ *     button.
+ *
+ * Either way, the legacy single `accessToken` field is cleared so we
+ * don't end up with a token outside the array that we'd have to scan
+ * for on every auth.
+ *
+ * @param {string} [deviceId] Stable per-install identifier from the client.
+ * @param {string} [userAgent] Free-form UA string for the future sessions UI.
+ * @returns {Promise<string>} The newly minted token.
+ */
+userSchema.methods.addAccessToken = async function (deviceId, userAgent) {
   const user = this
   const date = new Date()
-  const salt = user.username.toString() + date.toISOString()
+  const salt = user.username.toString() + date.toISOString() + (deviceId || '')
   const chance = new Chance(salt)
-  user.accessToken = chance.hash()
+  const newToken = chance.hash()
+
+  if (!Array.isArray(user.accessTokens)) user.accessTokens = []
+
+  if (deviceId) {
+    const existing = user.accessTokens.find((t) => t.deviceId === deviceId)
+    if (existing) {
+      existing.token = newToken
+      existing.lastUsedAt = date
+      if (userAgent) existing.userAgent = userAgent
+    } else {
+      user.accessTokens.push({ token: newToken, deviceId, userAgent, createdAt: date, lastUsedAt: date })
+    }
+  } else {
+    user.accessTokens.push({ token: newToken, userAgent, createdAt: date, lastUsedAt: date })
+  }
+
+  // NOTE: we intentionally do NOT clear `user.accessToken` here. Old
+  // PWA installs that booted before this deploy still have the legacy
+  // token in localStorage; clearing the field would lock them out on
+  // their next request. The legacy token stays valid alongside the new
+  // per-device entries until the user explicitly logs out (which only
+  // removes the token they authenticated with) or until a future
+  // explicit migration step.
   await user.save()
-  return user.accessToken
+  return newToken
 }
 
-userSchema.methods.removeAccessToken = async function () {
+/**
+ * Remove access token(s).
+ *
+ * @param {string} [token] If given, only the matching entry is removed
+ *   (logout-this-device semantics). If omitted, ALL tokens for the user
+ *   are removed plus the legacy field is cleared (admin "remove API
+ *   key" and force-logout-all semantics).
+ */
+userSchema.methods.removeAccessToken = async function (token) {
   const user = this
-  if (!user.accessToken) return
+  let dirty = false
 
-  user.accessToken = undefined
-  await user.save()
+  if (token) {
+    if (Array.isArray(user.accessTokens) && user.accessTokens.length > 0) {
+      const before = user.accessTokens.length
+      user.accessTokens = user.accessTokens.filter((t) => t.token !== token)
+      if (user.accessTokens.length !== before) dirty = true
+    }
+    if (user.accessToken && user.accessToken === token) {
+      user.accessToken = undefined
+      dirty = true
+    }
+  } else {
+    if (Array.isArray(user.accessTokens) && user.accessTokens.length > 0) {
+      user.accessTokens = []
+      dirty = true
+    }
+    if (user.accessToken) {
+      user.accessToken = undefined
+      dirty = true
+    }
+  }
+
+  if (dirty) await user.save()
 }
 
 userSchema.methods.generateL2Auth = async function () {
@@ -262,9 +361,13 @@ userSchema.statics.getUserByUsername = async function (user) {
   }
 
   // username is stored lowercase via schema option — exact match is correct and avoids regex injection.
+  // `+accessTokens` MUST be included so the login flow can append a new
+  // per-device entry without Mongoose treating the in-memory array as
+  // freshly initialized and overwriting other devices' tokens. Same
+  // reason for `+accessToken` (legacy single field).
   return this.model(COLLECTION)
     .findOne({ username: String(user).toLowerCase() })
-    .select('+password +accessToken')
+    .select('+password +accessToken +accessTokens')
     .exec()
 }
 
@@ -335,7 +438,38 @@ userSchema.statics.getUserByAccessToken = async function (token) {
     throw new Error('Invalid Token - UserSchema.GetUserByAccessToken()')
   }
 
-  return this.model(COLLECTION).findOne({ accessToken: token, deleted: false }, '+password')
+  // Match the token in EITHER the new per-device array or the legacy
+  // single field. Once the user logs in again on the new code, the
+  // legacy field is cleared by addAccessToken — until then both paths
+  // remain valid so existing PWA sessions don't break on deploy.
+  const user = await this.model(COLLECTION)
+    .findOne(
+      {
+        $or: [{ 'accessTokens.token': token }, { accessToken: token }],
+        deleted: false
+      },
+      '+password +accessTokens +accessToken'
+    )
+    .exec()
+
+  if (!user) return null
+
+  // Opportunistic lastUsedAt update — debounced to once per minute per
+  // entry to avoid writing on every API call. Fire-and-forget; auth
+  // never blocks on this.
+  if (Array.isArray(user.accessTokens) && user.accessTokens.length > 0) {
+    const entry = user.accessTokens.find((t) => t.token === token)
+    if (entry) {
+      const now = Date.now()
+      const last = entry.lastUsedAt ? new Date(entry.lastUsedAt).getTime() : 0
+      if (now - last > 60 * 1000) {
+        entry.lastUsedAt = new Date(now)
+        user.save().catch(() => { /* best-effort */ })
+      }
+    }
+  }
+
+  return user
 }
 
 userSchema.statics.getUserWithObject = async function (object) {
