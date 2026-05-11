@@ -131,6 +131,15 @@ const mapStateToProps = state => ({
   sessionUser: state.shared.sessionUser
 })
 
-export default withTranslation()(connect(mapStateToProps, { setSessionUser, showModal, saveEditAccount })(
-  ProfileDropdownPartial
-))
+// forwardRef: true is critical — without it react-redux's connect() does
+// not pass the ref through to the wrapped component. The parent's
+// `<ProfileDropdownPartial ref={...} />` ends up attached to the connect
+// HOC, the inner function component never sees it, useImperativeHandle
+// inside PDropdown never registers `show()`, and PDropdownTrigger's
+// click handler silently does nothing. Symptom: clicking the avatar
+// does not open the profile dropdown.
+export default withTranslation()(
+  connect(mapStateToProps, { setSessionUser, showModal, saveEditAccount }, null, { forwardRef: true })(
+    ProfileDropdownPartial
+  )
+)
