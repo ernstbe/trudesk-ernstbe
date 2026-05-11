@@ -193,6 +193,29 @@ function TopbarContainer ({
                   {/*    </a> */}
                   {/*  </OffCanvasTrigger> */}
                   {/* </li> */}
+                  {/* Direct profile + logout icons — the avatar dropdown
+                      below still works, but most users never realised the
+                      avatar itself was a clickable target. Putting Profile
+                      and Logout as their own icons next to it makes both
+                      reachable in one click for the discoverability case. */}
+                  <li className='top-bar-icon'>
+                    <a
+                      href='/profile'
+                      title={t('topbar.profileSettings')}
+                      className='uk-vertical-align'
+                    >
+                      <i className='material-icons'>person</i>
+                    </a>
+                  </li>
+                  <li className='top-bar-icon'>
+                    <a
+                      href='/logout'
+                      title={t('auth.logout')}
+                      className='no-ajaxy uk-vertical-align'
+                    >
+                      <i className='material-icons'>logout</i>
+                    </a>
+                  </li>
                   <li className='top-bar-icon nopadding nohover'>
                     <i className='material-icons separator'>remove</i>
                   </li>
