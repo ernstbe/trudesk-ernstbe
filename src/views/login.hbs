@@ -279,9 +279,12 @@
         });
 
         $(document).ready(function() {
-            if (screen.width <= 800) {
-                document.location = '/mobile';
-            }
+            // The legacy mobile view was disabled years ago (middleware now
+            // redirects /mobile -> /), so this auto-redirect created an
+            // infinite /login -> /mobile -> / -> /login loop for any phone
+            // viewport <= 800px. THW users go through the PWA at /app/
+            // anyway, the desktop login page is responsive enough for the
+            // rare admin who hits it on mobile.
 
             setTimeout(function() {
                 $('#login-username').focus();

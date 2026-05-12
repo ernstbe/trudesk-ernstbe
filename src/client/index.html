@@ -62,18 +62,8 @@
     <h4 style="font-size: 24px; font-weight: 300; margin-left: 25px;">Please Wait...</h4>
   </div>
 </div>
-<div id="nomobile" class="uk-visible-small uk-hidden-medium uk-hidden-large" style="
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100vh;
-    width: 100vw;
-    z-index: 99999999;
-    background: #f6f6f6;
-">
-  <div style="position: absolute; top: 50%; left: 0; width: 100%;text-align: center;font-size: 28px; font-weight: 300;"><a
-          href="/mobile">View Mobile Site...</a></div>
-</div>
+<!-- Legacy #nomobile overlay removed: linked to /mobile which is dead. -->
+
 
 <div class="disconnected loader-wrapper" style="display: none; opacity: 0; z-index: 999997;">
   <div class="shadow-wrapper">
@@ -138,11 +128,11 @@
 <audio id="error_audio" src="/sounds/error.ogg" class="uk-hidden"></audio>
 <audio id="clicksound" src="/sounds/click.ogg" class="uk-hidden"></audio>
 
-<script type="text/javascript">
-  if (screen.width <= 800) {
-    document.location = '/mobile';
-  }
-</script>
+<!--
+    Legacy mobile-redirect entfernt: /mobile-Middleware leitet auf /
+    weiter, /-Pages bouncen anonyme User auf /login -> Endlos-Loop.
+-->
+
 
 <script src="/js/trudesk.min.js"></script>
 
