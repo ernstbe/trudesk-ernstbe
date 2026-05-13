@@ -280,6 +280,10 @@
       "hint": "Bitte wähle die Prioritäten aus, die du dem Typ {{typeName}} hinzufügen möchtest",
       "slaOverdue": "SLA-Überfällig"
     },
+    "addStatus": {
+      "title": "Status hinzufügen",
+      "hint": "Bitte wähle die Status aus, die du dem Typ {{typeName}} hinzufügen möchtest"
+    },
     "deleteStatus": {
       "title": "Vorgangsstatus entfernen",
       "hint": "Bitte wähle den Vorgangsstatus aus, dem Vorgänge zugewiesen werden sollen, um diesen Status zu löschen.",

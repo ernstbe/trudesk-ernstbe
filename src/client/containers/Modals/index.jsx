@@ -22,6 +22,7 @@ import CreateTicketTypeModal from './CreateTicketTypeModal'
 import DeleteTicketTypeModal from './DeleteTicketTypeModal'
 import FilterTicketModal from './FilterTicketsModal'
 import AddPriorityToTypeModal from './AddPriorityToTypeModal'
+import AddStatusToTypeModal from './AddStatusToTypeModal'
 import CreatePriorityModal from './CreatePriorityModal'
 import DeletePriorityModal from './DeletePriorityModal'
 import CreateStatusModal from './CreateStatusModal'
@@ -53,6 +54,7 @@ const MODAL_COMPONENTS = {
   DELETE_TICKET_TYPE: DeleteTicketTypeModal,
   FILTER_TICKET: FilterTicketModal,
   ADD_PRIORITY_TO_TYPE: AddPriorityToTypeModal,
+  ADD_STATUS_TO_TYPE: AddStatusToTypeModal,
   CREATE_PRIORITY: CreatePriorityModal,
   DELETE_PRIORITY: DeletePriorityModal,
   CREATE_STATUS: CreateStatusModal,
