@@ -105,6 +105,26 @@ api.tickets.removePriorityFromType = ({ typeId, priority }) => {
     })
 }
 
+api.tickets.addStatusToType = ({ typeId, status }) => {
+  return axios
+    .post(`/api/v1/tickets/type/${typeId}/addstatus`, {
+      status
+    })
+    .then(res => {
+      return res.data
+    })
+}
+
+api.tickets.removeStatusFromType = ({ typeId, status }) => {
+  return axios
+    .post(`/api/v1/tickets/type/${typeId}/removestatus`, {
+      status
+    })
+    .then(res => {
+      return res.data
+    })
+}
+
 api.tickets.deleteTicketType = ({ id, newTypeId }) => {
   return axios.delete(`/api/v1/tickets/types/${id}`, { data: { newTypeId } }).then(res => {
     return res.data

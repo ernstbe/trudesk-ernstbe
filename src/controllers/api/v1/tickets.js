@@ -1163,6 +1163,50 @@ apiTickets.typeRemovePriority = async function (req, res) {
   }
 }
 
+apiTickets.typeAddStatus = async function (req, res) {
+  const id = req.params.id
+
+  const data = req.body
+
+  const ticketTypeSchema = require('../../../models/tickettype')
+
+  if (!id || !data || !data.status) {
+    return res.status(400).json({ success: false, error: 'Invalid request data' })
+  }
+
+  try {
+    let type = await ticketTypeSchema.getType(id)
+    type = type.addStatus(data.status)
+    const t = await type.save()
+    const tt = await t.populate('statuses')
+    return res.json({ success: true, type: tt })
+  } catch (err) {
+    return res.status(400).json({ success: false, error: err.message })
+  }
+}
+
+apiTickets.typeRemoveStatus = async function (req, res) {
+  const id = req.params.id
+
+  const data = req.body
+
+  const ticketTypeSchema = require('../../../models/tickettype')
+
+  if (!id || !data || !data.status) {
+    return res.status(400).json({ success: false, error: 'Invalid request data' })
+  }
+
+  try {
+    let type = await ticketTypeSchema.getType(id)
+    type = type.removeStatus(data.status)
+    const t = await type.save()
+    const tt = await t.populate('statuses')
+    return res.json({ success: true, type: tt })
+  } catch (err) {
+    return res.status(400).json({ success: false, error: err.message })
+  }
+}
+
 /**
  * @api {delete} /api/v1/tickets/types/:id Delete Ticket Type
  * @apiName deleteType

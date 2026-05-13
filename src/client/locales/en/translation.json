@@ -280,6 +280,10 @@
       "hint": "Please select the priorities you wish to add to type: {{typeName}}",
       "slaOverdue": "SLA Overdue"
     },
+    "addStatus": {
+      "title": "Add Statuses",
+      "hint": "Please select the statuses you wish to add to type: {{typeName}}"
+    },
     "deleteStatus": {
       "title": "Remove Task Status",
       "hint": "Please select the task status you wish to reassign tasks to in order to delete this status.",

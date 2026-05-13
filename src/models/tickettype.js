@@ -19,6 +19,7 @@ const COLLECTION = 'tickettypes'
 
 // Needed for Population
 require('./ticketpriority')
+require('./ticketStatus')
 
 /**
  * TicketType Schema
@@ -31,15 +32,17 @@ require('./ticketpriority')
  */
 const ticketTypeSchema = mongoose.Schema({
   name: { type: String, required: true, unique: true },
-  priorities: [{ type: mongoose.Schema.Types.ObjectId, ref: 'priorities' }]
+  priorities: [{ type: mongoose.Schema.Types.ObjectId, ref: 'priorities' }],
+  statuses: [{ type: mongoose.Schema.Types.ObjectId, ref: 'statuses' }]
 })
 
-const autoPopulatePriorities = function () {
+const autoPopulateRefs = function () {
   this.populate('priorities')
+  this.populate('statuses')
 }
 
-ticketTypeSchema.pre('find', autoPopulatePriorities)
-ticketTypeSchema.pre('findOne', autoPopulatePriorities)
+ticketTypeSchema.pre('find', autoPopulateRefs)
+ticketTypeSchema.pre('findOne', autoPopulateRefs)
 
 ticketTypeSchema.pre('save', function () {
   this.name = utils.sanitizeFieldPlainText(this.name.trim())
@@ -107,6 +110,37 @@ ticketTypeSchema.methods.removePriority = function (priorityId) {
 
   self.priorities = self.priorities.filter(function (p) {
     return p._id.toString() !== priorityId.toString()
+  })
+
+  return self
+}
+
+ticketTypeSchema.methods.addStatus = function (statusId) {
+  if (!statusId) throw new Error('Invalid Status Id')
+
+  const self = this
+
+  if (!Array.isArray(self.statuses)) {
+    self.statuses = []
+  }
+
+  const exists = self.statuses.some(function (s) {
+    return (s._id ? s._id.toString() : s.toString()) === statusId.toString()
+  })
+  if (exists) return self
+
+  self.statuses.push(statusId)
+
+  return self
+}
+
+ticketTypeSchema.methods.removeStatus = function (statusId) {
+  if (!statusId) throw new Error('Invalid Status Id')
+
+  const self = this
+
+  self.statuses = self.statuses.filter(function (s) {
+    return (s._id ? s._id.toString() : s.toString()) !== statusId.toString()
   })
 
   return self

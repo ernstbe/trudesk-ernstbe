@@ -31,6 +31,7 @@ import EditPriorityPartial from './editPriorityPartial'
 
 const TicketTypeBody = ({ type, fetchSettings, showModal }) => {
   const prioritiesRef = useRef({})
+  const statusesRef = useRef({})
 
   useEffect(() => {
     helpers.UI.inputs()
@@ -79,6 +80,36 @@ const TicketTypeBody = ({ type, fetchSettings, showModal }) => {
         .removePriorityFromType({ typeId: type.get('_id'), priority: priorityId })
         .then(() => {
           helpers.UI.showSnackbar(`Priority removed from type: ${type.get('name')}`)
+          fetchSettings()
+        })
+        .catch(error => {
+          if (!error.response) {
+            Log.error(error)
+            return
+          }
+          const errorText = error.response.data.error
+          Log.error(errorText, error.response)
+          helpers.UI.showSnackbar(`Error: ${errorText}`, true)
+        })
+    },
+    [type, fetchSettings]
+  )
+
+  const onAddStatusClick = useCallback(
+    (e, type) => {
+      showModal('ADD_STATUS_TO_TYPE', { type })
+    },
+    [showModal]
+  )
+
+  const onRemoveTicketTypeStatusClicked = useCallback(
+    (e, statusId) => {
+      e.preventDefault()
+
+      api.tickets
+        .removeStatusFromType({ typeId: type.get('_id'), status: statusId })
+        .then(() => {
+          helpers.UI.showSnackbar(`Status removed from type: ${type.get('name')}`)
           fetchSettings()
         })
         .catch(error => {
@@ -179,6 +210,55 @@ const TicketTypeBody = ({ type, fetchSettings, showModal }) => {
                   />
                 </div>
                 <EditPriorityPartial priority={item} />
+              </div>
+            )
+          })}
+        </div>
+      </div>
+      <div className='ticket-type-statuses-wrapper uk-margin-medium-top'>
+        <h2 className='text-light uk-display-inline-block'>
+          Statuses
+          <i
+            className='material-icons'
+            style={{ color: '#888', fontSize: '16px', cursor: 'pointer', lineHeight: '18px', marginLeft: '5px' }}
+            data-uk-tooltip="{cls:'long-text'}"
+            title='Statuses allowed for this type. <br /> If empty, all statuses are allowed (default).'
+          >
+            help
+          </i>
+        </h2>
+        <div className='uk-float-right'>
+          <Button
+            text='Add'
+            style='success'
+            flat
+            waves
+            onClick={e => onAddStatusClick(e, type)}
+          />
+        </div>
+        <hr style={{ margin: '5px 0 25px 0' }} />
+        <div className='status-loop zone'>
+          {(type.get('statuses') || []).map(item => {
+            return (
+              <div
+                key={item.get('_id')}
+                ref={i => (statusesRef.current[item.get('_id')] = i)}
+                className='z-box uk-clearfix'
+              >
+                <SettingSubItem
+                  title={item.get('name')}
+                  titleCss={{ color: item.get('htmlColor') }}
+                  component={
+                    <ButtonGroup classNames='uk-float-right'>
+                      <Button
+                        text='Remove'
+                        small
+                        style='danger'
+                        onClick={e => onRemoveTicketTypeStatusClicked(e, item.get('_id'))}
+                      />
+                    </ButtonGroup>
+                  }
+                />
               </div>
             )
           })}
