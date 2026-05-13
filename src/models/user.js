@@ -514,9 +514,26 @@ userSchema.statics.getAssigneeUsers = async function () {
   const roles = global.roles
   if (roles === undefined) return []
 
+  // We can't trust `role.isAgent` here. It's a Mongoose virtual that
+  // `mongoose-lean-virtuals` evaluates eagerly at `getRolesLean()` time,
+  // but at app boot that runs BEFORE `global.roles` is set — so the
+  // virtual's `global.roles === undefined` guard returns `false` for
+  // every role and freezes that stale value on the lean doc. The auth
+  // middleware (`isAgentOrAdmin` etc.) later patches `isAgent` back to
+  // `true` on `global.roles[i]`, but only for the role of the user who
+  // happens to be hitting that middleware — so whether a given role's
+  // `isAgent` is correct depends on which users were active since the
+  // last container restart. After a Watchtower redeploy with no Support
+  // users yet online, `Support.isAgent` stays false and getassignees
+  // returns only the calling Admin.
+  //
+  // Read the stored `grants` array directly instead — it's plain Mongo
+  // data, always populated.
   let assigneeRoles = []
   roles.forEach(function (role) {
-    if (role.isAgent) assigneeRoles.push(role._id)
+    if (role.grants && role.grants.indexOf('agent:*') !== -1) {
+      assigneeRoles.push(role._id)
+    }
   })
 
   assigneeRoles = [...new Set(assigneeRoles)]
