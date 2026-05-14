@@ -43,13 +43,16 @@ module.exports = function (middleware, router, controllers) {
   router.get('/api/v2/tickets/info/types', apiv2Auth, apiv2.tickets.info.types)
   router.get('/api/v2/tickets/status', apiv2Auth, apiv2.tickets.info.statuses)
   router.get('/api/v2/tickets/priorities', apiv2Auth, apiv2.tickets.info.priorities)
+  router.get('/api/v2/tickets/tags', apiv2Auth, apiv2.tickets.info.tags)
 
   // Tickets
   router.get('/api/v2/tickets', apiv2Auth, canUser('tickets:view'), apiv2.tickets.get)
   router.post('/api/v2/tickets', apiv2Auth, canUser('tickets:create'), apiv2.tickets.create)
   router.get('/api/v2/tickets/overdue', apiv2Auth, isAgentOrAdmin, apiv2.tickets.overdue)
-  // Stats routes MUST be registered before /tickets/:uid so Express doesn't
-  // match them as a uid. Same reason /batch below precedes /:uid.
+  // Static segments registered BEFORE /tickets/:uid so Express doesn't
+  // match them as a uid. Same reason /batch and /stats below precede /:uid.
+  router.get('/api/v2/tickets/search', apiv2Auth, canUser('tickets:view'), apiv1.tickets.search)
+  router.get('/api/v2/tickets/group/:id', apiv2Auth, canUser('tickets:view'), apiv1.tickets.getByGroup)
   router.get('/api/v2/tickets/stats', apiv2Auth, canUser('tickets:view'), apiv2.tickets.getStats)
   router.get('/api/v2/tickets/stats/group/:group', apiv2Auth, canUser('tickets:view'), apiv2.tickets.getGroupStats)
   router.get('/api/v2/tickets/stats/user/:user', apiv2Auth, canUser('tickets:view'), apiv2.tickets.getUserStats)
@@ -179,4 +182,13 @@ module.exports = function (middleware, router, controllers) {
   router.get('/api/v2/bug-reports', apiv2Auth, apiv1.bugReports.list)
   router.patch('/api/v2/bug-reports/:id', apiv2Auth, apiv1.bugReports.setResolved)
   router.delete('/api/v2/bug-reports/:id', apiv2Auth, apiv1.bugReports.remove)
+
+  // Attachment remove — same path shape as v1 so the PWA can migrate
+  // without rewriting the URL builder.
+  router.delete('/api/v2/tickets/:tid/attachments/remove/:aid', apiv2Auth, apiv1.tickets.removeAttachment)
+
+  // Notifications — v1 bolted these onto /users/notifications because of
+  // legacy controller layout. v2 gets a cleaner /notifications root.
+  router.post('/api/v2/notifications/:id/read', apiv2Auth, apiv1.users.markNotificationRead)
+  router.post('/api/v2/notifications/read-all', apiv2Auth, apiv1.users.markAllNotificationsRead)
 }
