@@ -106,8 +106,14 @@ describe('bug reports API', function () {
   })
 
   it('GET /bug-reports as admin returns the list', async function () {
-    await bugReportSchema.createReport(reporterUser._id, 'A', 'first', {})
-    await bugReportSchema.createReport(reporterUser._id, 'B', 'second', {})
+    // Force distinct createdAt timestamps. On CI both createReport calls
+    // can land in the same millisecond, leaving the {createdAt:-1} sort
+    // unstable and "newest first" flapping. Stamping explicitly removes
+    // the race without slowing the suite down.
+    const a = await bugReportSchema.createReport(reporterUser._id, 'A', 'first', {})
+    const b = await bugReportSchema.createReport(reporterUser._id, 'B', 'second', {})
+    await bugReportSchema.updateOne({ _id: a._id }, { $set: { createdAt: new Date(Date.now() - 1000) } })
+    await bugReportSchema.updateOne({ _id: b._id }, { $set: { createdAt: new Date() } })
 
     const res = await agent.get(baseUrl + '/api/v1/bug-reports').set('accesstoken', adminToken)
     expect(res.body.success).to.equal(true)
