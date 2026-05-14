@@ -18,6 +18,7 @@ module.exports = function (middleware, router, controllers) {
   // Shorten Vars
   const apiv2Auth = middleware.apiv2
   const apiv2 = controllers.api.v2
+  const apiv1 = controllers.api.v1
   const isAdmin = middleware.isAdmin
   const isAgentOrAdmin = middleware.isAgentOrAdmin
   const canUser = middleware.canUser
@@ -151,4 +152,31 @@ module.exports = function (middleware, router, controllers) {
   router.get('/api/v2/es/status', apiv2Auth, isAdmin, apiv2.elasticsearch.status)
 
   router.get('/api/v2/mailer/check', apiv2Auth, isAdmin, apiv2.mailer.check)
+
+  // ── Endpoints originally introduced under v1 that don't need v2-specific
+  // ── reshaping: mount the same controllers under /api/v2/* so a client
+  // ── that's standardized on v2 doesn't have to mix base URLs. The
+  // ── controllers read `req.user` which apiv2Auth populates the same way.
+  // ── Two known caveats live with this:
+  //  - sessions.list/revokeOthers read `req.headers.accesstoken` to flag
+  //    the current session. Under the JWT path that header is absent and
+  //    the `isCurrent` flag falls back to false — degraded but functional.
+  //  - The webpush + bug-report flows are header-agnostic, so they behave
+  //    identically on v1 and v2.
+
+  // Sessions
+  router.get('/api/v2/account/sessions', apiv2Auth, apiv1.sessions.list)
+  router.delete('/api/v2/account/sessions', apiv2Auth, apiv1.sessions.revokeOthers)
+  router.delete('/api/v2/account/sessions/:deviceId', apiv2Auth, apiv1.sessions.revoke)
+
+  // Web Push subscriptions
+  router.get('/api/v2/account/push/vapid-public', apiv2Auth, apiv1.pushSubscriptions.vapidPublic)
+  router.post('/api/v2/account/push/subscribe', apiv2Auth, apiv1.pushSubscriptions.subscribe)
+  router.delete('/api/v2/account/push/subscribe', apiv2Auth, apiv1.pushSubscriptions.unsubscribe)
+
+  // Bug reports
+  router.post('/api/v2/bug-reports', apiv2Auth, apiv1.bugReports.submit)
+  router.get('/api/v2/bug-reports', apiv2Auth, apiv1.bugReports.list)
+  router.patch('/api/v2/bug-reports/:id', apiv2Auth, apiv1.bugReports.setResolved)
+  router.delete('/api/v2/bug-reports/:id', apiv2Auth, apiv1.bugReports.remove)
 }
