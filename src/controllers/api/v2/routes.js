@@ -191,4 +191,13 @@ module.exports = function (middleware, router, controllers) {
   // legacy controller layout. v2 gets a cleaner /notifications root.
   router.post('/api/v2/notifications/:id/read', apiv2Auth, apiv1.users.markNotificationRead)
   router.post('/api/v2/notifications/read-all', apiv2Auth, apiv1.users.markAllNotificationsRead)
+
+  // Public (unauthed) signup flow. Captcha + origin checks + rate limit
+  // are the same chain v1 uses — the controllers don't read anything
+  // version-specific so they slot right in.
+  const checkCaptcha = middleware.checkCaptcha
+  const checkOrigin = middleware.checkOrigin
+  router.post('/api/v2/public/users/checkemail', rateLimits.publicRegister, checkCaptcha, checkOrigin, apiv1.users.checkEmail)
+  router.post('/api/v2/public/account/create', rateLimits.publicRegister, checkCaptcha, checkOrigin, apiv1.users.createPublicAccount)
+  router.post('/api/v2/public/tickets/create', rateLimits.publicRegister, checkCaptcha, checkOrigin, apiv1.tickets.createPublicTicket)
 }
