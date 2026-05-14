@@ -47,12 +47,24 @@ notificationSchema.post('save', function (doc) {
   try { webpush = require('../webpush') } catch (e) { return }
   if (!webpush.isInitialized || !webpush.isInitialized()) return
 
-  const ticketRef = doc.data && (doc.data.ticketUid || doc.data.ticketId)
+  // Callsites in events.js / event_ticket_created.js attach the whole
+  // ticket object as `data.ticket`; the bug-report controller attaches
+  // `data.bugReportId`. Resolve the URL accordingly so notification
+  // clicks land on the right page.
+  const data = doc.data || {}
+  const ticket = data.ticket
+  let url = '/app/'
+  if (ticket && (ticket.uid || ticket._id)) {
+    url = '/app/tickets/' + (ticket.uid || ticket._id)
+  } else if (data.bugReportId) {
+    url = '/app/bug-reports/' + data.bugReportId
+  }
+
   const payload = {
     title: doc.title,
     body: doc.message,
     tag: 'trudesk-notification-' + doc._id.toString(),
-    url: ticketRef ? '/app/tickets/' + ticketRef : '/app/'
+    url
   }
   webpush.sendToUser(doc.owner, payload).catch(() => { /* best-effort */ })
 })
