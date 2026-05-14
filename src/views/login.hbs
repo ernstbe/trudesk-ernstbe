@@ -1,228 +1,243 @@
 <!DOCTYPE html>
-<html>
+<html lang="de">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{{siteTitle}}} &middot; {{{title}}}</title>
     <link rel="icon" href="/img/favicon.png" />
     <link rel="stylesheet" href="/css/plugins.min.css">
     <link rel="stylesheet" href="/css/app.min.css">
-    <style type="text/css">
-        html {
-            overflow-x: hidden;
-        }
-        body {
-            background: {{colorSecondary}};
-            text-align: center;
-            font-family: "Roboto", Arial, sans-serif;
-        }
-
-        .login-wrapper {
-            width: 400px;
-            height: 400px;
-            position: absolute;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-        }
-
-        img {
-            margin-bottom: 50px;
+    <style>
+        :root {
+            --primary: #1e40af;
+            --primary-hover: #1e3a8a;
+            --primary-light: #dbeafe;
+            --bg: #f3f4f6;
+            --card: #ffffff;
+            --text: #111827;
+            --text-muted: #6b7280;
+            --border: #e5e7eb;
+            --border-focus: #1e40af;
+            --error: #dc2626;
+            --error-bg: #fee2e2;
+            --success: #059669;
+            --success-bg: #d1fae5;
+            --radius: 8px;
+            --shadow-lg: 0 10px 25px rgba(0,0,0,.1), 0 4px 10px rgba(0,0,0,.05);
         }
 
-        label {
-            text-align: left
-        }
+        * { box-sizing: border-box; }
 
-        button {
-            font-family: "Roboto", Arial, sans-serif;
-            width: 340px;
-            height: 20px;
-            text-align: left;
-            padding: 15px 20px;
-            background: #384b5f;
-            border: 1px solid #1c2937;
-            font-size: 20px;
-            color: #fff;
-            margin-bottom: 15px;
-            border-radius: 3px;
-            -moz-border-radius: 3px;
-            -webkit-border-radius: 3px;
-            font-weight: 300;
-        }
-
-        button.button {
-            width: 380px;
-            height: auto;
-            text-align: center;
-            background: {{colorTertiary}};
-            border: none;
-            text-transform: uppercase;
-            border-radius: 3px;
-            -moz-border-radius: 3px;
-            -webkit-border-radius: 3px;
-        }
-
-        button.button:hover {
-            background: #f15849;
-            cursor: pointer;
-        }
-
-        *:focus {
-            outline: 0;
-        }
-
-        a {
-            display: inline-block;
-            padding-right: 10px;
-            color: {{colorPrimary}};
-            font-size: 14px;
-            float: right;
-            text-decoration: none;
-            font-weight: 300;
-        }
-
-        a:hover {
-            color: {{colorPrimary}};
-        }
-
-        ::-webkit-input-placeholder { /* WebKit browsers */
-            color:    #222;
-        }
-        :-moz-placeholder { /* Mozilla Firefox 4 to 18 */
-            color:    #222;
-            opacity:  1;
-        }
-        ::-moz-placeholder { /* Mozilla Firefox 19+ */
-            color:    #222;
-            opacity:  1;
-        }
-        :-ms-input-placeholder { /* Internet Explorer 10+ */
-            color:    #222;
-        }
-
-        .alert-message {
+        html, body {
+            margin: 0;
             padding: 0;
-            position: fixed;
-            top: 75px;
-            left: 50%;
-            width: 380px;
-            height: 50px;
-            /*margin-bottom: 50px;*/
-            background: {{colorTertiary}};
-            border-radius: 5px;
-            -webkit-border-radius: 5px;
-            -moz-border-radius: 5px;
-            transform: translate(-50%, 0);
+            font: 400 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: var(--text);
+            background: var(--bg);
+            min-height: 100%;
         }
 
-        .alert-message p {
-            margin-top: 8px;
-            margin-bottom: 0;
-            color: white;
-            font-weight: 300;
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 16px;
+            min-height: 100vh;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 400px;
+            background: var(--card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            padding: 32px;
+        }
+
+        .brand {
             text-align: center;
-            font-size: 22px;
+            margin-bottom: 24px;
         }
 
-        button.button.noCap {
-            text-transform: none;
+        .brand img {
+            display: block;
+            margin: 0 auto 12px;
+            max-height: 64px;
+            max-width: 100%;
+            width: auto;
+            height: auto;
         }
 
-        .hide {
-            display: none;
+        .brand h1 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text);
         }
 
-        .green {
-            background: #29b955;
+        .field {
+            margin-bottom: 16px;
         }
 
-        input {
-            color: {{colorPrimary}};
+        .field label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text);
+            margin-bottom: 6px;
         }
 
-        .md-input-bar:before,
-        .md-input-bar:after {
-            background: {{colorTertiary}} !important;
+        .input {
+            width: 100%;
+            height: 40px;
+            padding: 0 12px;
+            font-size: 14px;
+            color: var(--text);
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            transition: border-color .15s, box-shadow .15s;
+            font-family: inherit;
+        }
+
+        .input:focus {
+            outline: none;
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 3px var(--primary-light);
         }
 
         .btn {
             width: 100%;
-            height: 50px;
-            margin-bottom: 24px !important;
-            /*color: #E74C3C;*/
+            height: 44px;
+            padding: 0 16px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+            background: var(--primary);
+            border: 0;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: background .15s;
+            font-family: inherit;
         }
 
-        .btn:hover, .btn:active, .btn:focus {
-            /*color: #222;*/
+        .btn:hover { background: var(--primary-hover); }
+
+        .links {
+            margin-top: 16px;
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            font-size: 13px;
         }
+
+        .links a {
+            color: var(--text-muted);
+            text-decoration: none;
+        }
+
+        .links a:hover { color: var(--primary); }
+
+        .footer-link {
+            display: block;
+            text-align: center;
+            margin-top: 16px;
+            font-size: 13px;
+            color: var(--text-muted);
+            text-decoration: none;
+        }
+
+        .footer-link:hover { color: var(--primary); }
+
+        .alert {
+            padding: 10px 12px;
+            border-radius: var(--radius);
+            font-size: 13px;
+            margin-bottom: 16px;
+            color: var(--error);
+            background: var(--error-bg);
+        }
+
+        .alert.success { color: var(--success); background: var(--success-bg); }
+
         .bottom {
             position: fixed;
-            bottom: 0;
-            left: 0;
-            font-size: 12px;
-            font-family: "Roboto", Arial, sans-serif;
-            margin: 0 0 5px 15px;
-            color: rgba(0,0,0,0.5);
+            bottom: 8px;
+            left: 12px;
+            font-size: 11px;
+            color: var(--text-muted);
+            opacity: .6;
         }
+
+        .hidden { display: none !important; }
     </style>
     <script src="/socket.io/socket.io.js"></script>
     <script src="/js/vendor.js"></script>
     <script src="/js/truRequire.js"></script>
 </head>
 <body>
-<div class="alert-message {{#if flash}} {{else}} hide {{/if}} {{#if flash.success}} green {{/if}}">
-    <p>{{#if flash.message}} {{{flash.message}}} {{else}} {{{flash}}}{{/if}}</p>
-</div>
-<div class="login-wrapper">
-    <img src="{{pageLogo}}" alt="Logo" class="site-logo-login" />
+<main class="card">
+    <header class="brand">
+        <img src="{{pageLogo}}" alt="{{{siteTitle}}}" class="site-logo-login" />
+        <h1>{{{siteTitle}}}</h1>
+    </header>
+
+    {{#if flash}}
+        <div class="alert {{#if flash.success}}success{{/if}}" role="alert">
+            {{#if flash.message}}{{{flash.message}}}{{else}}{{{flash}}}{{/if}}
+        </div>
+    {{/if}}
 
     <div class="loginForm">
-        <form id="loginForm" method="post" action="/login" class="uk-form-stacked uk-clearfix">
-            <div class="uk-margin-medium-bottom">
-                <label for="login-username">Username</label>
-                <input id="login-username" name="login-username" class="md-input" type="text" />
+        <form id="loginForm" method="post" action="/login">
+            <div class="field">
+                <label for="login-username">Benutzername</label>
+                <input id="login-username" name="login-username" class="input" type="text" autocomplete="username" required />
             </div>
-            <div class="uk-margin-medium-bottom">
-                <label for="login-password">Password</label>
-                <input id="login-password" name="login-password" class="md-input md-waves-light" type="password" />
+
+            <div class="field">
+                <label for="login-password">Passwort</label>
+                <input id="login-password" name="login-password" class="input" type="password" autocomplete="current-password" required />
             </div>
-            <button class="btn md-btn md-btn-flat md-btn-wave md-btn-flat-accent" type="submit">Login</button>
+
+            <button class="btn" type="submit">Anmelden</button>
         </form>
-        {{#if allowUserRegistration}}
-            <hr>
-            <a id="allowUserRegistration" href="/signup" class="no-ajaxy left">Create an Account.</a>
-        {{/if}}
+
         {{#if mailerEnabled}}
-            <a id="forgotPass" href="#" class="no-ajaxy right" style="display: block; clear: right;">Forgot your password?</a>
+            <div class="links">
+                {{#if allowUserRegistration}}
+                    <a id="allowUserRegistration" href="/signup" class="no-ajaxy">Konto erstellen</a>
+                {{else}}
+                    <span></span>
+                {{/if}}
+                <a id="forgotPass" href="#" class="no-ajaxy">Passwort vergessen?</a>
+            </div>
+        {{else if allowUserRegistration}}
+            <div class="links">
+                <a id="allowUserRegistration" href="/signup" class="no-ajaxy">Konto erstellen</a>
+            </div>
         {{/if}}
     </div>
 
     {{#if mailerEnabled}}
-        <div class="forgotPassForm" style="display: none;">
+        <div class="forgotPassForm hidden">
             <form id="forgotPassForm" method="post" action="/">
-                <div class="uk-margin-medium-bottom">
-                    <label for="forgotPass-email">Email</label>
-                    <input id="forgotPass-email" name="forgotPass-email" type="text" class="md-input" />
+                <div class="field">
+                    <label for="forgotPass-email">E-Mail-Adresse</label>
+                    <input id="forgotPass-email" name="forgotPass-email" type="email" class="input" autocomplete="email" required />
                 </div>
-                <!--<input id="login-password" name="login-password" type="password" placeholder="Password" />-->
-                <button class="btn no-ajaxy md-btn md-btn-flat md-btn-wave md-btn-flat-danger" type="submit">Forgot Password</button>
+                <button class="btn no-ajaxy" type="submit">Passwort zurücksetzen</button>
             </form>
-
-            <a id="backToLogin" href="#" class="no-ajaxy">Back to Login</a>
+            <a id="backToLogin" href="#" class="footer-link no-ajaxy">← Zurück zur Anmeldung</a>
         </div>
     {{/if}}
+</main>
 
-</div>
-
-<div class="bottom">
-    {{bottom}}
-</div>
+<div class="bottom">{{bottom}}</div>
 
 <script type="text/javascript">
-    window.truRequire(['jquery', 'helpers'], function(loadedModules) {
+    window.truRequire(['jquery'], function(loadedModules) {
         var $ = loadedModules[0];
-        var helpers = loadedModules[1];
-        helpers.UI.inputs();
-        helpers.UI.waves();
 
         $('#loginForm').submit(function(e) {
             var u = $('#login-username').val();
@@ -233,63 +248,46 @@
 
         $('#forgotPass').click(function(e) {
             e.preventDefault();
-            $('.loginForm').fadeOut(100, function() {
-                $('.forgotPassForm').fadeIn();
-            });
-
+            $('.loginForm').addClass('hidden');
+            $('.forgotPassForm').removeClass('hidden');
         });
 
         $('#backToLogin').click(function(e) {
             e.preventDefault();
-            $('.forgotPassForm').fadeOut(100, function() {
-                $('.loginForm').fadeIn();
-            })
+            $('.forgotPassForm').addClass('hidden');
+            $('.loginForm').removeClass('hidden');
         });
 
         $('#forgotPassForm').submit(function(e) {
             e.preventDefault();
             var self = $(this);
-            var alertMessage = $('.alert-message');
             $.ajax({
                 type: 'POST',
                 url: '/forgotpass',
                 data: self.serialize(),
                 async: true,
-                success: function(data) {
-                    alertMessage.removeClass('hide')
-                            .addClass('green')
-                            .find('p')
-                            .html('Password Reset Email Sent!');
-
+                success: function() {
+                    var alert = $('<div>').addClass('alert success').attr('role', 'alert')
+                        .text('Reset-E-Mail wurde versendet.');
+                    $('.card .alert').remove();
+                    $('.card header.brand').after(alert);
                     $('#forgotPass-email').val('');
-
-                    $('.forgotPassForm').fadeOut(100, function() {
-                        $('.loginForm').fadeIn();
-                    })
+                    $('.forgotPassForm').addClass('hidden');
+                    $('.loginForm').removeClass('hidden');
                 },
-
-                error: function(xhr, ajaxOptions, thrownError) {
-                    alertMessage.removeClass('hide')
-                            .find('p')
-                            .html(xhr.responseText);
+                error: function(xhr) {
+                    var alert = $('<div>').addClass('alert').attr('role', 'alert')
+                        .text(xhr.responseText || 'Fehler beim Senden.');
+                    $('.card .alert').remove();
+                    $('.card header.brand').after(alert);
                 }
             });
-
             return false;
         });
 
-        $(document).ready(function() {
-            // The legacy mobile view was disabled years ago (middleware now
-            // redirects /mobile -> /), so this auto-redirect created an
-            // infinite /login -> /mobile -> / -> /login loop for any phone
-            // viewport <= 800px. THW users go through the PWA at /app/
-            // anyway, the desktop login page is responsive enough for the
-            // rare admin who hits it on mobile.
-
-            setTimeout(function() {
-                $('#login-username').focus();
-            }, 700);
-        });
+        setTimeout(function() {
+            $('#login-username').focus();
+        }, 200);
     });
 </script>
 </body>
