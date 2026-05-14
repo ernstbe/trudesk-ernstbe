@@ -70,13 +70,14 @@ seeder.init = async function (callback) {
       winston.debug('Seeder: Created 6 departments')
 
       winston.info('Seeder: Finished — created 7 groups, 6 teams, 6 departments')
-    }
 
-    // Seed ticket types, tags, and statuses (idempotent — skips if they already exist)
-    await seedTicketTypes()
-    await seedTags()
-    await seedProcurementStatuses()
-    await seedBeschlussStatuses()
+      // Tags, types, and statuses are seeded only on initial install. Re-running them
+      // on every boot would resurrect entries an admin deliberately deleted via the UI.
+      await seedTicketTypes()
+      await seedTags()
+      await seedProcurementStatuses()
+      await seedBeschlussStatuses()
+    }
   } catch (err) {
     winston.warn('Seeder: Error during seeding — ' + err.message)
   }
