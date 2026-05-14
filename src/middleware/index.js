@@ -204,7 +204,28 @@ function allowCrossDomain (req, res, next) {
     'Access-Control-Allow-Headers',
     'DNT,X-Mx-ReqToken,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization,accesstoken,X-RToken,X-Token'
   )
-  res.setHeader('Content-Security-Policy', "frame-ancestors 'none';")
+  // Trudesk's admin UI is mostly server-rendered Handlebars with a lot of
+  // upstream-legacy inline scripts/styles (and the chart vendor needs eval).
+  // The CSP below is intentionally lax on script-src/style-src so the
+  // existing admin pages keep working, but locks down everything else.
+  // The strict PWA gets its own CSP from nginx.conf in the PWA repo.
+  res.setHeader(
+    'Content-Security-Policy',
+    [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "font-src 'self' https://fonts.gstatic.com data:",
+      "img-src 'self' data: blob: https:",
+      "connect-src 'self' wss:",
+      "frame-ancestors 'none'",
+      "base-uri 'self'",
+      "form-action 'self'"
+    ].join('; ') + ';'
+  )
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin')
+  res.setHeader('Cross-Origin-Resource-Policy', 'same-origin')
+  res.setHeader('X-Frame-Options', 'DENY')
 
   if (req.method === 'OPTIONS') {
     res.sendStatus(200)
