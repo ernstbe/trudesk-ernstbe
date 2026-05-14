@@ -180,6 +180,12 @@ function launchServer (db) {
 
       await require('./src/seeder').init()
 
+      try {
+        await require('./src/webpush').init()
+      } catch (webpushErr) {
+        winston.warn('webpush init failed — push notifications disabled: ' + webpushErr.message)
+      }
+
       winston.debug('Building dynamic sass...')
       await promisify(require('./src/sass/buildsass').build)
 

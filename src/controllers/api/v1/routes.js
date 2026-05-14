@@ -40,6 +40,11 @@ module.exports = function (middleware, router, controllers) {
   router.delete('/api/v1/account/sessions', apiv1, apiCtrl.sessions.revokeOthers)
   router.delete('/api/v1/account/sessions/:deviceId', apiv1, apiCtrl.sessions.revoke)
 
+  // Web Push subscriptions (Phase 1 of #web-push).
+  router.get('/api/v1/account/push/vapid-public', apiv1, apiCtrl.pushSubscriptions.vapidPublic)
+  router.post('/api/v1/account/push/subscribe', apiv1, apiCtrl.pushSubscriptions.subscribe)
+  router.delete('/api/v1/account/push/subscribe', apiv1, apiCtrl.pushSubscriptions.unsubscribe)
+
   // Roles
   router.get('/api/v1/roles', apiv1, apiCtrl.roles.get)
   router.post('/api/v1/roles', apiv1, isAdmin, apiCtrl.roles.create)
