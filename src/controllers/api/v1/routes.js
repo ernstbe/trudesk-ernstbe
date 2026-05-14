@@ -45,6 +45,12 @@ module.exports = function (middleware, router, controllers) {
   router.post('/api/v1/account/push/subscribe', apiv1, apiCtrl.pushSubscriptions.subscribe)
   router.delete('/api/v1/account/push/subscribe', apiv1, apiCtrl.pushSubscriptions.unsubscribe)
 
+  // Bug reports — submit from any authed user, admin-only read/patch/delete.
+  router.post('/api/v1/bug-reports', apiv1, apiCtrl.bugReports.submit)
+  router.get('/api/v1/bug-reports', apiv1, apiCtrl.bugReports.list)
+  router.patch('/api/v1/bug-reports/:id', apiv1, apiCtrl.bugReports.setResolved)
+  router.delete('/api/v1/bug-reports/:id', apiv1, apiCtrl.bugReports.remove)
+
   // Roles
   router.get('/api/v1/roles', apiv1, apiCtrl.roles.get)
   router.post('/api/v1/roles', apiv1, isAdmin, apiCtrl.roles.create)

@@ -43,6 +43,7 @@ apiController.v1.plugins = apiPluginsV1
 apiController.v1.roles = require('./api/v1/roles')
 apiController.v1.sessions = require('./api/v1/sessions')
 apiController.v1.pushSubscriptions = require('./api/v1/pushSubscriptions')
+apiController.v1.bugReports = require('./api/v1/bugReports')
 
 apiController.v2 = {}
 apiController.v2.common = require('./api/v2/common')
