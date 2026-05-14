@@ -1,259 +1,248 @@
 <!DOCTYPE html>
-<html>
+<html lang="de">
 <head>
-    <title>Trudesk &middot; {{{title}}}</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{{siteTitle}}} &middot; {{{title}}}</title>
     <link rel="icon" href="/img/favicon.png" />
     <link rel="stylesheet" href="/css/plugins.min.css">
     <link rel="stylesheet" href="/css/app.min.css">
-    <style type="text/css">
-        html {
-            overflow-x: hidden;
-        }
-        body {
-            background: #eee;
-            text-align: center;
-            font-family: "Roboto", Arial, sans-serif;
-        }
-
-        .login-wrapper {
-            width: 400px;
-            height: 400px;
-            position: absolute;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-        }
-
-        img {
-            margin-bottom: 55px;
+    <style>
+        :root {
+            --primary: #1e40af;
+            --primary-hover: #1e3a8a;
+            --primary-light: #dbeafe;
+            --bg: #f3f4f6;
+            --card: #ffffff;
+            --text: #111827;
+            --text-muted: #6b7280;
+            --border: #e5e7eb;
+            --border-focus: #1e40af;
+            --error: #dc2626;
+            --error-bg: #fee2e2;
+            --success: #059669;
+            --success-bg: #d1fae5;
+            --radius: 8px;
+            --shadow-lg: 0 10px 25px rgba(0,0,0,.1), 0 4px 10px rgba(0,0,0,.05);
         }
 
-        label {
-            text-align: left
-        }
+        * { box-sizing: border-box; }
 
-        button {
-            font-family: "Roboto", Arial, sans-serif;
-            width: 340px;
-            height: 20px;
-            text-align: left;
-            padding: 15px 20px;
-            background: #384b5f;
-            border: 1px solid #1c2937;
-            font-size: 20px;
-            color: #fff;
-            margin-bottom: 15px;
-            border-radius: 3px;
-            -moz-border-radius: 3px;
-            -webkit-border-radius: 3px;
-            font-weight: 300;
-        }
-
-        button.button {
-            width: 380px;
-            height: auto;
-            text-align: center;
-            background: #e74b3b;
-            border: none;
-            text-transform: uppercase;
-            border-radius: 3px;
-            -moz-border-radius: 3px;
-            -webkit-border-radius: 3px;
-        }
-
-        button.button:hover {
-            background: #f15849;
-            cursor: pointer;
-        }
-
-        *:focus {
-            outline: 0;
-        }
-
-        a {
-            display: inline-block;
-            padding-right: 10px;
-            color: #727272;
-            font-size: 14px;
-            float: right;
-            text-decoration: none;
-            font-weight: 300;
-        }
-
-        a:hover {
-            color: #A5A5A5;
-        }
-
-        ::-webkit-input-placeholder { /* WebKit browsers */
-            color:    #222;
-        }
-        :-moz-placeholder { /* Mozilla Firefox 4 to 18 */
-            color:    #222;
-            opacity:  1;
-        }
-        ::-moz-placeholder { /* Mozilla Firefox 19+ */
-            color:    #222;
-            opacity:  1;
-        }
-        :-ms-input-placeholder { /* Internet Explorer 10+ */
-            color:    #222;
-        }
-
-        .alert-message {
+        html, body {
+            margin: 0;
             padding: 0;
-            position: fixed;
-            top: 75px;
-            left: 50%;
-            width: 380px;
-            height: 50px;
-            /*margin-bottom: 50px;*/
-            background: #e73c3c;
-            border-radius: 5px;
-            -webkit-border-radius: 5px;
-            -moz-border-radius: 5px;
-            transform: translate(-50%, 0);
+            font: 400 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: var(--text);
+            background: var(--bg);
+            min-height: 100%;
         }
 
-        .alert-message p {
-            margin-top: 8px;
-            margin-bottom: 0;
-            color: white;
-            font-weight: 300;
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 16px;
+            min-height: 100vh;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 400px;
+            background: var(--card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            padding: 32px;
+        }
+
+        .brand {
             text-align: center;
-            font-size: 22px;
+            margin-bottom: 24px;
         }
 
-        button.button.noCap {
-            text-transform: none;
+        .brand img {
+            display: block;
+            margin: 0 auto 12px;
+            max-height: 64px;
+            max-width: 100%;
+            width: auto;
+            height: auto;
         }
 
-        .hide {
-            display: none;
+        .brand h1 {
+            margin: 0 0 4px;
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text);
         }
 
-        .green {
-            background: #29b955;
+        .brand .subtitle {
+            margin: 0;
+            font-size: 13px;
+            color: var(--text-muted);
         }
 
-        .md-input-bar:before,
-        .md-input-bar:after {
-            background: #e74c3c !important;
+        .field {
+            margin-bottom: 16px;
+        }
+
+        .field label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text);
+            margin-bottom: 6px;
+        }
+
+        .input {
+            width: 100%;
+            height: 40px;
+            padding: 0 12px;
+            font-size: 16px;
+            letter-spacing: .15em;
+            text-align: center;
+            color: var(--text);
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            transition: border-color .15s, box-shadow .15s;
+            font-family: inherit;
+        }
+
+        .input:focus {
+            outline: none;
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 3px var(--primary-light);
         }
 
         .btn {
             width: 100%;
-            height: 50px;
-            margin-bottom: 24px !important;
-            /*color: #E74C3C;*/
+            height: 44px;
+            padding: 0 16px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+            background: var(--primary);
+            border: 0;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: background .15s;
+            font-family: inherit;
         }
 
-        .btn:hover, .btn:active, .btn:focus {
-            /*color: #222;*/
+        .btn:hover { background: var(--primary-hover); }
+
+        .footer-link {
+            display: block;
+            text-align: center;
+            margin-top: 16px;
+            font-size: 13px;
+            color: var(--text-muted);
+            text-decoration: none;
         }
+
+        .footer-link:hover { color: var(--primary); }
+
+        .alert {
+            padding: 10px 12px;
+            border-radius: var(--radius);
+            font-size: 13px;
+            margin-bottom: 16px;
+            color: var(--error);
+            background: var(--error-bg);
+        }
+
+        .alert.success { color: var(--success); background: var(--success-bg); }
+
+        .hidden { display: none !important; }
     </style>
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="/js/vendor.js"></script>
     <script src="/js/truRequire.js"></script>
-    <!--<script src="/js/trudesk.min.js"></script>-->
 </head>
 <body>
-<div class="alert-message {{#if flash}} {{else}} hide {{/if}} {{#if flash.success}} green {{/if}}">
-    <p>{{#if flash.message}} {{{flash.message}}} {{else}} {{{flash}}}{{/if}}</p>
-</div>
-<div class="login-wrapper">
-    <img src="{{pageLogo}}" alt="Logo" class="site-logo-login" />
+<main class="card">
+    <header class="brand">
+        <img src="{{pageLogo}}" alt="{{{siteTitle}}}" class="site-logo-login" />
+        <h1>Zwei-Faktor-Authentifizierung</h1>
+        <p class="subtitle">Bitte gib den Code aus deiner Authenticator-App ein.</p>
+    </header>
 
-    <div class="level2auth" style="margin-top: 25px;">
+    {{#if flash}}
+        <div class="alert {{#if flash.success}}success{{/if}}" role="alert">
+            {{#if flash.message}}{{{flash.message}}}{{else}}{{{flash}}}{{/if}}
+        </div>
+    {{/if}}
+
+    <div class="level2auth">
         <form action="/l2auth" id="level2auth" method="post">
-            <div class="uk-margin-medium-bottom">
+            <div class="field">
                 <label for="code">Code</label>
-                <input type="text" id="code" class="md-input" name="code" />
+                <input type="text" id="code" class="input" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" required />
             </div>
-
-            <button class="btn no-ajaxy md-btn md-btn-flat md-btn-wave md-btn-flat-danger" type="submit">Send</button>
+            <button class="btn no-ajaxy" type="submit">Bestätigen</button>
         </form>
         {{#if mailerEnabled}}
-            <hr>
-            <a id="cantlogin" href="#" class="no-ajaxy right" style="display: block; clear: right;">Can't login?</a>
+            <a id="cantlogin" href="#" class="footer-link no-ajaxy">Kein Zugriff auf den Authenticator?</a>
         {{/if}}
     </div>
 
-    <div class="forgotl2auth" style="display: none;">
+    <div class="forgotl2auth hidden">
         <form id="forgotl2auth" method="post" action="/">
-            <div class="uk-margin-medium-bottom">
-                <label for="forgotl2auth-email">Email</label>
-                <input id="forgotl2auth-email" name="forgotl2auth-email" type="text" class="md-input" />
+            <div class="field">
+                <label for="forgotl2auth-email">E-Mail-Adresse</label>
+                <input id="forgotl2auth-email" name="forgotl2auth-email" type="email" class="input" autocomplete="email" required style="letter-spacing: normal; text-align: left;" />
             </div>
-            <!--<input id="login-password" name="login-password" type="password" placeholder="Password" />-->
-            <button class="btn no-ajaxy md-btn md-btn-flat md-btn-wave md-btn-flat-danger" type="submit">Recover Account</button>
+            <button class="btn no-ajaxy" type="submit">Konto wiederherstellen</button>
         </form>
-
-        <a id="backToLogin" href="#" class="no-ajaxy">Back to Login</a>
+        <a id="backToLogin" href="#" class="footer-link no-ajaxy">← Zurück</a>
     </div>
-</div>
+</main>
 
 <script type="text/javascript">
-    window.truRequire(['jquery', 'helpers'], function(loadedModules) {
+    window.truRequire(['jquery'], function(loadedModules) {
         var $ = loadedModules[0];
-        var helpers = loadedModules[1];
-        helpers.UI.inputs();
-        helpers.UI.waves();
 
         $('#cantlogin').click(function(e) {
             e.preventDefault();
-            $('.level2auth').fadeOut(100, function() {
-                $('.forgotl2auth').fadeIn();
-            });
-
+            $('.level2auth').addClass('hidden');
+            $('.forgotl2auth').removeClass('hidden');
         });
 
         $('#backToLogin').click(function(e) {
             e.preventDefault();
-            $('.forgotl2auth').fadeOut(100, function() {
-                $('.level2auth').fadeIn();
-            })
+            $('.forgotl2auth').addClass('hidden');
+            $('.level2auth').removeClass('hidden');
         });
 
         $('#forgotl2auth').submit(function(e) {
             e.preventDefault();
             var self = $(this);
-            var alertMessage = $('.alert-message');
             $.ajax({
                 type: 'POST',
                 url: '/forgotl2auth',
                 data: self.serialize(),
                 async: true,
-                success: function(data) {
-                    alertMessage.removeClass('hide')
-                            .addClass('green')
-                            .find('p')
-                            .html('Account recovery email sent');
-
+                success: function() {
+                    var alert = $('<div>').addClass('alert success').attr('role', 'alert')
+                        .text('Wiederherstellungs-E-Mail wurde versendet.');
+                    $('.card .alert').remove();
+                    $('.card header.brand').after(alert);
                     $('#forgotl2auth-email').val('');
-
-                    $('.forgotl2auth').fadeOut(100, function() {
-                        $('.loginForm').fadeIn();
-                    });
-
-                    setTimeout(function() {
-                        window.location = '/';
-                    }, 3000);
+                    $('.forgotl2auth').addClass('hidden');
+                    setTimeout(function() { window.location = '/'; }, 3000);
                 },
-
-                error: function(xhr, ajaxOptions, thrownError) {
-                    alertMessage.removeClass('hide')
-                            .find('p')
-                            .html(xhr.responseText);
+                error: function(xhr) {
+                    var alert = $('<div>').addClass('alert').attr('role', 'alert')
+                        .text(xhr.responseText || 'Fehler beim Senden.');
+                    $('.card .alert').remove();
+                    $('.card header.brand').after(alert);
                 }
             });
-
             return false;
         });
 
-        setTimeout(function() {
-            $('input#code').focus();
-        }, 600);
+        setTimeout(function() { $('input#code').focus(); }, 200);
     });
 </script>
 </body>

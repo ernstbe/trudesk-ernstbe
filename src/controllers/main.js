@@ -33,7 +33,7 @@ mainController.content = {}
 
 mainController.index = async function (req, res) {
   const content = {}
-  content.title = 'Login'
+  content.title = 'Anmelden'
   content.layout = false
   content.flash = req.flash('loginMessage')
 
@@ -531,7 +531,7 @@ mainController.l2authget = async function (req, res) {
   }
 
   const content = {}
-  content.title = 'Login'
+  content.title = 'Anmelden'
   content.layout = false
 
   try {
@@ -541,6 +541,7 @@ mainController.l2authget = async function (req, res) {
     if (settings !== null && settings.mailerEnabled !== null) {
       content.mailerEnabled = settings.mailerEnabled.value
     }
+    content.siteTitle = settings.siteTitle.value
     content.pageLogo = '/img/defaultLogoDark.png'
     if (settings.hasCustomPageLogo.value && settings.customPageLogoFilename.value.length > 0) {
       content.pageLogo = '/assets/' + settings.customPageLogoFilename.value
