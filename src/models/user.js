@@ -24,6 +24,12 @@ require('./role')
 const SALT_FACTOR = 10
 const COLLECTION = 'accounts'
 
+// Sliding-expiry window for per-device access tokens. A token whose
+// `lastUsedAt` falls outside this window is treated as expired:
+// `getUserByAccessToken` rejects it lazily on the next request, and the
+// weekly cron in `taskRunner` purges the dead entries from the array.
+const ACCESS_TOKEN_IDLE_TTL_MS = 90 * 24 * 60 * 60 * 1000
+
 /**
  * User Schema
  * @module models/user
@@ -454,14 +460,26 @@ userSchema.statics.getUserByAccessToken = async function (token) {
 
   if (!user) return null
 
-  // Opportunistic lastUsedAt update — debounced to once per minute per
-  // entry to avoid writing on every API call. Fire-and-forget; auth
-  // never blocks on this.
   if (Array.isArray(user.accessTokens) && user.accessTokens.length > 0) {
     const entry = user.accessTokens.find((t) => t.token === token)
     if (entry) {
       const now = Date.now()
       const last = entry.lastUsedAt ? new Date(entry.lastUsedAt).getTime() : 0
+
+      // Sliding-expiry: reject and remove tokens idle longer than the TTL.
+      // The legacy `accessToken` field has no lastUsedAt — it's left alone
+      // and the next login moves the user onto the array.
+      if (last > 0 && now - last > ACCESS_TOKEN_IDLE_TTL_MS) {
+        user.accessTokens = user.accessTokens.filter((t) => t.token !== token)
+        try {
+          await user.save()
+        } catch (err) { /* best-effort cleanup */ }
+        return null
+      }
+
+      // Opportunistic lastUsedAt update — debounced to once per minute per
+      // entry to avoid writing on every API call. Fire-and-forget; auth
+      // never blocks on this.
       if (now - last > 60 * 1000) {
         entry.lastUsedAt = new Date(now)
         user.save().catch(() => { /* best-effort */ })
@@ -471,6 +489,47 @@ userSchema.statics.getUserByAccessToken = async function (token) {
 
   return user
 }
+
+/**
+ * Remove access-token array entries whose `lastUsedAt` falls outside the
+ * sliding-expiry window. Runs from the weekly taskrunner cron and is also
+ * exported for tests / manual ops. Idempotent.
+ *
+ * @memberof User
+ * @static
+ * @method purgeExpiredAccessTokens
+ * @returns {Promise<{ usersTouched: number, tokensRemoved: number }>}
+ */
+userSchema.statics.purgeExpiredAccessTokens = async function () {
+  const cutoff = new Date(Date.now() - ACCESS_TOKEN_IDLE_TTL_MS)
+  const users = await this.model(COLLECTION)
+    .find({ 'accessTokens.lastUsedAt': { $lt: cutoff } }, '+accessTokens')
+    .exec()
+
+  let tokensRemoved = 0
+  let usersTouched = 0
+  for (const user of users) {
+    if (!Array.isArray(user.accessTokens) || user.accessTokens.length === 0) continue
+    const before = user.accessTokens.length
+    user.accessTokens = user.accessTokens.filter((t) => {
+      const last = t.lastUsedAt ? new Date(t.lastUsedAt).getTime() : 0
+      return last === 0 || Date.now() - last <= ACCESS_TOKEN_IDLE_TTL_MS
+    })
+    const removed = before - user.accessTokens.length
+    if (removed > 0) {
+      try {
+        await user.save()
+        tokensRemoved += removed
+        usersTouched += 1
+      } catch (err) {
+        winston.warn('purgeExpiredAccessTokens: skipped user ' + user._id + ' — ' + err.message)
+      }
+    }
+  }
+  return { usersTouched, tokensRemoved }
+}
+
+userSchema.statics.ACCESS_TOKEN_IDLE_TTL_MS = ACCESS_TOKEN_IDLE_TTL_MS
 
 userSchema.statics.getUserWithObject = async function (object) {
   if (!(typeof object === 'object' && object !== null)) {

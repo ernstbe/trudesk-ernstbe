@@ -32,7 +32,29 @@ taskRunner.init = function (callback) {
 
   winston.debug('TaskRunner: Recurring tasks cron scheduled (every 5 minutes)')
 
+  // Sliding-expiry housekeeping: drop access-token entries idle longer than
+  // the configured TTL. Auth already rejects them lazily, but the array
+  // would keep growing without a sweep. Sunday 03:15 to avoid the top-of-
+  // the-hour cron storm.
+  cron.schedule('15 3 * * 0', function () {
+    taskRunner.purgeExpiredAccessTokens()
+  })
+
+  winston.debug('TaskRunner: Access-token purge cron scheduled (Sun 03:15)')
+
   return callback()
+}
+
+taskRunner.purgeExpiredAccessTokens = async function () {
+  try {
+    const result = await userSchema.purgeExpiredAccessTokens()
+    if (result.tokensRemoved > 0) {
+      winston.info('TaskRunner: Purged ' + result.tokensRemoved + ' expired access tokens from ' + result.usersTouched + ' users')
+    }
+    return result
+  } catch (err) {
+    winston.warn('TaskRunner: Failed to purge expired access tokens — ' + err.message)
+  }
 }
 
 taskRunner.processRecurringTasks = async function () {
