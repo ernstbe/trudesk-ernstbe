@@ -31,6 +31,32 @@ const notificationSchema = mongoose.Schema({
   unread: { type: Boolean, default: true }
 })
 
+// Fire-and-forget Web Push fan-out for the owner. Hooked on `post('save')`
+// so every callsite that creates a new Notification (events.js,
+// event_ticket_created.js, socketio handlers) automatically gets push
+// without needing per-callsite glue. We only fire for newly-inserted
+// docs (`wasNew`) so toggling `unread` later doesn't re-notify.
+notificationSchema.pre('save', function () {
+  this.wasNew = this.isNew
+})
+
+notificationSchema.post('save', function (doc) {
+  if (this.wasNew === false) return
+  // Lazy-require to avoid a cycle: webpush -> userSchema -> notification.
+  let webpush
+  try { webpush = require('../webpush') } catch (e) { return }
+  if (!webpush.isInitialized || !webpush.isInitialized()) return
+
+  const ticketRef = doc.data && (doc.data.ticketUid || doc.data.ticketId)
+  const payload = {
+    title: doc.title,
+    body: doc.message,
+    tag: 'trudesk-notification-' + doc._id.toString(),
+    url: ticketRef ? '/app/tickets/' + ticketRef : '/app/'
+  }
+  webpush.sendToUser(doc.owner, payload).catch(() => { /* best-effort */ })
+})
+
 notificationSchema.methods.markRead = async function () {
   this.unread = false
 

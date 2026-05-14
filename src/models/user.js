@@ -107,6 +107,31 @@ const userSchema = mongoose.Schema({
     select: false,
     default: []
   },
+  // Web Push subscriptions. One entry per browser/device that has
+  // explicitly opted in to push notifications via the PWA's settings.
+  // `endpoint` is the PushManager URL the browser hands back; `keys.p256dh`
+  // and `keys.auth` are required for `web-push` to encrypt the payload.
+  // We dedup on `endpoint` (it's the natural key from the browser side).
+  // Tombstoned automatically when web-push returns 404/410.
+  pushSubscriptions: {
+    type: [
+      new mongoose.Schema(
+        {
+          endpoint: { type: String, required: true },
+          keys: {
+            p256dh: { type: String, required: true },
+            auth: { type: String, required: true }
+          },
+          deviceId: { type: String },
+          userAgent: { type: String },
+          createdAt: { type: Date, default: Date.now }
+        },
+        { _id: false }
+      )
+    ],
+    select: false,
+    default: []
+  },
 
   preferences: {
     tourCompleted: { type: Boolean, default: false },
