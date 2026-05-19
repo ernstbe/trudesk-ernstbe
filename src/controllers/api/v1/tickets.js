@@ -698,6 +698,16 @@ apiTickets.update = async function (req, res) {
         await ticket.populate('priority')
       }
 
+      // Type was silently dropped here previously — every PWA `Type` chip
+      // change ended up as a no-op. Route it through the schema helper
+      // so we get the existing 'ticket:set:type' history entry plus a
+      // proper "type does not exist" error if the id is bad.
+      if (reqTicket.type !== undefined) {
+        const typeId = reqTicket.type._id || reqTicket.type
+        await ticket.setTicketType(req.user._id, typeId)
+        await ticket.populate('type')
+      }
+
       if (reqTicket.closedDate !== undefined) {
         ticket.closedDate = reqTicket.closedDate
       }

@@ -94,6 +94,29 @@ describe('api/tickets.js', function () {
       .end(done)
   })
 
+  it('should update a ticket type via API', async function () {
+    // Regression test: the PUT /tickets/:id handler used to drop the
+    // `type` field on the floor, so the PWA's Type-chip change was a
+    // silent no-op. Pick a different type than the one used at create
+    // time, then assert the ticket comes back populated with it.
+    const tickettype = require('../../src/models/tickettype')
+    const types = await tickettype.find({})
+    const otherType = types.find(function (t) { return t.name !== 'Task' }) || types[1] || types[0]
+    expect(otherType).to.be.a('object')
+
+    const res = await api
+      .put('/api/v1/tickets/' + createdTicketId)
+      .set('accesstoken', tdapikey)
+      .set('Content-Type', 'application/json')
+      .send({ type: otherType._id.toString() })
+
+    expect(res.status).to.equal(200)
+    expect(res.body.success).to.be.true
+    expect(res.body.ticket).to.be.a('object')
+    expect(String(res.body.ticket.type._id || res.body.ticket.type))
+      .to.equal(otherType._id.toString())
+  })
+
   it('should add a comment to a ticket', function (done) {
     api
       .post('/api/v1/tickets/addcomment')
