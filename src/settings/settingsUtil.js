@@ -80,6 +80,7 @@ util.getSettings = async callback => {
         s.colorQuaternary = parseSetting(settings, 'color:quaternary', '#E6E7E8')
 
         s.defaultTicketType = parseSetting(settings, 'ticket:type:default', '')
+        s.defaultTicketStatus = parseSetting(settings, 'ticket:status:default', '')
         s.minSubjectLength = parseSetting(settings, 'ticket:minlength:subject', 10)
         s.minIssueLength = parseSetting(settings, 'ticket:minlength:issue', 10)
 

@@ -22,6 +22,7 @@ const Models = require('../../../models')
 const permissions = require('../../../permissions')
 const ticketStatusSchema = require('../../../models/ticketStatus')
 const { getDeadlineStatus } = require('../../../helpers/deadlineHelper')
+const { resolveDefaultTicketStatus } = require('../../../helpers/defaultTicketStatus')
 
 const ticketsV2 = {}
 
@@ -35,7 +36,7 @@ ticketsV2.create = async function (req, res) {
     const user = await Models.User.findOne({ _id: req.user._id })
     if (!user || user.deleted) return apiUtils.sendApiError(res, 400, 'Invalid User')
 
-    const status = await ticketStatusSchema.findOne({ order: 0 })
+    const status = await resolveDefaultTicketStatus()
     if (!status) return apiUtils.sendApiError(res, 500, 'No default ticket status configured')
 
     if (postData.tags !== undefined && postData.tags !== null && !Array.isArray(postData.tags)) {

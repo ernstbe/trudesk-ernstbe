@@ -134,6 +134,13 @@ const TicketsSettings = ({
     [updateSetting]
   )
 
+  const onDefaultTicketStatusChange = useCallback(
+    e => {
+      updateSetting({ name: 'ticket:status:default', value: e.target.value, stateName: 'defaultTicketStatus' })
+    },
+    [updateSetting]
+  )
+
   const onAllowPublicTicketsChange = useCallback(
     e => {
       updateSetting({
@@ -245,6 +252,13 @@ const TicketsSettings = ({
     return { text: type.get('name'), value: type.get('_id') }
   })
 
+  const mappedStatuses = getStatus()
+    .slice()
+    .sort((a, b) => (a.get('order') || 0) - (b.get('order') || 0))
+    .map(function (status) {
+      return { text: status.get('name'), value: status.get('_id') }
+    })
+
   return (
     <div className={active ? 'active' : 'hide'}>
       <SettingItem
@@ -256,6 +270,21 @@ const TicketsSettings = ({
             defaultValue={getSetting('defaultTicketType')}
             onSelectChange={e => {
               onDefaultTicketTypeChange(e)
+            }}
+            width='50%'
+            showTextbox={false}
+          />
+        }
+      />
+      <SettingItem
+        title={t('settings.defaultTicketStatus')}
+        subtitle={t('settings.defaultTicketStatusHint')}
+        component={
+          <SingleSelect
+            items={mappedStatuses}
+            defaultValue={getSetting('defaultTicketStatus')}
+            onSelectChange={e => {
+              onDefaultTicketStatusChange(e)
             }}
             width='50%'
             showTextbox={false}

@@ -489,6 +489,8 @@
     "colorQuaternaryHint": "Sidebar background color",
     "defaultTicketType": "Default Task Type",
     "defaultTicketTypeHint": "Default task type for newly created tasks.",
+    "defaultTicketStatus": "Default Task Status",
+    "defaultTicketStatusHint": "Default status assigned to newly created tasks.",
     "allowPublicTickets": "Allow Public Tasks",
     "allowPublicTicketsHint": "Allow the creation of tasks by unregistered users.",
     "allowAgentUserTickets": "Allow Staff to Submit Tasks on Behalf of Users",
