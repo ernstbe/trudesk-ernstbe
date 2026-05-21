@@ -489,6 +489,8 @@
     "colorQuaternaryHint": "Seitenleisten-Hintergrundfarbe",
     "defaultTicketType": "Standard-Vorgangstyp",
     "defaultTicketTypeHint": "Standard-Vorgangstyp für neu erstellte Vorgänge.",
+    "defaultTicketStatus": "Standard-Vorgangsstatus",
+    "defaultTicketStatusHint": "Standardstatus für neu erstellte Vorgänge.",
     "allowPublicTickets": "Öffentliche Vorgänge erlauben",
     "allowPublicTicketsHint": "Ermöglicht die Erstellung von Vorgängen durch nicht registrierte Benutzer.",
     "allowAgentUserTickets": "Bearbeiter dürfen Vorgänge im Namen von Benutzern erstellen",

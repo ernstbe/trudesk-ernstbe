@@ -381,8 +381,13 @@ apiTickets.create = async function (req, res) {
     const UserSchema = require('../../../models/user')
     const user = await UserSchema.findOne({ _id: req.user._id })
 
-    const TicketStatusSchema = require('../../../models/ticketStatus')
-    const status = await TicketStatusSchema.findOne({ order: 0 })
+    const { resolveDefaultTicketStatus } = require('../../../helpers/defaultTicketStatus')
+    const status = await resolveDefaultTicketStatus()
+    if (!status) {
+      response.success = false
+      response.error = 'No default ticket status configured'
+      return res.status(500).json(response)
+    }
 
     if (user.deleted) {
       response.success = false
@@ -538,13 +543,11 @@ apiTickets.createPublicTicket = async function (req, res) {
     const TicketTypeSchema = require('../../../models/tickettype')
     const ticketType = await TicketTypeSchema.getType(defaultType.value)
 
-    const defaultTicketStatus = await settingSchema.getSettingByName('ticket:status:default')
-    if (!defaultTicketStatus) {
+    const { resolveDefaultTicketStatus: resolvePublicDefaultStatus } = require('../../../helpers/defaultTicketStatus')
+    const ticketStatus = await resolvePublicDefaultStatus()
+    if (!ticketStatus) {
       throw new Error('Failed: Invalid Default Ticket Status')
     }
-
-    const TicketStatusSchema = require('../../../models/ticketStatus')
-    const ticketStatus = await TicketStatusSchema.getStatusById(defaultTicketStatus.value)
 
     // Create Ticket
     const TicketSchema = require('../../../models/ticket')
